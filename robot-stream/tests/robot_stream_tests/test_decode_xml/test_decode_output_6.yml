@@ -2,13 +2,9 @@
   version: '1'
 - initial_time: '2022-10-31T11:34:22.588'
   message_type: T
-- info: sys.platform=win32
-  message_type: I
-- info: python=3.8.1 (default, Jan  8 2020, 15:55:49) [MSC v.1916 64 bit (AMD64)]
-  message_type: I
 - info: Generated from output.xml
   message_type: I
-- info: robot=<not loaded>
+- info: Robot 5.0rc1 (Python 3.8.1 on win32)
   message_type: I
 - message_type: SS
   name: Robot5

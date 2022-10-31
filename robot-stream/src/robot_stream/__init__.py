@@ -67,7 +67,6 @@ class RFStream:
         # Attributes expected to be used just when used in-memory.
         config.write = kwargs.get("__write__")
         config.initial_time = kwargs.get("__initial_time__")
-        config.robot_version = kwargs.get("__robot_version__")
         config.additional_info = kwargs.get("__additional_info__")
 
         self._robot_output_impl = _RobotOutputImpl(config)
@@ -153,6 +152,9 @@ class RFStream:
 
     def send_tag(self, tag: str):
         return self._robot_output_impl.send_tag(tag)
+
+    def send_info(self, info: str):
+        return self._robot_output_impl.send_info(info)
 
     def end_test(self, name, attributes):
         # {

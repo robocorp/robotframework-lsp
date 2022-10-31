@@ -33,7 +33,6 @@ class _Config:
     # only when used as an API).
     write: Optional[Callable[[str], None]] = None
     initial_time: Optional[datetime.datetime] = None
-    robot_version: Optional[str] = None
     additional_info: Optional[Sequence[str]] = None
 
     def __init__(self):
@@ -136,7 +135,6 @@ class _RobotOutputImpl:
         else:
             self._initial_time = config.initial_time
 
-        self._robot_version = config.robot_version
         self._stack_handler = _StackHandler()
 
         self._rotate_handler = _RotateHandler(
@@ -188,19 +186,16 @@ class _RobotOutputImpl:
         self._write_with_separator(
             "T ", (self._initial_time.isoformat(timespec="milliseconds"),)
         )
-        self._write_json("I ", f"sys.platform={sys.platform}")
-        self._write_json("I ", f"python={sys.version}")
         if self._config.additional_info:
             for info in self._config.additional_info:
                 self._write_json("I ", info)
-
-        robot_version = self._robot_version
-        if robot_version is None:
+        else:
+            self._write_json("I ", f"sys.platform={sys.platform}")
+            self._write_json("I ", f"python={sys.version}")
             import robot
 
             robot_version = robot.get_version()
-
-        self._write_json("I ", f"robot={robot_version}")
+            self._write_json("I ", f"robot={robot_version}")
 
         for msg_in_stack in self._stack_handler:
             self._do_write(msg_in_stack)
@@ -318,6 +313,9 @@ class _RobotOutputImpl:
                 oid(tag),
             ],
         )
+
+    def send_info(self, info: str):
+        self._write_json("I ", info)
 
     def end_test(self, status, message, time_delta):
         oid = self._obtain_id

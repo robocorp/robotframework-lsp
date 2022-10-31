@@ -243,7 +243,9 @@ class _XmlSaxParser(xml.sax.ContentHandler):
 
     def start_robot(self, attrs):
         assert self._listener is None
+        generator = attrs.get("generator")
         self._listener = self._create_listener(attrs)
+        self._listener.send_info(generator)
         self._stack.append(_RobotData(attrs))
 
     def end_robot(self):
@@ -534,7 +536,6 @@ def convert_xml_to_rfstream(source, write: Optional[Callable[[str], None]] = Non
         kwargs = dict(
             __write__=write,
             __initial_time__=initial_time,
-            __robot_version__="<not loaded>",
             __additional_info__=[f"Generated from output.xml"],
         )
         kwargs["--dir"] = "None"
