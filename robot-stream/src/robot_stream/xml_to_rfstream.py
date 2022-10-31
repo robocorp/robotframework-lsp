@@ -101,11 +101,30 @@ class _ForData(_AbstractKeywordData):
     __repr__ = __str__
 
 
+class _WhileData(_AbstractKeywordData):
+    def __init__(self, attrs):
+        _AbstractKeywordData.__init__(self, attrs)
+        self.condition = attrs.get("condition", "<unknown condition>")
+
+    @property
+    def type(self):
+        return "WHILE"
+
+    @property
+    def name(self):
+        return f"{self.condition}"
+
+    def __str__(self):
+        return f"_WhileData({self.name})"
+
+    __repr__ = __str__
+
+
 class _IterData(_AbstractKeywordData):
     def __init__(self, attrs):
         _AbstractKeywordData.__init__(self, attrs)
-        self.var_name = "<unset>"
-        self.var = "<unset>"
+        self.var_name = None
+        self.var = None
 
     @property
     def type(self):
@@ -113,7 +132,13 @@ class _IterData(_AbstractKeywordData):
 
     @property
     def name(self):
-        return f"{self.var_name} = {self.var}"
+        if self.var_name is not None and self.var is not None:
+            return f"{self.var_name} = {self.var}"
+        if self.var_name is not None:
+            return f"{self.var_name}"
+        if self.var is not None:
+            return f"{self.var}"
+        return ""
 
     def __str__(self):
         return f"_IterData({self.name})"
@@ -323,6 +348,10 @@ class _XmlSaxParser(xml.sax.ContentHandler):
         self.send_delayed()
         self._stack.append(_ForData(attrs))
 
+    def start_while(self, attrs):
+        self.send_delayed()
+        self._stack.append(_WhileData(attrs))
+
     def start_iter(self, attrs):
         self.send_delayed()
         self._stack.append(_IterData(attrs))
@@ -351,6 +380,7 @@ class _XmlSaxParser(xml.sax.ContentHandler):
 
     end_for = end_kw
     end_iter = end_kw
+    end_while = end_kw
 
     def start_arg(self, attrs):
         self._need_chars = True

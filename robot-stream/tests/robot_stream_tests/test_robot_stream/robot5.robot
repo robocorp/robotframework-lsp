@@ -1,5 +1,5 @@
 *** Test Cases ***
-Check for
+Check while
     ${a}=    Evaluate    2
     WHILE    $a < 1
         ${a}=    Evaluate    $a-1

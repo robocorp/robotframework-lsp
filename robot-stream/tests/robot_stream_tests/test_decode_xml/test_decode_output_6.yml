@@ -1,0 +1,81 @@
+- message_type: V
+  version: '1'
+- initial_time: '2022-10-31T11:34:22.588'
+  message_type: T
+- info: sys.platform=win32
+  message_type: I
+- info: python=3.8.1 (default, Jan  8 2020, 15:55:49) [MSC v.1916 64 bit (AMD64)]
+  message_type: I
+- info: Generated from output.xml
+  message_type: I
+- info: robot=<not loaded>
+  message_type: I
+- message_type: SS
+  name: Robot5
+  suite_id: s1
+  suite_source: x:\vscode-robot\robotframework-lsp\robot-stream\tests\robot_stream_tests\test_robot_stream\robot5.robot
+  time_delta_in_seconds: -1.0
+- lineno: 2
+  message_type: ST
+  name: Check for
+  suite_id: s1-t1
+  time_delta_in_seconds: -1.0
+- doc: Evaluates the given expression in Python and returns the result.
+  keyword_type: KEYWORD
+  libname: BuiltIn
+  lineno: null
+  message_type: SK
+  name: Evaluate
+  source: null
+  time_delta_in_seconds: -1.0
+- assign: ${a}
+  message_type: AS
+- argument: '2'
+  message_type: KA
+- message_type: EK
+  status: PASS
+  time_delta_in_seconds: 0.046
+- doc: ''
+  keyword_type: WHILE
+  libname: ''
+  lineno: null
+  message_type: SK
+  name: $a < 1
+  source: null
+  time_delta_in_seconds: -1.0
+- doc: ''
+  keyword_type: ITERATION
+  libname: ''
+  lineno: null
+  message_type: SK
+  name: ''
+  source: null
+  time_delta_in_seconds: -1.0
+- doc: Evaluates the given expression in Python and returns the result.
+  keyword_type: KEYWORD
+  libname: BuiltIn
+  lineno: null
+  message_type: SK
+  name: Evaluate
+  source: null
+  time_delta_in_seconds: -1.0
+- assign: ${a}
+  message_type: AS
+- argument: $a-1
+  message_type: KA
+- message_type: EK
+  status: NOT RUN
+  time_delta_in_seconds: 0.051
+- message_type: EK
+  status: NOT RUN
+  time_delta_in_seconds: 0.051
+- message_type: EK
+  status: NOT RUN
+  time_delta_in_seconds: 0.051
+- message: ''
+  message_type: ET
+  status: PASS
+  time_delta_in_seconds: 0.052
+- message_type: ES
+  status: PASS
+  time_delta_in_seconds: -1.0

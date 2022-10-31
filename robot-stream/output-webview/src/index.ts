@@ -112,7 +112,7 @@ async function main(opts: IOpts) {
                 break;
             case "KA":
                 const item: IContentAdded = stack.at(-1);
-                item.span.textContent += ` | ${msg.decoded}`;
+                item.span.textContent += ` | ${msg.decoded["argument"]}`;
                 break;
             case "L":
                 // A bit different because it's always leaf and based on 'level', not 'status'.
