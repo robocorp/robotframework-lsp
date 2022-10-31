@@ -293,7 +293,7 @@ class _RobotOutputImpl:
         )
         self._stack_handler.pop()
 
-    def start_test(self, name, test_id, test_line, time_delta):
+    def start_test(self, name, test_id, test_line, time_delta, tags):
         oid = self._obtain_id
         with self._stack_handler.push_record():
             self._write_with_separator(
@@ -305,6 +305,19 @@ class _RobotOutputImpl:
                     self._number(time_delta),
                 ],
             )
+
+            if tags:
+                for tag in tags:
+                    self.send_tag(tag)
+
+    def send_tag(self, tag: str):
+        oid = self._obtain_id
+        self._write_with_separator(
+            "TG ",
+            [
+                oid(tag),
+            ],
+        )
 
     def end_test(self, status, message, time_delta):
         oid = self._obtain_id
@@ -329,7 +342,6 @@ class _RobotOutputImpl:
         start_time_delta,
         args,
         assigns,
-        tags,
     ):
         oid = self._obtain_id
         with self._stack_handler.push_record():
@@ -352,14 +364,6 @@ class _RobotOutputImpl:
                         "AS ",
                         [
                             oid(assign),
-                        ],
-                    )
-            if tags:
-                for tag in tags:
-                    self._write_with_separator(
-                        "TG ",
-                        [
-                            oid(tag),
                         ],
                     )
             if args:

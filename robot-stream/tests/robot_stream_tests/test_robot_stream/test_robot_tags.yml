@@ -1,0 +1,36 @@
+- message_type: V
+  version: '1'
+- initial_time: '2022-10-31T10:00:00.000'
+  message_type: T
+- message_type: SS
+  name: Robot7
+  suite_id: s1
+  suite_source: <source>
+  time_delta_in_seconds: 0
+- lineno: 2
+  message_type: ST
+  name: Check for
+  suite_id: s1-t1
+  time_delta_in_seconds: 0
+- message_type: TG
+  tag: another tag 2
+- message_type: TG
+  tag: tag nice 1
+- doc: <doc>
+  keyword_type: KEYWORD
+  libname: BuiltIn
+  lineno: 4
+  message_type: SK
+  name: No Operation
+  source: <source>
+  time_delta_in_seconds: 0
+- message_type: EK
+  status: PASS
+  time_delta_in_seconds: 0
+- message: ''
+  message_type: ET
+  status: PASS
+  time_delta_in_seconds: 0
+- message_type: ES
+  status: PASS
+  time_delta_in_seconds: 0

@@ -30,6 +30,8 @@ class _TestData:
     def __init__(self, attrs):
         self.attrs = attrs
         self.status = None
+        self.tags = []
+        self.sent = False
 
     def __str__(self):
         return f'_TestData({self.attrs.get("name")})'
@@ -190,6 +192,7 @@ class _XmlSaxParser(xml.sax.ContentHandler):
         self._stack.append(_RobotData(attrs))
 
     def end_robot(self):
+        self.send_delayed()
         del self._stack[-1]
 
     def start_suite(self, attrs):
@@ -218,12 +221,8 @@ class _XmlSaxParser(xml.sax.ContentHandler):
         self.send_delayed()
         name = attrs.get("name")
         suiteid = attrs.get("id")
-        line = attrs.get("line")
         if name and suiteid:
             self._stack.append(_TestData(attrs))
-            self._listener.start_test(
-                name, {"id": suiteid, "lineno": line, "timedelta": -1}
-            )
         else:
             self._stack.append(None)
 
@@ -245,8 +244,8 @@ class _XmlSaxParser(xml.sax.ContentHandler):
             )
 
     def start_kw(self, attrs):
-        name = attrs.get("name")
         self.send_delayed()
+        name = attrs.get("name")
         if name:
             self._stack.append(_KeywordData(attrs))
 
@@ -256,15 +255,15 @@ class _XmlSaxParser(xml.sax.ContentHandler):
             self._stack.append(None)
 
     def send_delayed(self):
-        self.send_kw()
-
-    def send_kw(self):
         if not self._stack:
             return
 
         peek = self._stack[-1]
-        if isinstance(peek, _AbstractKeywordData):
-            if not peek.sent:
+        if not hasattr(peek, "sent"):
+            return
+
+        if not peek.sent:
+            if isinstance(peek, _AbstractKeywordData):
                 peek.sent = True
                 attrs = peek.attrs
                 name = peek.name
@@ -283,6 +282,18 @@ class _XmlSaxParser(xml.sax.ContentHandler):
                         "timedelta": -1,
                         "assign": assign,
                     },
+                )
+            elif isinstance(peek, _TestData):
+                peek.sent = True
+
+                attrs = peek.attrs
+                name = attrs.get("name")
+                suiteid = attrs.get("id")
+                line = attrs.get("line")
+                tags = peek.tags
+
+                self._listener.start_test(
+                    name, {"id": suiteid, "lineno": line, "timedelta": -1, "tags": tags}
                 )
 
     def end_kw(self):
@@ -351,6 +362,22 @@ class _XmlSaxParser(xml.sax.ContentHandler):
             if isinstance(peek, _AbstractKeywordData):
                 peek.args.append(content)
 
+    def start_tag(self, attrs):
+        self._need_chars = True
+
+    def end_tag(self):
+        content = self._get_chars_and_disable()
+        if self._stack:
+            peek = self._stack[-1]
+            if isinstance(peek, _TestData):
+                if not peek.sent:
+                    peek.tags.append(content)
+                else:
+                    # The test data was already sent (it can be sent
+                    # just at the end, which isn't ideal...).
+                    self.send_delayed()
+                    self._listener.send_tag(content)
+
     def start_doc(self, attrs):
         self._need_chars = True
 
@@ -367,6 +394,7 @@ class _XmlSaxParser(xml.sax.ContentHandler):
         self._curr_message_attrs = attrs
 
     def end_msg(self):
+        self.send_delayed()
         content = self._get_chars_and_disable()
 
         level = self._curr_message_attrs["level"]

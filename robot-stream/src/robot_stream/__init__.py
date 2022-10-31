@@ -148,7 +148,11 @@ class RFStream:
                 "lineno"
             ),  # The source is already given by the suite (no need to repeat)
             self._get_time_delta(attributes),
+            attributes.get("tags"),
         )
+
+    def send_tag(self, tag: str):
+        return self._robot_output_impl.send_tag(tag)
 
     def end_test(self, name, attributes):
         # {
@@ -196,7 +200,6 @@ class RFStream:
             self._get_time_delta(attributes),
             attributes.get("args"),
             attributes.get("assign"),
-            attributes.get("tags"),
         )
 
     def end_keyword(self, name, attributes):

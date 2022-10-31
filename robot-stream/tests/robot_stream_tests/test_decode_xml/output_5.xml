@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 5.0rc1 (Python 3.8.1 on win32)" generated="20221031 11:15:05.139" rpa="false" schemaversion="3">
+<suite id="s1" name="Robot7" source="x:\vscode-robot\robotframework-lsp\robot-stream\tests\robot_stream_tests\test_robot_stream\robot7.robot">
+<test id="s1-t1" name="Check for" line="2">
+<kw name="No Operation" library="BuiltIn">
+<doc>Does absolutely nothing.</doc>
+<status status="PASS" starttime="20221031 11:15:05.179" endtime="20221031 11:15:05.180"/>
+</kw>
+<tag>another tag 2</tag>
+<tag>tag nice 1</tag>
+<status status="PASS" starttime="20221031 11:15:05.178" endtime="20221031 11:15:05.181"/>
+</test>
+<status status="PASS" starttime="20221031 11:15:05.151" endtime="20221031 11:15:05.183"/>
+</suite>
+<statistics>
+<total>
+<stat pass="1" fail="0" skip="0">All Tests</stat>
+</total>
+<tag>
+<stat pass="1" fail="0" skip="0">another tag 2</stat>
+<stat pass="1" fail="0" skip="0">tag nice 1</stat>
+</tag>
+<suite>
+<stat pass="1" fail="0" skip="0" id="s1" name="Robot7">Robot7</stat>
+</suite>
+</statistics>
+<errors>
+</errors>
+</robot>
