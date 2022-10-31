@@ -178,33 +178,31 @@ def iter_with_test_replacements(filepath):
         yield msg
 
 
-def test_robot_assign(datadir, data_regression):
-    generated_info = run_with_listener(datadir, robot_file=datadir / "robot6.robot")
+def check(datadir, data_regression, name):
+    generated_info = run_with_listener(datadir, robot_file=datadir / name)
     robot_stream = generated_info.robot_stream
     impl = robot_stream.robot_output_impl
     found = list(iter_with_test_replacements(impl.current_file))
+    # for l in found:
+    #     print(l)
     data_regression.check(found)
+
+
+def test_robot_assign(datadir, data_regression):
+    check(datadir, data_regression, "robot6.robot")
 
 
 def test_robot_tags(datadir, data_regression):
-    generated_info = run_with_listener(datadir, robot_file=datadir / "robot7.robot")
-    robot_stream = generated_info.robot_stream
-    impl = robot_stream.robot_output_impl
-    found = list(iter_with_test_replacements(impl.current_file))
-    data_regression.check(found)
+    check(datadir, data_regression, "robot7.robot")
 
 
 def test_robot_while(datadir, data_regression):
-    generated_info = run_with_listener(datadir, robot_file=datadir / "robot5.robot")
-    robot_stream = generated_info.robot_stream
-    impl = robot_stream.robot_output_impl
-    found = list(iter_with_test_replacements(impl.current_file))
-    data_regression.check(found)
+    check(datadir, data_regression, "robot5.robot")
 
 
 def test_robot_if(datadir, data_regression):
-    generated_info = run_with_listener(datadir, robot_file=datadir / "robot8.robot")
-    robot_stream = generated_info.robot_stream
-    impl = robot_stream.robot_output_impl
-    found = list(iter_with_test_replacements(impl.current_file))
-    data_regression.check(found)
+    check(datadir, data_regression, "robot8.robot")
+
+
+def test_robot_try_except(datadir, data_regression):
+    check(datadir, data_regression, "robot9.robot")

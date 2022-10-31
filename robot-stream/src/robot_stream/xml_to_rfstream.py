@@ -121,9 +121,16 @@ class _WhileData(_AbstractKeywordData):
 
 
 class _BranchData(_AbstractKeywordData):
+    """
+    Branch data can be:
+    - if/else if/else
+    - try/except/finally
+    """
+
     def __init__(self, attrs):
         _AbstractKeywordData.__init__(self, attrs)
-        self.condition = attrs.get("condition")
+        self.condition = attrs.get("condition")  # Used on if/else if
+        self.pattern = None  # Used on except (message)
 
     @property
     def type(self):
@@ -131,9 +138,11 @@ class _BranchData(_AbstractKeywordData):
 
     @property
     def name(self):
-        if not self.condition:
-            return ""
-        return self.condition
+        if self.condition:
+            return self.condition
+        if self.pattern:
+            return self.pattern
+        return ""
 
     def __str__(self):
         return f"_BranchData({self.name})"
@@ -410,6 +419,15 @@ class _XmlSaxParser(xml.sax.ContentHandler):
         content = self._get_chars_and_disable()
         data = self._stack[-1]
         data.values.append(content)
+
+    def start_pattern(self, attrs):
+        self._need_chars = True
+
+    def end_pattern(self):
+        content = self._get_chars_and_disable()
+        data = self._stack[-1]
+        if isinstance(data, _BranchData):
+            data.pattern = content
 
     def start_arg(self, attrs):
         self._need_chars = True
