@@ -1,0 +1,106 @@
+- message_type: V
+  version: '1'
+- initial_time: '2022-10-31T10:00:00.000'
+  message_type: T
+- message_type: SS
+  name: Robot8
+  suite_id: s1
+  suite_source: <source>
+  time_delta_in_seconds: 0
+- lineno: 2
+  message_type: ST
+  name: Check if
+  suite_id: s1-t1
+  time_delta_in_seconds: 0
+- doc: <doc>
+  keyword_type: KEYWORD
+  libname: BuiltIn
+  lineno: 3
+  message_type: SK
+  name: Set Variable
+  source: <source>
+  time_delta_in_seconds: 0
+- assign: ${var1}
+  message_type: AS
+- argument: '2'
+  message_type: KA
+- level: I
+  message: ${var1} = 2
+  message_type: L
+  time_delta_in_seconds: 0
+- message_type: EK
+  status: PASS
+  time_delta_in_seconds: 0
+- doc: <doc>
+  keyword_type: IF
+  libname: ''
+  lineno: 4
+  message_type: SK
+  name: ${var1} == ${var1}
+  source: <source>
+  time_delta_in_seconds: 0
+- doc: <doc>
+  keyword_type: KEYWORD
+  libname: BuiltIn
+  lineno: 5
+  message_type: SK
+  name: No Operation
+  source: <source>
+  time_delta_in_seconds: 0
+- message_type: EK
+  status: PASS
+  time_delta_in_seconds: 0
+- message_type: EK
+  status: PASS
+  time_delta_in_seconds: 0
+- doc: <doc>
+  keyword_type: ELSE IF
+  libname: ''
+  lineno: 6
+  message_type: SK
+  name: ${var1} == ${var1}
+  source: <source>
+  time_delta_in_seconds: 0
+- doc: <doc>
+  keyword_type: KEYWORD
+  libname: BuiltIn
+  lineno: 7
+  message_type: SK
+  name: No Operation
+  source: <source>
+  time_delta_in_seconds: 0
+- message_type: EK
+  status: NOT RUN
+  time_delta_in_seconds: 0
+- message_type: EK
+  status: NOT RUN
+  time_delta_in_seconds: 0
+- doc: <doc>
+  keyword_type: ELSE
+  libname: ''
+  lineno: 8
+  message_type: SK
+  name: ''
+  source: <source>
+  time_delta_in_seconds: 0
+- doc: <doc>
+  keyword_type: KEYWORD
+  libname: BuiltIn
+  lineno: 9
+  message_type: SK
+  name: No Operation
+  source: <source>
+  time_delta_in_seconds: 0
+- message_type: EK
+  status: NOT RUN
+  time_delta_in_seconds: 0
+- message_type: EK
+  status: NOT RUN
+  time_delta_in_seconds: 0
+- message: ''
+  message_type: ET
+  status: PASS
+  time_delta_in_seconds: 0
+- message_type: ES
+  status: PASS
+  time_delta_in_seconds: 0

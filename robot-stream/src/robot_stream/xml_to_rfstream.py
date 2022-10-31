@@ -120,6 +120,27 @@ class _WhileData(_AbstractKeywordData):
     __repr__ = __str__
 
 
+class _BranchData(_AbstractKeywordData):
+    def __init__(self, attrs):
+        _AbstractKeywordData.__init__(self, attrs)
+        self.condition = attrs.get("condition")
+
+    @property
+    def type(self):
+        return self.attrs.get("type")
+
+    @property
+    def name(self):
+        if not self.condition:
+            return ""
+        return self.condition
+
+    def __str__(self):
+        return f"_BranchData({self.name})"
+
+    __repr__ = __str__
+
+
 class _IterData(_AbstractKeywordData):
     def __init__(self, attrs):
         _AbstractKeywordData.__init__(self, attrs)
@@ -348,13 +369,25 @@ class _XmlSaxParser(xml.sax.ContentHandler):
         self.send_delayed()
         self._stack.append(_ForData(attrs))
 
+    end_for = end_kw
+
+    def start_branch(self, attrs):
+        self.send_delayed()
+        self._stack.append(_BranchData(attrs))
+
+    end_branch = end_kw
+
     def start_while(self, attrs):
         self.send_delayed()
         self._stack.append(_WhileData(attrs))
 
+    end_while = end_kw
+
     def start_iter(self, attrs):
         self.send_delayed()
         self._stack.append(_IterData(attrs))
+
+    end_iter = end_kw
 
     def start_var(self, attrs):
         self._need_chars = True
@@ -377,10 +410,6 @@ class _XmlSaxParser(xml.sax.ContentHandler):
         content = self._get_chars_and_disable()
         data = self._stack[-1]
         data.values.append(content)
-
-    end_for = end_kw
-    end_iter = end_kw
-    end_while = end_kw
 
     def start_arg(self, attrs):
         self._need_chars = True

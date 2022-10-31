@@ -200,3 +200,11 @@ def test_robot_while(datadir, data_regression):
     impl = robot_stream.robot_output_impl
     found = list(iter_with_test_replacements(impl.current_file))
     data_regression.check(found)
+
+
+def test_robot_if(datadir, data_regression):
+    generated_info = run_with_listener(datadir, robot_file=datadir / "robot8.robot")
+    robot_stream = generated_info.robot_stream
+    impl = robot_stream.robot_output_impl
+    found = list(iter_with_test_replacements(impl.current_file))
+    data_regression.check(found)
