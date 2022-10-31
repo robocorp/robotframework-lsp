@@ -195,6 +195,8 @@ class RFStream:
             attributes.get("lineno"),
             self._get_time_delta(attributes),
             attributes.get("args"),
+            attributes.get("assign"),
+            attributes.get("tags"),
         )
 
     def end_keyword(self, name, attributes):

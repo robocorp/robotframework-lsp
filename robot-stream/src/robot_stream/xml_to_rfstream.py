@@ -37,14 +37,29 @@ class _TestData:
     __repr__ = __str__
 
 
-class _KeywordData:
+class _AbstractKeywordData:
     def __init__(self, attrs):
         self.attrs = attrs
         self.status = None
 
         self.args = []
+
         self.doc = ""
         self.sent = False
+
+    @property
+    def name(self):
+        raise NotImplementedError
+
+    @property
+    def type(self):
+        raise NotImplementedError
+
+
+class _KeywordData(_AbstractKeywordData):
+    def __init__(self, attrs):
+        _AbstractKeywordData.__init__(self, attrs)
+        self.var_assign = []
 
     @property
     def name(self):
@@ -60,9 +75,9 @@ class _KeywordData:
     __repr__ = __str__
 
 
-class _ForData(_KeywordData):
+class _ForData(_AbstractKeywordData):
     def __init__(self, attrs):
-        _KeywordData.__init__(self, attrs)
+        _AbstractKeywordData.__init__(self, attrs)
         self.var = "<unset>"
         self.values = []
 
@@ -84,9 +99,9 @@ class _ForData(_KeywordData):
     __repr__ = __str__
 
 
-class _IterData(_KeywordData):
+class _IterData(_AbstractKeywordData):
     def __init__(self, attrs):
-        _KeywordData.__init__(self, attrs)
+        _AbstractKeywordData.__init__(self, attrs)
         self.var_name = "<unset>"
         self.var = "<unset>"
 
@@ -248,7 +263,7 @@ class _XmlSaxParser(xml.sax.ContentHandler):
             return
 
         peek = self._stack[-1]
-        if isinstance(peek, _KeywordData):
+        if isinstance(peek, _AbstractKeywordData):
             if not peek.sent:
                 peek.sent = True
                 attrs = peek.attrs
@@ -256,6 +271,7 @@ class _XmlSaxParser(xml.sax.ContentHandler):
                 libname = attrs.get("library", "")
                 doc = peek.doc
                 args = peek.args
+                assign = getattr(peek, "var_assign", [])
                 self._listener.start_keyword(
                     name,
                     {
@@ -265,6 +281,7 @@ class _XmlSaxParser(xml.sax.ContentHandler):
                         "args": args,
                         "type": peek.type,
                         "timedelta": -1,
+                        "assign": assign,
                     },
                 )
 
@@ -308,7 +325,10 @@ class _XmlSaxParser(xml.sax.ContentHandler):
     def end_var(self):
         content = self._get_chars_and_disable()
         data = self._stack[-1]
-        data.var = content
+        if hasattr(data, "var_assign"):
+            data.var_assign.append(content)
+        else:
+            data.var = content
 
     def start_value(self, attrs):
         self._need_chars = True
@@ -328,7 +348,7 @@ class _XmlSaxParser(xml.sax.ContentHandler):
         content = self._get_chars_and_disable()
         if self._stack:
             peek = self._stack[-1]
-            if isinstance(peek, _KeywordData):
+            if isinstance(peek, _AbstractKeywordData):
                 peek.args.append(content)
 
     def start_doc(self, attrs):
@@ -338,7 +358,7 @@ class _XmlSaxParser(xml.sax.ContentHandler):
         content = self._get_chars_and_disable()
         if self._stack:
             peek = self._stack[-1]
-            if isinstance(peek, _KeywordData):
+            if isinstance(peek, _AbstractKeywordData):
                 peek.doc = content
 
     def start_msg(self, attrs):

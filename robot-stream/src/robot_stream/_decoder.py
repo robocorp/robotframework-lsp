@@ -125,9 +125,11 @@ end_keyword = _decode("status:oid, time_delta_in_seconds:float", level_diff=-1)
 
 decode_log = _decode("level:str, message:oid, time_delta_in_seconds:float")
 
+assign = _decode("assign:oid")
 
-def keyword_argument(decoder, message):
-    return {"argument": decoder.memo[message]}
+tag = _decode("tag:oid")
+
+keyword_argument = _decode("argument:oid")
 
 
 _MESSAGE_TYPE_INFO = {
@@ -143,6 +145,8 @@ _MESSAGE_TYPE_INFO = {
     "SK": start_keyword,
     "EK": end_keyword,
     "KA": keyword_argument,
+    "AS": assign,
+    "TG": tag,
 }
 
 

@@ -144,8 +144,10 @@ class _RobotOutputImpl:
         )
         self._id_generator = _gen_id()
 
-        self._rotate_output()
-        self._write_on_start_or_after_rotate()
+        if self._output_dir is not None:
+            self._rotate_output()
+        else:
+            self._write_on_start_or_after_rotate()
 
     @property
     def current_file(self) -> Optional[Path]:
@@ -317,7 +319,17 @@ class _RobotOutputImpl:
         self._stack_handler.pop()
 
     def start_keyword(
-        self, name, libname, keyword_type, doc, source, lineno, start_time_delta, args
+        self,
+        name,
+        libname,
+        keyword_type,
+        doc,
+        source,
+        lineno,
+        start_time_delta,
+        args,
+        assigns,
+        tags,
     ):
         oid = self._obtain_id
         with self._stack_handler.push_record():
@@ -334,6 +346,22 @@ class _RobotOutputImpl:
                 ],
             )
 
+            if assigns:
+                for assign in assigns:
+                    self._write_with_separator(
+                        "AS ",
+                        [
+                            oid(assign),
+                        ],
+                    )
+            if tags:
+                for tag in tags:
+                    self._write_with_separator(
+                        "TG ",
+                        [
+                            oid(tag),
+                        ],
+                    )
             if args:
                 for arg in args:
                     self._write_with_separator(

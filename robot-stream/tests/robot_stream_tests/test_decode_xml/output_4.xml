@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 5.0rc1 (Python 3.8.1 on win32)" generated="20221031 10:46:31.941" rpa="false" schemaversion="3">
+<suite id="s1" name="Robot6" source="x:\vscode-robot\robotframework-lsp\robot-stream\tests\robot_stream_tests\test_robot_stream\robot6.robot">
+<test id="s1-t1" name="Check for" line="2">
+<kw name="Evaluate" library="BuiltIn">
+<var>${a}</var>
+<var>${b}</var>
+<arg>[2,3]</arg>
+<doc>Evaluates the given expression in Python and returns the result.</doc>
+<msg timestamp="20221031 10:46:31.987" level="INFO">${a} = 2</msg>
+<msg timestamp="20221031 10:46:31.989" level="INFO">${b} = 3</msg>
+<status status="PASS" starttime="20221031 10:46:31.987" endtime="20221031 10:46:31.989"/>
+</kw>
+<status status="PASS" starttime="20221031 10:46:31.985" endtime="20221031 10:46:31.990"/>
+</test>
+<status status="PASS" starttime="20221031 10:46:31.955" endtime="20221031 10:46:31.992"/>
+</suite>
+<statistics>
+<total>
+<stat pass="1" fail="0" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat pass="1" fail="0" skip="0" id="s1" name="Robot6">Robot6</stat>
+</suite>
+</statistics>
+<errors>
+</errors>
+</robot>

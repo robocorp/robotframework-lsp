@@ -154,3 +154,33 @@ def test_robot_stream(datadir):
     # contents = converted.read_text("utf-8")
     # for line in iter_decoded_log_format(StringIO(contents)):
     #     print(line)
+
+
+def iter_with_test_replacements(filepath):
+    from io import StringIO
+    from robot_stream import iter_decoded_log_format
+
+    contents = filepath.read_text("utf-8")
+
+    for msg in iter_decoded_log_format(StringIO(contents)):
+        if "time_delta_in_seconds" in msg:
+            msg["time_delta_in_seconds"] = 0
+        if "initial_time" in msg:
+            msg["initial_time"] = "2022-10-31T10:00:00.000"
+        if "suite_source" in msg:
+            msg["suite_source"] = "<source>"
+        if "source" in msg:
+            msg["source"] = "<source>"
+        if "doc" in msg:
+            msg["doc"] = "<doc>"
+        if "info" in msg:
+            continue
+        yield msg
+
+
+def test_robot_assign(datadir, data_regression):
+    generated_info = run_with_listener(datadir, robot_file=datadir / "robot6.robot")
+    robot_stream = generated_info.robot_stream
+    impl = robot_stream.robot_output_impl
+    found = list(iter_with_test_replacements(impl.current_file))
+    data_regression.check(found)

@@ -107,10 +107,6 @@ const end_keyword = _decode("status:oid, time_delta_in_seconds:float");
 
 const decode_log = _decode("level:str, message:oid, time_delta_in_seconds:float");
 
-function keyword_argument(decoder, message) {
-    return decoder.memo[message];
-}
-
 const _MESSAGE_TYPE_INFO = {
     "V": version_decode,
     "I": simple_decode,
@@ -122,8 +118,10 @@ const _MESSAGE_TYPE_INFO = {
     "ET": end_task_or_test,
     "SK": start_keyword,
     "EK": end_keyword,
-    "KA": keyword_argument,
+    "KA": _decode("argument:oid"),
     "L": decode_log,
+    "AS": _decode("assign:oid"),
+    "TG": _decode("tag:oid"),
 };
 
 export class Decoder {
