@@ -4,6 +4,8 @@ import sys
 import io
 from pathlib import Path
 from typing import Optional
+import pytest
+from robot_stream.robot_version import get_robot_major_version
 
 # Flags to debug during development (should be == False on repository).
 show_summary = False
@@ -87,6 +89,9 @@ def run_with_listener(
     return _GeneratedInfo(created[0], xml_output, outdir)
 
 
+@pytest.mark.skipif(
+    get_robot_major_version() < 4, reason="Not available on older versions of robot."
+)
 def test_rotate_logs(datadir):
     generated_info = run_with_listener(
         datadir, robot_file=datadir / "robot2.robot", max_file_size="50kb", max_files=2
@@ -196,13 +201,22 @@ def test_robot_tags(datadir, data_regression):
     check(datadir, data_regression, "robot7.robot")
 
 
+@pytest.mark.skipif(
+    get_robot_major_version() < 5, reason="Not available on older versions of robot."
+)
 def test_robot_while(datadir, data_regression):
     check(datadir, data_regression, "robot5.robot")
 
 
+@pytest.mark.skipif(
+    get_robot_major_version() < 4, reason="Not available on older versions of robot."
+)
 def test_robot_if(datadir, data_regression):
     check(datadir, data_regression, "robot8.robot")
 
 
+@pytest.mark.skipif(
+    get_robot_major_version() < 5, reason="Not available on older versions of robot."
+)
 def test_robot_try_except(datadir, data_regression):
     check(datadir, data_regression, "robot9.robot")

@@ -341,6 +341,7 @@ class _RobotOutputImpl:
         args,
         assigns,
     ):
+        keyword_type = keyword_type.upper()
         oid = self._obtain_id
         with self._stack_handler.push_record():
             self._write_with_separator(

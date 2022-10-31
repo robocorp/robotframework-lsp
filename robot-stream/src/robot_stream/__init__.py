@@ -1,5 +1,7 @@
 import datetime
 import json
+from typing import Optional, Any
+import sys
 
 
 _convert = {
@@ -179,6 +181,8 @@ class RFStream:
         )
 
     def start_keyword(self, name, attributes):
+        from robot_stream.robot_version import get_robot_major_version
+
         # {
         #     "doc": "Does absolutely nothing.",
         #     "assign": [],
@@ -192,13 +196,33 @@ class RFStream:
         #     "libname": "BuiltIn",
         #     "args": [],
         # }
+        source: Optional[str] = attributes.get("source")
+        lineno: Optional[int] = attributes.get("lineno")
+        if not source:
+            # HACK for RF 3: try to get the location (since it's not available).
+            if get_robot_major_version() < 4:
+                f: Optional[Any]
+                f = sys._getframe()
+                while f is not None:
+                    if f.f_code.co_name == "run_step":
+                        step = f.f_locals.get("step")
+                        if step is not None:
+                            try:
+                                source = step.source
+                                lineno = step.lineno
+                            except AttributeError:
+                                pass
+                        break  # Break when run_step is found anyways.
+
+                    f = f.f_back
+
         return self._robot_output_impl.start_keyword(
             attributes["kwname"],
             attributes.get("libname"),
             attributes.get("type"),
             attributes.get("doc"),
-            attributes.get("source"),
-            attributes.get("lineno"),
+            source,
+            lineno,
             self._get_time_delta(attributes),
             attributes.get("args"),
             attributes.get("assign"),
