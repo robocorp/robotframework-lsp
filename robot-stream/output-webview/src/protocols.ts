@@ -31,3 +31,8 @@ export interface IContentAdded {
     // 0 = pass, 1= warn, 2=error
     maxLevelFoundInHierarchy: number;
 }
+
+export interface IMessageNode {
+    message: IMessage;
+    parent: IMessageNode;
+}

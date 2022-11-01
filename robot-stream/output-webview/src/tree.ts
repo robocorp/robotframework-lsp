@@ -4,7 +4,7 @@
 // https://stackoverflow.com/questions/10813581/can-i-replace-the-expand-icon-of-the-details-element
 
 import { IMessage } from "./decoder";
-import { IContentAdded, IOpts } from "./protocols";
+import { IContentAdded, IMessageNode, IOpts } from "./protocols";
 
 /**
  * When we add content we initially add it as an item with the NO_CHILDREN class
@@ -17,7 +17,8 @@ export function addTreeContent(
     decodedMessage: IMessage,
     open: boolean,
     source: string,
-    lineno: number
+    lineno: number,
+    messageNode: IMessageNode
 ): IContentAdded {
     // <li>
     //   <details open>
@@ -46,12 +47,20 @@ export function addTreeContent(
     if (opts.onClickReference) {
         span.classList.add("span_link");
         span.onclick = (ev) => {
+            const scope = [];
+            let p: IMessageNode = messageNode.parent;
+            while (p !== undefined && p.message !== undefined) {
+                scope.push(p.message);
+                p = p.parent;
+            }
+
             ev.preventDefault();
             opts.onClickReference({
                 source,
                 lineno,
                 "message": decodedMessage.decoded,
                 "messageType": decodedMessage.message_type,
+                "scope": scope,
             });
         };
     }

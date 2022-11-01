@@ -1,7 +1,7 @@
-import { iter_decoded_log_format } from "./decoder";
+import { IMessage, iter_decoded_log_format } from "./decoder";
 import { addLevel, getIntLevelFromLevelStr } from "./handleLevel";
 import { acceptLevel, addStatus, getIntLevelFromStatus } from "./handleStatus";
-import { IContentAdded, IFilterLevel, IOpts, IState } from "./protocols";
+import { IContentAdded, IFilterLevel, IMessageNode, IOpts, IState } from "./protocols";
 import { getSampleContents } from "./sample";
 import "./style.css";
 import { addTreeContent } from "./tree";
@@ -53,12 +53,14 @@ async function main(opts: IOpts) {
     };
     const stack: IContentAdded[] = [];
     stack.push(parent);
+    let messageNode: IMessageNode = { "parent": undefined, message: undefined };
     let suiteName = "";
     let suiteSource = "";
     for (const msg of iter_decoded_log_format(opts.outputFileContents)) {
         switch (msg.message_type) {
             case "SS":
                 // start suite
+                messageNode = { "parent": messageNode, "message": msg };
                 suiteName = msg.decoded["name"] + ".";
                 suiteSource = msg.decoded["source"];
                 // parent = addTreeContent(opts, parent, msg.decoded["name"], msg, true);
@@ -67,6 +69,7 @@ async function main(opts: IOpts) {
 
             case "ST":
                 // start test
+                messageNode = { "parent": messageNode, "message": msg };
                 parent = addTreeContent(
                     opts,
                     parent,
@@ -74,12 +77,14 @@ async function main(opts: IOpts) {
                     msg,
                     false,
                     suiteSource,
-                    msg.decoded["lineno"]
+                    msg.decoded["lineno"],
+                    messageNode
                 );
                 stack.push(parent);
                 break;
             case "SK":
                 // start keyword
+                messageNode = { "parent": messageNode, "message": msg };
                 let libname = msg.decoded["libname"];
                 if (libname) {
                     libname += ".";
@@ -91,14 +96,17 @@ async function main(opts: IOpts) {
                     msg,
                     false,
                     msg.decoded["source"],
-                    msg.decoded["lineno"]
+                    msg.decoded["lineno"],
+                    messageNode
                 );
                 stack.push(parent);
                 break;
             case "ES": // end suite
+                messageNode = messageNode.parent;
                 suiteName = "";
                 break;
             case "ET": // end test
+                messageNode = messageNode.parent;
                 const currT = parent;
                 stack.pop();
                 parent = stack.at(-1);
@@ -107,6 +115,7 @@ async function main(opts: IOpts) {
                 onTestEndUpdateSummary(msg);
                 break;
             case "EK": // end keyword
+                messageNode = messageNode.parent;
                 let currK = parent;
                 stack.pop();
                 parent = stack.at(-1);
@@ -133,7 +142,8 @@ async function main(opts: IOpts) {
                         msg,
                         false,
                         undefined,
-                        undefined
+                        undefined,
+                        messageNode
                     );
                     logContent.maxLevelFoundInHierarchy = iLevel;
                     const summary = logContent.summary;
