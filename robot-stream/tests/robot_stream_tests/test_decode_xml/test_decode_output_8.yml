@@ -38,9 +38,13 @@
   message: message
   message_type: L
   time_delta_in_seconds: 0.038
+- message_type: S
+  start_time_delta: 0.038
 - message_type: EK
   status: FAIL
   time_delta_in_seconds: 0.04
+- message_type: S
+  start_time_delta: 0.038
 - message_type: EK
   status: FAIL
   time_delta_in_seconds: 0.04
@@ -60,9 +64,13 @@
   name: No Operation
   source: null
   time_delta_in_seconds: -1.0
+- message_type: S
+  start_time_delta: 0.04
 - message_type: EK
   status: PASS
   time_delta_in_seconds: 0.041
+- message_type: S
+  start_time_delta: 0.04
 - message_type: EK
   status: PASS
   time_delta_in_seconds: 0.041
@@ -82,16 +90,24 @@
   name: No Operation
   source: null
   time_delta_in_seconds: -1.0
+- message_type: S
+  start_time_delta: 0.041
 - message_type: EK
   status: PASS
   time_delta_in_seconds: 0.041
+- message_type: S
+  start_time_delta: 0.041
 - message_type: EK
   status: PASS
   time_delta_in_seconds: 0.041
+- message_type: S
+  start_time_delta: 0.037
 - message: ''
   message_type: ET
   status: PASS
   time_delta_in_seconds: 0.042
+- message_type: S
+  start_time_delta: 0.009
 - message_type: ES
   status: PASS
   time_delta_in_seconds: -1.0

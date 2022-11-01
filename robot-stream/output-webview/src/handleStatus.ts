@@ -8,6 +8,13 @@ export function addStatus(summary: HTMLElement, status: string) {
     summary.insertBefore(span, summary.firstChild);
 }
 
+export function addTime(summary: HTMLElement, diff: number) {
+    const span = document.createElement("span");
+    span.textContent = ` (${diff.toFixed(2)}s)`;
+    span.classList.add("timeLabel");
+    summary.appendChild(span);
+}
+
 export function acceptLevel(opts: IOpts, statusLevel: number) {
     switch (opts.state.filterLevel) {
         case "FAIL":

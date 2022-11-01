@@ -24,6 +24,8 @@
   name: No Operation
   source: null
   time_delta_in_seconds: -1.0
+- message_type: S
+  start_time_delta: 0.04
 - message_type: EK
   status: PASS
   time_delta_in_seconds: 0.041
@@ -31,10 +33,14 @@
   tag: another tag 2
 - message_type: TG
   tag: tag nice 1
+- message_type: S
+  start_time_delta: 0.039
 - message: ''
   message_type: ET
   status: PASS
   time_delta_in_seconds: 0.042
+- message_type: S
+  start_time_delta: 0.012
 - message_type: ES
   status: PASS
   time_delta_in_seconds: -1.0

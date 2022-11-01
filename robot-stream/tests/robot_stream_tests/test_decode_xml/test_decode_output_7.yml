@@ -28,6 +28,8 @@
   message_type: AS
 - argument: '2'
   message_type: KA
+- message_type: S
+  start_time_delta: 0.045
 - message_type: EK
   status: PASS
   time_delta_in_seconds: 0.05
@@ -47,9 +49,13 @@
   name: No Operation
   source: null
   time_delta_in_seconds: -1.0
+- message_type: S
+  start_time_delta: 0.052
 - message_type: EK
   status: PASS
   time_delta_in_seconds: 0.053
+- message_type: S
+  start_time_delta: 0.051
 - message_type: EK
   status: PASS
   time_delta_in_seconds: 0.053
@@ -69,9 +75,13 @@
   name: No Operation
   source: null
   time_delta_in_seconds: -1.0
+- message_type: S
+  start_time_delta: 0.053
 - message_type: EK
   status: NOT RUN
   time_delta_in_seconds: 0.054
+- message_type: S
+  start_time_delta: 0.053
 - message_type: EK
   status: NOT RUN
   time_delta_in_seconds: 0.054
@@ -91,16 +101,24 @@
   name: No Operation
   source: null
   time_delta_in_seconds: -1.0
+- message_type: S
+  start_time_delta: 0.054
 - message_type: EK
   status: NOT RUN
   time_delta_in_seconds: 0.055
+- message_type: S
+  start_time_delta: 0.054
 - message_type: EK
   status: NOT RUN
   time_delta_in_seconds: 0.055
+- message_type: S
+  start_time_delta: 0.044
 - message: ''
   message_type: ET
   status: PASS
   time_delta_in_seconds: 0.056
+- message_type: S
+  start_time_delta: 0.018
 - message_type: ES
   status: PASS
   time_delta_in_seconds: -1.0

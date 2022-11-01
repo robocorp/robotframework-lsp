@@ -158,6 +158,9 @@ class RFStream:
     def send_info(self, info: str):
         return self._robot_output_impl.send_info(info)
 
+    def send_start_time_delta(self, time_delta_in_seconds: float):
+        return self._robot_output_impl.send_start_time_delta(time_delta_in_seconds)
+
     def end_test(self, name, attributes):
         # {
         #     "id": "s1-t2",

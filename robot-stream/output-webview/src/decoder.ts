@@ -122,6 +122,7 @@ const _MESSAGE_TYPE_INFO = {
     "L": decode_log,
     "AS": _decode("assign:oid"),
     "TG": _decode("tag:oid"),
+    "S": _decode("start_time_delta:float"),
 };
 
 export class Decoder {

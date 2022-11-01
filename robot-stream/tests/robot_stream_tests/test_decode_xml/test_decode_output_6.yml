@@ -28,6 +28,8 @@
   message_type: AS
 - argument: '2'
   message_type: KA
+- message_type: S
+  start_time_delta: 0.043
 - message_type: EK
   status: PASS
   time_delta_in_seconds: 0.046
@@ -59,19 +61,29 @@
   message_type: AS
 - argument: $a-1
   message_type: KA
+- message_type: S
+  start_time_delta: 0.051
 - message_type: EK
   status: NOT RUN
   time_delta_in_seconds: 0.051
+- message_type: S
+  start_time_delta: 0.051
 - message_type: EK
   status: NOT RUN
   time_delta_in_seconds: 0.051
+- message_type: S
+  start_time_delta: 0.046
 - message_type: EK
   status: NOT RUN
   time_delta_in_seconds: 0.051
+- message_type: S
+  start_time_delta: 0.041
 - message: ''
   message_type: ET
   status: PASS
   time_delta_in_seconds: 0.052
+- message_type: S
+  start_time_delta: 0.011
 - message_type: ES
   status: PASS
   time_delta_in_seconds: -1.0

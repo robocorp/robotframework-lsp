@@ -317,6 +317,9 @@ class _RobotOutputImpl:
     def send_info(self, info: str):
         self._write_json("I ", info)
 
+    def send_start_time_delta(self, time_delta_in_seconds: float):
+        self._write_with_separator("S ", (self._number(time_delta_in_seconds),))
+
     def end_test(self, status, message, time_delta):
         oid = self._obtain_id
         self._write_with_separator(

@@ -40,19 +40,29 @@
   name: No Operation
   source: null
   time_delta_in_seconds: -1.0
+- message_type: S
+  start_time_delta: 0.029
 - message_type: EK
   status: PASS
   time_delta_in_seconds: 0.03
+- message_type: S
+  start_time_delta: 0.029
 - message_type: EK
   status: PASS
   time_delta_in_seconds: 0.03
+- message_type: S
+  start_time_delta: 0.029
 - message_type: EK
   status: PASS
   time_delta_in_seconds: 0.03
+- message_type: S
+  start_time_delta: 0.028
 - message: ''
   message_type: ET
   status: PASS
   time_delta_in_seconds: 0.031
+- message_type: S
+  start_time_delta: 0.005
 - message_type: ES
   status: PASS
   time_delta_in_seconds: -1.0

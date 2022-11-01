@@ -198,7 +198,10 @@ class _Status:
     def starttime(self):
         return self.attrs["starttime"]
 
-    def compute_timedelta(self, initial_time):
+    def compute_start_timedelta(self, initial_time):
+        return compute_timedelta(initial_time, self.starttime)
+
+    def compute_end_timedelta(self, initial_time):
         return compute_timedelta(initial_time, self.endtime)
 
 
@@ -210,12 +213,10 @@ class _XmlSaxParser(xml.sax.ContentHandler):
       end and thus we can't know what was the current keyword).
 
     - The start/end time is written as the last thing in the
-      element along with the status, so, we don't write the
-      start time, we just write the end time (we could write
-      the start time, but then we'd need to keep all the children
-      in memory, at which point we could just be working with
-      ElementTree instead of sax parsing as we'd need to have
-      almost everything in memory for it to work).
+      element along with the status, so, we have a special message
+      to write the start (in general the protocol would send it along
+      with the test time, but we send it afterwards so that we can
+      use the sax parser).
     """
 
     def __init__(self, create_listener):
@@ -270,6 +271,10 @@ class _XmlSaxParser(xml.sax.ContentHandler):
         s = self._stack.pop(-1)
         if s is not None:
             status = s.status.attrs["status"]
+            self._listener.send_start_time_delta(
+                s.status.compute_start_timedelta(self._listener.initial_time)
+            )
+
             self._listener.end_suite(
                 s.attrs["name"], {"status": status, "timedelta": -1}
             )
@@ -289,11 +294,15 @@ class _XmlSaxParser(xml.sax.ContentHandler):
         if s is not None:
             status = s.status.status
 
+            self._listener.send_start_time_delta(
+                s.status.compute_start_timedelta(self._listener.initial_time)
+            )
+
             self._listener.end_test(
                 s.attrs["name"],
                 {
                     "status": status,
-                    "timedelta": s.status.compute_timedelta(
+                    "timedelta": s.status.compute_end_timedelta(
                         self._listener.initial_time
                     ),
                     "message": "",
@@ -359,11 +368,14 @@ class _XmlSaxParser(xml.sax.ContentHandler):
         if s is not None:
             status = s.status.status
 
+            self._listener.send_start_time_delta(
+                s.status.compute_start_timedelta(self._listener.initial_time)
+            )
             self._listener.end_keyword(
                 s.name,
                 {
                     "status": status,
-                    "timedelta": s.status.compute_timedelta(
+                    "timedelta": s.status.compute_end_timedelta(
                         self._listener.initial_time
                     ),
                     "message": "",

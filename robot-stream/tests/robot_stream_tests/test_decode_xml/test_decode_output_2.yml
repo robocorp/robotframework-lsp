@@ -32,6 +32,8 @@
   name: No Operation
   source: null
   time_delta_in_seconds: -1.0
+- message_type: S
+  start_time_delta: 0.049
 - message_type: EK
   status: PASS
   time_delta_in_seconds: 0.05
@@ -51,16 +53,24 @@
   message: Some error message
   message_type: L
   time_delta_in_seconds: 0.05
+- message_type: S
+  start_time_delta: 0.05
 - message_type: EK
   status: PASS
   time_delta_in_seconds: 0.052
+- message_type: S
+  start_time_delta: 0.049
 - message_type: EK
   status: PASS
   time_delta_in_seconds: 0.052
+- message_type: S
+  start_time_delta: 0.048
 - message: ''
   message_type: ET
   status: PASS
   time_delta_in_seconds: 0.052
+- message_type: S
+  start_time_delta: 0.012
 - message_type: ES
   status: PASS
   time_delta_in_seconds: -1.0

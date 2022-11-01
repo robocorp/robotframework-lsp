@@ -125,6 +125,16 @@ a:active {
     font-weight: bold;
 }
 
+.timeLabel {
+    padding: 2px 2px;
+    font-size: 0.85em;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    border-radius: 3px;
+    margin-right: 5px;
+    font-weight: lighter;
+}
+
 .label.F,
 .label.E,
 .label.FAIL,
@@ -172,9 +182,9 @@ a:active {
     border-bottom: 5px solid var(--not-run-background-color);
 }
 
-.span_link::after {
+/* .span_link::after {
     content: " ⮳";
-}
+} */
 .span_link {
     cursor: pointer;
     /* text-decoration: underline; */

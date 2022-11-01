@@ -1,6 +1,6 @@
 import { iter_decoded_log_format } from "./decoder";
 import { addLevel, getIntLevelFromLevelStr } from "./handleLevel";
-import { acceptLevel, addStatus, getIntLevelFromStatus } from "./handleStatus";
+import { acceptLevel, addStatus, addTime, getIntLevelFromStatus } from "./handleStatus";
 import { createUL, divById, selectById } from "./plainDom";
 import { IContentAdded, IFilterLevel, IMessageNode, IOpts, IState, ITreeState } from "./protocols";
 import { getSampleContents } from "./sample";
@@ -138,7 +138,7 @@ async function main(opts: IOpts) {
                 stack.pop();
                 parent = stack.at(-1);
                 onEndUpdateMaxLevelFoundInHierarchyFromStatus(currT, parent, msg);
-                onEndSetStatusOrRemove(opts, currT, msg.decoded["status"]);
+                onEndSetStatusOrRemove(opts, currT, msg.decoded);
                 onTestEndUpdateSummary(msg);
                 break;
             case "EK": // end keyword
@@ -147,11 +147,20 @@ async function main(opts: IOpts) {
                 stack.pop();
                 parent = stack.at(-1);
                 onEndUpdateMaxLevelFoundInHierarchyFromStatus(currK, parent, msg);
-                onEndSetStatusOrRemove(opts, currK, msg.decoded["status"]);
+                onEndSetStatusOrRemove(opts, currK, msg.decoded);
+                break;
+            case "S":
+                // Update the start time from the current message.
+                const start = msg.decoded["start_time_delta"];
+                if (parent?.decodedMessage?.decoded) {
+                    parent.decodedMessage.decoded["time_delta_in_seconds"] = start;
+                }
                 break;
             case "KA":
                 const item: IContentAdded = stack.at(-1);
-                item.span.textContent += ` | ${msg.decoded["argument"]}`;
+                if (item?.span) {
+                    item.span.textContent += ` | ${msg.decoded["argument"]}`;
+                }
                 break;
             case "L":
                 // A bit different because it's always leaf and based on 'level', not 'status'.
@@ -231,11 +240,22 @@ function onEndUpdateMaxLevelFoundInHierarchyFromStatus(current: IContentAdded, p
     }
 }
 
-function onEndSetStatusOrRemove(opts: IOpts, current: IContentAdded, status: string) {
-    // console.log("Level: ", current.maxLevelFoundInHierarchy, "for", current.decodedMessage);
+function onEndSetStatusOrRemove(opts: IOpts, current: IContentAdded, endDecodedMsg: object) {
+    const status = endDecodedMsg["status"];
     if (acceptLevel(opts, current.maxLevelFoundInHierarchy)) {
         const summary = current.summary;
         addStatus(summary, status);
+
+        const startTime: number = current.decodedMessage.decoded["time_delta_in_seconds"];
+        if (startTime && startTime >= 0) {
+            const endTime: number = endDecodedMsg["time_delta_in_seconds"];
+            const diff = endTime - startTime;
+            // if (diff > 0) {
+            //     console.log("Current: ", JSON.stringify(current.decodedMessage), "end", JSON.stringify(endDecodedMsg));
+            //     console.log("Diff: ", diff);
+            // }
+            addTime(summary, diff);
+        }
     } else {
         current.li.remove();
     }

@@ -131,6 +131,8 @@ tag = _decode("tag:oid")
 
 keyword_argument = _decode("argument:oid")
 
+start_time = _decode("start_time_delta:float")
+
 
 _MESSAGE_TYPE_INFO = {
     "V": version_decode,
@@ -147,6 +149,7 @@ _MESSAGE_TYPE_INFO = {
     "KA": keyword_argument,
     "AS": assign,
     "TG": tag,
+    "S": start_time,
 }
 
 

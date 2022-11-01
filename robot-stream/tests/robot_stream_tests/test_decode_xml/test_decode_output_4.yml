@@ -30,13 +30,19 @@
   message_type: AS
 - argument: '[2,3]'
   message_type: KA
+- message_type: S
+  start_time_delta: 0.046
 - message_type: EK
   status: PASS
   time_delta_in_seconds: 0.048
+- message_type: S
+  start_time_delta: 0.044
 - message: ''
   message_type: ET
   status: PASS
   time_delta_in_seconds: 0.049
+- message_type: S
+  start_time_delta: 0.014
 - message_type: ES
   status: PASS
   time_delta_in_seconds: -1.0
