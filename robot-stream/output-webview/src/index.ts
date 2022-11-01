@@ -1,11 +1,11 @@
-import { IMessage, iter_decoded_log_format } from "./decoder";
+import { iter_decoded_log_format } from "./decoder";
 import { addLevel, getIntLevelFromLevelStr } from "./handleLevel";
 import { acceptLevel, addStatus, getIntLevelFromStatus } from "./handleStatus";
 import { createUL, divById, selectById } from "./plainDom";
-import { IContentAdded, IFilterLevel, IMessageNode, IOpts, IState } from "./protocols";
+import { IContentAdded, IFilterLevel, IMessageNode, IOpts, IState, ITreeState } from "./protocols";
 import { getSampleContents } from "./sample";
 import "./style.css";
-import { addTreeContent } from "./tree";
+import { addTreeContent, collectUlTreeState } from "./tree";
 import { requestToHandler, sendEventToClient, nextMessageSeq, IEventMessage, getState, setState } from "./vscodeComm";
 
 let lastOpts: IOpts | undefined = undefined;
@@ -16,9 +16,31 @@ export function updateFilterLevel(filterLevel: IFilterLevel) {
     }
     if (lastOpts.state.filterLevel !== filterLevel) {
         lastOpts.state.filterLevel = filterLevel;
+        collectTreeState(lastOpts.state, lastOpts.runId);
         setState(lastOpts.state);
         main(lastOpts);
     }
+}
+
+function collectTreeState(state: IState, runId: string): void {
+    const mainDiv = divById("mainTree");
+    let stateForRun: ITreeState = { "openNodes": {} };
+    if (state.runIdToTreeState === undefined) {
+        state.runIdToTreeState = {};
+    } else {
+        const oldStateForRun = state.runIdToTreeState[runId];
+        if (oldStateForRun) {
+            // Try to keep previously opened items (even if
+            // they've been filtered out).
+            stateForRun = oldStateForRun;
+        }
+    }
+    for (let child of mainDiv.childNodes) {
+        if (child instanceof HTMLUListElement) {
+            collectUlTreeState(stateForRun, child);
+        }
+    }
+    state.runIdToTreeState[runId] = stateForRun;
 }
 
 async function main(opts: IOpts) {
@@ -32,7 +54,7 @@ async function main(opts: IOpts) {
     const mainDiv = divById("mainTree");
     mainDiv.replaceChildren(); // clear all children
 
-    const rootUl = createUL();
+    const rootUl = createUL("ul_root");
     rootUl.classList.add("tree");
     mainDiv.appendChild(rootUl);
 
@@ -57,7 +79,9 @@ async function main(opts: IOpts) {
     let messageNode: IMessageNode = { "parent": undefined, message: undefined };
     let suiteName = "";
     let suiteSource = "";
+    let id = 0;
     for (const msg of iter_decoded_log_format(opts.outputFileContents)) {
+        id += 1;
         switch (msg.message_type) {
             case "SS":
                 // start suite
@@ -79,7 +103,8 @@ async function main(opts: IOpts) {
                     false,
                     suiteSource,
                     msg.decoded["lineno"],
-                    messageNode
+                    messageNode,
+                    id.toString()
                 );
                 stack.push(parent);
                 break;
@@ -98,7 +123,8 @@ async function main(opts: IOpts) {
                     false,
                     msg.decoded["source"],
                     msg.decoded["lineno"],
-                    messageNode
+                    messageNode,
+                    id.toString()
                 );
                 stack.push(parent);
                 break;
@@ -144,7 +170,8 @@ async function main(opts: IOpts) {
                         false,
                         undefined,
                         undefined,
-                        messageNode
+                        messageNode,
+                        id.toString()
                     );
                     logContent.maxLevelFoundInHierarchy = iLevel;
                     const summary = logContent.summary;

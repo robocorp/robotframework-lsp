@@ -10,8 +10,10 @@ export function selectById(id: string): HTMLSelectElement {
     return byId<HTMLSelectElement>(id);
 }
 
-export function createUL(): HTMLUListElement {
-    return document.createElement("ul");
+export function createUL(id: string): HTMLUListElement {
+    const element = document.createElement("ul");
+    element.setAttribute("data-tree-id", id);
+    return element;
 }
 
 export function createSummary(): HTMLElement {
@@ -22,10 +24,16 @@ export function createSpan(): HTMLSpanElement {
     return document.createElement("span");
 }
 
-export function createLI(): HTMLLIElement {
-    return document.createElement("li");
+export function createLI(id: string): HTMLLIElement {
+    const element = document.createElement("li");
+    element.setAttribute("data-tree-id", id);
+    return element;
 }
 
 export function createDetails(): HTMLDetailsElement {
     return document.createElement("details");
+}
+
+export function getDataTreeId(element: HTMLLIElement | HTMLUListElement) {
+    return element.getAttribute("data-tree-id");
 }

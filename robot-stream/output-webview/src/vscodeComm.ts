@@ -130,7 +130,7 @@ export function nextMessageSeq(): number {
     return _lastMessageId;
 }
 
-let _globalState: IState = { filterLevel: "PASS" };
+let _globalState: IState = { filterLevel: "PASS", runIdToTreeState: {} };
 
 export function getState(): IState {
     let vscodeRef = undefined;
@@ -139,12 +139,17 @@ export function getState(): IState {
     } catch (err) {}
 
     if (vscodeRef) {
-        let ret = vscodeRef.getState();
+        let ret: IState = vscodeRef.getState();
         if (!ret) {
             // Initial state.
             ret = _globalState;
         }
-        console.log("getState", JSON.stringify(ret));
+        if(!ret.filterLevel){
+            ret.filterLevel = "PASS";
+        }
+        if(!ret.runIdToTreeState){
+            ret.runIdToTreeState = {};
+        }
         return ret;
     }
     return _globalState;

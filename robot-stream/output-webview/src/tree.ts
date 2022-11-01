@@ -4,8 +4,8 @@
 // https://stackoverflow.com/questions/10813581/can-i-replace-the-expand-icon-of-the-details-element
 
 import { IMessage } from "./decoder";
-import { createDetails, createLI, createSpan, createSummary, createUL } from "./plainDom";
-import { IContentAdded, IMessageNode, IOpts } from "./protocols";
+import { createDetails, createLI, createSpan, createSummary, createUL, getDataTreeId } from "./plainDom";
+import { IContentAdded, IMessageNode, IOpts, ITreeState } from "./protocols";
 
 /**
  * When we add content we initially add it as an item with the NO_CHILDREN class
@@ -19,7 +19,8 @@ export function addTreeContent(
     open: boolean,
     source: string,
     lineno: number,
-    messageNode: IMessageNode
+    messageNode: IMessageNode,
+    id: string
 ): IContentAdded {
     // <li>
     //   <details open>
@@ -31,9 +32,23 @@ export function addTreeContent(
     //   </details>
     // </li>
 
-    const li: HTMLLIElement = createLI();
+    const treeState: ITreeState = opts.state.runIdToTreeState[opts.runId];
+    let openNodes = {};
+    if (treeState) {
+        openNodes = treeState.openNodes;
+    }
+
+    const liTreeId = "li_" + id;
+    const li: HTMLLIElement = createLI(liTreeId);
+
     const details: HTMLDetailsElement = createDetails();
-    details.open = open;
+    if (open) {
+        details.open = open;
+    } else {
+        if (openNodes[liTreeId]) {
+            details.open = true;
+        }
+    }
     const summary = createSummary();
 
     li.appendChild(details);
@@ -66,7 +81,7 @@ export function addTreeContent(
         };
     }
 
-    const ul = createUL();
+    const ul = createUL("ul_" + id);
     details.appendChild(ul);
     const ret = {
         ul,
@@ -96,4 +111,29 @@ function createUlIfNeededAndAppendChild(child: IContentAdded) {
     //         this.ul = ul;
     //     }
     //     this.ul.appendChild(child);
+}
+
+function collectLITreeState(state: ITreeState, li: HTMLLIElement) {
+    for (let child of li.childNodes) {
+        if (child instanceof HTMLDetailsElement) {
+            for (let c of child.childNodes) {
+                if (c instanceof HTMLUListElement) {
+                    collectUlTreeState(state, c);
+                }
+            }
+            if (child.open) {
+                state.openNodes[getDataTreeId(li)] = "open";
+            } else {
+                delete state.openNodes[getDataTreeId(li)];
+            }
+        }
+    }
+}
+
+export function collectUlTreeState(state: ITreeState, ul: HTMLUListElement) {
+    for (let child of ul.childNodes) {
+        if (child instanceof HTMLLIElement) {
+            collectLITreeState(state, child);
+        }
+    }
 }

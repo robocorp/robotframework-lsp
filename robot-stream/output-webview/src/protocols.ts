@@ -1,7 +1,16 @@
 import { IMessage } from "./decoder";
 
+export interface ITreeState {
+    openNodes: object;
+}
+
+type IRunIdToTreeState = {
+    [key: string]: ITreeState;
+};
+
 export interface IState {
     filterLevel: IFilterLevel;
+    runIdToTreeState: IRunIdToTreeState;
 }
 
 export type IFilterLevel = "FAIL" | "WARN" | "PASS";
