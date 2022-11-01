@@ -1,6 +1,7 @@
 import { IMessage, iter_decoded_log_format } from "./decoder";
 import { addLevel, getIntLevelFromLevelStr } from "./handleLevel";
 import { acceptLevel, addStatus, getIntLevelFromStatus } from "./handleStatus";
+import { createUL, divById, selectById } from "./plainDom";
 import { IContentAdded, IFilterLevel, IMessageNode, IOpts, IState } from "./protocols";
 import { getSampleContents } from "./sample";
 import "./style.css";
@@ -26,12 +27,12 @@ async function main(opts: IOpts) {
     totalFailures = 0;
     updateSummary();
 
-    const filterLevelEl: HTMLSelectElement = <HTMLSelectElement>document.getElementById("filterLevel");
+    const filterLevelEl: HTMLSelectElement = selectById("filterLevel");
     filterLevelEl.value = opts.state.filterLevel;
-    const mainDiv: HTMLElement = document.getElementById("mainTree");
+    const mainDiv = divById("mainTree");
     mainDiv.replaceChildren(); // clear all children
 
-    const rootUl = document.createElement("ul");
+    const rootUl = createUL();
     rootUl.classList.add("tree");
     mainDiv.appendChild(rootUl);
 
@@ -171,21 +172,21 @@ function onTestEndUpdateSummary(msg: any) {
 function updateSummary() {
     const totalTestsStr = ("" + totalTests).padStart(4);
     const totalFailuresStr = ("" + totalFailures).padStart(4);
-    const summary: HTMLDivElement = <HTMLDivElement>document.getElementById("summary");
+    const summary = divById("summary");
     summary.textContent = `Total: ${totalTestsStr} Failures: ${totalFailuresStr}`;
 
     if (totalFailures == 0 && totalTests == 0) {
-        const resultBar: HTMLDivElement = <HTMLDivElement>document.getElementById("summary");
+        const resultBar: HTMLDivElement = divById("summary");
         resultBar.classList.add("NOT_RUN");
         resultBar.classList.remove("PASS");
         resultBar.classList.remove("FAIL");
     } else if (totalFailures == 1) {
-        const resultBar: HTMLDivElement = <HTMLDivElement>document.getElementById("summary");
+        const resultBar: HTMLDivElement = divById("summary");
         resultBar.classList.remove("NOT_RUN");
         resultBar.classList.remove("PASS");
         resultBar.classList.add("FAIL");
     } else if (totalFailures == 0 && totalTests == 1) {
-        const resultBar: HTMLDivElement = <HTMLDivElement>document.getElementById("summary");
+        const resultBar: HTMLDivElement = divById("summary");
         resultBar.classList.remove("NOT_RUN");
         resultBar.classList.remove("FAIL");
     }
@@ -238,7 +239,7 @@ function setContents(msg) {
 requestToHandler["setContents"] = setContents;
 
 function onChangedFilterLevel() {
-    const filterLevel = document.getElementById("filterLevel");
+    const filterLevel = selectById("filterLevel");
     const value: IFilterLevel = <IFilterLevel>(<HTMLSelectElement>filterLevel).value;
     updateFilterLevel(value);
 }

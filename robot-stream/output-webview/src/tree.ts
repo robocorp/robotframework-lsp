@@ -4,6 +4,7 @@
 // https://stackoverflow.com/questions/10813581/can-i-replace-the-expand-icon-of-the-details-element
 
 import { IMessage } from "./decoder";
+import { createDetails, createLI, createSpan, createSummary, createUL } from "./plainDom";
 import { IContentAdded, IMessageNode, IOpts } from "./protocols";
 
 /**
@@ -30,16 +31,16 @@ export function addTreeContent(
     //   </details>
     // </li>
 
-    const li: HTMLLIElement = document.createElement("li");
-    const details: HTMLDetailsElement = document.createElement("details");
+    const li: HTMLLIElement = createLI();
+    const details: HTMLDetailsElement = createDetails();
     details.open = open;
-    const summary = document.createElement("summary");
+    const summary = createSummary();
 
     li.appendChild(details);
     details.appendChild(summary);
     details.classList.add("NO_CHILDREN");
 
-    const span: HTMLSpanElement = document.createElement("span");
+    const span: HTMLSpanElement = createSpan();
     span.setAttribute("role", "button");
     span.textContent = content;
     summary.appendChild(span);
@@ -65,7 +66,7 @@ export function addTreeContent(
         };
     }
 
-    const ul = document.createElement("ul");
+    const ul = createUL();
     details.appendChild(ul);
     const ret = {
         ul,
