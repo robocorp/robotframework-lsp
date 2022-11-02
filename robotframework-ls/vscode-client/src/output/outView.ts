@@ -74,15 +74,9 @@ export class RobotOutputViewProvider implements vscode.WebviewViewProvider {
         });
 
         webviewView.onDidChangeVisibility(() => {
-            this.updateHTML(undefined);
-            // NOTE: Change to this.update after testing!!
-            // NOTE: Change to this.update after testing!!
-            // NOTE: Change to this.update after testing!!
-            // NOTE: Change to this.update after testing!!
-            // NOTE: Change to this.update after testing!!
-            // NOTE: Change to this.update after testing!!
-            // NOTE: Change to this.update after testing!!
-            // this.update();
+            // Can be used in dev to update the whole HTML instead of just the contents.
+            // this.updateHTML(undefined);
+            this.update();
         });
 
         webviewView.onDidDispose(() => {

@@ -168,7 +168,7 @@ async function main(opts: IOpts) {
                 const iLevel = getIntLevelFromLevelStr(level);
                 if (iLevel > parent.maxLevelFoundInHierarchy) {
                     parent.maxLevelFoundInHierarchy = iLevel;
-                    console.log("set level", parent.decodedMessage, "to", iLevel);
+                    // console.log("set level", parent.decodedMessage, "to", iLevel);
                 }
                 if (acceptLevel(opts, iLevel)) {
                     const logContent = addTreeContent(

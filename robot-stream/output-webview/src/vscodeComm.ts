@@ -67,7 +67,7 @@ export function sendRequestToClient(message: IRequestMessage): Promise<any> {
 }
 
 export function sendEventToClient(message: IEventMessage): void {
-    console.log("send event", message);
+    // console.log("send event", message);
     let vscodeRef = undefined;
     try {
         vscodeRef = vscode;
@@ -144,10 +144,10 @@ export function getState(): IState {
             // Initial state.
             ret = _globalState;
         }
-        if(!ret.filterLevel){
+        if (!ret.filterLevel) {
             ret.filterLevel = "PASS";
         }
-        if(!ret.runIdToTreeState){
+        if (!ret.runIdToTreeState) {
             ret.runIdToTreeState = {};
         }
         return ret;
@@ -156,7 +156,7 @@ export function getState(): IState {
 }
 
 export function setState(state: IState) {
-    console.log("setState", JSON.stringify(state));
+    // console.log("setState", JSON.stringify(state));
     let vscodeRef = undefined;
     try {
         vscodeRef = vscode;
