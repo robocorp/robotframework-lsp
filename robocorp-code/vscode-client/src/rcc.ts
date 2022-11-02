@@ -108,17 +108,16 @@ async function downloadRcc(
             // Check if node is a 64 bit process or if it's a 32 bit process running in a 64 bit processor.
             relativePath = "/windows64/rcc.exe";
         } else {
-            // Do we even have a way to test a 32 bit build?
-            relativePath = "/windows32/rcc.exe";
+            throw new Error("Currently only Windows amd64 is supported.");
         }
     } else if (process.platform == "darwin") {
         relativePath = "/macos64/rcc";
     } else {
         // Linux
-        if (process.arch === "x64") {
+        if (process.arch == "x64") {
             relativePath = "/linux64/rcc";
         } else {
-            relativePath = "/linux32/rcc";
+            throw new Error("Currently only Linux amd64 is supported.");
         }
     }
     const RCC_VERSION = "v11.30.0";
@@ -134,8 +133,7 @@ function getBaseAsZipBasename() {
             // Check if node is a 64 bit process or if it's a 32 bit process running in a 64 bit processor.
             basename = "399434b9649683d3_windows_amd64.zip";
         } else {
-            // Do we even have a way to test a 32 bit build?
-            throw Error("Win 32 bits not supported.");
+            throw new Error("Currently only Windows amd64 is supported.");
         }
     } else if (process.platform == "darwin") {
         basename = "eb6ff3da7a543590_darwin_amd64.zip";
@@ -144,7 +142,7 @@ function getBaseAsZipBasename() {
         if (process.arch === "x64") {
             basename = "34e5b698835ffe32_linux_amd64.zip";
         } else {
-            throw Error("Linux 32 bits not supported.");
+            throw new Error("Currently only Linux amd64 is supported.");
         }
     }
     return basename;

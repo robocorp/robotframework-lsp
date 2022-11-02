@@ -1,8 +1,11 @@
+# Note: when updated the pre-built environments must be updated
+# (run related robot in control-room and update values in getBaseAsZipBasename).
 channels:
     - conda-forge
 
 dependencies:
     - python=3.9.13
+    - openssl>=3.0.7
     - pip=22.1.2
     - pip:
           - robocorp-inspector==0.8.2
