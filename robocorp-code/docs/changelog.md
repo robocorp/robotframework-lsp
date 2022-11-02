@@ -1,7 +1,7 @@
 NEXT
 -----------------------------
 
-- RCC was upgraded to `v11.28.1`.
+- RCC was upgraded to `v11.30.0`.
 
 
 
