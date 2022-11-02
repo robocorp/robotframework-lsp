@@ -1,50 +1,26 @@
 import { iter_decoded_log_format } from "./decoder";
 import { addLevel, getIntLevelFromLevelStr } from "./handleLevel";
 import { acceptLevel, addStatus, addTime, getIntLevelFromStatus } from "./handleStatus";
+import { getOpts } from "./options";
+import { saveTreeState } from "./persistTree";
 import { createUL, divById, selectById } from "./plainDom";
-import { IContentAdded, IFilterLevel, IMessageNode, IOpts, IState, ITreeState } from "./protocols";
+import { IContentAdded, IFilterLevel, IMessageNode, IOpts, IState } from "./protocols";
 import { getSampleContents } from "./sample";
 import "./style.css";
-import { addTreeContent, collectUlTreeState } from "./tree";
-import { requestToHandler, sendEventToClient, nextMessageSeq, IEventMessage, getState, setState } from "./vscodeComm";
-
-let lastOpts: IOpts | undefined = undefined;
+import { addTreeContent } from "./tree";
+import { requestToHandler, sendEventToClient, nextMessageSeq, IEventMessage } from "./vscodeComm";
 
 export function updateFilterLevel(filterLevel: IFilterLevel) {
-    if (!lastOpts) {
-        return;
-    }
-    if (lastOpts.state.filterLevel !== filterLevel) {
-        lastOpts.state.filterLevel = filterLevel;
-        collectTreeState(lastOpts.state, lastOpts.runId);
-        setState(lastOpts.state);
-        main(lastOpts);
+    const opts = getOpts();
+    if (opts.state.filterLevel !== filterLevel) {
+        opts.state.filterLevel = filterLevel;
+        saveTreeState();
+        rebuildTreeAndStatusesFromOpts();
     }
 }
 
-function collectTreeState(state: IState, runId: string): void {
-    const mainDiv = divById("mainTree");
-    let stateForRun: ITreeState = { "openNodes": {} };
-    if (state.runIdToTreeState === undefined) {
-        state.runIdToTreeState = {};
-    } else {
-        const oldStateForRun = state.runIdToTreeState[runId];
-        if (oldStateForRun) {
-            // Try to keep previously opened items (even if
-            // they've been filtered out).
-            stateForRun = oldStateForRun;
-        }
-    }
-    for (let child of mainDiv.childNodes) {
-        if (child instanceof HTMLUListElement) {
-            collectUlTreeState(stateForRun, child);
-        }
-    }
-    state.runIdToTreeState[runId] = stateForRun;
-}
-
-async function main(opts: IOpts) {
-    lastOpts = opts;
+async function rebuildTreeAndStatusesFromOpts() {
+    const opts = getOpts();
     totalTests = 0;
     totalFailures = 0;
     updateSummary();
@@ -191,7 +167,7 @@ async function main(opts: IOpts) {
         }
     }
 
-    return main;
+    return rebuildTreeAndStatusesFromOpts;
 }
 
 let totalTests: number = 0;
@@ -272,15 +248,13 @@ function onClickReference(message) {
 }
 
 function setContents(msg) {
-    const state = getState();
+    saveTreeState();
+    const opts = getOpts();
+    opts.runId = msg.runId;
+    opts.outputFileContents = msg.outputFileContents;
+    opts.onClickReference = onClickReference;
 
-    main({
-        outputFileContents: msg.outputFileContents,
-        runId: msg.runId,
-        state: state,
-        viewMode: "flat",
-        onClickReference: onClickReference,
-    });
+    rebuildTreeAndStatusesFromOpts();
 }
 
 requestToHandler["setContents"] = setContents;

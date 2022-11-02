@@ -11,6 +11,7 @@ type IRunIdToTreeState = {
 export interface IState {
     filterLevel: IFilterLevel;
     runIdToTreeState: IRunIdToTreeState;
+    runIdLRU: string[];
 }
 
 export type IFilterLevel = "FAIL" | "WARN" | "PASS";
@@ -19,7 +20,6 @@ export interface IOpts {
     outputFileContents: string;
     runId: string;
     state: IState | undefined;
-    viewMode: "hierarchy" | "flat";
     onClickReference: Function | undefined;
 }
 

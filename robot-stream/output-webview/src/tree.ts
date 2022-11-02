@@ -4,7 +4,8 @@
 // https://stackoverflow.com/questions/10813581/can-i-replace-the-expand-icon-of-the-details-element
 
 import { IMessage } from "./decoder";
-import { createDetails, createLI, createSpan, createSummary, createUL, getDataTreeId } from "./plainDom";
+import { saveTreeStateLater } from "./persistTree";
+import { createDetails, createLI, createSpan, createSummary, createUL } from "./plainDom";
 import { IContentAdded, IMessageNode, IOpts, ITreeState } from "./protocols";
 
 /**
@@ -42,6 +43,7 @@ export function addTreeContent(
     const li: HTMLLIElement = createLI(liTreeId);
 
     const details: HTMLDetailsElement = createDetails();
+
     if (open) {
         details.open = open;
     } else {
@@ -103,37 +105,8 @@ export function addTreeContent(
 function createUlIfNeededAndAppendChild(child: IContentAdded) {
     this.ul.appendChild(child.li);
     this.details.classList.remove("NO_CHILDREN");
-    //     if (this.ul === undefined) {
-    //         this.li.appendChild(this.details);
-    //         this.details.appendChild(this.summary);
-    //         const ul = document.createElement("ul");
-    //         this.details.appendChild(ul);
-    //         this.ul = ul;
-    //     }
-    //     this.ul.appendChild(child);
-}
-
-function collectLITreeState(state: ITreeState, li: HTMLLIElement) {
-    for (let child of li.childNodes) {
-        if (child instanceof HTMLDetailsElement) {
-            for (let c of child.childNodes) {
-                if (c instanceof HTMLUListElement) {
-                    collectUlTreeState(state, c);
-                }
-            }
-            if (child.open) {
-                state.openNodes[getDataTreeId(li)] = "open";
-            } else {
-                delete state.openNodes[getDataTreeId(li)];
-            }
-        }
-    }
-}
-
-export function collectUlTreeState(state: ITreeState, ul: HTMLUListElement) {
-    for (let child of ul.childNodes) {
-        if (child instanceof HTMLLIElement) {
-            collectLITreeState(state, child);
-        }
-    }
+    // If it can be toggled, track it for changes.
+    this.details.addEventListener("toggle", function () {
+        saveTreeStateLater();
+    });
 }
