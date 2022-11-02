@@ -227,6 +227,75 @@ class Dev(object):
         assert os.path.exists(bundle_js), f"{bundle_js} does not exist."
         print("=== Finished vendoring.")
 
+    def remove_robot_stream(self):
+        import time
+        import shutil
+
+        vendored_dir = os.path.join(
+            os.path.dirname(__file__), "src", "robotframework_ls", "vendored"
+        )
+        found = []
+        for path in ("robot_stream", "output-webview"):
+            target = os.path.join(vendored_dir, path)
+            try:
+                shutil.rmtree(target)
+            except:
+                if os.path.exists(target):
+                    traceback.print_exc()
+
+            found.append(target)
+
+        time.sleep(0.5)
+        return found
+
+    def vendor_robot_stream(self):
+        """
+        Vendors robot_stream into robotframework_ls/vendored.
+        """
+        import shutil
+        import subprocess
+
+        vendored_src, vendored_webview = self.remove_robot_stream()
+
+        src_core = os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "robot-stream",
+            "src",
+            "robot_stream",
+        )
+        print("=== Copying from: %s to %s" % (src_core, vendored_src))
+
+        shutil.copytree(src_core, vendored_src)
+
+        src_webview = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "..",
+                "robot-stream",
+                "output-webview",
+            )
+        )
+        print("=== Yarn install")
+        shell = sys.platform == "win32"
+        subprocess.check_call(["yarn", "install"], cwd=src_webview, shell=shell)
+
+        print("=== Building with webpack in: %s" % (vendored_webview,))
+        subprocess.check_call(
+            ["yarn", "build-prod", "--env", f"target={vendored_webview}"],
+            cwd=src_webview,
+            shell=shell,
+        )
+
+        assert os.path.exists(vendored_webview), f"{vendored_webview} does not exist."
+        print(f"Files found in: {vendored_webview}")
+        for f in os.listdir(vendored_webview):
+            print(f)
+
+        bundle_js = os.path.join(vendored_webview, "bundle.js")
+        assert os.path.exists(bundle_js), f"{bundle_js} does not exist."
+        print("=== Finished vendoring.")
+
     def fix_readme(self):
         """
         Updates the links in the README.md to match the current tagged version.

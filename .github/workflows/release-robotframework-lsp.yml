@@ -42,6 +42,7 @@ jobs:
       run: |
         python -m dev vendor-robocorp-ls-core
         python -m dev vendor-robotframework-interactive
+        python -m dev vendor-robot-stream
     - name: Fix README references
       run: python -m dev fix-readme
     - name: Build wheel

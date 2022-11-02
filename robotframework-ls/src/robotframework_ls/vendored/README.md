@@ -11,4 +11,4 @@ To vendor the proper contents, use:
 
 python -m dev vendor-robocorp-ls-core
 python -m dev vendor-robotframework-interactive
-python -m dev vendor-robocorp-robot-output
+python -m dev vendor-robot-stream
