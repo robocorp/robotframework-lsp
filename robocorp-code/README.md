@@ -69,7 +69,7 @@ Find the full installation instructions at [https://robocorp.com/docs/product-ma
 
 During the first activation, the extension will download additional dependencies (such as Conda manager) that are required for it to run.
 
-### Features (0.38.0)
+### Features (0.39.0)
 
 - Support for [Work Items](https://robocorp.com/docs/developer-tools/visual-studio-code/extension-features#using-work-items).
 - Automatic bootstrapping of the Python environment for the `Robot Framework Language Server`.

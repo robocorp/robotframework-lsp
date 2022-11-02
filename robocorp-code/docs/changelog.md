@@ -1,9 +1,11 @@
-NEXT
+New in 0.39.0 (2022-11-02)
 -----------------------------
 
 - RCC was upgraded to `v11.30.0`.
-
-
+- Base environment now requires OpenSSL 3.0.7.
+- Upgrades to robocorp-inspector.
+- More information is provided when rcc configure longpaths fails.
+- Updates in third party RPA conversor.
 
 New in 0.38.0 (2022-09-28)
 -----------------------------
