@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<robot generator="Robot 5.0.1 (Python 3.7.5 on win32)" generated="20221102 14:49:40.612" rpa="false" schemaversion="3">
+<suite id="s1" name="Robot Check" source="x:\vscode-robot\local_test\robot_check">
+<suite id="s1-s1" name="Checkmy" source="x:\vscode-robot\local_test\robot_check\checkmy.robot">
+<test id="s1-s1-t1" name="Test" line="10">
+<kw name="No Operation" library="BuiltIn">
+<doc>Does absolutely nothing.</doc>
+<status status="PASS" starttime="20221102 14:49:40.661" endtime="20221102 14:49:40.661"/>
+</kw>
+<status status="PASS" starttime="20221102 14:49:40.660" endtime="20221102 14:49:40.662"/>
+</test>
+<status status="PASS" starttime="20221102 14:49:40.657" endtime="20221102 14:49:40.664"/>
+</suite>
+<status status="PASS" starttime="20221102 14:49:40.620" endtime="20221102 14:49:40.667"/>
+</suite>
+<statistics>
+<total>
+<stat pass="1" fail="0" skip="0">All Tests</stat>
+</total>
+<tag>
+</tag>
+<suite>
+<stat pass="1" fail="0" skip="0" id="s1" name="Robot Check">Robot Check</stat>
+<stat pass="1" fail="0" skip="0" id="s1-s1" name="Checkmy">Robot Check.Checkmy</stat>
+</suite>
+</statistics>
+<errors>
+</errors>
+</robot>

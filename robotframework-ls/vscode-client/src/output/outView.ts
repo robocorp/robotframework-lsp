@@ -2,7 +2,7 @@ import { TextDecoder } from "util";
 import * as vscode from "vscode";
 import { OUTPUT_CHANNEL } from "../channel";
 import { debounce } from "../common";
-import { uriExists } from "../files";
+import { isFile, uriExists } from "../files";
 
 interface IContents {
     isPlaceholder: boolean;
@@ -59,10 +59,10 @@ export class RobotOutputViewProvider implements vscode.WebviewViewProvider {
                             // Tests have a line but the source comes from the suite.
                             if (lineno && lineno > 0) {
                                 const scope: any[] = data["scope"];
-                                if (scope) {
-                                    const parentMsg = scope[scope.length - 1];
+                                if (scope !== undefined && scope.length > 0) {
+                                    const parentMsg = scope[0];
                                     source = parentMsg["decoded"].suite_source;
-                                    if (source) {
+                                    if (source && isFile(source)) {
                                         showSourceAtLineno(source, lineno);
                                     }
                                 }

@@ -28,6 +28,15 @@ export function verifyFileExists(targetFile: string, warnUser: boolean = true): 
     return true;
 }
 
+export async function isFile(filename: string): Promise<boolean> {
+    try {
+        const stat = await fs.promises.stat(filename);
+        return stat.isFile();
+    } catch (err) {
+        return false;
+    }
+}
+
 export async function fileExists(filename: string): Promise<boolean> {
     try {
         await fs.promises.stat(filename);
