@@ -1,3 +1,18 @@
+New in 1.4.0 (2022-11-02)
+-----------------------------
+
+### New features
+
+- `Robot Output` View
+    - Shows information from output.xml when it's selected.
+    - Note: currently in beta.
+
+### Bugfixes
+
+- Fixes in `Robot Flow Explorer`.
+- Fix issue in test explorer integration when a `.robot` which is not under the workspace is opened.
+
+
 New in 1.3.5 (2022-10-19)
 -----------------------------
 
