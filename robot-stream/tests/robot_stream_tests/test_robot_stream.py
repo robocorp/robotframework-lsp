@@ -220,3 +220,10 @@ def test_robot_if(datadir, data_regression):
 )
 def test_robot_try_except(datadir, data_regression):
     check(datadir, data_regression, "robot9.robot")
+
+
+@pytest.mark.skipif(
+    get_robot_major_version() < 5, reason="Not available on older versions of robot."
+)
+def test_robot_return(datadir, data_regression):
+    check(datadir, data_regression, "robot10.robot")

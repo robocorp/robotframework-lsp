@@ -67,3 +67,7 @@ def test_decode_output_8(datadir, data_regression):
 
 def test_decode_output_9(datadir, data_regression):
     check(datadir, data_regression, "output_9.xml")
+
+
+def test_decode_output_10(datadir, data_regression):
+    check(datadir, data_regression, "output_10.xml")

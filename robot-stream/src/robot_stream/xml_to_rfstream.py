@@ -101,6 +101,25 @@ class _ForData(_AbstractKeywordData):
     __repr__ = __str__
 
 
+class _ReturnData(_AbstractKeywordData):
+    def __init__(self, attrs):
+        _AbstractKeywordData.__init__(self, attrs)
+        self.values = []
+
+    @property
+    def type(self):
+        return "RETURN"
+
+    @property
+    def name(self):
+        return f"{' | '.join(self.values)}"
+
+    def __str__(self):
+        return f"_ReturnData({self.name})"
+
+    __repr__ = __str__
+
+
 class _WhileData(_AbstractKeywordData):
     def __init__(self, attrs):
         _AbstractKeywordData.__init__(self, attrs)
@@ -231,16 +250,26 @@ class _XmlSaxParser(xml.sax.ContentHandler):
     def startElement(self, name, attrs):
         method = getattr(self, "start_" + name, None)
         if method:
-            method(attrs)
-        else:
-            print("Unhandled start:", name)
+            try:
+                method(attrs)
+            except:
+                raise RuntimeError(
+                    f"Error when starting element: {name}. Attrs: {attrs}. Stack: {self._stack}"
+                )
+        # else:
+        #     print("Unhandled start:", name)
 
     def endElement(self, name):
         method = getattr(self, "end_" + name, None)
         if method:
-            method()
-        else:
-            print("Unhandled end:", name)
+            try:
+                method()
+            except:
+                raise RuntimeError(
+                    f"Error when finishing element: {name}. Stack: {self._stack}"
+                )
+        # else:
+        #     print("Unhandled end:", name)
 
     def start_robot(self, attrs):
         assert self._listener is None
@@ -393,6 +422,12 @@ class _XmlSaxParser(xml.sax.ContentHandler):
         self._stack.append(_ForData(attrs))
 
     end_for = end_kw
+
+    def start_return(self, attrs):
+        self.send_delayed()
+        self._stack.append(_ReturnData(attrs))
+
+    end_return = end_kw
 
     def start_branch(self, attrs):
         self.send_delayed()
