@@ -58,7 +58,7 @@ from robotframework_ls.commands import (
     ROBOT_LINT_EXPLORER,
     ROBOT_GENERATE_FLOW_EXPLORER_MODEL,
     ROBOT_COLLECT_ROBOT_DOCUMENTATION,
-    ROBOT_CONVERT_OUTPUT_xml_to_rfstream,
+    ROBOT_CONVERT_OUTPUT_XML_TO_ROBOSTREAM,
 )
 from robocorp_ls_core.jsonrpc.exceptions import JsonRpcException
 import weakref
@@ -660,7 +660,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         log.info("Unable to provide evaluatable expression (no api available).")
         return None
 
-    @command_dispatcher(ROBOT_CONVERT_OUTPUT_xml_to_rfstream)
+    @command_dispatcher(ROBOT_CONVERT_OUTPUT_XML_TO_ROBOSTREAM)
     def _convert_output_xml_to_rfstream(self, opts: Dict[str, Any]):
         def convert_in_thread():
             from robotframework_ls import import_robot_stream
