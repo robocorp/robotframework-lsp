@@ -1,18 +1,18 @@
-import { IOpts } from "./protocols";
+import { IContentAdded, IOpts } from "./protocols";
 
-export function addStatus(summary: HTMLElement, status: string) {
+export function addStatus(current: IContentAdded, status: string) {
     const span = document.createElement("span");
     span.textContent = status;
     span.classList.add("label");
     span.classList.add(status.replace(" ", "_"));
-    summary.insertBefore(span, summary.firstChild);
+    current.summaryDiv.insertBefore(span, current.summaryDiv.firstChild);
 }
 
-export function addTime(summary: HTMLElement, diff: number) {
+export function addTime(current: IContentAdded, diff: number) {
     const span = document.createElement("span");
     span.textContent = ` (${diff.toFixed(2)}s)`;
     span.classList.add("timeLabel");
-    summary.appendChild(span);
+    current.summaryDiv.appendChild(span);
 }
 
 export function acceptLevel(opts: IOpts, statusLevel: number) {

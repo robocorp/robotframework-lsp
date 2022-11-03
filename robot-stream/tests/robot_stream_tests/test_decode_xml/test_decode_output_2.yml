@@ -19,7 +19,7 @@
 - doc: ''
   keyword_type: KEYWORD
   libname: another_sub
-  lineno: null
+  lineno: -1
   message_type: SK
   name: Another in sub keyword
   source: null
@@ -27,7 +27,7 @@
 - doc: Does absolutely nothing.
   keyword_type: KEYWORD
   libname: BuiltIn
-  lineno: null
+  lineno: -1
   message_type: SK
   name: No Operation
   source: null
@@ -40,7 +40,7 @@
 - doc: Logs the given message with the given level.
   keyword_type: KEYWORD
   libname: BuiltIn
-  lineno: null
+  lineno: -1
   message_type: SK
   name: Log
   source: null

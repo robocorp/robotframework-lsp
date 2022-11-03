@@ -19,7 +19,7 @@
 - doc: Evaluates the given expression in Python and returns the result.
   keyword_type: KEYWORD
   libname: BuiltIn
-  lineno: null
+  lineno: -1
   message_type: SK
   name: Evaluate
   source: null

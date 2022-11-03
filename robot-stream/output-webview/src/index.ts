@@ -49,6 +49,7 @@ async function rebuildTreeAndStatusesFromOpts() {
         "decodedMessage": undefined,
         "appendContentChild": addToRoot,
         "maxLevelFoundInHierarchy": 0,
+        "summaryDiv": undefined,
     };
     const stack: IContentAdded[] = [];
     stack.push(parent);
@@ -159,8 +160,7 @@ async function rebuildTreeAndStatusesFromOpts() {
                         id.toString()
                     );
                     logContent.maxLevelFoundInHierarchy = iLevel;
-                    const summary = logContent.summary;
-                    addLevel(summary, level);
+                    addLevel(logContent, level);
                 }
 
                 break;
@@ -220,7 +220,7 @@ function onEndSetStatusOrRemove(opts: IOpts, current: IContentAdded, endDecodedM
     const status = endDecodedMsg["status"];
     if (acceptLevel(opts, current.maxLevelFoundInHierarchy)) {
         const summary = current.summary;
-        addStatus(summary, status);
+        addStatus(current, status);
 
         const startTime: number = current.decodedMessage.decoded["time_delta_in_seconds"];
         if (startTime && startTime >= 0) {
@@ -230,7 +230,7 @@ function onEndSetStatusOrRemove(opts: IOpts, current: IContentAdded, endDecodedM
             //     console.log("Current: ", JSON.stringify(current.decodedMessage), "end", JSON.stringify(endDecodedMsg));
             //     console.log("Diff: ", diff);
             // }
-            addTime(summary, diff);
+            addTime(current, diff);
         }
     } else {
         current.li.remove();

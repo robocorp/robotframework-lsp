@@ -19,7 +19,7 @@
 - doc: Returns the given values which can then be assigned to a variables.
   keyword_type: KEYWORD
   libname: BuiltIn
-  lineno: null
+  lineno: -1
   message_type: SK
   name: Set Variable
   source: null
@@ -36,7 +36,7 @@
 - doc: ''
   keyword_type: IF
   libname: ''
-  lineno: null
+  lineno: -1
   message_type: SK
   name: ${var1} == ${var1}
   source: null
@@ -44,7 +44,7 @@
 - doc: Does absolutely nothing.
   keyword_type: KEYWORD
   libname: BuiltIn
-  lineno: null
+  lineno: -1
   message_type: SK
   name: No Operation
   source: null
@@ -62,7 +62,7 @@
 - doc: ''
   keyword_type: ELSE IF
   libname: ''
-  lineno: null
+  lineno: -1
   message_type: SK
   name: ${var1} == ${var1}
   source: null
@@ -70,7 +70,7 @@
 - doc: Does absolutely nothing.
   keyword_type: KEYWORD
   libname: BuiltIn
-  lineno: null
+  lineno: -1
   message_type: SK
   name: No Operation
   source: null
@@ -88,7 +88,7 @@
 - doc: ''
   keyword_type: ELSE
   libname: ''
-  lineno: null
+  lineno: -1
   message_type: SK
   name: ''
   source: null
@@ -96,7 +96,7 @@
 - doc: Does absolutely nothing.
   keyword_type: KEYWORD
   libname: BuiltIn
-  lineno: null
+  lineno: -1
   message_type: SK
   name: No Operation
   source: null

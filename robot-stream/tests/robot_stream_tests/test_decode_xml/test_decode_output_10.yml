@@ -19,7 +19,7 @@
 - doc: ''
   keyword_type: KEYWORD
   libname: ''
-  lineno: null
+  lineno: -1
   message_type: SK
   name: Some Keyword
   source: null
@@ -27,7 +27,7 @@
 - doc: Returns the given values which can then be assigned to a variables.
   keyword_type: KEYWORD
   libname: BuiltIn
-  lineno: null
+  lineno: -1
   message_type: SK
   name: Set Variable
   source: null
@@ -44,7 +44,7 @@
 - doc: Removes all ``removables`` from the given ``string``.
   keyword_type: KEYWORD
   libname: String
-  lineno: null
+  lineno: -1
   message_type: SK
   name: Remove String
   source: null
@@ -63,7 +63,7 @@
 - doc: ''
   keyword_type: RETURN
   libname: ''
-  lineno: null
+  lineno: -1
   message_type: SK
   name: ${rem} | ${value}
   source: null

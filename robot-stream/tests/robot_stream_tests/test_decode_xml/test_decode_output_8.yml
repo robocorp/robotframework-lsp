@@ -19,7 +19,7 @@
 - doc: ''
   keyword_type: TRY
   libname: ''
-  lineno: null
+  lineno: -1
   message_type: SK
   name: ''
   source: null
@@ -27,7 +27,7 @@
 - doc: Fails the test with the given message and optionally alters its tags.
   keyword_type: KEYWORD
   libname: BuiltIn
-  lineno: null
+  lineno: -1
   message_type: SK
   name: Fail
   source: null
@@ -51,7 +51,7 @@
 - doc: ''
   keyword_type: EXCEPT
   libname: ''
-  lineno: null
+  lineno: -1
   message_type: SK
   name: message
   source: null
@@ -59,7 +59,7 @@
 - doc: Does absolutely nothing.
   keyword_type: KEYWORD
   libname: BuiltIn
-  lineno: null
+  lineno: -1
   message_type: SK
   name: No Operation
   source: null
@@ -77,7 +77,7 @@
 - doc: ''
   keyword_type: FINALLY
   libname: ''
-  lineno: null
+  lineno: -1
   message_type: SK
   name: ''
   source: null
@@ -85,7 +85,7 @@
 - doc: Does absolutely nothing.
   keyword_type: KEYWORD
   libname: BuiltIn
-  lineno: null
+  lineno: -1
   message_type: SK
   name: No Operation
   source: null

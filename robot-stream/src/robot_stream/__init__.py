@@ -183,8 +183,10 @@ class RFStream:
             self._get_time_delta(attributes),
         )
 
+    class _Sentinel:
+        pass
+
     def start_keyword(self, name, attributes):
-        from robot_stream.robot_version import get_robot_major_version
 
         # {
         #     "doc": "Does absolutely nothing.",
@@ -199,25 +201,29 @@ class RFStream:
         #     "libname": "BuiltIn",
         #     "args": [],
         # }
-        source: Optional[str] = attributes.get("source")
-        lineno: Optional[int] = attributes.get("lineno")
-        if not source:
-            # HACK for RF 3: try to get the location (since it's not available).
-            if get_robot_major_version() < 4:
-                f: Optional[Any]
-                f = sys._getframe()
-                while f is not None:
-                    if f.f_code.co_name == "run_step":
-                        step = f.f_locals.get("step")
-                        if step is not None:
-                            try:
-                                source = step.source
-                                lineno = step.lineno
-                            except AttributeError:
-                                pass
-                        break  # Break when run_step is found anyways.
+        source: Optional[str] = attributes.get("source", self._Sentinel)
+        lineno: Optional[int] = attributes.get("lineno", self._Sentinel)
+        if source is self._Sentinel or lineno is self._Sentinel:
+            # I.e.: it was not passed at all (if it was passed and None,
+            # keep it as None: xml conversion use-case).
+            source = None
+            lineno = -1
 
-                    f = f.f_back
+            # HACK for RF 3: try to get the location (since it's not available).
+            f: Optional[Any]
+            f = sys._getframe()
+            while f is not None:
+                if f.f_code.co_name == "run_step":
+                    step = f.f_locals.get("step")
+                    if step is not None:
+                        try:
+                            source = step.source
+                            lineno = step.lineno
+                        except AttributeError:
+                            pass
+                    break  # Break when run_step is found anyways.
+
+                f = f.f_back
 
         return self._robot_output_impl.start_keyword(
             attributes["kwname"],

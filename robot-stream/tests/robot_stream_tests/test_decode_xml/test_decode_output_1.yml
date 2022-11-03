@@ -36,7 +36,7 @@
     of the list.'
   keyword_type: KEYWORD
   libname: re
-  lineno: null
+  lineno: -1
   message_type: SK
   name: Split
   source: null
@@ -55,7 +55,7 @@
 - doc: Logs the given message with the given level.
   keyword_type: KEYWORD
   libname: BuiltIn
-  lineno: null
+  lineno: -1
   message_type: SK
   name: Log
   source: null

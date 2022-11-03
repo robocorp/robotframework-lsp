@@ -24,10 +24,11 @@ export interface IOpts {
 }
 
 export interface IContentAdded {
-    ul: HTMLElement;
-    li: HTMLElement;
-    details: HTMLElement;
+    ul: HTMLUListElement;
+    li: HTMLLIElement;
+    details: HTMLDetailsElement;
     summary: HTMLElement;
+    summaryDiv: HTMLDivElement;
     span: HTMLElement;
     source: string;
     lineno: number;

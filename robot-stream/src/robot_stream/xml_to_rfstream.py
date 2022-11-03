@@ -376,6 +376,8 @@ class _XmlSaxParser(xml.sax.ContentHandler):
                         "type": peek.type,
                         "timedelta": -1,
                         "assign": assign,
+                        "source": None,  # source is never available in this case.
+                        "lineno": -1,
                     },
                 )
             elif isinstance(peek, _TestData):

@@ -1,11 +1,11 @@
 :root {
-    --fg-color: var(--vscode-editor-foreground);
-    --bg-color: var(--vscode-editor-background);
+    --fg-color: var(--vscode-editor-foreground, black);
+    --bg-color: var(--vscode-editor-background, white);
     --font-family: var(--vscode-editor-font-family, monospace, courier);
     --font-size: var(--vscode-editor-font-size, 14px);
     --font-weight: var(--vscode-font-weight);
-    --menu-background: var(--vscode-menu-background);
-    --menu-foreground: var(--vscode-menu-foreground);
+    --menu-background: var(--vscode-menu-background, rgb(235, 235, 235));
+    --menu-foreground: var(--vscode-menu-foreground, rgb(0, 0, 0));
 
     /* background-color: var(--vscode-editorError-foreground); */
     /* background-color: var(--vscode-inputValidation-errorBorder);  high-contrast doesn't have a good color */
@@ -69,6 +69,27 @@ div ul:not(:first-child) {
 .tree ul {
     margin-left: 10px;
     padding-left: 0;
+}
+
+.toolbarButton {
+    display: inline;
+    border-radius: 5px;
+    background: var(--bg-color);
+    color: var(--fg-color);
+    margin-left: 3px;
+    width: 15px;
+    height: 15px;
+    border: 0;
+    padding: 0;
+    vertical-align: middle;
+}
+
+.toolbarContainer {
+    display: inline-block;
+}
+
+.summaryDiv {
+    display: inline;
 }
 
 details > summary {

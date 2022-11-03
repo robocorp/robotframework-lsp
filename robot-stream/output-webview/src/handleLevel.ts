@@ -1,3 +1,5 @@
+import { IContentAdded } from "./protocols";
+
 function translateLevel(level: string): string {
     // ERROR = E
     // FAIL = F
@@ -30,10 +32,10 @@ export function getIntLevelFromLevelStr(level: string): number {
     }
 }
 
-export function addLevel(summary: HTMLElement, level: string) {
+export function addLevel(current: IContentAdded, level: string) {
     const span = document.createElement("span");
     span.textContent = `LOG ${translateLevel(level)}`;
     span.classList.add("label");
     span.classList.add(level.replace(" ", "_"));
-    summary.insertBefore(span, summary.firstChild);
+    current.summaryDiv.insertBefore(span, current.summaryDiv.firstChild);
 }

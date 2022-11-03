@@ -19,7 +19,7 @@
 - doc: ''
   keyword_type: FOR
   libname: ''
-  lineno: null
+  lineno: -1
   message_type: SK
   name: ${counter} IN RANGE [0 | 1]
   source: null
@@ -27,7 +27,7 @@
 - doc: ''
   keyword_type: ITERATION
   libname: ''
-  lineno: null
+  lineno: -1
   message_type: SK
   name: ${counter} = 0
   source: null
@@ -35,7 +35,7 @@
 - doc: Does absolutely nothing.
   keyword_type: KEYWORD
   libname: BuiltIn
-  lineno: null
+  lineno: -1
   message_type: SK
   name: No Operation
   source: null
