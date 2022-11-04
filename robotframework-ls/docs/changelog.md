@@ -1,3 +1,11 @@
+New in 1.4.3 (2022-11-04)
+-----------------------------
+
+### Bugfixes
+
+- `Robot Output` View can deal with `RETURN` properly.
+
+
 New in 1.4.0 (2022-11-02)
 -----------------------------
 

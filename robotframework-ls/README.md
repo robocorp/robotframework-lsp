@@ -44,7 +44,7 @@ Reporting Issues
 See: [Reporting Issue](docs/reporting_issues.md) for details on how to report some issue in the `Robot Framework Language Server`.
 
 
-Features (1.4.0)
+Features (1.4.3)
 -----------------
 
 - Robot Output View (shows output details for the current output.xml -- note: currently in beta). 
