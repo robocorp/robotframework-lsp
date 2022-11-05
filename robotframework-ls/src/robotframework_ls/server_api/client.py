@@ -14,6 +14,7 @@ from robocorp_ls_core.lsp import (
     CompletionItemTypedDict,
     CompletionsResponseTypedDict,
     CompletionResolveResponseTypedDict,
+    TextDocumentCodeActionTypedDict,
 )
 from robocorp_ls_core.basic import implements
 
@@ -411,6 +412,16 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         """
         return self.request_async(
             self._build_msg("document_highlight", doc_uri=doc_uri, line=line, col=col)
+        )
+
+    def request_code_action(
+        self, doc_uri: str, params: TextDocumentCodeActionTypedDict
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(
+            self._build_msg("code_action", doc_uri=doc_uri, params=params)
         )
 
     def request_references(

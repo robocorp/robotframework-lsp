@@ -245,7 +245,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         import json
 
         if is_saved:
-            # When a documnt is saved, if it's a conda.yaml or a robot.yaml,
+            # When a document is saved, if it's a conda.yaml or a robot.yaml,
             # validate it.
             if doc_uri.endswith("conda.yaml") or doc_uri.endswith("robot.yaml"):
                 robot_yaml_fs_path = uris.to_fs_path(doc_uri)

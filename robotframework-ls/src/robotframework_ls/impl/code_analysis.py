@@ -3,7 +3,11 @@ import re
 import sys
 from typing import Dict, Optional, List, Tuple
 
-from robocorp_ls_core.lsp import DiagnosticSeverity, DiagnosticTag
+from robocorp_ls_core.lsp import (
+    DiagnosticSeverity,
+    DiagnosticTag,
+    ICustomDiagnosticDataUndefinedKeywordTypedDict,
+)
 from robocorp_ls_core.protocols import check_implements
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.ast_utils import MAX_ERRORS
@@ -386,6 +390,10 @@ def collect_analysis_errors(initial_completion_context):
                     "Undefined keyword: %s." % (keyword_usage_info.name,),
                     tokens=[keyword_usage_info.token],
                 )
+                error.data: ICustomDiagnosticDataUndefinedKeywordTypedDict = {
+                    "kind": "undefined_keyword",
+                    "name": keyword_usage_info.name,
+                }
                 errors.append(error)
 
             else:

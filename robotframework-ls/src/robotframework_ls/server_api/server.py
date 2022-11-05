@@ -25,6 +25,8 @@ from robocorp_ls_core.lsp import (
     CompletionItemTypedDict,
     WorkspaceEditTypedDict,
     SelectionRangeTypedDict,
+    TextDocumentCodeActionTypedDict,
+    ICustomDiagnosticDataTypedDict,
 )
 from robotframework_ls.impl.protocols import (
     IKeywordFound,
@@ -753,6 +755,10 @@ class RobotFrameworkServerApi(PythonLanguageServer):
     def _create_completion_context(
         self, doc_uri, line, col, monitor: Optional[IMonitor]
     ):
+        """
+        :param line: 0-based
+        :param col: 0-based
+        """
         from robotframework_ls.impl.completion_context import CompletionContext
 
         if not self._check_and_log_rf_dependency_version():
@@ -1049,6 +1055,34 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return None
 
         return doc_highlight(completion_context)
+
+    def m_code_action(self, doc_uri: str, params: TextDocumentCodeActionTypedDict):
+        func = partial(self._threaded_code_action, doc_uri, params)
+        func = require_monitor(func)
+        return func
+
+    def _threaded_code_action(
+        self, doc_uri: str, params: TextDocumentCodeActionTypedDict, monitor: IMonitor
+    ) -> Optional[List[DocumentHighlightTypedDict]]:
+
+        from robotframework_ls.impl.code_action import code_action
+
+        start = params["range"]["start"]
+        line = start["line"]
+        col = start["character"]
+        completion_context = self._create_completion_context(
+            doc_uri, line, col, monitor
+        )
+        if completion_context is None:
+            return None
+
+        context = params["context"]
+        found_data: List[ICustomDiagnosticDataTypedDict] = []
+        for diagnostic in context["diagnostics"]:
+            data = diagnostic.get("data")
+            if data is not None:
+                found_data.append(data)
+        return code_action(completion_context, found_data)
 
     def m_references(
         self, doc_uri: str, line: int, col: int, include_declaration: bool

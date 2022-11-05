@@ -506,6 +506,57 @@ class TextDocumentPositionParamsTypedDict(TypedDict, total=False):
     position: PositionTypedDict
 
 
+class DiagnosticsTypedDict(TypedDict):
+    # The range at which the message applies.
+    range: RangeTypedDict
+
+    # The diagnostic's severity. Can be omitted. If omitted it is up to the
+    # client to interpret diagnostics as error, warning, info or hint.
+    severity: Optional[int]  # DiagnosticSeverity
+
+    # The diagnostic's code, which might appear in the user interface.
+    code: Union[int, str]
+
+    # An optional property to describe the error code.
+    #
+    # @since 3.16.0
+    codeDescription: Any
+
+    # A human-readable string describing the source of this
+    # diagnostic, e.g. 'typescript' or 'super lint'.
+    source: Optional[str]
+
+    # The diagnostic's message.
+    message: str
+
+    # Additional metadata about the diagnostic.
+    #
+    # @since 3.15.0
+    tags: list  # DiagnosticTag[];
+
+    # An array of related diagnostic information, e.g. when symbol-names within
+    # a scope collide all definitions can be marked via this property.
+    relatedInformation: list  # DiagnosticRelatedInformation[];
+
+    # A data entry field that is preserved between a
+    # `textDocument/publishDiagnostics` notification and
+    # `textDocument/codeAction` request.
+    #
+    # @since 3.16.0
+    data: Optional[Any]  # unknown;
+
+
+class TextDocumentContextTypedDict(TypedDict, total=False):
+    diagnostics: List[DiagnosticsTypedDict]
+    triggerKind: int
+
+
+class TextDocumentCodeActionTypedDict(TypedDict):
+    textDocument: TextDocumentIdentifierTypedDict
+    range: RangeTypedDict
+    context: TextDocumentContextTypedDict
+
+
 class PrepareRenameParamsTypedDict(TextDocumentPositionParamsTypedDict):
     pass
 
@@ -871,9 +922,18 @@ class LSPMessages(object):
         )
 
 
+class ICustomDiagnosticDataTypedDict(TypedDict, total=False):
+    kind: str
+
+
+class ICustomDiagnosticDataUndefinedKeywordTypedDict(TypedDict, total=False):
+    kind: str  # undefined_keyword
+    name: str
+
+
 class Error(object):
 
-    __slots__ = "msg start end severity tags".split(" ")
+    __slots__ = "msg start end severity tags data".split(" ")
 
     def __init__(
         self,
@@ -889,6 +949,7 @@ class Error(object):
         self.start = start
         self.end = end
         self.severity = severity
+        self.data = None
 
     def to_dict(self):
         ret = {
@@ -900,6 +961,8 @@ class Error(object):
         tags = getattr(self, "tags", None)
         if tags:
             ret["tags"] = tags
+        if self.data is not None:
+            ret["data"] = self.data
         return ret
 
     def __repr__(self):
@@ -922,4 +985,6 @@ class Error(object):
         }
         if tags:
             ret["tags"] = tags
+        if self.data is not None:
+            ret["data"] = self.data
         return ret

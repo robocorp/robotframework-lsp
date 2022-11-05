@@ -47,6 +47,7 @@ from robocorp_ls_core.lsp import (
     RenameParamsTypedDict,
     PrepareRenameParamsTypedDict,
     SelectionRangeParamsTypedDict,
+    TextDocumentCodeActionTypedDict,
 )
 from robotframework_ls.commands import (
     ROBOT_GET_RFLS_HOME_DIR,
@@ -486,7 +487,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         from robotframework_ls import commands
 
         server_capabilities = {
-            "codeActionProvider": False,
+            "codeActionProvider": {"resolveProvider": False},
             "codeLensProvider": {"resolveProvider": True},
             # Docs are lazily computed
             "completionProvider": {"resolveProvider": True},
@@ -1382,3 +1383,34 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
                 # so, we send it to all the APIs.
                 api.forward_async("cancelProgress", {"progressId": progressId})
         return True
+
+    def m_text_document__code_action(self, **kwargs):
+        params: TextDocumentCodeActionTypedDict = kwargs
+        # Sample params:
+        # {
+        #     "textDocument": {
+        #         "uri": "file:///x%3A/vscode-robot/local_test/robot_check/checkmy.robot"
+        #     },
+        #     "range": {
+        #         "start": {"line": 12, "character": 5},
+        #         "end": {"line": 12, "character": 5},
+        #     },
+        #     "context": {
+        #         "diagnostics": [
+        #             {
+        #                 "range": {
+        #                     "start": {"line": 12, "character": 4},
+        #                     "end": {"line": 12, "character": 8},
+        #                 },
+        #                 "message": "Undefined keyword: rara.",
+        #                 "severity": 1,
+        #                 "source": "robotframework",
+        #             }
+        #         ],
+        #         "triggerKind": 1,
+        #     },
+        # }
+        doc_uri = params["textDocument"]["uri"]
+        return self.async_api_forward(
+            "request_code_action", "others", doc_uri, params=params
+        )

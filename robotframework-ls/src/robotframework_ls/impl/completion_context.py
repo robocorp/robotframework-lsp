@@ -100,8 +100,8 @@ class CompletionContext(object):
     def __init__(
         self,
         doc,
-        line=Sentinel.SENTINEL,
-        col=Sentinel.SENTINEL,
+        line=Sentinel.SENTINEL,  # 0-based
+        col=Sentinel.SENTINEL,  # 0-based
         workspace: Optional[IWorkspace] = None,
         config: Optional[IConfig] = None,
         memo: Optional[_Memo] = None,
