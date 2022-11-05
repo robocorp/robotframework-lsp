@@ -29,6 +29,7 @@ ROBOT_COLLECT_ROBOT_DOCUMENTATION = "robot.collectRobotDocumentation"  # Collect
 ROBOT_VIEW_DOCUMENTATION_PIN = "robot.view.documentation.pin"  # Pin Robot Documentation
 ROBOT_VIEW_DOCUMENTATION_UNPIN = "robot.view.documentation.unpin"  # Unpin Robot Documentation
 ROBOT_CONVERT_OUTPUT_XML_TO_ROBOSTREAM = "robot.convertOutputXMLToRobostream"  # Convert output.xml to robocorp stream
+ROBOT_APPLY_CODE_ACTION = "robot.applyCodeAction"  # Applies some code action
 
 ALL_SERVER_COMMANDS: List[str] = [
     ROBOT_INTERNAL_RFINTERACTIVE_START,
@@ -47,6 +48,7 @@ ALL_SERVER_COMMANDS: List[str] = [
     ROBOT_GENERATE_FLOW_EXPLORER_MODEL,
     ROBOT_COLLECT_ROBOT_DOCUMENTATION,
     ROBOT_CONVERT_OUTPUT_XML_TO_ROBOSTREAM,
+    ROBOT_APPLY_CODE_ACTION,
 ]
 
 # fmt: on

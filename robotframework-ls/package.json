@@ -62,7 +62,8 @@
         "onCommand:robot.collectRobotDocumentation",
         "onCommand:robot.view.documentation.pin",
         "onCommand:robot.view.documentation.unpin",
-        "onCommand:robot.convertOutputXMLToRobostream"
+        "onCommand:robot.convertOutputXMLToRobostream",
+        "onCommand:robot.applyCodeAction"
     ],
     "galleryBanner": {
         "theme": "dark",
@@ -211,6 +212,11 @@
                 "command": "robot.convertOutputXMLToRobostream",
                 "title": "Convert output.xml to robocorp stream",
                 "category": "Robot Framework"
+            },
+            {
+                "command": "robot.applyCodeAction",
+                "title": "Applies some code action",
+                "category": "Robot Framework"
             }
         ],
         "submenus": [
@@ -337,6 +343,10 @@
                 },
                 {
                     "command": "robot.convertOutputXMLToRobostream",
+                    "when": "false"
+                },
+                {
+                    "command": "robot.applyCodeAction",
                     "when": "false"
                 }
             ]

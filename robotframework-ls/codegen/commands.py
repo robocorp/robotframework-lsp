@@ -195,6 +195,12 @@ COMMANDS: List[Command] = [
         server_handled=True,
         hide_from_command_palette=True,
     ),
+    Command(
+        "robot.applyCodeAction",
+        "Applies some code action",
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
 ]
 
 

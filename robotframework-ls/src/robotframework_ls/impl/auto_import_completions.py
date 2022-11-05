@@ -27,6 +27,7 @@ class _Collector(object):
         token,
         import_location_info: "_ImportLocationInfo",
         imported_keyword_name_to_keyword: Dict[str, List[IKeywordFound]],
+        exact_match: bool,
     ):
         from robotframework_ls.impl.string_matcher import RobotStringMatcher
 
@@ -37,12 +38,17 @@ class _Collector(object):
         self.import_location_info = import_location_info
         self.token = token
         self.imported_keyword_name_to_keyword = imported_keyword_name_to_keyword
+        self.exact_match = exact_match
 
         self._matcher = RobotStringMatcher(token_str)
 
     def accepts(self, keyword_name: str) -> bool:
-        if not self._matcher.accepts_keyword_name(keyword_name):
-            return False
+        if self.exact_match:
+            if not self._matcher.is_same_robot_name(keyword_name):
+                return False
+        else:
+            if not self._matcher.accepts_keyword_name(keyword_name):
+                return False
 
         keywords_found: Optional[
             List[IKeywordFound]
@@ -325,7 +331,8 @@ def _obtain_import_location_info(completion_context) -> _ImportLocationInfo:
 def complete(
     completion_context: ICompletionContext,
     imported_keyword_name_to_keyword: Dict[str, List[IKeywordFound]],
-):
+    exact_match=False,
+) -> List[CompletionItemTypedDict]:
     from robotframework_ls.impl import ast_utils
 
     token_info = completion_context.get_current_token()
@@ -341,6 +348,7 @@ def complete(
                 token,
                 import_location_info,
                 imported_keyword_name_to_keyword,
+                exact_match=exact_match,
             )
             _collect_auto_import_completions(completion_context, collector)
 

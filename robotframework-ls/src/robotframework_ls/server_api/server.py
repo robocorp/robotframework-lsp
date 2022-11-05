@@ -27,6 +27,7 @@ from robocorp_ls_core.lsp import (
     SelectionRangeTypedDict,
     TextDocumentCodeActionTypedDict,
     ICustomDiagnosticDataTypedDict,
+    CommandTypedDict,
 )
 from robotframework_ls.impl.protocols import (
     IKeywordFound,
@@ -1063,13 +1064,13 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
     def _threaded_code_action(
         self, doc_uri: str, params: TextDocumentCodeActionTypedDict, monitor: IMonitor
-    ) -> Optional[List[DocumentHighlightTypedDict]]:
+    ) -> Optional[List[CommandTypedDict]]:
 
         from robotframework_ls.impl.code_action import code_action
 
-        start = params["range"]["start"]
-        line = start["line"]
-        col = start["character"]
+        end = params["range"]["end"]
+        line = end["line"]
+        col = end["character"]
         completion_context = self._create_completion_context(
             doc_uri, line, col, monitor
         )
@@ -1079,7 +1080,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         context = params["context"]
         found_data: List[ICustomDiagnosticDataTypedDict] = []
         for diagnostic in context["diagnostics"]:
-            data = diagnostic.get("data")
+            data: Optional[ICustomDiagnosticDataTypedDict] = diagnostic.get("data")
             if data is not None:
                 found_data.append(data)
         return code_action(completion_context, found_data)

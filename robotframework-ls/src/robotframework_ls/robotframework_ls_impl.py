@@ -48,6 +48,7 @@ from robocorp_ls_core.lsp import (
     PrepareRenameParamsTypedDict,
     SelectionRangeParamsTypedDict,
     TextDocumentCodeActionTypedDict,
+    WorkspaceEditParamsTypedDict,
 )
 from robotframework_ls.commands import (
     ROBOT_GET_RFLS_HOME_DIR,
@@ -60,6 +61,7 @@ from robotframework_ls.commands import (
     ROBOT_GENERATE_FLOW_EXPLORER_MODEL,
     ROBOT_COLLECT_ROBOT_DOCUMENTATION,
     ROBOT_CONVERT_OUTPUT_XML_TO_ROBOSTREAM,
+    ROBOT_APPLY_CODE_ACTION,
 )
 from robocorp_ls_core.jsonrpc.exceptions import JsonRpcException
 import weakref
@@ -1411,6 +1413,11 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         #     },
         # }
         doc_uri = params["textDocument"]["uri"]
+        # Note: we have to use the "api" server which has symbols caches.
         return self.async_api_forward(
-            "request_code_action", "others", doc_uri, params=params
+            "request_code_action", "api", doc_uri, params=params
         )
+
+    @command_dispatcher(ROBOT_APPLY_CODE_ACTION)
+    def _apply_code_action(self, edit: WorkspaceEditParamsTypedDict):
+        self._lsp_messages.apply_edit_args(edit)

@@ -674,7 +674,7 @@ class CompletionItemTypedDict(TypedDict, total=False):
     # the edit's replace range, that means it must be contained and starting at the same position.
     #
     # @since 3.16.0 additional type `InsertReplaceEdit`
-    textEdit: Optional[Any]  # Union[TextEdit, InsertReplaceEdit]
+    textEdit: Optional[TextEditTypedDict]  # Union[TextEdit, InsertReplaceEdit]
     #
     # An optional array of additional [text edits](#TextEdit) that are applied when
     # selecting this completion. Edits must not overlap (including the same insert position)
@@ -863,6 +863,11 @@ class Location(_Base):
         self.range = range
 
 
+class WorkspaceEditParamsTypedDict(TypedDict, total=False):
+    label: Optional[str]
+    edit: WorkspaceEditTypedDict
+
+
 class LSPMessages(object):
     M_PUBLISH_DIAGNOSTICS = "textDocument/publishDiagnostics"
     M_APPLY_EDIT = "workspace/applyEdit"
@@ -876,8 +881,14 @@ class LSPMessages(object):
     def endpoint(self) -> IEndPoint:
         return self._endpoint
 
-    def apply_edit(self, edit):
-        return self._endpoint.request(self.M_APPLY_EDIT, {"edit": edit})
+    def apply_edit_args(self, edit_args: WorkspaceEditParamsTypedDict):
+        return self._endpoint.request(self.M_APPLY_EDIT, params=edit_args)
+
+    def apply_edit(self, edit: WorkspaceEditTypedDict, label: Optional[str] = None):
+        edit_args: WorkspaceEditParamsTypedDict = {"edit": edit}
+        if label:
+            edit_args["label"] = label
+        return self.apply_edit_args(edit_args)
 
     def publish_diagnostics(self, doc_uri, diagnostics):
         self._endpoint.notify(
@@ -922,11 +933,11 @@ class LSPMessages(object):
         )
 
 
-class ICustomDiagnosticDataTypedDict(TypedDict, total=False):
+class ICustomDiagnosticDataTypedDict(TypedDict):
     kind: str
 
 
-class ICustomDiagnosticDataUndefinedKeywordTypedDict(TypedDict, total=False):
+class ICustomDiagnosticDataUndefinedKeywordTypedDict(TypedDict):
     kind: str  # undefined_keyword
     name: str
 
