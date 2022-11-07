@@ -236,3 +236,52 @@ Renamed Keyword in resource
     context = CompletionContext(robot_doc, workspace=workspace.ws)
     dependency_graph = context.collect_dependency_graph()
     assert caches.cache_hits == 1
+
+
+def test_dependency_graph_invalidate_unresolved(workspace):
+    from robotframework_ls.impl.completion_context import CompletionContext
+
+    workspace.set_root("case_deps")
+    robot_doc = workspace.get_doc("root3.robot")
+
+    # Workaround case where a cache invalidation occurs due to the setup
+    # of the workspace...
+
+    import time
+
+    time.sleep(0.1)
+
+    ws: IRobotWorkspace = workspace.ws
+    caches: ICompletionContextWorkspaceCaches = ws.completion_context_workspace_caches
+    invalidations = caches.invalidations
+
+    while True:
+        context = CompletionContext(robot_doc, workspace=workspace.ws)
+        dependency_graph = context.collect_dependency_graph()
+        initial_dict = dependency_graph.to_dict()
+        initial_nodes_info = _nodes_info_to_compare(dependency_graph)
+
+        # Step 1: change nothing -> contents should be gotten from the cache.
+
+        context = CompletionContext(robot_doc, workspace=workspace.ws)
+        dependency_graph = context.collect_dependency_graph()
+        assert initial_dict == dependency_graph.to_dict()
+        check_nodes(initial_nodes_info, dependency_graph)
+        if invalidations == caches.invalidations:
+            break
+        else:
+            assert caches.invalidations < 5
+            invalidations = caches.invalidations
+
+    assert caches.cache_hits == 1
+
+    context = CompletionContext(robot_doc, workspace=workspace.ws)
+    dependency_graph = context.collect_dependency_graph()
+    assert caches.cache_hits == 2
+
+    # Putting dependent doc there should invalidate the cache.
+    workspace.put_doc("resource_not_there.resource", "")
+
+    context = CompletionContext(robot_doc, workspace=workspace.ws)
+    dependency_graph = context.collect_dependency_graph()
+    assert caches.cache_hits == 2  # i.e. no hits...

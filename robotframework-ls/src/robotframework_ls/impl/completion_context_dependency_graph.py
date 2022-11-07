@@ -13,6 +13,7 @@ from robotframework_ls.impl.protocols import (
 from robotframework_ls.impl.robot_constants import BUILTIN_LIB
 from robocorp_ls_core.callbacks import Callback
 from robocorp_ls_core import uris
+import os
 
 
 class _Memo(object):
@@ -70,6 +71,11 @@ class CompletionContextDependencyGraph:
         ] = {}
 
         self._invalidate_on_uri_changes: Set[str] = set()
+        self._invalidate_on_basename_no_ext_changes: Set[str] = set()
+
+    def invalidate_on_basename_change(self, name):
+        basename = self._normalize_for_basename_check(name)
+        self._invalidate_on_basename_no_ext_changes.add(basename)
 
     def to_dict(self):
         libraries = {}
@@ -185,7 +191,20 @@ class CompletionContextDependencyGraph:
             # it's used in the cache key when checking so it won't be a match).
             return False
 
-        return uris.normalize_uri(uri) in self._invalidate_on_uri_changes
+        if uris.normalize_uri(uri) in self._invalidate_on_uri_changes:
+            return True
+
+        basename = self._normalize_for_basename_check(uri)
+        if basename in self._invalidate_on_basename_no_ext_changes:
+            return True
+
+        return False
+
+    def _normalize_for_basename_check(self, name):
+        if "}" in name:
+            # Get everything after a variable to account for patterns such as ${/}.
+            name = name.split("}")[-1]
+        return os.path.basename(os.path.splitext(name)[0]).lower()
 
     @classmethod
     def _collect_library_info_from_completion_context(
@@ -284,6 +303,10 @@ class CompletionContextDependencyGraph:
             # i.e.: Note that the cache key involves the import names, not the
             # import locations (so, in case there's a match we need to fix
             # the newly returned info).
+
+            resource_imports = completion_context.get_resource_imports()
+            variable_imports = completion_context.get_variable_imports()
+
             cache_key = (
                 completion_context.doc.uri,
                 tuple(
@@ -293,13 +316,13 @@ class CompletionContextDependencyGraph:
                 tuple(
                     (
                         tuple(t.value for t in node.tokens if t.type == t.NAME)
-                        for node in completion_context.get_resource_imports()
+                        for node in resource_imports
                     )
                 ),
                 tuple(
                     (
                         tuple(t.value for t in node.tokens if t.type == t.NAME)
-                        for node in completion_context.get_variable_imports()
+                        for node in variable_imports
                     )
                 ),
             )
@@ -390,6 +413,19 @@ class CompletionContextDependencyGraph:
                     dependency_graph.add_variable_infos(
                         curr_ctx.doc.uri, new_variable_imports
                     )
+
+                for node in resource_imports:
+                    for t in node.tokens:
+                        if t.type == t.NAME:
+                            dependency_graph.invalidate_on_basename_change(t.value)
+
+                for n in variable_imports:
+                    for t in n.tokens:
+                        if t.type == t.NAME:
+                            dependency_graph.invalidate_on_basename_change(t.value)
+
+                for info in initial_library_infos:
+                    dependency_graph.invalidate_on_basename_change(info.name)
 
                 is_root_context = False
 
