@@ -352,10 +352,12 @@ def collect_analysis_errors(initial_completion_context):
                     error_msg += f"\nNote: resolved name: {resolved_name}"
 
             error = ast_utils.Error(error_msg, start, end)
-            error.data: ICustomDiagnosticDataUndefinedResourceTypedDict = {
+            undefined_resource_data: ICustomDiagnosticDataUndefinedResourceTypedDict = {
                 "kind": "undefined_resource",
                 "name": resource_name,
+                "resolved_name": resolved_name,
             }
+            error.data = undefined_resource_data
             errors.append(error)
 
     collector = _AnalysisKeywordsCollector(
@@ -396,10 +398,11 @@ def collect_analysis_errors(initial_completion_context):
                     "Undefined keyword: %s." % (keyword_usage_info.name,),
                     tokens=[keyword_usage_info.token],
                 )
-                error.data: ICustomDiagnosticDataUndefinedKeywordTypedDict = {
+                undefined_keyword_data: ICustomDiagnosticDataUndefinedKeywordTypedDict = {
                     "kind": "undefined_keyword",
                     "name": keyword_usage_info.name,
                 }
+                error.data = undefined_keyword_data
                 errors.append(error)
 
             else:

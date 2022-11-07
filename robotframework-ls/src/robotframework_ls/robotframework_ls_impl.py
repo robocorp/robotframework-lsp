@@ -1419,5 +1419,6 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         )
 
     @command_dispatcher(ROBOT_APPLY_CODE_ACTION)
-    def _apply_code_action(self, edit: WorkspaceEditParamsTypedDict):
-        self._lsp_messages.apply_edit_args(edit)
+    def _apply_code_action(self, code_action_info):
+        apply_edit: WorkspaceEditParamsTypedDict = code_action_info["apply_edit"]
+        self._lsp_messages.apply_edit_args(apply_edit)

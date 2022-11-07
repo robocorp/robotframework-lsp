@@ -1,0 +1,9 @@
+- arguments:
+  - apply_edit:
+      edit:
+        documentChanges:
+        - kind: create
+          uri: import_from_this_robot.robot
+      label: 'Create import_from_this_robot.robot '
+  command: robot.applyCodeAction
+  title: 'Create import_from_this_robot.robot '

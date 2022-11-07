@@ -1,27 +1,28 @@
 - arguments:
-  - edit:
-      changes:
-        case4.robot:
-        - newText: My Keyword
-          range:
-            end:
-              character: 14
-              line: 4
-            start:
-              character: 4
-              line: 4
-        - newText: '*** Settings ***
+  - apply_edit:
+      edit:
+        changes:
+          case4.robot:
+          - newText: My Keyword
+            range:
+              end:
+                character: 14
+                line: 4
+              start:
+                character: 4
+                line: 4
+          - newText: '*** Settings ***
 
-            Resource    import_from_this_robot.robot
+              Resource    import_from_this_robot.robot
 
-            '
-          range:
-            end:
-              character: 0
-              line: 0
-            start:
-              character: 0
-              line: 0
-    label: Import My Keyword (import_from_this_robot.robot)
+              '
+            range:
+              end:
+                character: 0
+                line: 0
+              start:
+                character: 0
+                line: 0
+      label: Import My Keyword (import_from_this_robot.robot)
   command: robot.applyCodeAction
   title: Import My Keyword (import_from_this_robot.robot)

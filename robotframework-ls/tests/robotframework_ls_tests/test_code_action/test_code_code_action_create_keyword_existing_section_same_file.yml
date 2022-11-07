@@ -1,18 +1,19 @@
 - arguments:
-  - edit:
-      changes:
-        case4.robot:
-        - newText: 'My Keyword
+  - apply_edit:
+      edit:
+        changes:
+          case4.robot:
+          - newText: 'My Keyword
 
 
-            '
-          range:
-            end:
-              character: 0
-              line: 9
-            start:
-              character: 0
-              line: 9
-    label: 'Create Keyword: My Keyword (in current file)'
+              '
+            range:
+              end:
+                character: 0
+                line: 9
+              start:
+                character: 0
+                line: 9
+      label: 'Create Keyword: My Keyword (in current file)'
   command: robot.applyCodeAction
   title: 'Create Keyword: My Keyword (in current file)'

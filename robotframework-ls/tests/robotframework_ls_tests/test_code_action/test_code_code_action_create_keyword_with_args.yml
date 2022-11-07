@@ -1,15 +1,16 @@
 - arguments:
-  - edit:
-      changes:
-        case4.robot:
-        - newText: "Foobar\n    [Arguments]    ${value}    ${another}\n\n\n"
-          range:
-            end:
-              character: 0
-              line: 2
-            start:
-              character: 0
-              line: 2
-    label: 'Create Keyword: Foobar (in current file)'
+  - apply_edit:
+      edit:
+        changes:
+          case4.robot:
+          - newText: "Foobar\n    [Arguments]    ${value}    ${another}\n\n\n"
+            range:
+              end:
+                character: 0
+                line: 2
+              start:
+                character: 0
+                line: 2
+      label: 'Create Keyword: Foobar (in current file)'
   command: robot.applyCodeAction
   title: 'Create Keyword: Foobar (in current file)'

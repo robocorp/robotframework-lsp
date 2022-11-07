@@ -20,7 +20,7 @@ https://github.com/microsoft/language-server-protocol/tree/gh-pages/_specificati
 https://microsoft.github.io/language-server-protocol/specification
 """
 from __future__ import annotations
-from typing import List, Union, Optional, Any, Tuple, Dict
+from typing import List, Union, Optional, Any, Tuple, Dict, Sequence
 import typing
 
 from robocorp_ls_core.protocols import IEndPoint, IFuture, TypedDict
@@ -451,13 +451,32 @@ class TextDocumentEditTypedDict(TypedDict):
     edits: List[Union[TextEditTypedDict, AnnotatedTextEditTypedDict]]
 
 
+class CreateFileOptions(TypedDict, total=False):
+    overwrite: Optional[bool]
+    ignoreIfExists: Optional[bool]
+
+
+class CreateFileTypedDict(TypedDict, total=False):
+    kind: str  # "create"
+
+    uri: str  # DocumentUri
+
+    options: Optional[CreateFileOptions]
+
+    annotationId: str  # Optional[ChangeAnnotationIdentifier]
+
+
 class WorkspaceEditTypedDict(TypedDict, total=False):
     # Changes to existing docs.
     changes: Dict[str, List[TextEditTypedDict]]
 
     # Changes + resources changes (rename, delete, create)
     # Requires workspace.workspaceEdit.documentChanges client capability
-    documentChanges: Any
+    documentChanges: Union[
+        Sequence[TextDocumentEditTypedDict],
+        Sequence[TextDocumentEditTypedDict],
+        Sequence[CreateFileTypedDict],
+    ]
 
     # Changes with descriptions
     # Requires workspace.changeAnnotationSupport client capability
@@ -945,6 +964,7 @@ class ICustomDiagnosticDataUndefinedKeywordTypedDict(TypedDict):
 class ICustomDiagnosticDataUndefinedResourceTypedDict(TypedDict):
     kind: str  # undefined_resource
     name: str
+    resolved_name: str
 
 
 class Error(object):
@@ -965,7 +985,7 @@ class Error(object):
         self.start = start
         self.end = end
         self.severity = severity
-        self.data = None
+        self.data: Any = None
 
     def to_dict(self):
         ret = {

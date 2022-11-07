@@ -6,19 +6,35 @@ def check_code_action_data_regression(data_regression, found, basename=None):
     for c in found:
         arguments = c["arguments"]
         if arguments:
+            title = c["title"]
+            if "(at " in title:
+                c["title"] = title[: title.index("(at")]
+
             for c in arguments:
-                changes = c["edit"]["changes"]
-                new_changes = {}
-                for uri, v in changes.items():
-                    uri = uri.split("/")[-1]
-                    new_changes[uri] = v
-                c["edit"]["changes"] = new_changes
+                label = c["apply_edit"]["label"]
+                if "(at " in label:
+                    c["apply_edit"]["label"] = label[: label.index("(at")]
+                changes = c["apply_edit"]["edit"].get("changes", None)
+                if changes:
+                    new_changes = {}
+                    for uri, v in changes.items():
+                        uri = uri.split("/")[-1]
+                        new_changes[uri] = v
+                    c["apply_edit"]["edit"]["changes"] = new_changes
+
+                changes = c["apply_edit"]["edit"].get("documentChanges", None)
+                if changes:
+                    for change in changes:
+                        if change.get("kind") == "create":
+                            change["uri"] = change["uri"].split("/")[-1]
 
     data_regression.check(found, basename=basename)
 
 
 def check_apply_result(doc, actions, expected):
-    changes = next(iter(actions[0]["arguments"][0]["edit"]["changes"].values()))
+    changes = next(
+        iter(actions[0]["arguments"][0]["apply_edit"]["edit"]["changes"].values())
+    )
     doc.apply_text_edits(changes)
 
     expected = expected.replace("\r\n", "\n").replace("\r", "\n")
@@ -266,21 +282,19 @@ Something
     )
 
 
-# def test_code_code_action_create_resource(workspace, libspec_manager, data_regression):
-#     from robotframework_ls.impl.code_action import code_action
-#
-#     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
-#     doc = workspace.put_doc("case4.robot")
-#     doc.source = """
-# *** Settings ***
-# Resource    ./import_from_this_robot
-# """
-#
-#     completion_context, diagnostic_data = _analyze_and_create_completion_context(
-#         doc, workspace, "undefined_resource"
-#     )
-#     print(diagnostic_data)
-#     found_data = [diagnostic_data]
-#     actions = code_action(completion_context, found_data)
-#     print(actions)
-#     # check_code_action_data_regression(data_regression, actions)
+def test_code_code_action_create_resource(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.code_action import code_action
+
+    workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.put_doc("case4.robot")
+    doc.source = """
+*** Settings ***
+Resource    ./import_from_this_robot.robot
+"""
+
+    completion_context, diagnostic_data = _analyze_and_create_completion_context(
+        doc, workspace, "undefined_resource"
+    )
+    found_data = [diagnostic_data]
+    actions = code_action(completion_context, found_data)
+    check_code_action_data_regression(data_regression, actions)

@@ -9,10 +9,13 @@ from robocorp_ls_core.lsp import (
     CompletionItemTypedDict,
     TextEditTypedDict,
     WorkspaceEditParamsTypedDict,
+    ICustomDiagnosticDataUndefinedResourceTypedDict,
 )
 from robotframework_ls.impl.protocols import ICompletionContext, IKeywordFound
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.basic import isinstance_name
+import os
+from pathlib import Path
 
 log = get_logger(__name__)
 
@@ -57,7 +60,7 @@ def _add_import_code_action(
         command: CommandTypedDict = {
             "title": title,
             "command": "robot.applyCodeAction",
-            "arguments": [edit_params],
+            "arguments": [{"apply_edit": edit_params}],
         }
 
         yield command
@@ -143,10 +146,44 @@ def _create_keyword_code_action(
         command: CommandTypedDict = {
             "title": title,
             "command": "robot.applyCodeAction",
-            "arguments": [edit_params],
+            "arguments": [{"apply_edit": edit_params}],
         }
 
         yield command
+
+
+def _undefined_resource_code_action(
+    completion_context: ICompletionContext,
+    undefined_resource_data: ICustomDiagnosticDataUndefinedResourceTypedDict,
+) -> Iterator[CommandTypedDict]:
+    from robocorp_ls_core.lsp import CreateFileTypedDict
+    from robocorp_ls_core import uris
+
+    name = undefined_resource_data["resolved_name"]
+    if not name:
+        name = undefined_resource_data["name"]
+        if not name:
+            return
+
+    if "$" in name or "{" in name or "}" in name:
+        return
+
+    path = Path(os.path.join(os.path.dirname(completion_context.doc.path), name))
+    create_doc_change: CreateFileTypedDict = {
+        "kind": "create",
+        "uri": uris.from_fs_path(str(path)),
+    }
+    edit: WorkspaceEditTypedDict = {"documentChanges": [create_doc_change]}
+    title: str = f"Create {path.name} (at {path.parent})"
+    edit_params: WorkspaceEditParamsTypedDict = {"edit": edit, "label": title}
+
+    command: CommandTypedDict = {
+        "title": title,
+        "command": "robot.applyCodeAction",
+        "arguments": [{"apply_edit": edit_params}],
+    }
+
+    yield command
 
 
 def _undefined_keyword_code_action(
@@ -206,6 +243,15 @@ def code_action(
             )
             ret.extend(
                 _undefined_keyword_code_action(
+                    completion_context, undefined_keyword_data
+                )
+            )
+        elif data["kind"] == "undefined_resource":
+            undefined_keyword_data = typing.cast(
+                ICustomDiagnosticDataUndefinedResourceTypedDict, data
+            )
+            ret.extend(
+                _undefined_resource_code_action(
                     completion_context, undefined_keyword_data
                 )
             )
