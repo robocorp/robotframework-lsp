@@ -42,3 +42,17 @@ def create_convert_keyword_format_func(config):
                 return lambda label: label.upper()
 
     return lambda x: x
+
+
+def get_arguments_separator(completion_context):
+    from robotframework_ls.impl.robot_generated_lsp_constants import (
+        OPTION_ROBOT_COMPLETIONS_KEYWORDS_ARGUMENTS_SEPARATOR,
+    )
+
+    separator = "    "
+    config = completion_context.config
+    if config is not None:
+        separator = config.get_setting(
+            OPTION_ROBOT_COMPLETIONS_KEYWORDS_ARGUMENTS_SEPARATOR, str, "    "
+        )
+    return separator

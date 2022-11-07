@@ -176,21 +176,14 @@ def complete(completion_context: ICompletionContext) -> List[CompletionItemTyped
 
     :param CompletionContext completion_context:
     """
-    from robotframework_ls.impl.robot_generated_lsp_constants import (
-        OPTION_ROBOT_COMPLETIONS_KEYWORDS_ARGUMENTS_SEPARATOR,
-    )
+    from robotframework_ls.robot_config import get_arguments_separator
 
     sel = completion_context.sel  #::type sel: DocumentSelection
     line_to_column = sel.line_to_column.lstrip().lower()
     if not line_to_column:
         return []
 
-    separator_spaces = "    "
-    config = completion_context.config
-    if config is not None:
-        separator_spaces = config.get_setting(
-            OPTION_ROBOT_COMPLETIONS_KEYWORDS_ARGUMENTS_SEPARATOR, str, "    "
-        )
+    separator_spaces = get_arguments_separator(completion_context)
 
     ret = []
     for label, data in _get_global_snippets():

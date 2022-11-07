@@ -35,6 +35,7 @@ from robocorp_ls_core.lsp import (
     TextDocumentItem,
     TextDocumentContentChangeEvent,
     RangeTypedDict,
+    TextEditTypedDict,
 )
 import weakref
 from collections import namedtuple
@@ -44,6 +45,12 @@ from robocorp_ls_core.watchdog_wrapper import IFSObserver
 log = get_logger(__name__)
 
 _FileMTimeInfo = namedtuple("_FileMTimeInfo", "st_mtime, st_size")
+
+
+def _text_edit_reverse_key(text_edit: TextEditTypedDict):
+    start = text_edit["range"]["start"]
+    # Note: negative because we want the reversed order for the apply
+    return -start["line"], -start["character"]
 
 
 class _DirInfo(object):
@@ -852,9 +859,10 @@ class Document(object):
 
         self._source = new.getvalue()
 
-    def apply_text_edits(self, text_edits):
+    def apply_text_edits(self, text_edits: List[TextEditTypedDict]):
         self._check_in_mutate_thread()
-        for text_edit in reversed(text_edits):
+        text_edits = sorted(text_edits, key=_text_edit_reverse_key)
+        for text_edit in text_edits:
             self._apply_change(text_edit["range"], text_edit["newText"])
 
     def find_line_with_contents(self, contents: str) -> int:

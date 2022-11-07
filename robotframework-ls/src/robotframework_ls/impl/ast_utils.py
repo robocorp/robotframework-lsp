@@ -342,13 +342,28 @@ def print_ast(node, stream=None):
     errors_visitor.visit(node)
 
 
+def iter_sections(node):
+    yield from iter(node.sections)
+
+
+def find_keyword_section(node):
+    for section in iter_sections(node):
+        if isinstance_name(section, "KeywordSection"):
+            return section
+    return None
+
+
+def is_keyword_section(node) -> bool:
+    return isinstance_name(node, "KeywordSection")
+
+
 def find_section(node, line: int) -> Optional[INode]:
     """
     :param line:
         0-based
     """
     last_section = None
-    for section in node.sections:
+    for section in iter_sections(node):
         # section.lineno is 1-based.
         if (section.lineno - 1) <= line:
             last_section = section

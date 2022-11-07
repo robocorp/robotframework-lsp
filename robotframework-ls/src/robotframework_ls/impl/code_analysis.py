@@ -7,6 +7,7 @@ from robocorp_ls_core.lsp import (
     DiagnosticSeverity,
     DiagnosticTag,
     ICustomDiagnosticDataUndefinedKeywordTypedDict,
+    ICustomDiagnosticDataUndefinedResourceTypedDict,
 )
 from robocorp_ls_core.protocols import check_implements
 from robocorp_ls_core.robotframework_log import get_logger
@@ -350,7 +351,12 @@ def collect_analysis_errors(initial_completion_context):
                 if "{" in resource_name and resolved_name:
                     error_msg += f"\nNote: resolved name: {resolved_name}"
 
-            errors.append(ast_utils.Error(error_msg, start, end))
+            error = ast_utils.Error(error_msg, start, end)
+            error.data: ICustomDiagnosticDataUndefinedResourceTypedDict = {
+                "kind": "undefined_resource",
+                "name": resource_name,
+            }
+            errors.append(error)
 
     collector = _AnalysisKeywordsCollector(
         on_unresolved_library,
