@@ -24,5 +24,7 @@
                 character: 0
                 line: 0
       label: Import My Keyword (import_from_this_robot.robot)
+    lint_uris:
+    - case4.robot
   command: robot.applyCodeAction
   title: Import My Keyword (import_from_this_robot.robot)

@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, Iterator
+from typing import List, Dict, Any, Iterator, Optional
 import typing
 
 from robocorp_ls_core.lsp import (
@@ -10,8 +10,14 @@ from robocorp_ls_core.lsp import (
     TextEditTypedDict,
     WorkspaceEditParamsTypedDict,
     ICustomDiagnosticDataUndefinedResourceTypedDict,
+    RangeTypedDict,
+    ShowDocumentParamsTypedDict,
 )
-from robotframework_ls.impl.protocols import ICompletionContext, IKeywordFound
+from robotframework_ls.impl.protocols import (
+    ICompletionContext,
+    IKeywordFound,
+    IResourceImportNode,
+)
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.basic import isinstance_name
 import os
@@ -22,7 +28,6 @@ log = get_logger(__name__)
 
 def _add_import_code_action(
     completion_context: ICompletionContext,
-    undefined_keyword_data: ICustomDiagnosticDataUndefinedKeywordTypedDict,
 ) -> Iterator[CommandTypedDict]:
     from robotframework_ls.impl.collect_keywords import (
         collect_keyword_name_to_keyword_found,
@@ -68,7 +73,6 @@ def _add_import_code_action(
 
 def _create_keyword_in_current_file_text_edit(
     completion_context: ICompletionContext,
-    undefined_keyword_data: ICustomDiagnosticDataUndefinedKeywordTypedDict,
     keyword_template: str,
 ) -> TextEditTypedDict:
     from robotframework_ls.impl import ast_utils
@@ -100,7 +104,7 @@ def _create_keyword_in_current_file_text_edit(
         # We need to create the keyword section too
         current_section = completion_context.get_ast_current_section()
         if current_section is None:
-            use_line = 1
+            use_line = 0
         else:
             use_line = current_section.lineno - 1
 
@@ -124,32 +128,27 @@ def _create_keyword_in_current_file_text_edit(
         }
 
 
-def _create_keyword_code_action(
-    completion_context: ICompletionContext,
-    undefined_keyword_data: ICustomDiagnosticDataUndefinedKeywordTypedDict,
-    keyword_template: str,
+def _create_keyword_in_current_file_code_action(
+    completion_context: ICompletionContext, keyword_template: str, keyword_name: str
 ) -> Iterator[CommandTypedDict]:
 
-    name = undefined_keyword_data["name"]
-    if "." not in name:
-        label = name
-        lst: List[TextEditTypedDict] = [
-            _create_keyword_in_current_file_text_edit(
-                completion_context, undefined_keyword_data, keyword_template
-            )
-        ]
+    text_edit = _create_keyword_in_current_file_text_edit(
+        completion_context, keyword_template
+    )
+    lst: List[TextEditTypedDict] = [text_edit]
 
-        changes = {completion_context.doc.uri: lst}
-        edit: WorkspaceEditTypedDict = {"changes": changes}
-        title = f"Create Keyword: {label} (in current file)"
-        edit_params: WorkspaceEditParamsTypedDict = {"edit": edit, "label": title}
-        command: CommandTypedDict = {
-            "title": title,
-            "command": "robot.applyCodeAction",
-            "arguments": [{"apply_edit": edit_params}],
-        }
+    changes = {completion_context.doc.uri: lst}
+    edit: WorkspaceEditTypedDict = {"changes": changes}
+    title = f"Create Keyword: {keyword_name} (in current file)"
+    edit_params: WorkspaceEditParamsTypedDict = {"edit": edit, "label": title}
+    command: CommandTypedDict = {
+        "title": title,
+        "command": "robot.applyCodeAction",
+        "arguments": [{"apply_edit": edit_params}],
+    }
 
-        yield command
+    _add_show_document_at_command(command, completion_context.doc.uri, text_edit)
+    yield command
 
 
 def _undefined_resource_code_action(
@@ -169,9 +168,10 @@ def _undefined_resource_code_action(
         return
 
     path = Path(os.path.join(os.path.dirname(completion_context.doc.path), name))
+    doc_uri = uris.from_fs_path(str(path))
     create_doc_change: CreateFileTypedDict = {
         "kind": "create",
-        "uri": uris.from_fs_path(str(path)),
+        "uri": doc_uri,
     }
     edit: WorkspaceEditTypedDict = {"documentChanges": [create_doc_change]}
     title: str = f"Create {path.name} (at {path.parent})"
@@ -183,6 +183,8 @@ def _undefined_resource_code_action(
         "arguments": [{"apply_edit": edit_params}],
     }
 
+    _add_show_document_at_command(command, doc_uri)
+
     yield command
 
 
@@ -193,21 +195,21 @@ def _undefined_keyword_code_action(
     from robotframework_ls.robot_config import get_arguments_separator
 
     keyword_template = """$keyword_name$arguments\n\n"""
-    # We'd like to have a cursor here, but alas, this isn't possible...
-    # See: https://github.com/microsoft/language-server-protocol/issues/592
-    # See: https://github.com/microsoft/language-server-protocol/issues/724
-    keyword_name = undefined_keyword_data["name"]
-    keyword_template = keyword_template.replace("$keyword_name", keyword_name)
+
+    # --- Update the arguments in the template.
 
     arguments: List[str] = []
     keyword_usage_info = completion_context.get_current_keyword_usage_info()
     if keyword_usage_info is not None:
         for token in keyword_usage_info.node.tokens:
             if token.type == token.ARGUMENT:
-                if "=" in token.value:
-                    name = token.value.split("=")[0]
+                i = token.value.find("=")
+                if i > 0:
+                    name = token.value[:i]
                 else:
                     name = token.value
+                if not name:
+                    name = "arg"
                 arguments.append(f"${{{name}}}")
 
     separator = get_arguments_separator(completion_context)
@@ -221,10 +223,145 @@ def _undefined_keyword_code_action(
 
     keyword_template = keyword_template.replace("$arguments", args_str)
 
-    yield from _add_import_code_action(completion_context, undefined_keyword_data)
-    yield from _create_keyword_code_action(
-        completion_context, undefined_keyword_data, keyword_template
+    # --- Update the keyword name in the template.
+
+    # We'd like to have a cursor here, but alas, this isn't possible...
+    # See: https://github.com/microsoft/language-server-protocol/issues/592
+    # See: https://github.com/microsoft/language-server-protocol/issues/724
+    keyword_name = undefined_keyword_data["name"]
+
+    dots_found = keyword_name.count(".")
+    if dots_found >= 2:
+        # Must check for use cases... Do nothing for now.
+        return
+
+    if dots_found == 1:
+        # Something as:
+        # my_resource.Keyword or
+        # my_python_module.Keyword
+        #
+        # in this case we need to create a keyword "Keyword" in "my_resource".
+        # If my_module is imported, create it in that module, otherwise,
+        # if it exists but we haven't imported it, we need to import it.
+        # If it doesn't exist we need to create it first.
+        splitted = keyword_name.split(".")
+        resource_or_import_or_alias_name, keyword_name = splitted
+        keyword_template = keyword_template.replace("$keyword_name", keyword_name)
+        yield from _deal_with_resource_or_import_or_alias_name(
+            completion_context,
+            resource_or_import_or_alias_name,
+            keyword_template,
+            keyword_name,
+        )
+        return
+
+    keyword_template = keyword_template.replace("$keyword_name", keyword_name)
+
+    yield from _add_import_code_action(completion_context)
+    yield from _create_keyword_in_current_file_code_action(
+        completion_context, keyword_template, keyword_name
     )
+
+
+def _matches_resource_import(
+    resource_import: IResourceImportNode,
+    name: str,
+):
+    from robotframework_ls.impl.text_utilities import normalize_robot_name
+
+    name = normalize_robot_name(name)
+
+    for token in resource_import.tokens:
+        if token.type == token.NAME:
+            import_name = normalize_robot_name(token.value)
+
+            if import_name == name:
+                return True
+
+            # ./my_resource.robot -> my_resource.robot
+            import_name = os.path.basename(import_name)
+            if import_name == name:
+                return True
+
+            # Handle something as my_resource.robot
+            import_name = os.path.splitext(import_name)[0]
+            if import_name == name:
+                return True
+
+    return False
+
+
+def _create_keyword_in_another_file_code_action(
+    completion_context: ICompletionContext, keyword_template: str, keyword_name: str
+) -> Iterator[CommandTypedDict]:
+
+    text_edit = _create_keyword_in_current_file_text_edit(
+        completion_context, keyword_template
+    )
+    lst: List[TextEditTypedDict] = [text_edit]
+
+    changes = {completion_context.doc.uri: lst}
+    edit: WorkspaceEditTypedDict = {"changes": changes}
+    modname: str = os.path.basename(completion_context.doc.uri)
+    title = f"Create Keyword: {keyword_name} (in {modname})"
+    edit_params: WorkspaceEditParamsTypedDict = {"edit": edit, "label": title}
+
+    command: CommandTypedDict = {
+        "title": title,
+        "command": "robot.applyCodeAction",
+        "arguments": [
+            {
+                "apply_edit": edit_params,
+            }
+        ],
+    }
+
+    _add_show_document_at_command(command, completion_context.doc.uri, text_edit)
+
+    yield command
+
+
+def _add_show_document_at_command(
+    command: CommandTypedDict,
+    doc_uri: str,
+    text_edit: Optional[TextEditTypedDict] = None,
+):
+    if text_edit:
+        endline = text_edit["range"]["end"]["line"]
+        endchar = text_edit["range"]["end"]["character"]
+    else:
+        endline = 0
+        endchar = 0
+
+    selection: RangeTypedDict = {
+        "start": {"line": endline, "character": endchar},
+        "end": {"line": endline, "character": endchar},
+    }
+    show_document: ShowDocumentParamsTypedDict = {
+        "uri": doc_uri,
+        "selection": selection,
+        "takeFocus": True,
+    }
+
+    arguments = command["arguments"]
+    if arguments:
+        arguments[0]["show_document"] = show_document
+
+
+def _deal_with_resource_or_import_or_alias_name(
+    completion_context: ICompletionContext,
+    resource_or_import_or_alias_name: str,
+    keyword_template: str,
+    keyword_name: str,
+):
+    for resource_import in completion_context.get_resource_imports():
+        if _matches_resource_import(resource_import, resource_or_import_or_alias_name):
+            doc = completion_context.get_resource_import_as_doc(resource_import)
+            if doc is not None:
+                new_completion_context = completion_context.create_copy(doc)
+                yield from _create_keyword_in_another_file_code_action(
+                    new_completion_context, keyword_template, keyword_name
+                )
 
 
 def code_action(
@@ -255,5 +392,16 @@ def code_action(
                     completion_context, undefined_keyword_data
                 )
             )
+
+    for r in ret:
+        if r["command"] == "robot.applyCodeAction":
+            arguments = r["arguments"]
+            if arguments:
+                arg = arguments[0]
+                lint_uris = arg.get("lint_uris")
+                if lint_uris is None:
+                    lint_uris = []
+                    arg["lint_uris"] = lint_uris
+                lint_uris.append(completion_context.doc.uri)
 
     return ret

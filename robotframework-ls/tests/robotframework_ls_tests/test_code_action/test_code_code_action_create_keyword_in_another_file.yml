@@ -2,30 +2,27 @@
   - apply_edit:
       edit:
         changes:
-          case4.robot:
-          - newText: 'My Keyword
-
-
-              '
+          my_resource.resource:
+          - newText: "*** Keywords ***\nFoobar\n    [Arguments]    ${arg}\n\n\n"
             range:
               end:
                 character: 0
-                line: 9
+                line: 0
               start:
                 character: 0
-                line: 9
-      label: 'Create Keyword: My Keyword (in current file)'
+                line: 0
+      label: 'Create Keyword: Foobar (in my_resource.resource)'
     lint_uris:
     - case4.robot
     show_document:
       selection:
         end:
           character: 0
-          line: 9
+          line: 0
         start:
           character: 0
-          line: 9
+          line: 0
       takeFocus: true
-      uri: case4.robot
+      uri: my_resource.resource
   command: robot.applyCodeAction
-  title: 'Create Keyword: My Keyword (in current file)'
+  title: 'Create Keyword: Foobar (in my_resource.resource)'

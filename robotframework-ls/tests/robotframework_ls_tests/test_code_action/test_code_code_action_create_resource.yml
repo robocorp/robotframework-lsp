@@ -5,5 +5,17 @@
         - kind: create
           uri: import_from_this_robot.robot
       label: 'Create import_from_this_robot.robot '
+    lint_uris:
+    - case4.robot
+    show_document:
+      selection:
+        end:
+          character: 0
+          line: 0
+        start:
+          character: 0
+          line: 0
+      takeFocus: true
+      uri: import_from_this_robot.robot
   command: robot.applyCodeAction
   title: 'Create import_from_this_robot.robot '

@@ -12,5 +12,17 @@
                 character: 0
                 line: 2
       label: 'Create Keyword: Foobar (in current file)'
+    lint_uris:
+    - case4.robot
+    show_document:
+      selection:
+        end:
+          character: 0
+          line: 2
+        start:
+          character: 0
+          line: 2
+      takeFocus: true
+      uri: case4.robot
   command: robot.applyCodeAction
   title: 'Create Keyword: Foobar (in current file)'

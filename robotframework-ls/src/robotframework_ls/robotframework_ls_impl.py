@@ -25,6 +25,7 @@ from robocorp_ls_core.protocols import (
     IEndPoint,
     IProgressReporter,
     ActionResultDict,
+    IFuture,
 )
 from pathlib import Path
 from robotframework_ls.ep_providers import (
@@ -49,6 +50,7 @@ from robocorp_ls_core.lsp import (
     SelectionRangeParamsTypedDict,
     TextDocumentCodeActionTypedDict,
     WorkspaceEditParamsTypedDict,
+    ShowDocumentParamsTypedDict,
 )
 from robotframework_ls.commands import (
     ROBOT_GET_RFLS_HOME_DIR,
@@ -404,6 +406,10 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         self._robot_framework_ls_completion_impl = _RobotFrameworkLsCompletionImpl(
             self._server_manager, self
         )
+
+    def _execute_on_main_thread(self, on_main_thread_callback):
+        read_queue = self._jsonrpc_stream_reader.get_read_queue()
+        read_queue.put(on_main_thread_callback)
 
     def get_remote_fs_observer_port(self) -> Optional[int]:
         from robocorp_ls_core.remote_fs_observer_impl import RemoteFSObserver
@@ -1420,5 +1426,32 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
     @command_dispatcher(ROBOT_APPLY_CODE_ACTION)
     def _apply_code_action(self, code_action_info):
-        apply_edit: WorkspaceEditParamsTypedDict = code_action_info["apply_edit"]
-        self._lsp_messages.apply_edit_args(apply_edit)
+        weak_self = weakref.ref(self)
+
+        def in_thread(*args, **kwargs):
+            self = weak_self()
+            if self is None:
+                return
+
+            apply_edit: WorkspaceEditParamsTypedDict = code_action_info["apply_edit"]
+            fut: IFuture = self._lsp_messages.apply_edit_args(apply_edit)
+            try:
+                fut.result(4)
+            except:
+                log.exception(f"Exception calling: {self._lsp_messages.M_APPLY_EDIT}")
+
+            # Deal with linting (because if only a dependent file is changed we
+            # still want to ask for the main file to be linted).
+            lint_uris = code_action_info.get("lint_uris")
+            if lint_uris:
+                for uri in lint_uris:
+                    self._execute_on_main_thread(partial(self.lint, uri, is_saved=True))
+
+            # Force showing some document?
+            show_document_args: Optional[
+                ShowDocumentParamsTypedDict
+            ] = code_action_info.get("show_document")
+            log.info("Show document: %s", show_document_args)
+            self._lsp_messages.show_document(show_document_args)
+
+        return in_thread

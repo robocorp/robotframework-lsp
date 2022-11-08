@@ -882,6 +882,13 @@ class Location(_Base):
         self.range = range
 
 
+class ShowDocumentParamsTypedDict(TypedDict, total=False):
+    uri: str
+    external: Optional[bool]
+    takeFocus: Optional[bool]
+    selection: Optional[RangeTypedDict]
+
+
 class WorkspaceEditParamsTypedDict(TypedDict, total=False):
     label: Optional[str]
     edit: WorkspaceEditTypedDict
@@ -892,6 +899,7 @@ class LSPMessages(object):
     M_APPLY_EDIT = "workspace/applyEdit"
     M_SHOW_MESSAGE = "window/showMessage"
     M_SHOW_MESSAGE_REQUEST = "window/showMessageRequest"
+    M_SHOW_DOCUMENT = "window/showDocument"
 
     def __init__(self, endpoint: IEndPoint):
         self._endpoint = endpoint
@@ -900,10 +908,15 @@ class LSPMessages(object):
     def endpoint(self) -> IEndPoint:
         return self._endpoint
 
-    def apply_edit_args(self, edit_args: WorkspaceEditParamsTypedDict):
+    def apply_edit_args(self, edit_args: WorkspaceEditParamsTypedDict) -> IFuture:
         return self._endpoint.request(self.M_APPLY_EDIT, params=edit_args)
 
-    def apply_edit(self, edit: WorkspaceEditTypedDict, label: Optional[str] = None):
+    def show_document(self, show_document_args: ShowDocumentParamsTypedDict) -> IFuture:
+        return self._endpoint.request(self.M_SHOW_DOCUMENT, params=show_document_args)
+
+    def apply_edit(
+        self, edit: WorkspaceEditTypedDict, label: Optional[str] = None
+    ) -> IFuture:
         edit_args: WorkspaceEditParamsTypedDict = {"edit": edit}
         if label:
             edit_args["label"] = label
@@ -920,7 +933,7 @@ class LSPMessages(object):
             self.M_SHOW_MESSAGE, params={"type": msg_type, "message": message}
         )
 
-    def execute_workspace_command(self, command, arguments):
+    def execute_workspace_command(self, command, arguments) -> IFuture:
         command_future = self._endpoint.request(
             "$/executeWorkspaceCommand",
             {

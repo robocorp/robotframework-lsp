@@ -1,3 +1,6 @@
+import os
+
+
 def check_code_action_data_regression(data_regression, found, basename=None):
     import copy
 
@@ -14,6 +17,7 @@ def check_code_action_data_regression(data_regression, found, basename=None):
                 label = c["apply_edit"]["label"]
                 if "(at " in label:
                     c["apply_edit"]["label"] = label[: label.index("(at")]
+
                 changes = c["apply_edit"]["edit"].get("changes", None)
                 if changes:
                     new_changes = {}
@@ -27,6 +31,14 @@ def check_code_action_data_regression(data_regression, found, basename=None):
                     for change in changes:
                         if change.get("kind") == "create":
                             change["uri"] = change["uri"].split("/")[-1]
+
+                lint_uris = c.get("lint_uris")
+                if lint_uris:
+                    c["lint_uris"] = [os.path.basename(x) for x in lint_uris]
+
+                show_document = c.get("show_document")
+                if show_document:
+                    show_document["uri"] = os.path.basename(show_document["uri"])
 
     data_regression.check(found, basename=basename)
 
@@ -62,13 +74,18 @@ def _collect_errors(completion_context):
     return errors
 
 
-def _analyze_and_create_completion_context(doc, workspace, kind="undefined_keyword"):
+def _analyze_and_create_completion_context(
+    doc, workspace, kind="undefined_keyword", filter=False
+):
     from robotframework_ls.impl.completion_context import CompletionContext
 
     errors = _collect_errors(CompletionContext(doc, workspace=workspace.ws))
-    assert len(errors) == 1
+    if filter:
+        errors = [x for x in errors if x["data"] and x["data"]["kind"] == kind]
 
+    assert len(errors) == 1
     error = next(iter(errors))
+
     diagnostic_data = error["data"]
     assert diagnostic_data["kind"] == kind
 
@@ -298,3 +315,40 @@ Resource    ./import_from_this_robot.robot
     found_data = [diagnostic_data]
     actions = code_action(completion_context, found_data)
     check_code_action_data_regression(data_regression, actions)
+
+
+def test_code_code_action_create_keyword_in_another_file(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.code_action import code_action
+
+    workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
+    doc_target = workspace.put_doc("my_resource.resource")
+
+    doc = workspace.put_doc("case4.robot")
+    doc.source = """
+*** Settings ***
+Resource    ./my_resource.resource
+
+*** Test Case ***
+My Test
+    my_resource.Foobar    arg=10
+"""
+
+    completion_context, diagnostic_data = _analyze_and_create_completion_context(
+        doc, workspace, filter=True
+    )
+    found_data = [diagnostic_data]
+    actions = code_action(completion_context, found_data)
+    check_code_action_data_regression(data_regression, actions)
+
+    check_apply_result(
+        doc_target,
+        actions,
+        """*** Keywords ***
+Foobar
+    [Arguments]    ${arg}
+
+
+""",
+    )

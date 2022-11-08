@@ -17,5 +17,17 @@
                 character: 0
                 line: 1
       label: 'Create Keyword: My Keyword (in current file)'
+    lint_uris:
+    - case4.robot
+    show_document:
+      selection:
+        end:
+          character: 0
+          line: 1
+        start:
+          character: 0
+          line: 1
+      takeFocus: true
+      uri: case4.robot
   command: robot.applyCodeAction
   title: 'Create Keyword: My Keyword (in current file)'
