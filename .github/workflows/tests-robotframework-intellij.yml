@@ -50,9 +50,12 @@ jobs:
         java-version: 11
     - name: Install deps
       run: pip install --upgrade pip fire twine wheel setuptools robotframework
-    - name: Vendor robocorp_ls_core
+    - name: Vendor deps
       working-directory: ./robotframework-ls    
-      run: python -m dev vendor-robocorp-ls-core
+      run: |
+        python -m dev vendor-robocorp-ls-core
+        python -m dev vendor-robotframework-interactive
+        python -m dev vendor-robot-stream
     - name: Fix README references
       working-directory: ./robotframework-ls    
       run: python -m dev fix-readme

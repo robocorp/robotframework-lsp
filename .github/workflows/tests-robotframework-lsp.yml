@@ -83,7 +83,7 @@ jobs:
       if: contains(matrix.name, '-pip-v5')
     - name: Install robotremoteserver via pip
       run: python -W ignore -m pip install robotremoteserver
-    - name: Vendor robocorp_ls_core/robotframework_interactive
+    - name: Vendor deps
       working-directory: ./robotframework-ls
       run: |
         pip install fire
