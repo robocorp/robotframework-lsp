@@ -198,7 +198,7 @@ def convert_to_monaco_completion(
     insert_text: str = lsp_completion.get("insertText", label)  # type: ignore
 
     text_edit = lsp_completion.get("textEdit")
-    range_ = None
+    range_: Any = None
     if text_edit:
         insert_text = text_edit["newText"]
         range_ = text_edit["range"]

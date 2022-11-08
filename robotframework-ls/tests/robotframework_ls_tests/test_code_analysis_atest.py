@@ -48,7 +48,7 @@ def embed_errors_into_file(ws, doc, config=None) -> IDocument:
 
     new_doc = Document("<no-uri>", "".join(contents_without_added_docs))
     errors = sorted(errors, key=key)
-    changes = []
+    changes: List[TextEdit] = []
     for error in errors:
         line = error["range"]["start"]["line"] + 1
         character = error["range"]["start"]["character"]

@@ -25,6 +25,9 @@ def _collect_errors(
         )
 
     errors = sorted(errors, key=key)
+    # We're not interested in the data in this case
+    for error in errors:
+        error.pop("data", None)
     data_regression.check(errors, basename=basename)
 
 

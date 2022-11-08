@@ -17,7 +17,7 @@
 # limitations under the License.
 import io
 import os
-from typing import Optional, Dict, List, Iterable, Tuple, Set
+from typing import Optional, Dict, List, Iterable, Tuple, Set, Union, Any
 
 from robocorp_ls_core import uris
 from robocorp_ls_core.basic import implements
@@ -36,6 +36,7 @@ from robocorp_ls_core.lsp import (
     TextDocumentContentChangeEvent,
     RangeTypedDict,
     TextEditTypedDict,
+    TextEdit,
 )
 import weakref
 from collections import namedtuple
@@ -47,10 +48,9 @@ log = get_logger(__name__)
 _FileMTimeInfo = namedtuple("_FileMTimeInfo", "st_mtime, st_size")
 
 
-def _text_edit_reverse_key(text_edit: TextEditTypedDict):
+def _text_edit_key(text_edit: Union[TextEditTypedDict, TextEdit]):
     start = text_edit["range"]["start"]
-    # Note: negative because we want the reversed order for the apply
-    return -start["line"], -start["character"]
+    return start["line"], start["character"]
 
 
 class _DirInfo(object):
@@ -859,10 +859,13 @@ class Document(object):
 
         self._source = new.getvalue()
 
-    def apply_text_edits(self, text_edits: List[TextEditTypedDict]):
+    def apply_text_edits(
+        self, text_edits: Union[List[TextEditTypedDict], List[TextEdit]]
+    ):
         self._check_in_mutate_thread()
-        text_edits = sorted(text_edits, key=_text_edit_reverse_key)
-        for text_edit in text_edits:
+        sorted_text_edits = reversed(sorted(text_edits, key=_text_edit_key))
+        text_edit: Any
+        for text_edit in sorted_text_edits:
             self._apply_change(text_edit["range"], text_edit["newText"])
 
     def find_line_with_contents(self, contents: str) -> int:
