@@ -9,7 +9,6 @@ from robocorp_code.protocols import (
 from typing import List
 import time
 from robocorp_code_tests.protocols import IRobocorpLanguageServerClient
-import py
 from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
 from robocorp_code_tests.fixtures import RccPatch
 
@@ -174,7 +173,7 @@ def test_get_plugins_dir(
 def test_cloud_list_workspaces_sorting(
     language_server_initialized: IRobocorpLanguageServerClient,
     rcc_patch: RccPatch,
-    tmpdir: py.path.local,
+    tmpdir,
 ):
     client = language_server_initialized
     root_dir = str(tmpdir.join("root").mkdir())

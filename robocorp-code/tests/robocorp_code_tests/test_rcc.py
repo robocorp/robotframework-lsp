@@ -1,5 +1,3 @@
-import py.path
-
 from robocorp_code.protocols import IRcc, IRccRobotMetadata
 import pytest
 from pathlib import Path
@@ -25,9 +23,7 @@ def test_rcc_template_names(rcc: IRcc):
     assert "python" in template_names
 
 
-def test_rcc_cloud_issues(
-    rcc: IRcc, ci_credentials: str, tmpdir: py.path.local, rcc_patch: RccPatch
-):
+def test_rcc_cloud_issues(rcc: IRcc, ci_credentials: str, tmpdir, rcc_patch: RccPatch):
     def custom_handler(args, *sargs, **kwargs):
         cp = args[:]
         # i.e.: cloud_list_workspaces
@@ -106,7 +102,7 @@ def test_rcc_cloud_issues(
     assert [ws.workspace_name for ws in workspaces_listed] == ["Ex3"]
 
 
-def test_rcc_cloud(rcc: IRcc, ci_credentials: str, tmpdir: py.path.local):
+def test_rcc_cloud(rcc: IRcc, ci_credentials: str, tmpdir):
     """
     Note on the setup:
 
