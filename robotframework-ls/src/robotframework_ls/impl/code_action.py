@@ -119,8 +119,14 @@ def _create_keyword_in_current_file_text_edit(
         }
 
     else:
-        # We add the keyword to the end of the existing keyword section
+        # We add the keyword after the end of the existing keyword section
         use_line = keyword_section.end_lineno
+        if completion_context.doc.get_line(use_line - 1).strip():
+            keyword_template = "\n\n" + keyword_template
+
+        elif completion_context.doc.get_line(use_line - 2).strip():
+            keyword_template = "\n" + keyword_template
+
         return {
             "range": {
                 "start": {"line": use_line, "character": 0},

@@ -52,7 +52,11 @@ def check_apply_result(doc, actions, expected):
     expected = expected.replace("\r\n", "\n").replace("\r", "\n")
 
     obtained = doc.source.replace("\r\n", "\n").replace("\r", "\n")
-    assert obtained == expected
+    if obtained != expected:
+        print("Obtained:--")
+        print(obtained)
+        print("--")
+        assert obtained == expected
 
 
 def _collect_errors(completion_context):
@@ -382,6 +386,94 @@ My Test
         doc_target,
         actions,
         """*** Keywords ***
+Foobar
+    [Arguments]    ${arg}
+
+
+""",
+    )
+
+
+def test_code_code_action_create_keyword_in_another_file_2(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.code_action import code_action
+
+    workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
+    doc_target = workspace.put_doc("my_resource.resource")
+    doc_target.source = """*** Keywords ***
+My test
+    Log     Something"""
+
+    doc = workspace.put_doc("case4.robot")
+    doc.source = """
+*** Settings ***
+Resource    ./my_resource.resource
+
+*** Test Case ***
+My Test
+    my_resource.Foobar    arg=10
+"""
+
+    completion_context, diagnostic_data = _analyze_and_create_completion_context(
+        doc, workspace, filter=True
+    )
+    found_data = [diagnostic_data]
+    actions = code_action(completion_context, found_data)
+    # check_code_action_data_regression(data_regression, actions)
+
+    check_apply_result(
+        doc_target,
+        actions,
+        """*** Keywords ***
+My test
+    Log     Something
+
+Foobar
+    [Arguments]    ${arg}
+
+
+""",
+    )
+
+
+def test_code_code_action_create_keyword_in_another_file_3(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.code_action import code_action
+
+    workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
+    doc_target = workspace.put_doc("my_resource.resource")
+    doc_target.source = """*** Keywords ***
+My test
+    Log     Something
+"""
+
+    doc = workspace.put_doc("case4.robot")
+    doc.source = """
+*** Settings ***
+Resource    ./my_resource.resource
+
+*** Test Case ***
+My Test
+    my_resource.Foobar    arg=10
+"""
+
+    completion_context, diagnostic_data = _analyze_and_create_completion_context(
+        doc, workspace, filter=True
+    )
+    found_data = [diagnostic_data]
+    actions = code_action(completion_context, found_data)
+    # check_code_action_data_regression(data_regression, actions)
+
+    check_apply_result(
+        doc_target,
+        actions,
+        """*** Keywords ***
+My test
+    Log     Something
+
+
 Foobar
     [Arguments]    ${arg}
 
