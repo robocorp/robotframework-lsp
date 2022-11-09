@@ -1,4 +1,4 @@
-import xml.sax
+import xml.sax.handler
 import sys
 import datetime
 from typing import Optional, Callable
@@ -224,7 +224,7 @@ class _Status:
         return compute_timedelta(initial_time, self.endtime)
 
 
-class _XmlSaxParser(xml.sax.ContentHandler):
+class _XmlSaxParser(xml.sax.handler.ContentHandler):
     """
     Notes:
 
