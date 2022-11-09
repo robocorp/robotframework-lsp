@@ -963,6 +963,9 @@ class ICompletionContext(Protocol):
     def create_copy(self, doc: IRobotDocument) -> "ICompletionContext":
         pass
 
+    def create_copy_with_config(self, config: IConfig) -> "ICompletionContext":
+        pass
+
     def create_copy_doc_line_col(
         self, doc: IRobotDocument, line: int, col: int
     ) -> "ICompletionContext":

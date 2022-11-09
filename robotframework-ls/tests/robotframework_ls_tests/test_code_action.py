@@ -145,6 +145,47 @@ Some Test
     )
 
 
+def test_code_code_action_use_template(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.code_action import code_action
+    from robotframework_ls.robot_config import RobotConfig
+
+    workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.put_doc("case4.robot")
+    doc.source = """
+*** Test Cases ***
+Some Test
+    My Keyword"""
+
+    completion_context, diagnostic_data = _analyze_and_create_completion_context(
+        doc, workspace
+    )
+    found_data = [diagnostic_data]
+
+    config = RobotConfig()
+    config.update(
+        {
+            "robot": {
+                "quickFix.keywordTemplate": "$keyword_name$keyword_arguments\n    [Documentation]    Add docs for $keyword_name\n    $cursor\n",
+            }
+        }
+    )
+    completion_context = completion_context.create_copy_with_config(config)
+    actions = code_action(completion_context, found_data)
+    check_code_action_data_regression(data_regression, actions)
+    check_apply_result(
+        doc,
+        actions,
+        """
+*** Keywords ***
+My Keyword
+    [Documentation]    Add docs for My Keyword
+    
+*** Test Cases ***
+Some Test
+    My Keyword""",
+    )
+
+
 def test_code_code_action_create_keyword_same_file(
     workspace, libspec_manager, data_regression
 ):
@@ -169,6 +210,7 @@ Some Test
         """
 *** Keywords ***
 My Keyword
+    
 
 *** Test Cases ***
 Some Test
@@ -215,6 +257,7 @@ Sample
     
     
 My Keyword
+    
 
 *** Test Cases ***
 Some Test
@@ -255,6 +298,7 @@ Something
     No operation
 
 My Keyword
+    
 
 Sample
     No operation
@@ -293,7 +337,7 @@ Something
 *** keywords ***
 Foobar
     [Arguments]    ${value}    ${another}
-
+    
 
 Something
     No operation
@@ -388,7 +432,7 @@ My Test
         """*** Keywords ***
 Foobar
     [Arguments]    ${arg}
-
+    
 
 """,
     )
@@ -431,7 +475,7 @@ My test
 
 Foobar
     [Arguments]    ${arg}
-
+    
 
 """,
     )
@@ -476,7 +520,7 @@ My test
 
 Foobar
     [Arguments]    ${arg}
-
+    
 
 """,
     )

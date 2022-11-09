@@ -3,14 +3,15 @@
       edit:
         changes:
           case4.robot:
-          - newText: "My Keyword\n    \n\n"
+          - newText: "*** Keywords ***\nMy Keyword\n    [Documentation]    Add docs\
+              \ for My Keyword\n    \n"
             range:
               end:
                 character: 0
-                line: 5
+                line: 1
               start:
                 character: 0
-                line: 5
+                line: 1
       label: 'Create Keyword: My Keyword (in current file)'
     lint_uris:
     - case4.robot
@@ -18,10 +19,10 @@
       selection:
         end:
           character: 4
-          line: 6
+          line: 4
         start:
           character: 4
-          line: 6
+          line: 4
       takeFocus: true
       uri: case4.robot
   command: robot.applyCodeAction

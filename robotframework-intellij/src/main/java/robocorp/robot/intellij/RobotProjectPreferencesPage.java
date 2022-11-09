@@ -48,6 +48,7 @@ class RobotProjectPreferencesComponent {
     private final JBTextField robotCompletionsKeywordsFormat = new JBTextField();
     private final JBTextField robotCompletionsKeywordsArgumentsSeparator = new JBTextField();
     private final JBTextField robotWorkspaceSymbolsOnlyForOpenDocs = new JBTextField();
+    private final JBTextField robotQuickFixKeywordTemplate = new JBTextField();
     private final JBTextField robotLanguage = new JBTextField();
 
     public RobotProjectPreferencesComponent() {
@@ -108,6 +109,8 @@ class RobotProjectPreferencesComponent {
                 .addComponent(createJTextArea("Defines the string used to separate arguments when applying a Keyword completion with arguments.\n"))
                 .addLabeledComponent(new JBLabel("Workspace Symbols Only For Open Docs"), robotWorkspaceSymbolsOnlyForOpenDocs, 1, false)
                 .addComponent(createJTextArea("Collecting workspace symbols can be resource intensive on big projects and may slow down code-\ncompletion, in this case, it's possible collect info only for open files on big projects.\nNote: expected 'true' or 'false'\n"))
+                .addLabeledComponent(new JBLabel("Quick Fix Keyword Template"), robotQuickFixKeywordTemplate, 1, false)
+                .addComponent(createJTextArea("The template to be used for keyword creation in quick fixes.\n"))
                 .addLabeledComponent(new JBLabel("Language"), robotLanguage, 1, false)
                 .addComponent(createJTextArea("Language(s) to be used in Robot Framework\n(passed as the --language argument for robot when launching).\nNote: expected format: JSON Array\n"))
                 
@@ -387,6 +390,15 @@ class RobotProjectPreferencesComponent {
     }
     
     @NotNull
+    public String getRobotQuickFixKeywordTemplate() {
+        return robotQuickFixKeywordTemplate.getText();
+    }
+
+    public void setRobotQuickFixKeywordTemplate (@NotNull String newText) {
+        robotQuickFixKeywordTemplate.setText(newText);
+    }
+    
+    @NotNull
     public String getRobotLanguage() {
         return robotLanguage.getText();
     }
@@ -549,6 +561,10 @@ public class RobotProjectPreferencesPage implements Configurable {
             return true;
         }
         
+        if(!settings.getRobotQuickFixKeywordTemplate().equals(component.getRobotQuickFixKeywordTemplate())){
+            return true;
+        }
+        
         if(!settings.getRobotLanguage().equals(component.getRobotLanguage())){
             return true;
         }
@@ -593,6 +609,7 @@ public class RobotProjectPreferencesPage implements Configurable {
         component.setRobotCompletionsKeywordsFormat(settings.getRobotCompletionsKeywordsFormat());
         component.setRobotCompletionsKeywordsArgumentsSeparator(settings.getRobotCompletionsKeywordsArgumentsSeparator());
         component.setRobotWorkspaceSymbolsOnlyForOpenDocs(settings.getRobotWorkspaceSymbolsOnlyForOpenDocs());
+        component.setRobotQuickFixKeywordTemplate(settings.getRobotQuickFixKeywordTemplate());
         component.setRobotLanguage(settings.getRobotLanguage());
     }
 
@@ -718,6 +735,10 @@ public class RobotProjectPreferencesPage implements Configurable {
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Workspace Symbols Only For Open Docs:\n" + s);
         }
+        s = settings.validateRobotQuickFixKeywordTemplate(component.getRobotQuickFixKeywordTemplate());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Quick Fix Keyword Template:\n" + s);
+        }
         s = settings.validateRobotLanguage(component.getRobotLanguage());
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Language:\n" + s);
@@ -751,6 +772,7 @@ public class RobotProjectPreferencesPage implements Configurable {
         settings.setRobotCompletionsKeywordsFormat(component.getRobotCompletionsKeywordsFormat());
         settings.setRobotCompletionsKeywordsArgumentsSeparator(component.getRobotCompletionsKeywordsArgumentsSeparator());
         settings.setRobotWorkspaceSymbolsOnlyForOpenDocs(component.getRobotWorkspaceSymbolsOnlyForOpenDocs());
+        settings.setRobotQuickFixKeywordTemplate(component.getRobotQuickFixKeywordTemplate());
         settings.setRobotLanguage(component.getRobotLanguage());
     }
 }

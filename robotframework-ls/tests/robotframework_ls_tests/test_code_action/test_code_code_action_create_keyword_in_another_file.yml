@@ -3,7 +3,7 @@
       edit:
         changes:
           my_resource.resource:
-          - newText: "*** Keywords ***\nFoobar\n    [Arguments]    ${arg}\n\n\n"
+          - newText: "*** Keywords ***\nFoobar\n    [Arguments]    ${arg}\n    \n\n"
             range:
               end:
                 character: 0
@@ -17,11 +17,11 @@
     show_document:
       selection:
         end:
-          character: 0
-          line: 0
+          character: 4
+          line: 3
         start:
-          character: 0
-          line: 0
+          character: 4
+          line: 3
       takeFocus: true
       uri: my_resource.resource
   command: robot.applyCodeAction

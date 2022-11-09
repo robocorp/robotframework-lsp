@@ -148,6 +148,11 @@ SETTINGS = {
         "default": True,
         "description": "Replaces the key stroke of tab with 4 spaces. Set to 'false' to active VSCode default.",
     },
+    "robot.quickFix.keywordTemplate": {
+        "type": "string",
+        "default": r"$keyword_name$keyword_arguments\n    $cursor\n\n",
+        "description": "The template to be used for keyword creation in quick fixes.",
+    },
     "robot.codeLens.enable": {
         "type": "boolean",
         "default": True,

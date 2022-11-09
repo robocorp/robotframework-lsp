@@ -206,15 +206,22 @@ class CompletionContext(object):
     def create_copy(self, doc: IRobotDocument) -> ICompletionContext:
         return self.create_copy_doc_line_col(doc, line=0, col=0)
 
+    def create_copy_with_config(self, config: IConfig) -> "ICompletionContext":
+        return self.create_copy_doc_line_col(
+            doc=self._doc, line=self.sel.line, col=self.sel.col, config=config
+        )
+
     def create_copy_doc_line_col(
-        self, doc: IRobotDocument, line: int, col: int
+        self, doc: IRobotDocument, line: int, col: int, config: Optional[IConfig] = None
     ) -> ICompletionContext:
+        if config is None:
+            config = self._config
         ctx = CompletionContext(
             doc,
             line=line,
             col=col,
             workspace=self._workspace,
-            config=self._config,
+            config=config,
             memo=self._memo,
             monitor=self._monitor,
             variables_from_arguments_files_loader=self.variables_from_arguments_files_loader,

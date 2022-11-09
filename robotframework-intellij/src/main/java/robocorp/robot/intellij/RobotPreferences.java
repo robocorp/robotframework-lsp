@@ -46,6 +46,7 @@ class RobotState {
     public String robotCompletionsKeywordsFormat = "";
     public String robotCompletionsKeywordsArgumentsSeparator = "";
     public String robotWorkspaceSymbolsOnlyForOpenDocs = "";
+    public String robotQuickFixKeywordTemplate = "";
     public String robotLanguage = "";
 }
 
@@ -82,6 +83,7 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
     public static final String ROBOT_COMPLETIONS_KEYWORDS_FORMAT = "robot.completions.keywords.format";
     public static final String ROBOT_COMPLETIONS_KEYWORDS_ARGUMENTS_SEPARATOR = "robot.completions.keywords.argumentsSeparator";
     public static final String ROBOT_WORKSPACE_SYMBOLS_ONLY_FOR_OPEN_DOCS = "robot.workspaceSymbolsOnlyForOpenDocs";
+    public static final String ROBOT_QUICK_FIX_KEYWORD_TEMPLATE = "robot.quickFix.keywordTemplate";
     public static final String ROBOT_LANGUAGE = "robot.language";
 
     private static final Logger LOG = Logger.getInstance(RobotPreferences.class);
@@ -120,6 +122,7 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         robotState.robotCompletionsKeywordsFormat = getRobotCompletionsKeywordsFormat();
         robotState.robotCompletionsKeywordsArgumentsSeparator = getRobotCompletionsKeywordsArgumentsSeparator();
         robotState.robotWorkspaceSymbolsOnlyForOpenDocs = getRobotWorkspaceSymbolsOnlyForOpenDocs();
+        robotState.robotQuickFixKeywordTemplate = getRobotQuickFixKeywordTemplate();
         robotState.robotLanguage = getRobotLanguage();
         return robotState;
     }
@@ -156,6 +159,7 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         setRobotCompletionsKeywordsFormat(robotState.robotCompletionsKeywordsFormat);
         setRobotCompletionsKeywordsArgumentsSeparator(robotState.robotCompletionsKeywordsArgumentsSeparator);
         setRobotWorkspaceSymbolsOnlyForOpenDocs(robotState.robotWorkspaceSymbolsOnlyForOpenDocs);
+        setRobotQuickFixKeywordTemplate(robotState.robotQuickFixKeywordTemplate);
         setRobotLanguage(robotState.robotLanguage);
     }
 
@@ -410,6 +414,15 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
             
             try {
                 jsonObject.add(ROBOT_WORKSPACE_SYMBOLS_ONLY_FOR_OPEN_DOCS, new JsonPrimitive(Boolean.parseBoolean(robotWorkspaceSymbolsOnlyForOpenDocs)));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotQuickFixKeywordTemplate.isEmpty()){
+            
+            try {
+                jsonObject.add(ROBOT_QUICK_FIX_KEYWORD_TEMPLATE, new JsonPrimitive(robotQuickFixKeywordTemplate));
             } catch(Exception e) {
                 LOG.error(e);
             }
@@ -1771,6 +1784,53 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             try {
                 listener.onChanged(ROBOT_WORKSPACE_SYMBOLS_ONLY_FOR_OPEN_DOCS, old, s);
+            } catch (CancelledException e) {
+                // just ignore at this point
+            }
+        }
+    }
+    
+    private String robotQuickFixKeywordTemplate = "";
+
+    public @NotNull String getRobotQuickFixKeywordTemplate() {
+        return robotQuickFixKeywordTemplate;
+    }
+
+    public @Nullable JsonPrimitive getRobotQuickFixKeywordTemplateAsJson() {
+        if(robotQuickFixKeywordTemplate.isEmpty()){
+            return null;
+        }
+        
+        return new JsonPrimitive(robotQuickFixKeywordTemplate);
+    }
+
+    public @NotNull String validateRobotQuickFixKeywordTemplate(String robotQuickFixKeywordTemplate) {
+        if(robotQuickFixKeywordTemplate.isEmpty()) {
+            return "";
+        }
+        try {
+            
+            new JsonPrimitive(robotQuickFixKeywordTemplate);
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotQuickFixKeywordTemplate(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotQuickFixKeywordTemplate)) {
+            return;
+        }
+        String old = robotQuickFixKeywordTemplate;
+        robotQuickFixKeywordTemplate = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            try {
+                listener.onChanged(ROBOT_QUICK_FIX_KEYWORD_TEMPLATE, old, s);
             } catch (CancelledException e) {
                 // just ignore at this point
             }

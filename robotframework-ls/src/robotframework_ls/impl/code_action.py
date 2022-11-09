@@ -24,6 +24,9 @@ from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.basic import isinstance_name
 import os
 from pathlib import Path
+from robotframework_ls.impl.robot_generated_lsp_constants import (
+    OPTION_ROBOT_QUICK_FIX_KEYWORD_TEMPLATE,
+)
 
 log = get_logger(__name__)
 
@@ -202,7 +205,21 @@ def _undefined_keyword_code_action(
 ) -> Iterator[CommandTypedDict]:
     from robotframework_ls.robot_config import get_arguments_separator
 
-    keyword_template = """$keyword_name$arguments\n\n"""
+    keyword_template = """$keyword_name$keyword_arguments\n    $cursor\n\n"""
+    config = completion_context.config
+    if config is not None:
+        keyword_template = config.get_setting(
+            OPTION_ROBOT_QUICK_FIX_KEYWORD_TEMPLATE, str, keyword_template
+        )
+
+    # Make it less likely that we'll have conflicts for our variables.
+    keyword_template = keyword_template.replace("$cursor", "$__LSP_CURSOR_LOCATION__$")
+    keyword_template = keyword_template.replace(
+        "$keyword_name", "$__LSP_KEYWORD_NAME_LOCATION__$"
+    )
+    keyword_template = keyword_template.replace(
+        "$keyword_arguments", "$__LSP_KEYWORD_ARGUMENTS_LOCATION__$"
+    )
 
     # --- Update the arguments in the template.
 
@@ -227,9 +244,10 @@ def _undefined_keyword_code_action(
         for arg in arguments:
             args_str += separator
             args_str += arg
-        args_str += "\n"
 
-    keyword_template = keyword_template.replace("$arguments", args_str)
+    keyword_template = keyword_template.replace(
+        "$__LSP_KEYWORD_ARGUMENTS_LOCATION__$", args_str
+    )
 
     # --- Update the keyword name in the template.
 
@@ -254,7 +272,9 @@ def _undefined_keyword_code_action(
         # If it doesn't exist we need to create it first.
         splitted = keyword_name.split(".")
         resource_or_import_or_alias_name, keyword_name = splitted
-        keyword_template = keyword_template.replace("$keyword_name", keyword_name)
+        keyword_template = keyword_template.replace(
+            "$__LSP_KEYWORD_NAME_LOCATION__$", keyword_name
+        )
         yield from _deal_with_resource_or_import_or_alias_name(
             completion_context,
             resource_or_import_or_alias_name,
@@ -263,7 +283,9 @@ def _undefined_keyword_code_action(
         )
         return
 
-    keyword_template = keyword_template.replace("$keyword_name", keyword_name)
+    keyword_template = keyword_template.replace(
+        "$__LSP_KEYWORD_NAME_LOCATION__$", keyword_name
+    )
 
     yield from _add_import_code_action(completion_context)
     yield from _create_keyword_in_current_file_code_action(
@@ -335,8 +357,22 @@ def _add_show_document_at_command(
     text_edit: Optional[TextEditTypedDict] = None,
 ):
     if text_edit:
-        endline = text_edit["range"]["end"]["line"]
-        endchar = text_edit["range"]["end"]["character"]
+        new_text = text_edit["newText"]
+        cursor_i = new_text.find("$__LSP_CURSOR_LOCATION__$")
+        if cursor_i == -1:
+            endline = text_edit["range"]["end"]["line"]
+            endchar = text_edit["range"]["end"]["character"]
+        else:
+            endline = text_edit["range"]["start"]["line"]
+            endchar = text_edit["range"]["start"]["character"]
+            # Find the actual cursor_i location (and remove it from the text)
+            text_edit["newText"] = new_text.replace("$__LSP_CURSOR_LOCATION__$", "", 1)
+            for line_i, text in enumerate(new_text.splitlines()):
+                if "$__LSP_CURSOR_LOCATION__$" in text:
+                    endline += line_i
+                    endchar += text.find("$__LSP_CURSOR_LOCATION__$")
+                    break
+
     else:
         endline = 0
         endchar = 0

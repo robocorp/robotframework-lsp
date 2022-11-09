@@ -3,12 +3,7 @@
       edit:
         changes:
           case4.robot:
-          - newText: '*** Keywords ***
-
-              My Keyword
-
-
-              '
+          - newText: "*** Keywords ***\nMy Keyword\n    \n\n"
             range:
               end:
                 character: 0
@@ -22,11 +17,11 @@
     show_document:
       selection:
         end:
-          character: 0
-          line: 1
+          character: 4
+          line: 3
         start:
-          character: 0
-          line: 1
+          character: 4
+          line: 3
       takeFocus: true
       uri: case4.robot
   command: robot.applyCodeAction
