@@ -1,10 +1,11 @@
 from robotframework_ls.impl.protocols import (
     IKeywordArg,
     IRobotToken,
+    IKeywordFound,
 )
 from typing import Optional, List, Deque, Iterator, Dict, Union, Sequence
 import itertools
-from robocorp_ls_core.lsp import Error
+from robocorp_ls_core.lsp import Error, ICustomDiagnosticDataUnexpectedArgumentTypedDict
 from robocorp_ls_core.constants import Null, NULL
 import typing
 
@@ -37,12 +38,22 @@ class UsageInfoForKeywordArgumentAnalysis:
 
 
 class KeywordArgumentAnalysis:
-    def __init__(self, keyword_args: Sequence[IKeywordArg]) -> None:
+    def __init__(
+        self,
+        keyword_args: Sequence[IKeywordArg],
+        keyword_found: Optional[IKeywordFound] = None,
+    ) -> None:
+        """
+        :param keyword_found:
+            May be None if we're analyzing args for something as a library constructor
+            (or some other case which doesn't map to a keyword).
+        """
 
         args = self._keyword_args = keyword_args
 
         self.found_star_arg: Optional[IKeywordArg] = None
         self.found_keyword_arg: Optional[IKeywordArg] = None
+        self.keyword_found: Optional[IKeywordFound] = keyword_found
         self._star_arg_index = -1
         self._keyword_arg_index = -1
 
@@ -158,6 +169,30 @@ class KeywordArgumentAnalysis:
             )
         except SkipAnalysisControlFlowException:
             pass
+
+    def _create_unexpected_arg_data(self, arg_name: str):
+        keyword_found = self.keyword_found
+        if keyword_found is None:
+            return None
+        ast = keyword_found.keyword_ast
+        if ast is None:
+            return None
+
+        if keyword_found.source is None:
+            return None
+
+        if not keyword_found.keyword_name:
+            return None
+
+        # Only create the data if we have a reference to the ast (where it's
+        # actionable afterwards to create an argument through code actions).
+        unexpected_arg_data: ICustomDiagnosticDataUnexpectedArgumentTypedDict = {
+            "kind": "unexpected_argument",
+            "arg_name": arg_name,
+            "keyword_name": keyword_found.keyword_name,
+            "path": keyword_found.source,
+        }
+        return unexpected_arg_data
 
     def _collect_keyword_usage_errors_and_build_definition_map_raises_exc(
         self,
@@ -323,6 +358,7 @@ class KeywordArgumentAnalysis:
                             f"Unexpected argument: {token_arg.value}",
                             tokens=[token_arg],
                         )
+                        error.data = self._create_unexpected_arg_data(token_arg.value)
                         yield error
             return
 
@@ -357,6 +393,9 @@ class KeywordArgumentAnalysis:
                                     usage_info.node,
                                     f"Unexpected named argument: {name}",
                                     tokens=[token_arg],
+                                )
+                                error.data = self._create_unexpected_arg_data(
+                                    name + "="
                                 )
                                 yield error
 

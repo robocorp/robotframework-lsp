@@ -533,7 +533,7 @@ def collect_analysis_errors(initial_completion_context):
                     if keyword_token is not None:
                         # Ok, we found the keyword, let's check if the arguments are correct.
                         keyword_argument_analysis = KeywordArgumentAnalysis(
-                            keyword_found.keyword_args
+                            keyword_found.keyword_args, keyword_found
                         )
 
                         for (
@@ -562,7 +562,7 @@ def collect_analysis_errors(initial_completion_context):
                                 stack, keyword_usage_info.node
                             ):
                                 keyword_argument_analysis = KeywordArgumentAnalysis(
-                                    keyword_found.keyword_args
+                                    keyword_found.keyword_args, keyword_found
                                 )
                                 args_tokens = template_arguments_node_info.node.tokens
                                 for (

@@ -150,7 +150,7 @@ SETTINGS = {
     },
     "robot.quickFix.keywordTemplate": {
         "type": "string",
-        "default": r"$keyword_name$keyword_arguments\n    $cursor\n\n",
+        "default": "$keyword_name$keyword_arguments\n    $cursor\n\n",
         "description": "The template to be used for keyword creation in quick fixes.",
     },
     "robot.codeLens.enable": {

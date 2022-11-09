@@ -1,0 +1,28 @@
+- arguments:
+  - apply_edit:
+      edit:
+        changes:
+          case4.robot:
+          - newText: '    ${b}'
+            range:
+              end:
+                character: 23
+                line: 3
+              start:
+                character: 23
+                line: 3
+      label: Add argument ${b} to Foobar
+    lint_uris:
+    - case4.robot
+    show_document:
+      selection:
+        end:
+          character: 31
+          line: 3
+        start:
+          character: 31
+          line: 3
+      takeFocus: true
+      uri: case4.robot
+  command: robot.applyCodeAction
+  title: Add argument ${b} to Foobar

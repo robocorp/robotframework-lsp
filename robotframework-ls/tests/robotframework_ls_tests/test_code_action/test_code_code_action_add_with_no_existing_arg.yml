@@ -1,0 +1,28 @@
+- arguments:
+  - apply_edit:
+      edit:
+        changes:
+          case4.robot:
+          - newText: '    ${another}'
+            range:
+              end:
+                character: 15
+                line: 3
+              start:
+                character: 15
+                line: 3
+      label: Add argument ${another} to Foobar
+    lint_uris:
+    - case4.robot
+    show_document:
+      selection:
+        end:
+          character: 29
+          line: 3
+        start:
+          character: 29
+          line: 3
+      takeFocus: true
+      uri: case4.robot
+  command: robot.applyCodeAction
+  title: Add argument ${another} to Foobar

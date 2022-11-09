@@ -14,11 +14,13 @@ from robocorp_ls_core.lsp import (
     ShowDocumentParamsTypedDict,
     ICustomDiagnosticDataUndefinedLibraryTypedDict,
     ICustomDiagnosticDataUndefinedVarImportTypedDict,
+    ICustomDiagnosticDataUnexpectedArgumentTypedDict,
 )
 from robotframework_ls.impl.protocols import (
     ICompletionContext,
     IKeywordFound,
     IResourceImportNode,
+    IRobotDocument,
 )
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.basic import isinstance_name
@@ -205,7 +207,7 @@ def _undefined_keyword_code_action(
 ) -> Iterator[CommandTypedDict]:
     from robotframework_ls.robot_config import get_arguments_separator
 
-    keyword_template = """$keyword_name$keyword_arguments\n    $cursor\n\n"""
+    keyword_template = "$keyword_name$keyword_arguments\n    $cursor\n\n"
     config = completion_context.config
     if config is not None:
         keyword_template = config.get_setting(
@@ -408,6 +410,122 @@ def _deal_with_resource_or_import_or_alias_name(
                 )
 
 
+def _create_arguments_command(
+    completion_context: ICompletionContext,
+    use_line: int,
+    use_col: int,
+    arg_name: str,
+    keyword_name: str,
+    prefix: str = "",
+    postfix: str = "",
+) -> CommandTypedDict:
+    from robotframework_ls.robot_config import get_arguments_separator
+
+    separator = get_arguments_separator(completion_context)
+    text_edit: TextEditTypedDict = {
+        "range": {
+            "start": {
+                "line": use_line,
+                "character": use_col,
+            },
+            "end": {
+                "line": use_line,
+                "character": use_col,
+            },
+        },
+        "newText": f"{prefix}{separator}{arg_name}$__LSP_CURSOR_LOCATION__${postfix}",
+    }
+
+    changes = {completion_context.doc.uri: [text_edit]}
+    edit: WorkspaceEditTypedDict = {"changes": changes}
+    title = f"Add argument {arg_name} to {keyword_name}"
+    edit_params: WorkspaceEditParamsTypedDict = {
+        "edit": edit,
+        "label": title,
+    }
+    command: CommandTypedDict = {
+        "title": title,
+        "command": "robot.applyCodeAction",
+        "arguments": [{"apply_edit": edit_params}],
+    }
+
+    _add_show_document_at_command(command, completion_context.doc.uri, text_edit)
+    return command
+
+
+def _unexpected_argument_code_action(
+    completion_context: ICompletionContext,
+    unexpected_argument_data: ICustomDiagnosticDataUnexpectedArgumentTypedDict,
+):
+    from robocorp_ls_core import uris
+    from robotframework_ls.impl import ast_utils
+    from robotframework_ls.impl.string_matcher import RobotStringMatcher
+
+    arg_name = unexpected_argument_data["arg_name"]
+    if "=" not in arg_name:
+        return
+
+    arg_name = arg_name.split("=")[0]
+    if not arg_name:
+        return
+
+    arg_name = "${%s}" % (arg_name,)
+
+    keyword_name = unexpected_argument_data["keyword_name"]
+    path = unexpected_argument_data["path"]
+    doc = completion_context.workspace.get_document(
+        uris.from_fs_path(path), accept_from_file=True
+    )
+    if not doc:
+        return
+
+    robotdoc = typing.cast(IRobotDocument, doc)
+    completion_context = completion_context.create_copy(robotdoc)
+    ast = robotdoc.get_ast()
+    robot_string_matcher = RobotStringMatcher(keyword_name)
+    matched_keyword_node = None
+    for keyword in ast_utils.iter_keywords(ast):
+        keyword_name = keyword.node.name
+        if robot_string_matcher.is_keyword_name_match(keyword_name):
+            matched_keyword_node = keyword.node
+            break
+    else:
+        return
+
+    for stmt in matched_keyword_node.body:
+        if isinstance_name(stmt, "Arguments"):
+            # Ok, found existing arguments
+            for token in reversed(stmt.tokens):
+                if token.type in (token.ARGUMENT, token.ARGUMENTS):
+                    last_arg = token
+                    use_line = last_arg.lineno - 1
+                    use_col = last_arg.end_col_offset
+
+                    yield _create_arguments_command(
+                        completion_context,
+                        use_line,
+                        use_col,
+                        arg_name,
+                        keyword_name,
+                    )
+                    return
+
+    # If we got here theres no [Arguments] section. So, create it along
+    # with the arguments.
+    header = matched_keyword_node.header
+    prefix = f"    [Arguments]"
+
+    yield _create_arguments_command(
+        completion_context,
+        use_line=header.end_lineno,
+        use_col=0,
+        arg_name=arg_name,
+        keyword_name=keyword_name,
+        prefix=prefix,
+        postfix="\n",
+    )
+
+
 def code_action(
     completion_context: ICompletionContext,
     found_data: List[ICustomDiagnosticDataTypedDict],
@@ -427,6 +545,17 @@ def code_action(
                     completion_context, undefined_keyword_data
                 )
             )
+
+        elif data["kind"] == "unexpected_argument":
+            unexpected_argument_data = typing.cast(
+                ICustomDiagnosticDataUnexpectedArgumentTypedDict, data
+            )
+            ret.extend(
+                _unexpected_argument_code_action(
+                    completion_context, unexpected_argument_data
+                )
+            )
+
         elif data["kind"] == "undefined_resource":
             undefined_resource_data = typing.cast(
                 ICustomDiagnosticDataUndefinedResourceTypedDict, data

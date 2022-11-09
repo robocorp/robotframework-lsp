@@ -79,12 +79,12 @@ def _collect_errors(completion_context):
 
 
 def _analyze_and_create_completion_context(
-    doc, workspace, kind="undefined_keyword", filter=False
+    doc, workspace, kind="undefined_keyword", filter_kind=False
 ):
     from robotframework_ls.impl.completion_context import CompletionContext
 
     errors = _collect_errors(CompletionContext(doc, workspace=workspace.ws))
-    if filter:
+    if filter_kind:
         errors = [x for x in errors if x["data"] and x["data"]["kind"] == kind]
 
     assert len(errors) == 1
@@ -347,6 +347,202 @@ Something
     )
 
 
+def test_code_code_action_add_arg_after_existing_arg(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.code_action import code_action
+
+    workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.put_doc("case4.robot")
+    doc.source = """
+*** keywords ***
+Foobar
+    [Arguments]    ${foo}
+    No Operation
+    
+Something
+    Foobar    1    another=10
+"""
+
+    completion_context, diagnostic_data = _analyze_and_create_completion_context(
+        doc, workspace, "unexpected_argument"
+    )
+    found_data = [diagnostic_data]
+    actions = code_action(completion_context, found_data)
+    check_code_action_data_regression(data_regression, actions)
+
+    check_apply_result(
+        doc,
+        actions,
+        """
+*** keywords ***
+Foobar
+    [Arguments]    ${foo}    ${another}
+    No Operation
+    
+Something
+    Foobar    1    another=10
+""",
+    )
+
+
+def test_code_code_action_add_with_no_existing_arg(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.code_action import code_action
+
+    workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.put_doc("case4.robot")
+    doc.source = """
+*** keywords ***
+Foobar
+    [Arguments]
+    No Operation
+    
+Something
+    Foobar    another=10
+"""
+
+    completion_context, diagnostic_data = _analyze_and_create_completion_context(
+        doc, workspace, "unexpected_argument"
+    )
+    found_data = [diagnostic_data]
+    actions = code_action(completion_context, found_data)
+    check_code_action_data_regression(data_regression, actions)
+
+    check_apply_result(
+        doc,
+        actions,
+        """
+*** keywords ***
+Foobar
+    [Arguments]    ${another}
+    No Operation
+    
+Something
+    Foobar    another=10
+""",
+    )
+
+
+def test_code_code_action_add_with_no_existing_arg_section(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.code_action import code_action
+
+    workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.put_doc("case4.robot")
+    doc.source = """
+*** keywords ***
+Foobar
+    No Operation
+    
+Something
+    Foobar    another=10
+"""
+
+    completion_context, diagnostic_data = _analyze_and_create_completion_context(
+        doc, workspace, "unexpected_argument"
+    )
+    found_data = [diagnostic_data]
+    actions = code_action(completion_context, found_data)
+    check_code_action_data_regression(data_regression, actions)
+
+    check_apply_result(
+        doc,
+        actions,
+        """
+*** keywords ***
+Foobar
+    [Arguments]    ${another}
+    No Operation
+    
+Something
+    Foobar    another=10
+""",
+    )
+
+
+def test_code_code_action_add_2nd_named_arg(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.code_action import code_action
+
+    workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.put_doc("case4.robot")
+    doc.source = """
+*** keywords ***
+Foobar
+    [Arguments]    ${a}
+    No Operation
+    
+Something
+    Foobar    a=10    b=20
+"""
+
+    completion_context, diagnostic_data = _analyze_and_create_completion_context(
+        doc, workspace, "unexpected_argument"
+    )
+    found_data = [diagnostic_data]
+    actions = code_action(completion_context, found_data)
+    check_code_action_data_regression(data_regression, actions)
+
+    check_apply_result(
+        doc,
+        actions,
+        """
+*** keywords ***
+Foobar
+    [Arguments]    ${a}    ${b}
+    No Operation
+    
+Something
+    Foobar    a=10    b=20
+""",
+    )
+
+
+def test_code_code_action_in_another_file(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.code_action import code_action
+
+    workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
+    doc_import = workspace.put_doc("import_from.robot")
+    doc_import.source = """
+*** keywords ***
+Foobar
+    [Arguments]    ${a}
+    No Operation
+"""
+
+    doc = workspace.put_doc("case4.robot")
+    doc.source = """
+*** Settings ***
+Resource    import_from.robot
+
+*** Test Cases ***
+Something
+    Foobar    a=10    b=20
+"""
+
+    completion_context, diagnostic_data = _analyze_and_create_completion_context(
+        doc, workspace, "unexpected_argument"
+    )
+    found_data = [diagnostic_data]
+    actions = code_action(completion_context, found_data)
+    check_code_action_data_regression(data_regression, actions)
+
+    check_apply_result(
+        doc_import,
+        actions,
+        """
+*** keywords ***
+Foobar
+    [Arguments]    ${a}    ${b}
+    No Operation
+""",
+    )
+
+
 def test_code_code_action_create_resource(workspace, libspec_manager, data_regression):
     from robotframework_ls.impl.code_action import code_action
 
@@ -420,7 +616,7 @@ My Test
 """
 
     completion_context, diagnostic_data = _analyze_and_create_completion_context(
-        doc, workspace, filter=True
+        doc, workspace, filter_kind=True
     )
     found_data = [diagnostic_data]
     actions = code_action(completion_context, found_data)
@@ -460,7 +656,7 @@ My Test
 """
 
     completion_context, diagnostic_data = _analyze_and_create_completion_context(
-        doc, workspace, filter=True
+        doc, workspace, filter_kind=True
     )
     found_data = [diagnostic_data]
     actions = code_action(completion_context, found_data)
@@ -504,7 +700,7 @@ My Test
 """
 
     completion_context, diagnostic_data = _analyze_and_create_completion_context(
-        doc, workspace, filter=True
+        doc, workspace, filter_kind=True
     )
     found_data = [diagnostic_data]
     actions = code_action(completion_context, found_data)

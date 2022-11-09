@@ -992,6 +992,13 @@ class ICustomDiagnosticDataUndefinedLibraryTypedDict(TypedDict):
     resolved_name: str
 
 
+class ICustomDiagnosticDataUnexpectedArgumentTypedDict(TypedDict):
+    kind: str  # unexpected_argument
+    arg_name: str
+    keyword_name: str
+    path: str
+
+
 class Error(object):
 
     __slots__ = "msg start end severity tags data".split(" ")
