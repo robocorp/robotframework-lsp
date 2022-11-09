@@ -1,3 +1,11 @@
+New in 1.5.0 (2022-11-09)
+-----------------------------
+
+### Bugfixes
+
+- Fixed caching issue where adding a file would not invalidate an internal cache which could make resolved imports appear as unresolved.
+
+
 New in 1.4.0 (2022-11-02)
 -----------------------------
 

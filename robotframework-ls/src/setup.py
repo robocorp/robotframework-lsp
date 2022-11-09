@@ -105,7 +105,7 @@ def collect_other_vendored_files():
 
 setup(
     name="robotframework-lsp",
-    version="1.4.3",
+    version="1.5.0",
     description="Language Server Protocol implementation for Robot Framework",
     long_description=_readme.read_text(),
     url="https://github.com/robocorp/robotframework-lsp",

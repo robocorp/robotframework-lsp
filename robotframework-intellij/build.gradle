@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '1.4.3'
+version '1.5.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -50,13 +50,13 @@ intellij {
 patchPluginXml {
     changeNotes = """
     <p>
-    <strong>Release 1.4.0</strong>
+    <strong>Release 1.5.0</strong>
     </p>
     
     <ul>
     <li><strong>Bugfixes</strong></li>
     <ul>
-    <li>Minor fixes.</li>
+    <li>Fixed caching issue where adding a file would not invalidate an internal cache which could make resolved imports appear as unresolved.</li>
     </ul>
     
     

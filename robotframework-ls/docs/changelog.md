@@ -1,3 +1,23 @@
+New in 1.5.0 (2022-11-09)
+-----------------------------
+
+### New features
+
+- Quick-fixes especially suited for TDD-style coding lovers:
+    - Create Keyword from undefined keyword diagnostic.
+    - Create named Keyword argument from named unresolved argument.
+    - Create Library from undefined Library import.
+    - Create Resource from undefined Resource import.
+    - Create Variable file from undefined Variable file import.
+
+- Other quick-fixes:
+    - Import resource or library from undefined keyword diagnostic.
+
+### Bugfixes
+
+- Fixed caching issue where adding a file would not invalidate an internal cache which could make resolved imports appear as unresolved.
+
+
 New in 1.4.3 (2022-11-04)
 -----------------------------
 
