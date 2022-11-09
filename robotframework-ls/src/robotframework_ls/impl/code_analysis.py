@@ -8,6 +8,8 @@ from robocorp_ls_core.lsp import (
     DiagnosticTag,
     ICustomDiagnosticDataUndefinedKeywordTypedDict,
     ICustomDiagnosticDataUndefinedResourceTypedDict,
+    ICustomDiagnosticDataUndefinedVarImportTypedDict,
+    ICustomDiagnosticDataUndefinedLibraryTypedDict,
 )
 from robocorp_ls_core.protocols import check_implements
 from robocorp_ls_core.robotframework_log import get_logger
@@ -315,13 +317,19 @@ def collect_analysis_errors(initial_completion_context):
                     if "{" in library_name and resolved_name:
                         error_msg += f"\nNote: resolved name: {resolved_name}"
 
-            errors.append(
-                ast_utils.Error(
-                    f"Unresolved library: {library_name}.{error_msg}{additional}".strip(),
-                    start,
-                    end,
-                )
+            error = ast_utils.Error(
+                f"Unresolved library: {library_name}.{error_msg}{additional}".strip(),
+                start,
+                end,
             )
+            undefined_var_import_data: ICustomDiagnosticDataUndefinedLibraryTypedDict = {
+                "kind": "undefined_library",
+                "name": library_name,
+                "resolved_name": resolved_name,
+            }
+            error.data = undefined_var_import_data
+
+            errors.append(error)
 
     def on_unresolved_resource(
         completion_context: ICompletionContext,
@@ -739,9 +747,14 @@ def _collect_undefined_variables_errors(initial_completion_context):
                 if "{" in variable_import_name and resolved_name:
                     error_msg += f"\nNote: resolved name: {resolved_name}"
 
-            unresolved_variable_import_errors.append(
-                ast_utils.Error(error_msg, start, end)
-            )
+            error = ast_utils.Error(error_msg, start, end)
+            undefined_var_import_data: ICustomDiagnosticDataUndefinedVarImportTypedDict = {
+                "kind": "undefined_var_import",
+                "name": variable_import_name,
+                "resolved_name": resolved_name,
+            }
+            error.data = undefined_var_import_data
+            unresolved_variable_import_errors.append(error)
 
     from robotframework_ls.impl import variable_completions
 

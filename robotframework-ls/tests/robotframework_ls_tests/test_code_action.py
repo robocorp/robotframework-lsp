@@ -317,6 +317,42 @@ Resource    ./import_from_this_robot.robot
     check_code_action_data_regression(data_regression, actions)
 
 
+def test_code_code_action_create_library(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.code_action import code_action
+
+    workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.put_doc("case4.robot")
+    doc.source = """
+*** Settings ***
+Library    .${/}import_from_this_lib.py
+"""
+
+    completion_context, diagnostic_data = _analyze_and_create_completion_context(
+        doc, workspace, "undefined_library"
+    )
+    found_data = [diagnostic_data]
+    actions = code_action(completion_context, found_data)
+    check_code_action_data_regression(data_regression, actions)
+
+
+def test_code_code_action_create_variables(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.code_action import code_action
+
+    workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.put_doc("case4.robot")
+    doc.source = """
+*** Settings ***
+Variables    ${CURDIR}/my_vars.py
+"""
+
+    completion_context, diagnostic_data = _analyze_and_create_completion_context(
+        doc, workspace, "undefined_var_import"
+    )
+    found_data = [diagnostic_data]
+    actions = code_action(completion_context, found_data)
+    check_code_action_data_regression(data_regression, actions)
+
+
 def test_code_code_action_create_keyword_in_another_file(
     workspace, libspec_manager, data_regression
 ):

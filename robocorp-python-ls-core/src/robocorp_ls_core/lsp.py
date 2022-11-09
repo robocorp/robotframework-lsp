@@ -980,6 +980,18 @@ class ICustomDiagnosticDataUndefinedResourceTypedDict(TypedDict):
     resolved_name: str
 
 
+class ICustomDiagnosticDataUndefinedVarImportTypedDict(TypedDict):
+    kind: str  # undefined_var_import
+    name: str
+    resolved_name: str
+
+
+class ICustomDiagnosticDataUndefinedLibraryTypedDict(TypedDict):
+    kind: str  # undefined_import
+    name: str
+    resolved_name: str
+
+
 class Error(object):
 
     __slots__ = "msg start end severity tags data".split(" ")

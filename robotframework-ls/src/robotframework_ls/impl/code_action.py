@@ -12,6 +12,8 @@ from robocorp_ls_core.lsp import (
     ICustomDiagnosticDataUndefinedResourceTypedDict,
     RangeTypedDict,
     ShowDocumentParamsTypedDict,
+    ICustomDiagnosticDataUndefinedLibraryTypedDict,
+    ICustomDiagnosticDataUndefinedVarImportTypedDict,
 )
 from robotframework_ls.impl.protocols import (
     ICompletionContext,
@@ -384,12 +386,32 @@ def code_action(
                 )
             )
         elif data["kind"] == "undefined_resource":
-            undefined_keyword_data = typing.cast(
+            undefined_resource_data = typing.cast(
                 ICustomDiagnosticDataUndefinedResourceTypedDict, data
             )
             ret.extend(
                 _undefined_resource_code_action(
-                    completion_context, undefined_keyword_data
+                    completion_context, undefined_resource_data
+                )
+            )
+
+        elif data["kind"] == "undefined_library":
+            undefined_library_data = typing.cast(
+                ICustomDiagnosticDataUndefinedLibraryTypedDict, data
+            )
+            ret.extend(
+                _undefined_resource_code_action(
+                    completion_context, undefined_library_data
+                )
+            )
+
+        elif data["kind"] == "undefined_var_import":
+            undefined_var_import_data = typing.cast(
+                ICustomDiagnosticDataUndefinedVarImportTypedDict, data
+            )
+            ret.extend(
+                _undefined_resource_code_action(
+                    completion_context, undefined_var_import_data
                 )
             )
 
