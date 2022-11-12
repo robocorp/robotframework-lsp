@@ -144,6 +144,8 @@ class LaunchProcessDebugAdapterRobotTargetComm(BaseLaunchProcessTargetComm):
 
     on_logMessage_event = _forward_event_to_client
 
+    on_rfStream_event = _forward_event_to_client
+
     def is_terminated(self):
         with self._terminated_lock:
             return self._terminated_event.is_set()

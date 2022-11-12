@@ -43,6 +43,7 @@ import { registerDebugger } from "./debugger";
 import { debounce } from "./common";
 import { RobotDocumentationViewProvider } from "./docs";
 import { RobotOutputViewProvider } from "./output/outView";
+import { setupDebugSessionOutViewIntegration } from "./output/outViewRunIntegration";
 
 interface ExecuteWorkspaceCommandArgs {
     command: string;
@@ -416,6 +417,7 @@ async function startLanguageServer(): Promise<LanguageClient> {
     );
 
     await setupTestExplorerSupport();
+    await setupDebugSessionOutViewIntegration(extensionContext);
     // Important: register listeners before starting (otherwise startup progress is not shown).
     await registerLanguageServerListeners(langServer);
 

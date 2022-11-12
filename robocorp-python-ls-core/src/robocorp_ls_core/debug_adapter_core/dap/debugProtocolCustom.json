@@ -5,6 +5,32 @@
   "type": "object",
 
   "definitions": {
+    "RFStreamEvent": {
+      "allOf": [
+        { "$ref": "#/definitions/Event" },
+        {
+          "type": "object",
+          "description": "Sends a RobotStream message..",
+          "properties": {
+            "event": {
+              "type": "string",
+              "enum": ["rfStream"]
+            },
+            "body": {
+              "type": "object",
+              "properties": {
+                "msg": {
+                  "type": "string",
+                  "description": "The message logged."
+                }
+              },
+              "required": []
+            }
+          },
+          "required": ["event", "body"]
+        }
+      ]
+    },
     "LogMessageEvent": {
       "allOf": [
         { "$ref": "#/definitions/Event" },

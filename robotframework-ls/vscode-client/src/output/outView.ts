@@ -150,7 +150,7 @@ export class RobotOutputViewProvider implements vscode.WebviewViewProvider {
             this.loading = undefined;
 
             if (this.view && this.view.visible) {
-                this.setContentsInHTML(loadingEntry.cts.token, this.view.webview);
+                this.onUpdatedEditorSelection(loadingEntry.cts.token, this.view.webview);
             }
         })();
 
@@ -169,9 +169,7 @@ export class RobotOutputViewProvider implements vscode.WebviewViewProvider {
         ]);
     }
 
-    private async setContentsInHTML(token: vscode.CancellationToken, webview: vscode.Webview): Promise<IContents> {
-        OUTPUT_CHANNEL.appendLine("Robot Output webview: set contents in HTML.");
-
+    private async onUpdatedEditorSelection(token: vscode.CancellationToken, webview: vscode.Webview): Promise<IContents> {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             return;

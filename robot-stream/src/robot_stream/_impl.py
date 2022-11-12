@@ -25,7 +25,6 @@ def _gen_id(level: int = 1) -> Iterator[str]:
 class _Config:
     # Loaded from constructor args
     output_dir: Optional[str]
-    port: int
     max_file_size_in_bytes: int
     max_files: int
 
@@ -37,7 +36,6 @@ class _Config:
 
     def __init__(self):
         self.output_dir = "./out_"
-        self.port = -1
 
 
 class _RotateHandler:
@@ -121,8 +119,6 @@ class _RobotOutputImpl:
             self._output_dir = Path(config.output_dir)
             self._output_dir.mkdir(exist_ok=True)
         self._write = config.write
-
-        self._port = config.port
 
         self._move_old_runs()
 

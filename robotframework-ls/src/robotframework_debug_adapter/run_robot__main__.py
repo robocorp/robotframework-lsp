@@ -652,6 +652,10 @@ def main():
             sys.stderr.write("Python executable: %s.\n\n" % (sys.executable,))
             raise
 
+        from robotframework_debug_adapter.listeners import install_rf_stream_connection
+
+        install_rf_stream_connection(processor.write_message)
+
         from robot import run_cli
 
         exitcode = run_cli(robot_args, exit=False)

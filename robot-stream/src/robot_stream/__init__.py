@@ -38,11 +38,10 @@ class RFStream:
 
     def __init__(self, *args, **kwargs):
         from robot_stream._impl import _RobotOutputImpl, _Config
-        import sys
 
         config = _Config()
 
-        check_args = ["--dir=", "--port=", "--max-file-size=", "--max-files="]
+        check_args = ["--dir=", "--max-file-size=", "--max-files="]
         for arg in args:
             for check_arg in check_args:
                 if arg.startswith(check_arg):
@@ -53,7 +52,6 @@ class RFStream:
         )
         if config.output_dir == "None":
             config.output_dir = None
-        config.port = int(kwargs.get("--port", "-1"))
 
         max_file_size_arg = kwargs.get("--max-file-size", "1MB")
         config.max_file_size_in_bytes = _convert_to_bytes(max_file_size_arg)

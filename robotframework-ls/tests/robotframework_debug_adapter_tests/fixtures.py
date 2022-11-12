@@ -136,6 +136,7 @@ class _DebuggerAPI(object):
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
             ConfigurationDoneResponse,
         )
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import RFStreamEvent
 
         while True:
             msg = self.read_queue.get(timeout=TIMEOUT)
@@ -149,7 +150,9 @@ class _DebuggerAPI(object):
                     return msg
 
                 # Skip OutputEvent and ConfigurationDoneResponse. Other events must match.
-                if not isinstance(msg, (OutputEvent, ConfigurationDoneResponse)):
+                if not isinstance(
+                    msg, (OutputEvent, ConfigurationDoneResponse, RFStreamEvent)
+                ):
                     raise AssertionError(
                         "Received: %s when expecting: %s" % (msg, expect_class)
                     )
