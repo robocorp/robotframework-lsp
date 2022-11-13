@@ -119,7 +119,6 @@ export function addTreeContent(
 let toolbar: HTMLSpanElement = undefined;
 let globalCurrMouseOver: IContentAdded = undefined;
 function expandOnClick() {
-    console.log("expand on click");
     if (globalCurrMouseOver === undefined) {
         return;
     }

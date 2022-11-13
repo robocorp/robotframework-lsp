@@ -2,10 +2,12 @@ import { IOpts } from "./protocols";
 import { getState } from "./vscodeComm";
 
 let _opts: IOpts = {
-    outputFileContents: undefined,
+    initialContents: undefined,
     runId: undefined,
     state: undefined,
+    label: "",
     onClickReference: undefined,
+    appendedContents: [],
 };
 
 export function getOpts(): IOpts {

@@ -40,7 +40,11 @@ function decode_memo(decoder, message) {
 }
 
 function _decodeOid(decoder, oid) {
-    return decoder.memo[oid];
+    const ret = decoder.memo[oid];
+    if (ret === undefined) {
+        return `<ref not found: ${oid}>`;
+    }
+    return ret;
 }
 function _decodeFloat(decoder, msg) {
     return parseFloat(msg);
@@ -155,9 +159,8 @@ function splitInChar(line: string, char: string) {
     return undefined;
 }
 
-export function* iter_decoded_log_format(stream: string) {
-    var decoded, decoder, message, message_type;
-    decoder = new Decoder();
+export function* iter_decoded_log_format(stream: string, decoder: Decoder) {
+    var decoded, message, message_type;
 
     for (let line of stream.split(/\r?\n/)) {
         line = line.trim();

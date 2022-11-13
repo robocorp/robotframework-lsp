@@ -34,6 +34,21 @@ export interface IEventMessage {
     event: string;
 }
 
+export interface ISetContentsRequest {
+    type: "request";
+    command: "setContents";
+    initialContents: string;
+    runId: string;
+    label: string;
+}
+
+export interface IAppendContentsRequest {
+    type: "request";
+    command: "appendContents";
+    appendContents: string;
+    runId: string;
+}
+
 let msgIdToSeq = {};
 
 export function sendRequestToClient(message: IRequestMessage): Promise<any> {
@@ -86,6 +101,7 @@ export let eventToHandler = {
 
 export let requestToHandler = {
     "setContents": undefined,
+    "appendContents": undefined,
 };
 
 // i.e.: Receive message from client

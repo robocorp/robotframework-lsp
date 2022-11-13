@@ -17,10 +17,19 @@ export interface IState {
 export type IFilterLevel = "FAIL" | "WARN" | "PASS";
 
 export interface IOpts {
-    outputFileContents: string;
     runId: string;
     state: IState | undefined;
     onClickReference: Function | undefined;
+    label: string;
+
+    // Contains the initial file contents.
+    initialContents: string;
+
+    // Contains the contents added afterwards (i.e.:
+    // we may add the contents for a session up to a point
+    // and then add new messages line by line as it's
+    // being tracked afterwards).
+    appendedContents: string[];
 }
 
 export interface IContentAdded {

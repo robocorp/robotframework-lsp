@@ -1,8 +1,8 @@
 import { TextDecoder } from "util";
 import * as vscode from "vscode";
-import { OUTPUT_CHANNEL } from "../channel";
 import { debounce } from "../common";
 import { isFile, uriExists } from "../files";
+import { globalOutputViewState } from "./outViewRunIntegration";
 
 interface IContents {
     isPlaceholder: boolean;
@@ -48,7 +48,6 @@ export class RobotOutputViewProvider implements vscode.WebviewViewProvider {
         webviewView.webview.onDidReceiveMessage(async (message) => {
             if (message.type == "event") {
                 if (message.event == "onClickReference") {
-                    // OUTPUT_CHANNEL.appendLine(JSON.stringify(message));
                     const data = message.data;
                     if (data) {
                         let source = data["source"];
@@ -69,20 +68,33 @@ export class RobotOutputViewProvider implements vscode.WebviewViewProvider {
                             }
                         }
                     }
+                } else if (message.event === "onSetCurrentRunId") {
+                    const data = message.data;
+                    if (data) {
+                        globalOutputViewState.setCurrentRunId(data["runId"]);
+                    }
                 }
             }
         });
 
         webviewView.onDidChangeVisibility(() => {
+            if (!this.view || !this.view.visible) {
+                globalOutputViewState.setWebview(undefined);
+            } else {
+                globalOutputViewState.setWebview(this.view.webview);
+            }
+
             // Can be used in dev to update the whole HTML instead of just the contents.
             // this.updateHTML(undefined);
             this.update();
         });
 
         webviewView.onDidDispose(() => {
+            globalOutputViewState.setWebview(undefined);
             this.view = undefined;
         });
 
+        globalOutputViewState.setWebview(this.view.webview);
         this.updateHTML(token);
     }
 
@@ -118,6 +130,7 @@ export class RobotOutputViewProvider implements vscode.WebviewViewProvider {
             html = "Error loading HTML: " + error;
         }
         webviewView.webview.html = html;
+        globalOutputViewState.updateAfterSetHTML();
 
         this.update();
     }
@@ -150,7 +163,7 @@ export class RobotOutputViewProvider implements vscode.WebviewViewProvider {
             this.loading = undefined;
 
             if (this.view && this.view.visible) {
-                this.onUpdatedEditorSelection(loadingEntry.cts.token, this.view.webview);
+                this.onUpdatedEditorSelection(loadingEntry.cts.token);
             }
         })();
 
@@ -169,7 +182,7 @@ export class RobotOutputViewProvider implements vscode.WebviewViewProvider {
         ]);
     }
 
-    private async onUpdatedEditorSelection(token: vscode.CancellationToken, webview: vscode.Webview): Promise<IContents> {
+    private async onUpdatedEditorSelection(token: vscode.CancellationToken): Promise<IContents> {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             return;
@@ -199,7 +212,7 @@ export class RobotOutputViewProvider implements vscode.WebviewViewProvider {
             }
             text = converted;
         }
-        webview.postMessage({ type: "request", command: "setContents", "outputFileContents": text, "runId": filePath });
+        await globalOutputViewState.addRun(filePath, filePath, text);
     }
 }
 
