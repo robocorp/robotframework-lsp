@@ -77,7 +77,7 @@ class OutputViewState {
         this.webview = webview;
     }
 
-    updateAfterSetHTML() {
+    updateAfterVisible() {
         if (this.currentRunId !== undefined) {
             this.setCurrentRunId(this.currentRunId);
         }

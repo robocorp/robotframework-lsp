@@ -82,6 +82,7 @@ export class RobotOutputViewProvider implements vscode.WebviewViewProvider {
                 globalOutputViewState.setWebview(undefined);
             } else {
                 globalOutputViewState.setWebview(this.view.webview);
+                globalOutputViewState.updateAfterVisible();
             }
 
             // Can be used in dev to update the whole HTML instead of just the contents.
@@ -130,7 +131,7 @@ export class RobotOutputViewProvider implements vscode.WebviewViewProvider {
             html = "Error loading HTML: " + error;
         }
         webviewView.webview.html = html;
-        globalOutputViewState.updateAfterSetHTML();
+        globalOutputViewState.updateAfterVisible();
 
         this.update();
     }
