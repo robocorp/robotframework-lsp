@@ -45,7 +45,7 @@ interface ISetContentsRequest {
     command: "setContents";
     initialContents: string;
     runId: string;
-    label: string;
+    allRunIdsToLabel: object;
 }
 
 interface IAppendContentsRequest {
@@ -55,6 +55,13 @@ interface IAppendContentsRequest {
     runId: string;
 }
 
+interface IUpdateLabelRequest {
+    type: "request";
+    command: "updateLabel";
+    runId: string;
+    label: string;
+}
+
 class OutputViewState {
     storageUri: vscode.Uri | undefined = undefined;
 
@@ -62,6 +69,7 @@ class OutputViewState {
 
     currentRunId: string | undefined;
 
+    // NOTE: runIds is a FIFO
     runIds: string[] = [];
 
     runIdToContents: Map<string, Contents> = new Map();
@@ -92,12 +100,19 @@ class OutputViewState {
                 OUTPUT_CHANNEL.appendLine("No contents registered for runId: " + runId);
                 return;
             }
+            const allRunIdsToLabel: object = {};
+            for (const rId of this.runIds) {
+                const c = this.runIdToContents.get(rId);
+                if (c !== undefined) {
+                    allRunIdsToLabel[rId] = c.label;
+                }
+            }
             const msg: ISetContentsRequest = {
                 type: "request",
                 command: "setContents",
                 "initialContents": contents.getFullContents(),
                 "runId": runId,
-                "label": contents.label,
+                "allRunIdsToLabel": allRunIdsToLabel,
             };
             webview.postMessage(msg);
         }
@@ -107,6 +122,16 @@ class OutputViewState {
      * @param runId the run id which should be tracked.
      */
     public async addRun(runId: string, label: string, contents: string) {
+        this.runIds.push(runId);
+        const MAX_RUNS_SHOWN = 15;
+        while (this.runIds.length > MAX_RUNS_SHOWN) {
+            // NOTE: runIds is a FIFO
+            let removeI = 0;
+            let removeRunId = this.runIds[removeI];
+            this.runIdToContents.delete(removeRunId);
+            this.runIds.splice(removeI, 1);
+        }
+
         this.runIdToContents.set(runId, new Contents(runId, label, contents));
         await this.setCurrentRunId(runId);
     }
@@ -115,6 +140,17 @@ class OutputViewState {
         const contents = this.runIdToContents.get(runId);
         if (contents !== undefined) {
             contents.label = label;
+
+            const webview = this.webview;
+            if (webview !== undefined) {
+                const msg: IUpdateLabelRequest = {
+                    type: "request",
+                    command: "updateLabel",
+                    "runId": runId,
+                    "label": label,
+                };
+                webview.postMessage(msg);
+            }
         }
     }
 

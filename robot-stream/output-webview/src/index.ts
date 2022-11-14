@@ -2,6 +2,7 @@ import { getOpts } from "./options";
 import { saveTreeState } from "./persistTree";
 import { selectById } from "./plainDom";
 import { IFilterLevel } from "./protocols";
+import { rebuildRunSelection } from "./runSelection";
 import { getSampleContents } from "./sample";
 import "./style.css";
 import { TreeBuilder } from "./treeBuilder";
@@ -12,6 +13,7 @@ import {
     IEventMessage,
     ISetContentsRequest,
     IAppendContentsRequest,
+    IUpdateLabelRequest,
 } from "./vscodeComm";
 
 let treeBuilder: TreeBuilder | undefined;
@@ -52,8 +54,9 @@ function setContents(msg: ISetContentsRequest): void {
     opts.initialContents = msg.initialContents;
     opts.onClickReference = onClickReference;
     opts.appendedContents = [];
-    opts.label = msg.label;
+    opts.allRunIdsToLabel = msg.allRunIdsToLabel;
 
+    rebuildRunSelection(opts.allRunIdsToLabel, opts.runId);
     rebuildTreeAndStatusesFromOpts();
 }
 
@@ -67,8 +70,15 @@ function appendContents(msg: IAppendContentsRequest): void {
     }
 }
 
+function updateLabel(msg: IUpdateLabelRequest): void {
+    const opts = getOpts();
+    opts.allRunIdsToLabel[msg.runId] = msg.label;
+    rebuildRunSelection(opts.allRunIdsToLabel, opts.runId);
+}
+
 requestToHandler["setContents"] = setContents;
 requestToHandler["appendContents"] = appendContents;
+requestToHandler["updateLabel"] = updateLabel;
 
 function onChangedFilterLevel() {
     const filterLevel = selectById("filterLevel");
@@ -76,7 +86,17 @@ function onChangedFilterLevel() {
     updateFilterLevel(value);
 }
 
-function onChangedRun() {}
+function onChangedRun() {
+    const selectedRun = selectById("selectedRun").value;
+    let ev: IEventMessage = {
+        type: "event",
+        seq: nextMessageSeq(),
+        event: "onSetCurrentRunId",
+    };
+    ev["data"] = { "runId": selectedRun };
+    sendEventToClient(ev);
+}
+
 window["onChangedRun"] = onChangedRun;
 window["onChangedFilterLevel"] = onChangedFilterLevel;
 window["setContents"] = setContents;

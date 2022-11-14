@@ -31,7 +31,7 @@
             </div>
             <div class="summaryField" id="selectRunContainer" style="flex-grow: 2; display: none">
                 <select name="selectedRun" id="selectedRun" onchange="window.onChangedRun()" style="width: 100%">
-                    <option value="NO_RUN" selected="selected">Select run...</option>
+                    <option value="NO_RUN" selected="selected">No runs available...</option>
                 </select>
             </div>
         </div>
@@ -42,6 +42,7 @@
         try {
             const vscode = acquireVsCodeApi();
             window.setVSCodeAPI(vscode);
+            document.getElementById("selectRunContainer").style.display = "block";
         } catch (err) {
             // That's ok (not running in VSCode).
             window.setContents({

@@ -20,7 +20,7 @@ export interface IOpts {
     runId: string;
     state: IState | undefined;
     onClickReference: Function | undefined;
-    label: string;
+    allRunIdsToLabel: object;
 
     // Contains the initial file contents.
     initialContents: string;

@@ -5,9 +5,9 @@ let _opts: IOpts = {
     initialContents: undefined,
     runId: undefined,
     state: undefined,
-    label: "",
     onClickReference: undefined,
     appendedContents: [],
+    allRunIdsToLabel: {},
 };
 
 export function getOpts(): IOpts {

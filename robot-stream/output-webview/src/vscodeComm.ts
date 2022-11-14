@@ -39,7 +39,7 @@ export interface ISetContentsRequest {
     command: "setContents";
     initialContents: string;
     runId: string;
-    label: string;
+    allRunIdsToLabel: object;
 }
 
 export interface IAppendContentsRequest {
@@ -47,6 +47,13 @@ export interface IAppendContentsRequest {
     command: "appendContents";
     appendContents: string;
     runId: string;
+}
+
+export interface IUpdateLabelRequest {
+    type: "request";
+    command: "updateLabel";
+    runId: string;
+    label: string;
 }
 
 let msgIdToSeq = {};
@@ -102,6 +109,7 @@ export let eventToHandler = {
 export let requestToHandler = {
     "setContents": undefined,
     "appendContents": undefined,
+    "updateLabel": undefined,
 };
 
 // i.e.: Receive message from client

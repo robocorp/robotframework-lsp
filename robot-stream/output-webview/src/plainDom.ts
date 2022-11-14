@@ -24,6 +24,10 @@ export function createSpan(): HTMLSpanElement {
     return document.createElement("span");
 }
 
+export function createOption(): HTMLOptionElement {
+    return document.createElement("option");
+}
+
 export function createButton(): HTMLButtonElement {
     return document.createElement("button");
 }

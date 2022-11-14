@@ -60,7 +60,8 @@ export function collectTreeState(state: IState, runId: string): void {
     }
     state.runIdLRU.push(runId);
 
-    while (state.runIdLRU.length > 10) {
+    const MAX_RUNS_SHOWN = 15;
+    while (state.runIdLRU.length > MAX_RUNS_SHOWN) {
         const removeRunId = state.runIdLRU.splice(0, 1);
         delete state.runIdToTreeState[removeRunId[0]];
     }
