@@ -1,5 +1,6 @@
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const HtmlInlineScriptPlugin = require("html-inline-script-webpack-plugin");
 
 module.exports = (env) => {
     let mode;
@@ -29,6 +30,19 @@ module.exports = (env) => {
         target = envTarget;
     }
     console.log("Building to: " + target);
+
+    let plugins = [
+        // Generates the index.html
+        new HtmlWebpackPlugin({
+            title: "Robot Output",
+            template: "./src/index.html",
+            scriptLoading: "blocking",
+        }),
+    ];
+
+    if (mode == "production") {
+        plugins.push(new HtmlInlineScriptPlugin());
+    }
 
     return {
         entry: ["./src/index.ts", "./src/style.css"],
@@ -71,14 +85,7 @@ module.exports = (env) => {
         resolve: {
             extensions: [".ts", ".js"],
         },
-        plugins: [
-            // Generates the index.html
-            new HtmlWebpackPlugin({
-                title: "Robot Output",
-                template: "./src/index.html",
-                scriptLoading: "blocking",
-            }),
-        ],
+        plugins: plugins,
         optimization: {
             minimize: minimize,
         },

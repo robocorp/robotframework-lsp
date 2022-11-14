@@ -25,6 +25,7 @@
     },
     "devDependencies": {
         "css-loader": "^5.2.6",
+        "html-inline-script-webpack-plugin": "^3.1.0",
         "html-webpack-plugin": "^5.3.1",
         "prettier": "2.4.1",
         "style-loader": "^2.0.0",
