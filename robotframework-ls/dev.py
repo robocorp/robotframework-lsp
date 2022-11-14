@@ -292,8 +292,8 @@ class Dev(object):
         for f in os.listdir(vendored_webview):
             print(f)
 
-        bundle_js = os.path.join(vendored_webview, "bundle.js")
-        assert os.path.exists(bundle_js), f"{bundle_js} does not exist."
+        index_html = os.path.join(vendored_webview, "index.html")
+        assert os.path.exists(index_html), f"{index_html} does not exist."
         print("=== Finished vendoring.")
 
     def fix_readme(self):

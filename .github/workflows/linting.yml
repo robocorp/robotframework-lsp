@@ -18,10 +18,10 @@ jobs:
         with:
           python-version: 3.8
           
-      - name: Setup node 12.x
+      - name: Setup node 16.x
         uses: actions/setup-node@v1
         with:
-          node-version: 12.x
+          node-version: 16.x
 
       - name: Install black
         run: |
