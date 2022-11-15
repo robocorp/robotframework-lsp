@@ -13,7 +13,7 @@
             "path": "../../robotframework-interactive"
         },
         {
-            "path": "../../robot-stream"
+            "path": "../../robotframework-output-stream"
         },
         {
             "path": "../../example-vscode"

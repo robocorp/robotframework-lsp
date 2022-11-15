@@ -220,7 +220,7 @@ export class RobotOutputViewProvider implements vscode.WebviewViewProvider {
 async function getLocalResourceRoot(extensionUri: vscode.Uri): Promise<vscode.Uri | undefined> {
     let localResourceRoot = vscode.Uri.joinPath(extensionUri, "src", "robotframework_ls", "vendored", "output-webview");
     if (!(await uriExists(localResourceRoot))) {
-        const checkUri = vscode.Uri.joinPath(extensionUri, "..", "robot-stream", "output-webview", "dist");
+        const checkUri = vscode.Uri.joinPath(extensionUri, "..", "robotframework-output-stream", "output-webview", "dist");
         if (!(await uriExists(checkUri))) {
             vscode.window.showErrorMessage(
                 "Unable to find robot output webview in:\n[" +

@@ -248,7 +248,7 @@ class Dev(object):
         time.sleep(0.5)
         return found
 
-    def vendor_robot_stream(self):
+    def vendor_robotframework_output_stream(self):
         """
         Vendors robot_stream into robotframework_ls/vendored.
         """
@@ -260,7 +260,7 @@ class Dev(object):
         src_core = os.path.join(
             os.path.dirname(__file__),
             "..",
-            "robot-stream",
+            "robotframework-output-stream",
             "src",
             "robot_stream",
         )
@@ -272,7 +272,7 @@ class Dev(object):
             os.path.join(
                 os.path.dirname(__file__),
                 "..",
-                "robot-stream",
+                "robotframework-output-stream",
                 "output-webview",
             )
         )

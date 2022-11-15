@@ -1,0 +1,91 @@
+- message_type: V
+  version: '1'
+- initial_time: '2022-11-03T08:31:39.003'
+  message_type: T
+- info: Generated from output.xml
+  message_type: I
+- info: Robot 5.0rc1 (Python 3.8.1 on win32)
+  message_type: I
+- message_type: SS
+  name: Robot10
+  suite_id: s1
+  suite_source: d:\x\vscode-robot\robotframework-lsp\robotframework-output-stream\tests\robot_stream_tests\test_robot_stream\robot10.robot
+  time_delta_in_seconds: -1.0
+- lineno: 11
+  message_type: ST
+  name: Check if
+  suite_id: s1-t1
+  time_delta_in_seconds: -1.0
+- doc: ''
+  keyword_type: KEYWORD
+  libname: ''
+  lineno: -1
+  message_type: SK
+  name: Some Keyword
+  source: null
+  time_delta_in_seconds: -1.0
+- doc: Returns the given values which can then be assigned to a variables.
+  keyword_type: KEYWORD
+  libname: BuiltIn
+  lineno: -1
+  message_type: SK
+  name: Set Variable
+  source: null
+  time_delta_in_seconds: -1.0
+- assign: ${value}
+  message_type: AS
+- argument: retval
+  message_type: KA
+- message_type: S
+  start_time_delta: 0.038
+- message_type: EK
+  status: PASS
+  time_delta_in_seconds: 0.04
+- doc: Removes all ``removables`` from the given ``string``.
+  keyword_type: KEYWORD
+  libname: String
+  lineno: -1
+  message_type: SK
+  name: Remove String
+  source: null
+  time_delta_in_seconds: -1.0
+- assign: ${rem}
+  message_type: AS
+- argument: ${value}
+  message_type: KA
+- argument: a
+  message_type: KA
+- message_type: S
+  start_time_delta: 0.04
+- message_type: EK
+  status: PASS
+  time_delta_in_seconds: 0.041
+- doc: ''
+  keyword_type: RETURN
+  libname: ''
+  lineno: -1
+  message_type: SK
+  name: ${rem} | ${value}
+  source: null
+  time_delta_in_seconds: -1.0
+- message_type: S
+  start_time_delta: 0.041
+- message_type: EK
+  status: PASS
+  time_delta_in_seconds: 0.041
+- message_type: S
+  start_time_delta: 0.038
+- message_type: EK
+  status: PASS
+  time_delta_in_seconds: 0.041
+- message_type: S
+  start_time_delta: 0.037
+- message: ''
+  message_type: ET
+  status: PASS
+  time_delta_in_seconds: 0.042
+- message_type: S
+  start_time_delta: 0.005
+- message_type: ES
+  status: PASS
+  time_delta_in_seconds: -1.0

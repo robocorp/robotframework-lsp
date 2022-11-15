@@ -1,4 +1,4 @@
-# robot-stream
+# robotframework-output-stream
 A custom output for Robot Framework enabling realtime analysis in a more compact format.
 
 ## Details

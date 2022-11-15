@@ -121,4 +121,4 @@ def import_robot_stream():
     def import_callback():
         import robot_stream
 
-    _import_helper(import_callback, "robot-stream")
+    _import_helper(import_callback, "robotframework-output-stream")

@@ -60,9 +60,9 @@ jobs:
         run: |
           black --check ./robocorp-python-ls-core --exclude=vendored --exclude=libs
           
-      - name: Black check robot-stream
+      - name: Black check robotframework-output-stream
         run: |
-          black --check ./robot-stream --exclude=vendored --exclude=libs
+          black --check ./robotframework-output-stream --exclude=vendored --exclude=libs
           
       - name: mypy create env
         run: |
@@ -76,11 +76,11 @@ jobs:
           echo $PWD/robotframework-ls/src > .venv/lib/python3.8/site-packages/rf_src.pth
           echo $PWD/robocorp-code/src >> .venv/lib/python3.8/site-packages/rf_src.pth
           echo $PWD/robocorp-python-ls-core/src >> .venv/lib/python3.8/site-packages/rf_src.pth
-          echo $PWD/robot-stream/src >> .venv/lib/python3.8/site-packages/rf_src.pth
+          echo $PWD/robotframework-output-stream/src >> .venv/lib/python3.8/site-packages/rf_src.pth
           echo $PWD/robotframework-ls/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
           echo $PWD/robocorp-code/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
           echo $PWD/robocorp-python-ls-core/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
-          echo $PWD/robot-stream/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
+          echo $PWD/robotframework-output-stream/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
           
 
       - name: mypy robocorp-code
@@ -99,10 +99,10 @@ jobs:
           source ./.venv/bin/activate
           mypy --follow-imports=silent --show-column-numbers $PWD/robotframework-ls/src $PWD/robotframework-ls/tests
           
-      - name: mypy robot-stream
+      - name: mypy robotframework-output-stream
         run: |
           source ./.venv/bin/activate
-          mypy --follow-imports=silent --show-column-numbers $PWD/robot-stream/src $PWD/robot-stream/tests
+          mypy --follow-imports=silent --show-column-numbers $PWD/robotframework-output-stream/src $PWD/robotframework-output-stream/tests
           
       - name: mypy robotframework-interactive
         run: |

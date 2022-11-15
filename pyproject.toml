@@ -1,6 +1,6 @@
 [tool.mypy]
 exclude = "_resources|libs|dap_schema|vendored"
-mypy_path = "robocorp-python-ls-core/src:robocorp-python-ls-core/stubs:robocorp-python-ls-core/tests:robotframework-ls/src:robotframework-ls/tests:robocorp-python-ls-core/src/robocorp_ls_core/libs/fsnotify_lib:robocorp-python-ls-core/src/robocorp_ls_core/libs/robocop_lib:robocorp-python-ls-core/src/robocorp_ls_core/libs/robotidy_lib:robocorp-python-ls-core/src/robocorp_ls_core/libs/watchdog_lib:robocorp-python-ls-core/src/robocorp_ls_core/libs/yaml_lib:robotframework-interactive/src:robotframework-interactive/tests:robocorp-code/src:robocorp-code/tests:robot-stream/src:robot-stream/tests"
+mypy_path = "robocorp-python-ls-core/src:robocorp-python-ls-core/stubs:robocorp-python-ls-core/tests:robotframework-ls/src:robotframework-ls/tests:robocorp-python-ls-core/src/robocorp_ls_core/libs/fsnotify_lib:robocorp-python-ls-core/src/robocorp_ls_core/libs/robocop_lib:robocorp-python-ls-core/src/robocorp_ls_core/libs/robotidy_lib:robocorp-python-ls-core/src/robocorp_ls_core/libs/watchdog_lib:robocorp-python-ls-core/src/robocorp_ls_core/libs/yaml_lib:robotframework-interactive/src:robotframework-interactive/tests:robocorp-code/src:robocorp-code/tests:robotframework-output-stream/src:robotframework-output-stream/tests"
 
 [[tool.mypy.overrides]]
 module = "RPA.*"

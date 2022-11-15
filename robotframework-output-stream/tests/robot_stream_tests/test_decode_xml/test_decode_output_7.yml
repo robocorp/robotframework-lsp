@@ -1,59 +1,44 @@
 - message_type: V
   version: '1'
-- initial_time: '2022-10-31T14:53:07.510'
+- initial_time: '2022-10-31T14:45:57.829'
   message_type: T
 - info: Generated from output.xml
   message_type: I
 - info: Robot 5.0rc1 (Python 3.8.1 on win32)
   message_type: I
 - message_type: SS
-  name: Robot9
+  name: Robot8
   suite_id: s1
-  suite_source: x:\vscode-robot\robotframework-lsp\robot-stream\tests\robot_stream_tests\test_robot_stream\robot9.robot
+  suite_source: x:\vscode-robot\robotframework-lsp\robotframework-output-stream\tests\robot_stream_tests\test_robot_stream\robot8.robot
   time_delta_in_seconds: -1.0
 - lineno: 2
   message_type: ST
   name: Check if
   suite_id: s1-t1
   time_delta_in_seconds: -1.0
-- doc: ''
-  keyword_type: TRY
-  libname: ''
-  lineno: -1
-  message_type: SK
-  name: ''
-  source: null
-  time_delta_in_seconds: -1.0
-- doc: Fails the test with the given message and optionally alters its tags.
+- doc: Returns the given values which can then be assigned to a variables.
   keyword_type: KEYWORD
   libname: BuiltIn
   lineno: -1
   message_type: SK
-  name: Fail
+  name: Set Variable
   source: null
   time_delta_in_seconds: -1.0
-- argument: message
+- assign: ${var1}
+  message_type: AS
+- argument: '2'
   message_type: KA
-- level: F
-  message: message
-  message_type: L
-  time_delta_in_seconds: 0.038
 - message_type: S
-  start_time_delta: 0.038
+  start_time_delta: 0.045
 - message_type: EK
-  status: FAIL
-  time_delta_in_seconds: 0.04
-- message_type: S
-  start_time_delta: 0.038
-- message_type: EK
-  status: FAIL
-  time_delta_in_seconds: 0.04
+  status: PASS
+  time_delta_in_seconds: 0.05
 - doc: ''
-  keyword_type: EXCEPT
+  keyword_type: IF
   libname: ''
   lineno: -1
   message_type: SK
-  name: message
+  name: ${var1} == ${var1}
   source: null
   time_delta_in_seconds: -1.0
 - doc: Does absolutely nothing.
@@ -65,17 +50,43 @@
   source: null
   time_delta_in_seconds: -1.0
 - message_type: S
-  start_time_delta: 0.04
+  start_time_delta: 0.052
 - message_type: EK
   status: PASS
-  time_delta_in_seconds: 0.041
+  time_delta_in_seconds: 0.053
 - message_type: S
-  start_time_delta: 0.04
+  start_time_delta: 0.051
 - message_type: EK
   status: PASS
-  time_delta_in_seconds: 0.041
+  time_delta_in_seconds: 0.053
 - doc: ''
-  keyword_type: FINALLY
+  keyword_type: ELSE IF
+  libname: ''
+  lineno: -1
+  message_type: SK
+  name: ${var1} == ${var1}
+  source: null
+  time_delta_in_seconds: -1.0
+- doc: Does absolutely nothing.
+  keyword_type: KEYWORD
+  libname: BuiltIn
+  lineno: -1
+  message_type: SK
+  name: No Operation
+  source: null
+  time_delta_in_seconds: -1.0
+- message_type: S
+  start_time_delta: 0.053
+- message_type: EK
+  status: NOT RUN
+  time_delta_in_seconds: 0.054
+- message_type: S
+  start_time_delta: 0.053
+- message_type: EK
+  status: NOT RUN
+  time_delta_in_seconds: 0.054
+- doc: ''
+  keyword_type: ELSE
   libname: ''
   lineno: -1
   message_type: SK
@@ -91,23 +102,23 @@
   source: null
   time_delta_in_seconds: -1.0
 - message_type: S
-  start_time_delta: 0.041
+  start_time_delta: 0.054
 - message_type: EK
-  status: PASS
-  time_delta_in_seconds: 0.041
+  status: NOT RUN
+  time_delta_in_seconds: 0.055
 - message_type: S
-  start_time_delta: 0.041
+  start_time_delta: 0.054
 - message_type: EK
-  status: PASS
-  time_delta_in_seconds: 0.041
+  status: NOT RUN
+  time_delta_in_seconds: 0.055
 - message_type: S
-  start_time_delta: 0.037
+  start_time_delta: 0.044
 - message: ''
   message_type: ET
   status: PASS
-  time_delta_in_seconds: 0.042
+  time_delta_in_seconds: 0.056
 - message_type: S
-  start_time_delta: 0.009
+  start_time_delta: 0.018
 - message_type: ES
   status: PASS
   time_delta_in_seconds: -1.0

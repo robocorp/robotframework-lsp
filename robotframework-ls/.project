@@ -4,7 +4,7 @@
 	<comment></comment>
 	<projects>
 		<project>robocorp-python-ls-core</project>
-		<project>robot-stream</project>
+		<project>robotframework-output-stream</project>
 		<project>robotframework-interactive</project>
 		<project>robotframework-ls</project>
 	</projects>

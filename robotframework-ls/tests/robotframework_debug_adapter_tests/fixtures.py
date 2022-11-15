@@ -252,7 +252,9 @@ class _DebuggerAPI(object):
         self.write(StepOutRequest(arguments))
         self.read(StepOutResponse)
 
-    def continue_event(self, thread_id, accept_terminated=False):
+    def continue_event(
+        self, thread_id, accept_terminated=False, additional_accepted=()
+    ):
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ContinueRequest
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ContinueArguments
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ContinueResponse
@@ -263,6 +265,7 @@ class _DebuggerAPI(object):
         expected = [ContinueResponse]
         if accept_terminated:
             expected.append(TerminatedEvent)
+        expected.extend(additional_accepted)
         return self.read(expect_class=tuple(expected))
 
     def launch(

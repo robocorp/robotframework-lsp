@@ -1,14 +1,14 @@
-name: Tests - Robot Stream (robot-stream)
+name: Tests - Robot Stream (robotframework-output-stream)
 
 on:
   push:
     paths:
-    - robot-stream/**
+    - robotframework-output-stream/**
     - .github/**
 
   pull_request:
     paths:
-    - robot-stream/**
+    - robotframework-output-stream/**
     - .github/**
       
 jobs:
@@ -63,19 +63,19 @@ jobs:
         python setup.py install
         cd ..
     - name: setup.py install
-      working-directory: ./robot-stream
+      working-directory: ./robotframework-output-stream
       run: |
         cd src
         python setup.py install
         cd ..
     - name: Install test deps
-      working-directory: ./robot-stream
+      working-directory: ./robotframework-output-stream
       run: |
         cd tests
         pip install -r test_requirements.txt
         cd ..
     - name: Test
-      working-directory: ./robot-stream/tests
+      working-directory: ./robotframework-output-stream/tests
       env:
         PYTHONPATH: .
         RUN_TESTS_TIMEOUT: 300
@@ -83,5 +83,5 @@ jobs:
     - uses: actions/upload-artifact@v1
       with:
         name: tests_output.${{ matrix.name }}.txt
-        path: robot-stream/tests/tests_output
+        path: robotframework-output-stream/tests/tests_output
 

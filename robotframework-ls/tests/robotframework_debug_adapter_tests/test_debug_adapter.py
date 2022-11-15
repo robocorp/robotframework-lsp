@@ -196,6 +196,8 @@ def test_launch_pydevd_change_breakpoints(debugger_api: _DebuggerAPI):
 def test_simple_debug_launch_stop_on_robot_and_pydevd(debugger_api: _DebuggerAPI):
     from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
     from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ThreadsResponse
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import StoppedEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ContinuedEvent
 
     debugger_api.initialize()
     target = debugger_api.get_dap_case_file("case_python.robot")
@@ -212,13 +214,23 @@ def test_simple_debug_launch_stop_on_robot_and_pydevd(debugger_api: _DebuggerAPI
     debugger_api.configuration_done()
 
     json_hit = debugger_api.wait_for_thread_stopped(file="case_python.robot")
-    msg = debugger_api.continue_event(json_hit.thread_id)
 
-    debugger_api.wait_for_thread_stopped(file="mypylib.py")
+    # Note: because we're effectively dealing with 2 debuggers, it's possible that
+    # the stopped event is received before the continued.
+    msg = debugger_api.continue_event(
+        json_hit.thread_id, additional_accepted=(StoppedEvent,)
+    )
+    if not isinstance(msg, StoppedEvent):
+        debugger_api.wait_for_thread_stopped(file="mypylib.py")
+
     msg = debugger_api.continue_event(json_hit.thread_id, accept_terminated=True)
 
     if not isinstance(msg, TerminatedEvent):
-        debugger_api.read(TerminatedEvent)
+        # If we read Stopped before Continued, we may read a 2nd continued at this point.
+        msg = debugger_api.read((TerminatedEvent, ContinuedEvent))
+
+        if not isinstance(msg, TerminatedEvent):
+            msg = debugger_api.read(TerminatedEvent)
 
 
 def test_step_in(debugger_api: _DebuggerAPI):

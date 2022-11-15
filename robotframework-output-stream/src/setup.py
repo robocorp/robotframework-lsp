@@ -24,9 +24,9 @@ for path in [_thirdparty, _license, _copyright]:
         shutil.copy2(_origin, path)
 
 setup(
-    name="robot-stream",
+    name="robotframework-output-stream",
     version="0.0.1",
-    description="Robot Framework Stream (a RF listener to provide an output that's streamable).",
+    description="Robot Framework Output Stream (a RF listener to provide an output that's streamable).",
     long_description=_readme.read_text(),
     url="https://github.com/robocorp/robotframework-lsp",
     author="Fabio Zadrozny",
@@ -67,6 +67,8 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Topic :: Text Editors",
         "Topic :: Text Editors :: Integrated Development Environments (IDE)",
         "Topic :: Software Development :: Debuggers",
