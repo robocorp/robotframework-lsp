@@ -44,7 +44,7 @@ class RFStream:
 
         config = _Config()
 
-        check_args = ["--dir=", "--max-file-size=", "--max-files="]
+        check_args = ["--dir=", "--max-file-size=", "--max-files=", "--log="]
         for arg in args:
             for check_arg in check_args:
                 if arg.startswith(check_arg):
@@ -55,6 +55,10 @@ class RFStream:
         )
         if config.output_dir == "None":
             config.output_dir = None
+
+        config.log_html = kwargs.get("--log")
+        if config.log_html:
+            config.log_html = config.log_html.replace("<COLON>", ":")
 
         max_file_size_arg = kwargs.get("--max-file-size", "1MB")
         config.max_file_size_in_bytes = _convert_to_bytes(max_file_size_arg)
@@ -285,6 +289,9 @@ class RFStream:
     def message(self, message):
         if message["level"] in ("FAIL", "ERROR"):
             return self.log_message(message, skip_error=False)
+
+    def close(self):
+        self.robot_output_impl.close()
 
 
 def iter_decoded_log_format(stream):

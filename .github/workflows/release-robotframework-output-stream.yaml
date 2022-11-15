@@ -21,6 +21,11 @@ jobs:
       with:
         submodules: recursive
 
+    - name: Setup node
+      uses: actions/setup-node@v1
+      with:
+        node-version: 16.x
+
     - name: Set up Python 3.7
       uses: actions/setup-python@v1
       with:
@@ -29,6 +34,11 @@ jobs:
     # Build Python version
     - name: Install deps
       run: pip install --upgrade pip fire twine wheel setuptools
+      
+    - name: Vendor deps
+      working-directory: ./robotframework-output-stream
+      run: |
+        python -m dev build-output-view
       
     - name: Build wheel
       working-directory: ./robotframework-output-stream/src
