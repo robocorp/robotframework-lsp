@@ -1,6 +1,6 @@
 def convert_in_memory(xml_output):
     import io
-    from robot_stream.xml_to_rfstream import convert_xml_to_rfstream
+    from robot_out_stream.xml_to_rfstream import convert_xml_to_rfstream
 
     txt = xml_output.read_text("utf-8")
 
@@ -19,7 +19,7 @@ def convert_in_memory(xml_output):
 
 
 def check(datadir, data_regression, name):
-    from robot_stream import iter_decoded_log_format
+    from robot_out_stream import iter_decoded_log_format
 
     xml_output = datadir / name
     rf_stream_output = convert_in_memory(xml_output)

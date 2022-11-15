@@ -9,7 +9,7 @@
 - message_type: SS
   name: Robot8
   suite_id: s1
-  suite_source: x:\vscode-robot\robotframework-lsp\robotframework-output-stream\tests\robot_stream_tests\test_robot_stream\robot8.robot
+  suite_source: x:\vscode-robot\robotframework-lsp\robotframework-output-stream\tests\robot_out_stream_tests\test_robot_out_stream\robot8.robot
   time_delta_in_seconds: -1.0
 - lineno: 2
   message_type: ST

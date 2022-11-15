@@ -672,11 +672,11 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     @command_dispatcher(ROBOT_CONVERT_OUTPUT_XML_TO_ROBOSTREAM)
     def _convert_output_xml_to_rfstream(self, opts: Dict[str, Any]):
         def convert_in_thread():
-            from robotframework_ls import import_robot_stream
+            from robotframework_ls import import_robot_out_stream
 
-            import_robot_stream()
+            import_robot_out_stream()
 
-            from robot_stream import xml_to_rfstream
+            from robot_out_stream import xml_to_rfstream
 
             source = opts.get("xml_path")
             if source:

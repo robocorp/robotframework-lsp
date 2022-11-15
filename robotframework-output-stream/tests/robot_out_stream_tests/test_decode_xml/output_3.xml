@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <robot generator="Robot 5.0rc1 (Python 3.8.1 on win32)" generated="20221031 09:23:53.057" rpa="false" schemaversion="3">
-<suite id="s1" name="Robot4" source="x:\vscode-robot\robotframework-lsp\robotframework-output-stream\tests\robot_stream_tests\test_robot_stream\robot4.robot">
+<suite id="s1" name="Robot4" source="x:\vscode-robot\robotframework-lsp\robotframework-output-stream\tests\robot_out_stream_tests\test_robot_out_stream\robot4.robot">
 <test id="s1-t1" name="Check for" line="2">
 <for flavor="IN RANGE">
 <var>${counter}</var>

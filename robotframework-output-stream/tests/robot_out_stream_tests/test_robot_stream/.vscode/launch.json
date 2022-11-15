@@ -12,7 +12,7 @@
             "target": "${file}",
             "terminal": "integrated",
             "env": {"PYTHONPATH": "${workspaceFolder}/../../../src"},
-            "args": ["--listener",  "robot_stream.RFStream"]
+            "args": ["--listener",  "robot_out_stream.RFStream"]
         }
     ]
 }

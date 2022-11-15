@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <robot generator="Robot 5.0rc1 (Python 3.8.1 on win32)" generated="20221031 09:16:39.244" rpa="false" schemaversion="3">
-<suite id="s1" name="Robot3" source="x:\vscode-robot\robotframework-lsp\robotframework-output-stream\tests\robot_stream_tests\test_robot_stream\robot3.robot">
+<suite id="s1" name="Robot3" source="x:\vscode-robot\robotframework-lsp\robotframework-output-stream\tests\robot_out_stream_tests\test_robot_out_stream\robot3.robot">
 <test id="s1-t1" name="First test" line="6">
 <kw name="Another in sub keyword" library="another_sub">
 <kw name="No Operation" library="BuiltIn">
@@ -31,7 +31,7 @@
 </suite>
 </statistics>
 <errors>
-<msg timestamp="20221031 09:16:39.289" level="ERROR">Error in file 'x:\vscode-robot\robotframework-lsp\robotframework-output-stream\tests\robot_stream_tests\test_robot_stream\sub\another_sub.robot' on line 2: Library 'lib_not_there.py' does not exist.</msg>
+<msg timestamp="20221031 09:16:39.289" level="ERROR">Error in file 'x:\vscode-robot\robotframework-lsp\robotframework-output-stream\tests\robot_out_stream_tests\test_robot_out_stream\sub\another_sub.robot' on line 2: Library 'lib_not_there.py' does not exist.</msg>
 <msg timestamp="20221031 09:16:39.294" level="ERROR">Some error message</msg>
 </errors>
 </robot>

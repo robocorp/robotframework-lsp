@@ -227,7 +227,7 @@ class Dev(object):
         assert os.path.exists(bundle_js), f"{bundle_js} does not exist."
         print("=== Finished vendoring.")
 
-    def remove_robot_stream(self):
+    def remove_robot_out_stream(self):
         import time
         import shutil
 
@@ -235,7 +235,7 @@ class Dev(object):
             os.path.dirname(__file__), "src", "robotframework_ls", "vendored"
         )
         found = []
-        for path in ("robot_stream", "output-webview"):
+        for path in ("robot_out_stream", "output-webview"):
             target = os.path.join(vendored_dir, path)
             try:
                 shutil.rmtree(target)
@@ -250,19 +250,19 @@ class Dev(object):
 
     def vendor_robotframework_output_stream(self):
         """
-        Vendors robot_stream into robotframework_ls/vendored.
+        Vendors robot_out_stream into robotframework_ls/vendored.
         """
         import shutil
         import subprocess
 
-        vendored_src, vendored_webview = self.remove_robot_stream()
+        vendored_src, vendored_webview = self.remove_robot_out_stream()
 
         src_core = os.path.join(
             os.path.dirname(__file__),
             "..",
             "robotframework-output-stream",
             "src",
-            "robot_stream",
+            "robot_out_stream",
         )
         print("=== Copying from: %s to %s" % (src_core, vendored_src))
 

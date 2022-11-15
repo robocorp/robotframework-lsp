@@ -1,4 +1,4 @@
-name: Tests - Robot Stream (robotframework-output-stream)
+name: Tests - Robot Output Stream (robotframework-output-stream)
 
 on:
   push:

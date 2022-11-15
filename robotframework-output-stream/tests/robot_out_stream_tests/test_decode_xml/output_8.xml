@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <robot generator="Robot 5.0rc1 (Python 3.8.1 on win32)" generated="20221031 14:53:07.510" rpa="false" schemaversion="3">
-<suite id="s1" name="Robot9" source="x:\vscode-robot\robotframework-lsp\robotframework-output-stream\tests\robot_stream_tests\test_robot_stream\robot9.robot">
+<suite id="s1" name="Robot9" source="x:\vscode-robot\robotframework-lsp\robotframework-output-stream\tests\robot_out_stream_tests\test_robot_out_stream\robot9.robot">
 <test id="s1-t1" name="Check if" line="2">
 <try>
 <branch type="TRY">

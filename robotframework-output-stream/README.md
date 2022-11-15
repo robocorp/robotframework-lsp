@@ -7,7 +7,7 @@ install to use it in any Robot Framework run.
 
 ## Usage
 
-  `python -m robot -l NONE -r NONE -o NONE --listener robot_stream.RFStream:--dir=<dir_to_output>:--port:<port>`
+  `python -m robot -l NONE -r NONE -o NONE --listener robot_out_stream.RFStream:--dir=<dir_to_output>:--port:<port>`
 
   Note: the `-l NONE and -r NONE -o NONE` are recommended to disable the standard Robot Framework output (since
   the RFStream should cover all its use-cases).
@@ -83,12 +83,12 @@ Given the requisites above, the idea is generating the following files while run
     Files in the same format pointing to where an error happened (it should
     be possible to derive a traceback from that information).
     
-    - `robot_stream.error.0.rfstream`
-    - `robot_stream.error.1.rfstream`
+    - `robot_out_stream.error.0.rfstream`
+    - `robot_out_stream.error.1.rfstream`
     
     After the processing finished a file is written with all the errors.
 
-    - `robot_stream.errors.summary.rfstream`
+    - `robot_out_stream.errors.summary.rfstream`
 
     Note: for most users just the errors log should be enough, but if something
     isn't identified as an error, the "Basic log" should provide insight on

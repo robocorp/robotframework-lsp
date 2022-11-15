@@ -5,7 +5,7 @@ import io
 from pathlib import Path
 from typing import Optional
 import pytest
-from robot_stream.robot_version import get_robot_major_version
+from robot_out_stream.robot_version import get_robot_major_version
 
 # Flags to debug during development (should be == False on repository).
 show_summary = False
@@ -32,10 +32,10 @@ def after(obj, method_name, callback):
 
 
 class _GeneratedInfo:
-    def __init__(self, robot_stream, xml_output: Path, outdir: Path):
-        from robot_stream import RFStream
+    def __init__(self, robot_out_stream, xml_output: Path, outdir: Path):
+        from robot_out_stream import RFStream
 
-        self.robot_stream: RFStream = robot_stream
+        self.robot_out_stream: RFStream = robot_out_stream
         self.outdir: Path = outdir
         self.xml_output: Path = xml_output
 
@@ -48,7 +48,7 @@ def run_with_listener(
     robot_file: Optional[Path] = None,
 ) -> _GeneratedInfo:
     import robot
-    from robot_stream import RFStream
+    from robot_out_stream import RFStream
 
     if outdir is None:
         outdir = datadir / "out"
@@ -57,8 +57,8 @@ def run_with_listener(
 
     created = []
 
-    def on_created(robot_stream, *args, **kwargs):
-        created.append(robot_stream)
+    def on_created(robot_out_stream, *args, **kwargs):
+        created.append(robot_out_stream)
 
     with after(RFStream, "__init__", on_created):
         outdir_to_listener = str(outdir).replace(":", "<COLON>")
@@ -76,7 +76,7 @@ def run_with_listener(
                 "-o",
                 str(xml_output),
                 "--listener",
-                f"robot_stream.RFStream:--dir={outdir_to_listener}:--max-file-size={max_file_size}:--max-files={max_files}",
+                f"robot_out_stream.RFStream:--dir={outdir_to_listener}:--max-file-size={max_file_size}:--max-files={max_files}",
                 str(robot_file),
             ],
             exit=False,
@@ -100,15 +100,15 @@ def test_rotate_logs(datadir):
     assert len(files) == 2, f"Found: {files}"
 
 
-def test_robot_stream(datadir):
-    from robot_stream import iter_decoded_log_format
+def test_robot_out_stream(datadir):
+    from robot_out_stream import iter_decoded_log_format
     from io import StringIO
 
     generated_info = run_with_listener(datadir)
-    robot_stream = generated_info.robot_stream
+    robot_out_stream = generated_info.robot_out_stream
     xml_output = generated_info.xml_output
 
-    impl = robot_stream.robot_output_impl
+    impl = robot_out_stream.robot_output_impl
     assert impl.current_file.exists()
     contents = impl.current_file.read_text("utf-8")
     if show_contents:
@@ -136,7 +136,7 @@ def test_robot_stream(datadir):
     if show_summary:
         print(f"Decoded size: {decoded_len/8} bytes")
 
-    from robot_stream.xml_to_rfstream import (
+    from robot_out_stream.xml_to_rfstream import (
         convert_xml_to_rfstream,
     )
 
@@ -163,7 +163,7 @@ def test_robot_stream(datadir):
 
 def iter_with_test_replacements(filepath):
     from io import StringIO
-    from robot_stream import iter_decoded_log_format
+    from robot_out_stream import iter_decoded_log_format
 
     contents = filepath.read_text("utf-8")
 
@@ -185,8 +185,8 @@ def iter_with_test_replacements(filepath):
 
 def check(datadir, data_regression, name):
     generated_info = run_with_listener(datadir, robot_file=datadir / name)
-    robot_stream = generated_info.robot_stream
-    impl = robot_stream.robot_output_impl
+    robot_out_stream = generated_info.robot_out_stream
+    impl = robot_out_stream.robot_output_impl
     found = list(iter_with_test_replacements(impl.current_file))
     # for l in found:
     #     print(l)

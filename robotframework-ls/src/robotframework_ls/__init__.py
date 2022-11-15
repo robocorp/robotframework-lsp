@@ -112,13 +112,13 @@ def import_rf_interactive():
     _import_helper(import_callback, "robotframework-interactive")
 
 
-def import_robot_stream():
+def import_robot_out_stream():
     """
-    Helper function to make sure that robot_stream is imported properly
+    Helper function to make sure that robot_out_stream is imported properly
     (either in dev or in release mode).
     """
 
     def import_callback():
-        import robot_stream
+        import robot_out_stream
 
     _import_helper(import_callback, "robotframework-output-stream")

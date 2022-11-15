@@ -1,46 +1,48 @@
 - message_type: V
   version: '1'
-- initial_time: '2022-10-31T11:15:05.139'
+- initial_time: '2022-10-31T10:46:31.941'
   message_type: T
 - info: Generated from output.xml
   message_type: I
 - info: Robot 5.0rc1 (Python 3.8.1 on win32)
   message_type: I
 - message_type: SS
-  name: Robot7
+  name: Robot6
   suite_id: s1
-  suite_source: x:\vscode-robot\robotframework-lsp\robotframework-output-stream\tests\robot_stream_tests\test_robot_stream\robot7.robot
+  suite_source: x:\vscode-robot\robotframework-lsp\robotframework-output-stream\tests\robot_out_stream_tests\test_robot_out_stream\robot6.robot
   time_delta_in_seconds: -1.0
 - lineno: 2
   message_type: ST
   name: Check for
   suite_id: s1-t1
   time_delta_in_seconds: -1.0
-- doc: Does absolutely nothing.
+- doc: Evaluates the given expression in Python and returns the result.
   keyword_type: KEYWORD
   libname: BuiltIn
   lineno: -1
   message_type: SK
-  name: No Operation
+  name: Evaluate
   source: null
   time_delta_in_seconds: -1.0
+- assign: ${a}
+  message_type: AS
+- assign: ${b}
+  message_type: AS
+- argument: '[2,3]'
+  message_type: KA
 - message_type: S
-  start_time_delta: 0.04
+  start_time_delta: 0.046
 - message_type: EK
   status: PASS
-  time_delta_in_seconds: 0.041
-- message_type: TG
-  tag: another tag 2
-- message_type: TG
-  tag: tag nice 1
+  time_delta_in_seconds: 0.048
 - message_type: S
-  start_time_delta: 0.039
+  start_time_delta: 0.044
 - message: ''
   message_type: ET
   status: PASS
-  time_delta_in_seconds: 0.042
+  time_delta_in_seconds: 0.049
 - message_type: S
-  start_time_delta: 0.012
+  start_time_delta: 0.014
 - message_type: ES
   status: PASS
   time_delta_in_seconds: -1.0

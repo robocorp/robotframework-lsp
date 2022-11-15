@@ -37,7 +37,7 @@ class RFStream:
     ROBOT_LISTENER_API_VERSION = 2
 
     def __init__(self, *args, **kwargs):
-        from robot_stream._impl import _RobotOutputImpl, _Config
+        from robot_out_stream._impl import _RobotOutputImpl, _Config
 
         config = _Config()
 
@@ -121,7 +121,7 @@ class RFStream:
         #     "tests": ["First task", "Second task"],
         #     "suites": [],
         #     "totaltests": 2,
-        #     "source": "C:\\Users\\fabio\\AppData\\Local\\Temp\\pytest-of-fabio\\pytest-184\\test_robot_stream0\\test_robot_stream\\robot1.robot",
+        #     "source": "C:\\Users\\fabio\\AppData\\Local\\Temp\\pytest-of-fabio\\pytest-184\\test_robot_out_stream0\\test_robot_out_stream\\robot1.robot",
         #     "statistics": "2 tasks, 1 passed, 1 failed",
         # }
         return self._robot_output_impl.end_suite(
@@ -166,7 +166,7 @@ class RFStream:
         #     "doc": "",
         #     "tags": [],
         #     "lineno": 15,
-        #     "source": "C:\\Users\\fabio\\AppData\\Local\\Temp\\pytest-of-fabio\\pytest-187\\test_robot_stream0\\test_robot_stream\\robot1.robot",
+        #     "source": "C:\\Users\\fabio\\AppData\\Local\\Temp\\pytest-of-fabio\\pytest-187\\test_robot_out_stream0\\test_robot_out_stream\\robot1.robot",
         #     "starttime": "20221004 16:23:10.403",
         #     "endtime": "20221004 16:23:10.412",
         #     "elapsedtime": 9,
@@ -191,7 +191,7 @@ class RFStream:
         #     "assign": [],
         #     "tags": [],
         #     "lineno": 7,
-        #     "source": "C:\\Users\\fabio\\AppData\\Local\\Temp\\pytest-of-fabio\\pytest-170\\test_robot_stream0\\test_robot_stream\\robot1.robot",
+        #     "source": "C:\\Users\\fabio\\AppData\\Local\\Temp\\pytest-of-fabio\\pytest-170\\test_robot_out_stream0\\test_robot_out_stream\\robot1.robot",
         #     "type": "KEYWORD",
         #     "status": "NOT SET",
         #     "starttime": "20221003 16:20:21.234",
@@ -241,7 +241,7 @@ class RFStream:
         #     "assign": [],
         #     "tags": [],
         #     "lineno": 7,
-        #     "source": "C:\\Users\\fabio\\AppData\\Local\\Temp\\pytest-of-fabio\\pytest-191\\test_robot_stream0\\test_robot_stream\\robot1.robot",
+        #     "source": "C:\\Users\\fabio\\AppData\\Local\\Temp\\pytest-of-fabio\\pytest-191\\test_robot_out_stream0\\test_robot_out_stream\\robot1.robot",
         #     "type": "KEYWORD",
         #     "status": "PASS",
         #     "starttime": "20221004 16:27:46.959",

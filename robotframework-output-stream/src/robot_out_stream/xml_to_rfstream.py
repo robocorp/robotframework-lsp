@@ -572,7 +572,7 @@ def convert_xml_to_rfstream(source, write: Optional[Callable[[str], None]] = Non
     :param write:
         A callable to be used to write the contents received (sent line-by-line).
     """
-    from robot_stream import RFStream
+    from robot_out_stream import RFStream
 
     if write is None:
 

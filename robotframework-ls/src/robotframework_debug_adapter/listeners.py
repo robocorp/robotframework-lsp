@@ -84,13 +84,13 @@ class DebugListenerV2(object):
 
 def install_rf_stream_connection(write_message):
     try:
-        from robot_stream import RFStream
+        from robot_out_stream import RFStream
     except ImportError:
-        from robotframework_ls import import_robot_stream
+        from robotframework_ls import import_robot_out_stream
 
-        import_robot_stream()
+        import_robot_out_stream()
 
-        from robot_stream import RFStream
+        from robot_out_stream import RFStream
 
     def write_str(s):
         write_message({"type": "event", "event": "rfStream", "body": {"msg": s}})

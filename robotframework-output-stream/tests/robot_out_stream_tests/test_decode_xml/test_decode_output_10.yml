@@ -9,7 +9,7 @@
 - message_type: SS
   name: Robot10
   suite_id: s1
-  suite_source: d:\x\vscode-robot\robotframework-lsp\robotframework-output-stream\tests\robot_stream_tests\test_robot_stream\robot10.robot
+  suite_source: d:\x\vscode-robot\robotframework-lsp\robotframework-output-stream\tests\robot_out_stream_tests\test_robot_out_stream\robot10.robot
   time_delta_in_seconds: -1.0
 - lineno: 11
   message_type: ST

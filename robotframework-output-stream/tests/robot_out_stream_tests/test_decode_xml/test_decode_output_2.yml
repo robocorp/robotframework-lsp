@@ -9,7 +9,7 @@
 - message_type: SS
   name: Robot3
   suite_id: s1
-  suite_source: x:\vscode-robot\robotframework-lsp\robotframework-output-stream\tests\robot_stream_tests\test_robot_stream\robot3.robot
+  suite_source: x:\vscode-robot\robotframework-lsp\robotframework-output-stream\tests\robot_out_stream_tests\test_robot_out_stream\robot3.robot
   time_delta_in_seconds: -1.0
 - lineno: 6
   message_type: ST
@@ -75,7 +75,7 @@
   status: PASS
   time_delta_in_seconds: -1.0
 - level: E
-  message: 'Error in file ''x:\vscode-robot\robotframework-lsp\robotframework-output-stream\tests\robot_stream_tests\test_robot_stream\sub\another_sub.robot''
+  message: 'Error in file ''x:\vscode-robot\robotframework-lsp\robotframework-output-stream\tests\robot_out_stream_tests\test_robot_out_stream\sub\another_sub.robot''
     on line 2: Library ''lib_not_there.py'' does not exist.'
   message_type: L
   time_delta_in_seconds: 0.045
