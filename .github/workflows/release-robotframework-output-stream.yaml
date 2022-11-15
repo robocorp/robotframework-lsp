@@ -1,0 +1,47 @@
+on:
+  push:
+    branches:
+      - "release-robotframework-output-stream"
+    tags:
+      - "robotframework-output-stream-*"
+name: Deploy - RobotFramework Output Stream
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./robotframework-output-stream
+    
+    strategy:
+      fail-fast: true
+
+    steps:
+    - name: Checkout repository and submodules
+      uses: actions/checkout@v1
+      with:
+        submodules: recursive
+
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+    
+    # Build Python version
+    - name: Install deps
+      run: pip install --upgrade pip fire twine wheel setuptools
+      
+    - name: Build wheel
+      working-directory: ./robotframework-output-stream/src
+      run: |
+        cp ../README.md ./README.md
+        python setup.py sdist bdist_wheel --universal
+        
+    - name: Check tag version
+      run: python -m dev check-tag-version
+      
+    - name: Upload to PyPI
+      working-directory: ./robotframework-output-stream/src
+      run: twine upload dist/*
+      env:
+        TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}

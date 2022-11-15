@@ -91,7 +91,7 @@ class Dev(object):
         import subprocess
 
         # i.e.: Gets the last tagged version
-        cmd = "git describe --tags --abbrev=0 --match robotframework*".split()
+        cmd = "git describe --tags --abbrev=0 --match robotframework-lsp*".split()
         popen = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         stdout, stderr = popen.communicate()
 

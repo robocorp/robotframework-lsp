@@ -46,7 +46,6 @@ setup(
     # for example:
     # $ pip install -e .[test]
     extras_require={
-        "selenium": ["robotframework-seleniumlibrary >=4.4"],
         "test": [
             "mock",
             "pytest",
@@ -69,9 +68,6 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
-        "Topic :: Text Editors",
-        "Topic :: Text Editors :: Integrated Development Environments (IDE)",
-        "Topic :: Software Development :: Debuggers",
         "Framework :: Robot Framework",
         "Framework :: Robot Framework :: Tool",
     ],

@@ -2,26 +2,6 @@ import datetime
 import json
 
 
-def version_decode(decoder, message: str):
-    return {"version": message}
-
-
-def simple_decode(decoder, message: str):
-    return {"info": json.loads(message)}
-
-
-def decode_time(decoder, time):
-    decoder.initial_time = datetime.datetime.fromisoformat(time)
-    return {"initial_time": time}
-
-
-def decode_memo(decoder, message):
-    memo_id, memo_value = message.split(":", 1)
-    memo_value = json.loads(memo_value)
-    decoder.memo[memo_id] = memo_value
-    return None
-
-
 def _decode_oid(decoder, oid):
     return decoder.memo[oid]
 
@@ -101,55 +81,44 @@ def _decode(message_definition, level_diff=0):
     return dec_impl
 
 
-start_suite = _decode(
-    "name:oid, suite_id:oid, suite_source:oid, time_delta_in_seconds:float",
-    level_diff=+1,
-)
+def decode_time(decoder, time):
+    decoder.initial_time = datetime.datetime.fromisoformat(time)
+    return {"initial_time": time}
 
-end_suite = _decode("status:oid, time_delta_in_seconds:float", level_diff=-1)
 
-start_task_or_test = _decode(
-    "name:oid, suite_id:oid, lineno:int, time_delta_in_seconds:float", level_diff=+1
-)
-
-end_task_or_test = _decode(
-    "status:oid, message:oid, time_delta_in_seconds:float", level_diff=-1
-)
-
-start_keyword = _decode(
-    "name:oid, libname:oid, keyword_type:oid, doc:oid, source:oid, lineno:int, time_delta_in_seconds:float",
-    level_diff=+1,
-)
-
-end_keyword = _decode("status:oid, time_delta_in_seconds:float", level_diff=-1)
-
-decode_log = _decode("level:str, message:oid, time_delta_in_seconds:float")
-
-assign = _decode("assign:oid")
-
-tag = _decode("tag:oid")
-
-keyword_argument = _decode("argument:oid")
-
-start_time = _decode("start_time_delta:float")
+def decode_memo(decoder, message):
+    memo_id, memo_value = message.split(":", 1)
+    memo_value = json.loads(memo_value)
+    decoder.memo[memo_id] = memo_value
+    return None
 
 
 _MESSAGE_TYPE_INFO = {
-    "V": version_decode,
-    "I": simple_decode,
+    "V": lambda _decoder, message: {"version": message},
+    "I": lambda _decoder, message: {"info": json.loads(message)},
     "T": decode_time,
     "M": decode_memo,
-    "L": decode_log,
-    "SS": start_suite,
-    "ES": end_suite,
-    "ST": start_task_or_test,
-    "ET": end_task_or_test,
-    "SK": start_keyword,
-    "EK": end_keyword,
-    "KA": keyword_argument,
-    "AS": assign,
-    "TG": tag,
-    "S": start_time,
+    "L": _decode("level:str, message:oid, time_delta_in_seconds:float"),
+    "SS": _decode(
+        "name:oid, suite_id:oid, suite_source:oid, time_delta_in_seconds:float",
+        level_diff=+1,
+    ),
+    "ES": _decode("status:oid, time_delta_in_seconds:float", level_diff=-1),
+    "ST": _decode(
+        "name:oid, suite_id:oid, lineno:int, time_delta_in_seconds:float", level_diff=+1
+    ),
+    "ET": _decode(
+        "status:oid, message:oid, time_delta_in_seconds:float", level_diff=-1
+    ),
+    "SK": _decode(
+        "name:oid, libname:oid, keyword_type:oid, doc:oid, source:oid, lineno:int, time_delta_in_seconds:float",
+        level_diff=+1,
+    ),
+    "EK": _decode("status:oid, time_delta_in_seconds:float", level_diff=-1),
+    "KA": _decode("argument:oid"),
+    "AS": _decode("assign:oid"),
+    "TG": _decode("tag:oid"),
+    "S": _decode("start_time_delta:float"),
 }
 
 

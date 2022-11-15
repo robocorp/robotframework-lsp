@@ -3,6 +3,9 @@ import json
 from typing import Optional, Any
 import sys
 
+__version__ = "0.0.1"
+version_info = [int(x) for x in __version__.split(".")]
+
 
 _convert = {
     "gb": lambda s: s * 1e9,

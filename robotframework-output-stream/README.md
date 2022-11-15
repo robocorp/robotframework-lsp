@@ -61,39 +61,18 @@ The requirements for the generated log files are the following:
 
 ## Outputs
 
-Given the requisites above, the idea is generating the following files while running:
+The basic log can actually be splitted to multiple files.
+Such files are splitted in the following files (the idea
+is that it can be split when it becomes too big).
 
-1. `Basic log`
+- `output_0.rfstream`
+- `output_1.rfstream`
+- `output_2.rfstream`
+- ...
 
-    The basic log can actually be splitted to multiple files.
-    Such files are splitted in the following files (the idea
-    is that it can be split when it becomes too big).
-
-    - `output.0.rfstream`
-    - `output.1.rfstream`
-    - `output.2.rfstream`
-    - ...
-
-    The file should be always written and flushed at each log entry and
-    it should be consistent even if the process crashes in the meanwhile
-    (meaning that all entries written are valid up to the point of the crash).
-
-2. `Errors log`
-
-    Files in the same format pointing to where an error happened (it should
-    be possible to derive a traceback from that information).
-    
-    - `robot_out_stream.error.0.rfstream`
-    - `robot_out_stream.error.1.rfstream`
-    
-    After the processing finished a file is written with all the errors.
-
-    - `robot_out_stream.errors.summary.rfstream`
-
-    Note: for most users just the errors log should be enough, but if something
-    isn't identified as an error, the "Basic log" should provide insight on
-    what actually happened during the full run.
-
+The file should be always written and flushed at each log entry and
+it should be consistent even if the process crashes in the meanwhile
+(meaning that all entries written are valid up to the point of the crash).
 
 ## "Basic log" spec
 
@@ -126,34 +105,121 @@ Basic message types are:
     I "python=3.7"
     I "RF=5.7.0"
 
-### M: Memorize name(id, json_string)
+### M: Memorize name(id ':' json_string)
 
     Example:
 
     M SS:"Start Suite"     - Identifies the String 'Start Suite' as 'SS' in the logs 
     M ES:"End Suite"      - Identifies the String 'End Suite' as 'ES' in the logs
-    
+
 ### T: Initial time(isoformat)
 
     Example:
     
     T 2022-10-03T11:30:54.927
 
-### SS: Start Suite(name_id, suite_id_id, suite_source_id, time_delta_in_seconds)
+### SS: Start Suite
 
-    Example:
+    Spec: `name:oid, suite_id:oid, suite_source:oid, time_delta_in_seconds:float`
     
-    M 1:"My Suite"
-    M 2:"my_suite"
-    M 3:"c:/temp/foo/bar/my_suite.robot"
-    SS 1|2|3|0.553
+    Note: references to oid mean a reference to a previously memorized name.
+    
+    Note: the time may be given as -1 (if unknown -- later it may be provided
+    through an "S" message to specify the start time which may be useful
+    when converting to xml where the status only appears later on in the file
+    along with the status and not at the suite definition).
+    
+    Example (were a, b and c are references to previously memorized names):
+    
+    SS a|b|c|0.333
 
 ### ES: End Suite
 
+    Spec: `status:oid, time_delta_in_seconds:float`
+    
+    Note: the status (PASS, FAIL, SKIP) is a previously memorized name.
+    
+    Example:
+    
+    ES a|0.222
+
 ### ST: Start Task/test
+
+    Spec: `name:oid, suite_id:oid, lineno:int, time_delta_in_seconds:float`
+    
+    Note: the source (filename) is available through the parent suite_source.
+    
+    Example:
+    
+    ST a|b|22|0.332
 
 ### ET: End Task/Test
 
+    Spec: `status:oid, message:oid, time_delta_in_seconds:float`
+    
+    Example:
+    
+    ET a|b|0.332
+
 ### SK: Start Keyword
 
+    Spec: `name:oid, libname:oid, keyword_type:oid, doc:oid, source:oid, lineno:int, time_delta_in_seconds:float`
+    
+    Example:
+    
+    SK a|b|c|d|e|22|0.444
+    
+### KA: Keyword argument
+
+    Spec: `argument:oid`
+    
+    Example:
+    
+    KA f
+
+### AS: Assign keyword call result to a variable
+
+    Spec: `assign:oid`
+    
+    Example:
+    
+    AS f
+
 ### EK: End Keyword
+
+    Spec: `status:oid, time_delta_in_seconds:float`
+    
+    Example:
+    
+    EK a|0.333
+
+### L: Provide a log message
+
+    Spec: `level:level_enum, message:oid, time_delta_in_seconds:float`
+    
+    level_enum is:
+    # ERROR = E
+    # FAIL = F
+    # INFO = I
+    # WARN = W
+    
+    Example:
+    
+    L E|a|0.123
+
+### S: Specify the start time (of the containing suite/test/task/keyword)
+
+    Spec: `start_time_delta:float`
+    
+    Example:
+    
+    S 2.456
+
+### TG: Apply tag
+
+    Spec: `tag:oid`
+    
+    Example:
+    
+    TG a
+
