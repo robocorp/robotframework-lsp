@@ -133,6 +133,11 @@ Basic message types are:
     
     SS a|b|c|0.333
 
+## RS: Replay Start Suite
+
+    Same as "SS" but used just to replay the content to specify the context
+    when the log starts being written in a new file.
+
 ### ES: End Suite
 
     Spec: `status:oid, time_delta_in_seconds:float`
@@ -153,6 +158,12 @@ Basic message types are:
     
     ST a|b|22|0.332
 
+## RT: Replay Start Task/test
+
+    Same as "ST" but used just to replay the content to specify the context
+    when the log starts being written in a new file.
+
+
 ### ET: End Task/Test
 
     Spec: `status:oid, message:oid, time_delta_in_seconds:float`
@@ -168,7 +179,12 @@ Basic message types are:
     Example:
     
     SK a|b|c|d|e|22|0.444
-    
+
+## RK: Replay Keyword
+
+    Same as "SK" but used just to replay the content to specify the context
+    when the log starts being written in a new file.
+
 ### KA: Keyword argument
 
     Spec: `argument:oid`

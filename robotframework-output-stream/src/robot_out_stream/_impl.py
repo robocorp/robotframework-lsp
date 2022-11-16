@@ -71,37 +71,49 @@ class _RotateHandler:
         yield from iter(self._found_files)
 
 
+class _StackEntry:
+    def __init__(self, msg_type, new_msg_type):
+        self.msg_type = msg_type
+        self.new_msg_type = new_msg_type
+        self._messages: List[str] = []
+
+    def append(self, msg: str):
+        self._messages.append(msg)
+
+    def translated_messages(self) -> Iterator[str]:
+        iter_in = iter(self._messages)
+        for msg in iter_in:
+            if msg.startswith(self.msg_type):
+                msg = msg.replace(self.msg_type, self.new_msg_type, 1)
+            yield msg
+
+
 class _StackHandler:
     def __init__(self):
         self._queue = []
-        self._push_record = None
         self.recording_writes = False
+        self._record_to = None
 
     @contextmanager
-    def push_record(self):
-        assert self._push_record is None
+    def push_record(self, msg_type, new_msg_type):
         self.recording_writes = True
-        self._push_record = []
+        self._record_to = _StackEntry(msg_type, new_msg_type)
         try:
             yield
         finally:
-            self._queue.append(self._push_record)
-            self._push_record = None
+            self._queue.append(self._record_to)
             self.recording_writes = False
 
     def record_msg(self, msg):
-        self._push_record.append(msg)
+        self._record_to.append(msg)
 
     def pop(self):
         self._queue.pop(-1)
 
     def __iter__(self):
-        for msg_or_list_msg in self._queue:
-            if isinstance(msg_or_list_msg, (list, tuple)):
-                yield from iter(msg_or_list_msg)
-
-            else:
-                yield msg_or_list_msg
+        for stack_entry in self._queue:
+            assert isinstance(stack_entry, _StackEntry)
+            yield stack_entry
 
 
 class _RobotOutputImpl:
@@ -197,8 +209,9 @@ class _RobotOutputImpl:
             robot_version = robot.get_version()
             self._write_json("I ", f"robot={robot_version}")
 
-        for msg_in_stack in self._stack_handler:
-            self._do_write(msg_in_stack)
+        for stack_entry in self._stack_handler:
+            for msg in stack_entry.translated_messages():
+                self._do_write(msg)
 
     def _do_write(self, s: str) -> None:
         if self._stack_handler.recording_writes:
@@ -266,7 +279,7 @@ class _RobotOutputImpl:
 
     def start_suite(self, name, suite_id, suite_source, time_delta):
         oid = self._obtain_id
-        with self._stack_handler.push_record():
+        with self._stack_handler.push_record("SS", "RS"):
             self._write_with_separator(
                 "SS ",
                 [
@@ -290,7 +303,7 @@ class _RobotOutputImpl:
 
     def start_test(self, name, test_id, test_line, time_delta, tags):
         oid = self._obtain_id
-        with self._stack_handler.push_record():
+        with self._stack_handler.push_record("ST", "RT"):
             self._write_with_separator(
                 "ST ",
                 [
@@ -346,7 +359,7 @@ class _RobotOutputImpl:
     ):
         keyword_type = keyword_type.upper()
         oid = self._obtain_id
-        with self._stack_handler.push_record():
+        with self._stack_handler.push_record("SK", "RK"):
             self._write_with_separator(
                 "SK ",
                 [

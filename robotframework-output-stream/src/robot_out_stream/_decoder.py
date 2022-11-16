@@ -121,6 +121,10 @@ _MESSAGE_TYPE_INFO = {
     "S": _decode("start_time_delta:float"),
 }
 
+_MESSAGE_TYPE_INFO["RS"] = _MESSAGE_TYPE_INFO["SS"]
+_MESSAGE_TYPE_INFO["RT"] = _MESSAGE_TYPE_INFO["ST"]
+_MESSAGE_TYPE_INFO["RK"] = _MESSAGE_TYPE_INFO["SK"]
+
 
 class Decoder:
     def __init__(self):

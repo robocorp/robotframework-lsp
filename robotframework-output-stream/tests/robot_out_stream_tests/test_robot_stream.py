@@ -93,11 +93,27 @@ def run_with_listener(
     get_robot_major_version() < 4, reason="Not available on older versions of robot."
 )
 def test_rotate_logs(datadir):
+    from robot_out_stream import iter_decoded_log_format
+
     generated_info = run_with_listener(
         datadir, robot_file=datadir / "robot2.robot", max_file_size="50kb", max_files=2
     )
     files = tuple(generated_info.outdir.glob("*.rfstream"))
     assert len(files) == 2, f"Found: {files}"
+
+    name_to_file = dict((f.name, f) for f in files)
+    assert set(name_to_file.keys()) == {"output_2.rfstream", "output_3.rfstream"}
+    output_2 = name_to_file["output_2.rfstream"]
+
+    # Check that replay suite/test/keyword are properly sent on rotate.
+    expect_types = {"RS", "RT", "RK"}
+    with output_2.open("r") as stream:
+        for msg in iter_decoded_log_format(stream):
+            expect_types.discard(msg["message_type"])
+            if not expect_types:
+                break
+        else:
+            raise AssertionError(f"Some expected messages not found: {expect_types}")
 
 
 def test_robot_out_stream(datadir):
