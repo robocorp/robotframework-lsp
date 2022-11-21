@@ -6,7 +6,9 @@
     "scripts": {
         "build-prod": "webpack --env production",
         "build-dev": "webpack --env development",
+        "build-test": "webpack --env test",
         "watch-build-dev": "webpack --watch --env development",
+        "watch-build-test": "webpack --watch --env test",
         "build": "webpack",
         "start": "webpack serve --hot --inline --progress --port 8886"
     },

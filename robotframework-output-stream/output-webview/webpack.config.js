@@ -20,11 +20,21 @@ module.exports = (env) => {
         // devtool = 'eval';
         devtool = "source-map";
         minimize = false;
+    } else if (env.test) {
+        console.log("Building in TEST mode!");
+        mode = "development";
+        // devtool = 'cheap-module-source-map';
+        devtool = "eval-source-map";
+        minimize = false;
     } else {
         throw Error("Either production or development need to be specified");
     }
 
     target = path.resolve(__dirname, "dist");
+    if (env.test) {
+        target = path.resolve(__dirname, "dist-test");
+    }
+
     let envTarget = env.target;
     if (envTarget) {
         target = envTarget;
@@ -44,8 +54,12 @@ module.exports = (env) => {
         plugins.push(new HtmlInlineScriptPlugin());
     }
 
+    let entry = ["./src/index.ts", "./src/style.css"];
+    if (env.test) {
+        entry.push("./tests/tests.ts");
+    }
     return {
-        entry: ["./src/index.ts", "./src/style.css"],
+        entry: entry,
         output: {
             filename: "bundle.js",
             path: target,

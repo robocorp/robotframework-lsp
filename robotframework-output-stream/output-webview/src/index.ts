@@ -47,7 +47,7 @@ function onClickReference(message) {
  * Should be called to set the initial contents of the tree
  * as well as the current run id and label.
  */
-function setContents(msg: ISetContentsRequest): void {
+export function setContents(msg: ISetContentsRequest): void {
     saveTreeState();
     const opts = getOpts();
     opts.runId = msg.runId;
@@ -60,7 +60,7 @@ function setContents(msg: ISetContentsRequest): void {
     rebuildTreeAndStatusesFromOpts();
 }
 
-function appendContents(msg: IAppendContentsRequest): void {
+export function appendContents(msg: IAppendContentsRequest): void {
     const opts = getOpts();
     if (opts.runId === msg.runId) {
         opts.appendedContents.push(msg.appendContents);
@@ -70,7 +70,7 @@ function appendContents(msg: IAppendContentsRequest): void {
     }
 }
 
-function updateLabel(msg: IUpdateLabelRequest): void {
+export function updateLabel(msg: IUpdateLabelRequest): void {
     const opts = getOpts();
     opts.allRunIdsToLabel[msg.runId] = msg.label;
     rebuildRunSelection(opts.allRunIdsToLabel, opts.runId);

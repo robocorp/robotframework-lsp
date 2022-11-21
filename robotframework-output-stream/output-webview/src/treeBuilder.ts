@@ -12,15 +12,14 @@ import { addTreeContent } from "./tree";
  * Whenever we enter a tree builder async-related function it must
  * be checked.
  */
- let globalLeaseId: number = 0;
- let globalCurrentLease: number = -1;
- function obtainNewLease() {
-     globalLeaseId += 1;
-     globalCurrentLease = globalLeaseId;
-     return globalLeaseId;
- }
- 
- 
+let globalLeaseId: number = 0;
+let globalCurrentLease: number = -1;
+function obtainNewLease() {
+    globalLeaseId += 1;
+    globalCurrentLease = globalLeaseId;
+    return globalLeaseId;
+}
+
 /**
  * A helper class to build the tree.
  *
@@ -28,7 +27,7 @@ import { addTreeContent } from "./tree";
  * synchronize operations so that messages are handled in the proper
  * order.
  */
- export class TreeBuilder {
+export class TreeBuilder {
     readonly opts: IOpts;
     readonly stack: IContentAdded[] = [];
 
@@ -59,11 +58,18 @@ import { addTreeContent } from "./tree";
 
     decoder: Decoder = new Decoder();
 
+    seenSuiteOrTestOrKeyword: boolean = false;
+
     constructor() {
         this.opts = getOpts();
         this.runId = this.opts.runId;
         this.summaryBuilder = new SummaryBuilder();
         this.lease = obtainNewLease();
+        this.resetState();
+    }
+
+    resetState() {
+        this.seenSuiteOrTestOrKeyword = false;
     }
 
     /**
@@ -79,6 +85,7 @@ import { addTreeContent } from "./tree";
      */
     clearAndInitializeTree() {
         this.summaryBuilder.clear();
+        this.resetState();
 
         const filterLevelEl: HTMLSelectElement = selectById("filterLevel");
         filterLevelEl.value = this.opts.state.filterLevel;
@@ -164,10 +171,42 @@ import { addTreeContent } from "./tree";
     }
 
     private addOneMessageSync(msg: IMessage): void {
+        let msgType = msg.message_type;
+        switch (msgType) {
+            // if it's a replay suite/test/keyword, skip it if we've already seen
+            // a suit/test/keyword (otherwise, change the replay to the actual
+            // type being replayed to have it properly handled).
+            case "SS":
+            case "ST":
+            case "SK":
+                this.seenSuiteOrTestOrKeyword = true;
+                break;
+
+            case "RS":
+                if (this.seenSuiteOrTestOrKeyword) {
+                    return;
+                }
+                msgType = "SS";
+                break;
+            case "RT":
+                if (this.seenSuiteOrTestOrKeyword) {
+                    return;
+                }
+                msgType = "ST";
+                break;
+            case "RK":
+                if (this.seenSuiteOrTestOrKeyword) {
+                    return;
+                }
+                msgType = "SK";
+                break;
+        }
         this.id += 1;
-        switch (msg.message_type) {
+
+        switch (msgType) {
             case "SS":
                 // start suite
+
                 this.messageNode = { "parent": this.messageNode, "message": msg };
                 this.suiteName = msg.decoded["name"] + ".";
                 this.suiteSource = msg.decoded["source"];
@@ -177,6 +216,7 @@ import { addTreeContent } from "./tree";
 
             case "ST":
                 // start test
+
                 this.messageNode = { "parent": this.messageNode, "message": msg };
                 this.parent = addTreeContent(
                     this.opts,
@@ -193,6 +233,7 @@ import { addTreeContent } from "./tree";
                 break;
             case "SK":
                 // start keyword
+
                 this.messageNode = { "parent": this.messageNode, "message": msg };
                 let libname = msg.decoded["libname"];
                 if (libname) {

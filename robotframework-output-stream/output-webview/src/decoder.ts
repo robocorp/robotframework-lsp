@@ -4,8 +4,8 @@
 import parseISO from "date-fns/parseISO";
 
 export interface IMessage {
-    message_type: string;
-    decoded: any;
+    readonly message_type: string;
+    readonly decoded: any;
 }
 
 function version_decode(decoder, message) {
@@ -117,10 +117,13 @@ const _MESSAGE_TYPE_INFO = {
     "T": decode_time,
     "M": decode_memo,
     "SS": start_suite,
+    "RS": start_suite,
     "ES": end_suite,
     "ST": start_task_or_test,
+    "RT": start_task_or_test,
     "ET": end_task_or_test,
     "SK": start_keyword,
+    "RK": start_keyword,
     "EK": end_keyword,
     "KA": _decode("argument:oid"),
     "L": decode_log,
