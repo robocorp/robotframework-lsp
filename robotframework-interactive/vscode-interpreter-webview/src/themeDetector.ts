@@ -31,10 +31,13 @@ export function detectBaseTheme(): "my-light" | "my-dark" | "my-hc" {
         switch (body.className) {
             case "vscode-light":
                 foundInBody = logAndReturn("my-light", reason);
+                break;
             case "vscode-dark":
                 foundInBody = logAndReturn("my-dark", reason);
+                break;
             case "vscode-high-contrast":
                 foundInBody = logAndReturn("my-hc", reason);
+                break;
         }
         if (foundInBody !== undefined) {
             return foundInBody;
