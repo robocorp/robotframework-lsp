@@ -29,9 +29,18 @@ Test Scenario 1
 Test Scenario 2
     [Documentation]
     ...    A simple scenario where the output view is opened with a
-    ...    single test which passed without any keywords.
+    ...    single test which passed without any keywords (with ignored restart).
     Open Output View For Tests
     Setup Scenario    ${CURDIR}/_resources/case2.rfstream
+    Check Labels    1
+    Check Tree Items Text    Robot1.Simple Task
+
+Test Scenario 3
+    [Documentation]
+    ...    A simple scenario where the output view is opened with a
+    ...    single test which passed without any keywords (just with restart).
+    Open Output View For Tests
+    Setup Scenario    ${CURDIR}/_resources/case3.rfstream
     Check Labels    1
     Check Tree Items Text    Robot1.Simple Task
 
