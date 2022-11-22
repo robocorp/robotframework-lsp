@@ -127,6 +127,21 @@ SETTINGS = {
         "description": "Defines how completions should be shown for section headers (i.e.: *** Setting(s) ***).\nOne of: plural, singular, both.",
         "enum": ["plural", "singular", "both"],
     },
+    "robot.completions.keywordsNotImported.enable": {
+        "type": "boolean",
+        "default": True,
+        "description": "Defines whether to show completions for keywords not currently imported (adds the proper import when applied).",
+    },
+    "robot.completions.keywordsNotImported.addImport": {
+        "type": "boolean",
+        "default": True,
+        "description": "Defines whether to actually add import for completions showing keywords not currently imported.",
+    },
+    "robot.completions.keywordsNotImported.prefixModule": {
+        "type": "boolean",
+        "default": False,
+        "description": "Defines whether completions showing keywords not currently imported should prefix completions with the module name.",
+    },
     "robot.completions.keywords.format": {
         "type": "string",
         "default": "",

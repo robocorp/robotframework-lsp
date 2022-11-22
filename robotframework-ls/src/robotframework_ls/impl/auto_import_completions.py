@@ -28,6 +28,8 @@ class _Collector(object):
         import_location_info: "_ImportLocationInfo",
         imported_keyword_name_to_keyword: Dict[str, List[IKeywordFound]],
         exact_match: bool,
+        add_import: bool,
+        prefix_module: bool,
     ):
         from robotframework_ls.impl.string_matcher import RobotStringMatcher
 
@@ -39,6 +41,8 @@ class _Collector(object):
         self.token = token
         self.imported_keyword_name_to_keyword = imported_keyword_name_to_keyword
         self.exact_match = exact_match
+        self.add_import = add_import
+        self.prefix_module = prefix_module
 
         self._matcher = RobotStringMatcher(token_str)
 
@@ -84,32 +88,33 @@ class _Collector(object):
 
         prefix = ""
         detail = ""
-        import_line = -1
-        if completion_context.type != CompletionType.shell:
-            if lib_import is not None:
-                import_line = self.import_location_info.get_library_import_line()
-            elif resource_path is not None:
-                import_line = self.import_location_info.get_resource_import_line()
+        if self.add_import:
+            import_line = -1
+            if completion_context.type != CompletionType.shell:
+                if lib_import is not None:
+                    import_line = self.import_location_info.get_library_import_line()
+                elif resource_path is not None:
+                    import_line = self.import_location_info.get_resource_import_line()
 
-        if import_line == -1:
-            # There's no existing import, so, let's see if we have a *** Settings *** section.
-            # If we don't we have to create the whole settings, otherwise, we'll add the statement
-            # as the first thing in the existing *** Settings *** section.
-            if completion_context.type == CompletionType.shell:
-                import_line = 0
-                prefix = "*** Settings ***\n"
-            elif self.import_location_info.setting_section_node_info is None:
-                import_line = 0
-                prefix = "*** Settings ***\n"
-            else:
-                import_line = (
-                    self.import_location_info.setting_section_node_info.node.end_lineno
-                    - 1
-                )
+            if import_line == -1:
+                # There's no existing import, so, let's see if we have a *** Settings *** section.
+                # If we don't we have to create the whole settings, otherwise, we'll add the statement
+                # as the first thing in the existing *** Settings *** section.
+                if completion_context.type == CompletionType.shell:
+                    import_line = 0
+                    prefix = "*** Settings ***\n"
+                elif self.import_location_info.setting_section_node_info is None:
+                    import_line = 0
+                    prefix = "*** Settings ***\n"
+                else:
+                    import_line = (
+                        self.import_location_info.setting_section_node_info.node.end_lineno
+                        - 1
+                    )
 
         text = keyword_name
 
-        if keyword_name in self.imported_keyword_name_to_keyword:
+        if keyword_name in self.imported_keyword_name_to_keyword or self.prefix_module:
             check = lib_import or resource_path
             if check:
                 basename = os.path.basename(check)
@@ -128,30 +133,37 @@ class _Collector(object):
             "newText": text,
         }
 
-        additional_text_edits: List[TextEditTypedDict] = []
+        additional_text_edits: Optional[List[TextEditTypedDict]] = None
 
-        if lib_import is not None:
-            additional_text_edits.append(
-                {
-                    "range": {
-                        "start": {"line": import_line, "character": 0},
-                        "end": {"line": import_line, "character": 0},
-                    },
-                    "newText": f"{prefix}Library    {lib_import}\n",
-                }
-            )
-            detail = "* Adds Library Import"
-        elif resource_path is not None:
-            additional_text_edits.append(
-                {
-                    "range": {
-                        "start": {"line": import_line, "character": 0},
-                        "end": {"line": import_line, "character": 0},
-                    },
-                    "newText": f"{prefix}Resource    {resource_path}\n",
-                }
-            )
-            detail = "* Adds Resource Import"
+        if not self.add_import:
+            if lib_import is not None:
+                detail = "* Requires Library Import"
+            elif resource_path is not None:
+                detail = "* Requires Resource Import"
+        else:
+            additional_text_edits = []
+            if lib_import is not None:
+                additional_text_edits.append(
+                    {
+                        "range": {
+                            "start": {"line": import_line, "character": 0},
+                            "end": {"line": import_line, "character": 0},
+                        },
+                        "newText": f"{prefix}Library    {lib_import}\n",
+                    }
+                )
+                detail = "* Adds Library Import"
+            elif resource_path is not None:
+                additional_text_edits.append(
+                    {
+                        "range": {
+                            "start": {"line": import_line, "character": 0},
+                            "end": {"line": import_line, "character": 0},
+                        },
+                        "newText": f"{prefix}Resource    {resource_path}\n",
+                    }
+                )
+                detail = "* Adds Resource Import"
 
         completion_item: CompletionItemTypedDict = {
             "label": f"{label}*",
@@ -331,9 +343,40 @@ def _obtain_import_location_info(completion_context) -> _ImportLocationInfo:
 def complete(
     completion_context: ICompletionContext,
     imported_keyword_name_to_keyword: Dict[str, List[IKeywordFound]],
+    use_for_quick_fix=False,
     exact_match=False,
 ) -> List[CompletionItemTypedDict]:
     from robotframework_ls.impl import ast_utils
+    from robotframework_ls.impl.robot_generated_lsp_constants import (
+        OPTION_ROBOT_COMPLETIONS_KEYWORDS_NOT_IMPORTED_ENABLE,
+        OPTION_ROBOT_COMPLETIONS_KEYWORDS_NOT_IMPORTED_ADD_IMPORT,
+        OPTION_ROBOT_COMPLETIONS_KEYWORDS_NOT_IMPORTED_PREFIX_MODULE,
+    )
+
+    config = completion_context.config
+
+    if use_for_quick_fix:
+        exact_match = True
+    else:
+        if config is not None:
+            if not config.get_setting(
+                OPTION_ROBOT_COMPLETIONS_KEYWORDS_NOT_IMPORTED_ENABLE, bool, True
+            ):
+                return []
+
+    add_import = True
+    prefix_module = False
+    if config is not None:
+        add_import = config.get_setting(
+            OPTION_ROBOT_COMPLETIONS_KEYWORDS_NOT_IMPORTED_ADD_IMPORT, bool, True
+        )
+
+        prefix_module = config.get_setting(
+            OPTION_ROBOT_COMPLETIONS_KEYWORDS_NOT_IMPORTED_PREFIX_MODULE, bool, False
+        )
+
+    if use_for_quick_fix:
+        add_import = True
 
     token_info = completion_context.get_current_token()
     if token_info is not None:
@@ -349,6 +392,8 @@ def complete(
                 import_location_info,
                 imported_keyword_name_to_keyword,
                 exact_match=exact_match,
+                add_import=add_import,
+                prefix_module=prefix_module,
             )
             _collect_auto_import_completions(completion_context, collector)
 

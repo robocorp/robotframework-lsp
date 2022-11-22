@@ -47,7 +47,9 @@ def _add_import_code_action(
     auto_imports_found: List[
         CompletionItemTypedDict
     ] = auto_import_completions.complete(
-        completion_context, keyword_name_to_keyword_found, exact_match=True
+        completion_context,
+        keyword_name_to_keyword_found,
+        use_for_quick_fix=True,
     )
 
     for auto_import in auto_imports_found:
