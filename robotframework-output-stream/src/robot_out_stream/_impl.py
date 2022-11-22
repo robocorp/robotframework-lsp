@@ -138,7 +138,7 @@ class _RobotOutputImpl:
 
         self._move_old_runs()
 
-        self._current_entry = -1
+        self._current_entry = 0
         self._current_file: Optional[Path] = None
         self._stream = None
 
@@ -172,7 +172,7 @@ class _RobotOutputImpl:
             self._current_memo = {}
 
             self._current_entry += 1
-            if self._current_entry:
+            if self._current_entry != 1:
                 self._current_file = (
                     self._output_dir / f"output_{self._current_entry}.rfstream"
                 )

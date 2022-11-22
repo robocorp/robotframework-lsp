@@ -1,31 +1,93 @@
 # robotframework-output-stream
+
 A custom output for Robot Framework enabling realtime analysis in a more compact format.
 
+## Important
+
+The current version is still pre-alpha and the format specified below may still change. 
+
 ## Details
-It's implementation is based on a listener, so, it's possible to
-install to use it in any Robot Framework run.
+
+Its implementation is based on a listener, so, it's possible to
+use it in any Robot Framework run by using the `--listener` argument.
+
+## Installation
+
+Install with:
+
+`pip install robotframework-output-stream`
 
 ## Usage
 
-  `python -m robot -l NONE -r NONE -o NONE --listener robot_out_stream.RFStream:--dir=<dir_to_output>:--port:<port>`
+  `python -m robot -l NONE -r NONE -o NONE --listener robot_out_stream.RFStream:--dir=<dir_to_output>:--max-file-size=<5m>:--max-files=<5>:--log=<log.html>`
 
-  Note: the `-l NONE and -r NONE -o NONE` are recommended to disable the standard Robot Framework output (since
-  the RFStream should cover all its use-cases).
+  Note: the `-l NONE and -r NONE -o NONE` arguments are recommended to disable the standard Robot Framework output (since
+  the `RFStream` should cover all its use-cases).
 
   Arguments:
 
   `--dir`
   
-      Points to a directory where the output files should be written.
-      (default: '.' -- i.e.: working dir).
-      Note: if a ':' is used it should be changed to <COLON> (because a ':'
-      char is used as the separator by Robot Framework).
-      So, something as `c:\temp\foo` should be written as `c<COLON>\temp\foo`.
+    Points to a directory where the output files should be written.
+    (default: '.' -- i.e.: working dir).
+    
+    Note: if a ':' is used it should be changed to <COLON> (because a ':'
+    char is used as the separator by Robot Framework).
+    So, something as `c:/temp/foo` should be written as `c<COLON>/temp/foo`.
+    
+    Example:
+    
+      --dir=./output
+      --dir=c<COLON>/temp/output
 
-  `--port`
+  `--max-file-size`
   
-      A port to where the streamed contents should be sent (only connects to localhost).
-      A server should be listening at that port to receive the streamed "Basic log" contents.
+    Specifies the maximum file size before a rotation for the output file occurs.
+    
+    The size can be specified with its unit.
+    The following units are supported: `gb, g, mb, m, kb, k, b`
+    (to support gigabytes=gb or g, megabytes=mb or m, kilobytes=kb or k, bytes=b).
+    
+    Note: if no unit is specified, it's considered as bytes.
+    
+    Example:
+    
+      --max-file-size=200kb
+      --max-file-size=2mb
+      --max-file-size=1gb
+      --max-file-size=10000b
+
+  `--max-files`
+  
+    Specifies the maximum number of files to be generated in the logging before
+    starting to prune old files.
+    
+    i.e.: If `--max-files=2`, it will generate `output.rfstream`, `output_2.rfstream`
+    and when `output_3.rfstream` is about to be generated it'll erase `output.rfstream`.
+    
+    Example:
+    
+      --max-files=3
+
+  `--log`
+  
+    If specified writes html contents which enables the log contents to be
+    viewed embedded in an html file.
+    It should point to a path in the filesystem.
+    
+    Note: if a ':' is used it should be changed to <COLON> (because a ':'
+    char is used as the separator by Robot Framework).
+    So, something as `c:/temp/log.html` should be written as `c<COLON>/temp/log.html`.
+    
+    Note: the contents embedded in the file will contain the files written on disk
+    but embedded as a compressed information (so, its size should be less than
+    the size of the contents on disk), note that contents prunned from the log
+    (due to the --max-files setting) will NOT appear in the log.html.
+    
+    Example:
+    
+      --log=./logs/log.html
+      --log=c<COLON>/temp/log.html
 
 
 ## Requirements
@@ -65,9 +127,9 @@ The basic log can actually be splitted to multiple files.
 Such files are splitted in the following files (the idea
 is that it can be split when it becomes too big).
 
-- `output_0.rfstream`
-- `output_1.rfstream`
+- `output.rfstream`
 - `output_2.rfstream`
+- `output_3.rfstream`
 - ...
 
 The file should be always written and flushed at each log entry and
@@ -94,29 +156,31 @@ Basic message types are:
 
 ### V: Version(name)
 
+    Identifies the version of the log being used
+    
     Example:
     
-    V 1                     - Identifies version 1 of the log
-    
+    `V 1`             - Identifies version 1 of the log
+
 ### I: Info(info_as_json_string)
 
     Example:
     
-    I "python=3.7"
-    I "RF=5.7.0"
+    `I "python=3.7"`
+    `I "RF=5.7.0"`
 
 ### M: Memorize name(id ':' json_string)
 
     Example:
 
-    M SS:"Start Suite"     - Identifies the String 'Start Suite' as 'SS' in the logs 
-    M ES:"End Suite"      - Identifies the String 'End Suite' as 'ES' in the logs
+    `M a:"Start Suite"`    - Identifies the String 'Start Suite' as 'a' in the logs 
+    `M b:"End Suite"`      - Identifies the String 'End Suite' as 'b' in the logs
 
 ### T: Initial time(isoformat)
 
     Example:
     
-    T 2022-10-03T11:30:54.927
+    `T 2022-10-03T11:30:54.927`
 
 ### SS: Start Suite
 
@@ -131,7 +195,7 @@ Basic message types are:
     
     Example (were a, b and c are references to previously memorized names):
     
-    SS a|b|c|0.333
+    `SS a|b|c|0.333`
 
 ## RS: Replay Start Suite
 
@@ -146,7 +210,7 @@ Basic message types are:
     
     Example:
     
-    ES a|0.222
+    `ES a|0.222`
 
 ### ST: Start Task/test
 
@@ -156,7 +220,7 @@ Basic message types are:
     
     Example:
     
-    ST a|b|22|0.332
+    `ST a|b|22|0.332`
 
 ## RT: Replay Start Task/test
 
@@ -170,7 +234,7 @@ Basic message types are:
     
     Example:
     
-    ET a|b|0.332
+    `ET a|b|0.332`
 
 ### SK: Start Keyword
 
@@ -178,7 +242,7 @@ Basic message types are:
     
     Example:
     
-    SK a|b|c|d|e|22|0.444
+    `SK a|b|c|d|e|22|0.444`
 
 ## RK: Replay Keyword
 
@@ -191,7 +255,7 @@ Basic message types are:
     
     Example:
     
-    KA f
+    `KA f`
 
 ### AS: Assign keyword call result to a variable
 
@@ -199,7 +263,7 @@ Basic message types are:
     
     Example:
     
-    AS f
+    `AS f`
 
 ### EK: End Keyword
 
@@ -207,21 +271,21 @@ Basic message types are:
     
     Example:
     
-    EK a|0.333
+    `EK a|0.333`
 
 ### L: Provide a log message
 
     Spec: `level:level_enum, message:oid, time_delta_in_seconds:float`
     
     level_enum is:
-    # ERROR = E
-    # FAIL = F
-    # INFO = I
-    # WARN = W
+    - ERROR = `E`
+    - FAIL = `F`
+    - INFO = `I`
+    - WARN = `W`
     
     Example:
     
-    L E|a|0.123
+    `L E|a|0.123`
 
 ### S: Specify the start time (of the containing suite/test/task/keyword)
 
@@ -229,7 +293,7 @@ Basic message types are:
     
     Example:
     
-    S 2.456
+    `S 2.456`
 
 ### TG: Apply tag
 
@@ -237,5 +301,5 @@ Basic message types are:
     
     Example:
     
-    TG a
+    `TG a`
 

@@ -60,7 +60,7 @@ jobs:
     - name: Install robotframework from pip
       run: python -W ignore -m pip install "robotframework>=4.0"
       if: contains(matrix.name, '-pip-v4')
-    - name: setup.py install (robocorp-pytho-ls-core)
+    - name: setup.py install (robocorp-python-ls-core)
       working-directory: ./robocorp-python-ls-core
       run: |
         cd src
@@ -77,7 +77,15 @@ jobs:
       run: |
         cd tests
         pip install -r test_requirements.txt
+        pip install fire
         cd ..
+    - name: Embed output view in index.py
+      working-directory: ./robotframework-output-stream
+      run: |
+        python -m dev build-output-view
+        # python -m dev check-no-git-changes -- disabled because
+        # building in prod makes changes appear even if the entry
+        # code is the same. 
     - name: Build output view
       if: contains(matrix.name, '-outviewintegrationtests')
       working-directory: ./robotframework-output-stream/output-webview

@@ -102,8 +102,8 @@ def test_rotate_logs(datadir):
     assert len(files) == 2, f"Found: {files}"
 
     name_to_file = dict((f.name, f) for f in files)
-    assert set(name_to_file.keys()) == {"output_2.rfstream", "output_3.rfstream"}
-    output_2 = name_to_file["output_2.rfstream"]
+    assert set(name_to_file.keys()) == {"output_3.rfstream", "output_4.rfstream"}
+    output_2 = name_to_file["output_3.rfstream"]
 
     # Check that replay suite/test/keyword are properly sent on rotate.
     expect_types = {"RS", "RT", "RK"}

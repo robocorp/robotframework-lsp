@@ -35,11 +35,14 @@ jobs:
     - name: Install deps
       run: pip install --upgrade pip fire twine wheel setuptools
       
-    - name: Vendor deps
+    - name: Embed output view in index.py
       working-directory: ./robotframework-output-stream
       run: |
         python -m dev build-output-view
-      
+        # python -m dev check-no-git-changes -- disabled because
+        # building in prod makes changes appear even if the entry
+        # code is the same. 
+
     - name: Build wheel
       working-directory: ./robotframework-output-stream/src
       run: |

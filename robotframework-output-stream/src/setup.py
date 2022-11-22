@@ -26,7 +26,7 @@ for path in [_thirdparty, _license, _copyright]:
 setup(
     name="robotframework-output-stream",
     version="0.0.1",
-    description="Robot Framework Output Stream (a RF listener to provide an output that's streamable).",
+    description="Robot Framework Output Stream (a RF listener to provide an output that's compact and streamable).",
     long_description=_readme.read_text(),
     url="https://github.com/robocorp/robotframework-lsp",
     author="Fabio Zadrozny",
@@ -55,7 +55,8 @@ setup(
         ],
     },
     classifiers=[
-        "Development Status :: 5 - Production/Stable",
+        # "Development Status :: 5 - Production/Stable",
+        "Development Status :: 2 - Pre-Alpha",
         "Environment :: Console",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Apache Software License",
