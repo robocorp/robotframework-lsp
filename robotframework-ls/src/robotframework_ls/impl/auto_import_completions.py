@@ -350,7 +350,7 @@ def complete(
     from robotframework_ls.impl.robot_generated_lsp_constants import (
         OPTION_ROBOT_COMPLETIONS_KEYWORDS_NOT_IMPORTED_ENABLE,
         OPTION_ROBOT_COMPLETIONS_KEYWORDS_NOT_IMPORTED_ADD_IMPORT,
-        OPTION_ROBOT_COMPLETIONS_KEYWORDS_NOT_IMPORTED_PREFIX_MODULE,
+        OPTION_ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME,
     )
 
     config = completion_context.config
@@ -372,7 +372,7 @@ def complete(
         )
 
         prefix_module = config.get_setting(
-            OPTION_ROBOT_COMPLETIONS_KEYWORDS_NOT_IMPORTED_PREFIX_MODULE, bool, False
+            OPTION_ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME, bool, False
         )
 
     if use_for_quick_fix:

@@ -47,8 +47,8 @@ class RobotProjectPreferencesComponent {
     private final JBTextField robotCompletionsSectionHeadersForm = new JBTextField();
     private final JBTextField robotCompletionsKeywordsNotImportedEnable = new JBTextField();
     private final JBTextField robotCompletionsKeywordsNotImportedAddImport = new JBTextField();
-    private final JBTextField robotCompletionsKeywordsNotImportedPrefixModule = new JBTextField();
     private final JBTextField robotCompletionsKeywordsFormat = new JBTextField();
+    private final JBTextField robotCompletionsKeywordsPrefixImportName = new JBTextField();
     private final JBTextField robotCompletionsKeywordsArgumentsSeparator = new JBTextField();
     private final JBTextField robotWorkspaceSymbolsOnlyForOpenDocs = new JBTextField();
     private final JBTextField robotQuickFixKeywordTemplate = new JBTextField();
@@ -110,10 +110,10 @@ class RobotProjectPreferencesComponent {
                 .addComponent(createJTextArea("Defines whether to show completions for keywords not currently imported\n(adds the proper import when applied).\nNote: expected 'true' or 'false'\n"))
                 .addLabeledComponent(new JBLabel("Completions Keywords Not Imported Add Import"), robotCompletionsKeywordsNotImportedAddImport, 1, false)
                 .addComponent(createJTextArea("Defines whether to actually add import for completions showing keywords not currently imported.\nNote: expected 'true' or 'false'\n"))
-                .addLabeledComponent(new JBLabel("Completions Keywords Not Imported Prefix Module"), robotCompletionsKeywordsNotImportedPrefixModule, 1, false)
-                .addComponent(createJTextArea("Defines whether completions showing keywords not currently imported should prefix completions with\nthe module name.\nNote: expected 'true' or 'false'\n"))
                 .addLabeledComponent(new JBLabel("Completions Keywords Format"), robotCompletionsKeywordsFormat, 1, false)
                 .addComponent(createJTextArea("Defines how keyword completions should be applied.\nOne of: First upper, Title Case, ALL UPPER, all lower.\n"))
+                .addLabeledComponent(new JBLabel("Completions Keywords Prefix Import Name"), robotCompletionsKeywordsPrefixImportName, 1, false)
+                .addComponent(createJTextArea("Defines whether completions showing keywords should prefix completions with the module name.\nNote: expected 'true' or 'false'\n"))
                 .addLabeledComponent(new JBLabel("Completions Keywords Arguments Separator"), robotCompletionsKeywordsArgumentsSeparator, 1, false)
                 .addComponent(createJTextArea("Defines the string used to separate arguments when applying a Keyword completion with arguments.\n"))
                 .addLabeledComponent(new JBLabel("Workspace Symbols Only For Open Docs"), robotWorkspaceSymbolsOnlyForOpenDocs, 1, false)
@@ -390,21 +390,21 @@ class RobotProjectPreferencesComponent {
     }
     
     @NotNull
-    public String getRobotCompletionsKeywordsNotImportedPrefixModule() {
-        return robotCompletionsKeywordsNotImportedPrefixModule.getText();
-    }
-
-    public void setRobotCompletionsKeywordsNotImportedPrefixModule (@NotNull String newText) {
-        robotCompletionsKeywordsNotImportedPrefixModule.setText(newText);
-    }
-    
-    @NotNull
     public String getRobotCompletionsKeywordsFormat() {
         return robotCompletionsKeywordsFormat.getText();
     }
 
     public void setRobotCompletionsKeywordsFormat (@NotNull String newText) {
         robotCompletionsKeywordsFormat.setText(newText);
+    }
+    
+    @NotNull
+    public String getRobotCompletionsKeywordsPrefixImportName() {
+        return robotCompletionsKeywordsPrefixImportName.getText();
+    }
+
+    public void setRobotCompletionsKeywordsPrefixImportName (@NotNull String newText) {
+        robotCompletionsKeywordsPrefixImportName.setText(newText);
     }
     
     @NotNull
@@ -593,11 +593,11 @@ public class RobotProjectPreferencesPage implements Configurable {
             return true;
         }
         
-        if(!settings.getRobotCompletionsKeywordsNotImportedPrefixModule().equals(component.getRobotCompletionsKeywordsNotImportedPrefixModule())){
+        if(!settings.getRobotCompletionsKeywordsFormat().equals(component.getRobotCompletionsKeywordsFormat())){
             return true;
         }
         
-        if(!settings.getRobotCompletionsKeywordsFormat().equals(component.getRobotCompletionsKeywordsFormat())){
+        if(!settings.getRobotCompletionsKeywordsPrefixImportName().equals(component.getRobotCompletionsKeywordsPrefixImportName())){
             return true;
         }
         
@@ -656,8 +656,8 @@ public class RobotProjectPreferencesPage implements Configurable {
         component.setRobotCompletionsSectionHeadersForm(settings.getRobotCompletionsSectionHeadersForm());
         component.setRobotCompletionsKeywordsNotImportedEnable(settings.getRobotCompletionsKeywordsNotImportedEnable());
         component.setRobotCompletionsKeywordsNotImportedAddImport(settings.getRobotCompletionsKeywordsNotImportedAddImport());
-        component.setRobotCompletionsKeywordsNotImportedPrefixModule(settings.getRobotCompletionsKeywordsNotImportedPrefixModule());
         component.setRobotCompletionsKeywordsFormat(settings.getRobotCompletionsKeywordsFormat());
+        component.setRobotCompletionsKeywordsPrefixImportName(settings.getRobotCompletionsKeywordsPrefixImportName());
         component.setRobotCompletionsKeywordsArgumentsSeparator(settings.getRobotCompletionsKeywordsArgumentsSeparator());
         component.setRobotWorkspaceSymbolsOnlyForOpenDocs(settings.getRobotWorkspaceSymbolsOnlyForOpenDocs());
         component.setRobotQuickFixKeywordTemplate(settings.getRobotQuickFixKeywordTemplate());
@@ -782,13 +782,13 @@ public class RobotProjectPreferencesPage implements Configurable {
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Completions Keywords Not Imported Add Import:\n" + s);
         }
-        s = settings.validateRobotCompletionsKeywordsNotImportedPrefixModule(component.getRobotCompletionsKeywordsNotImportedPrefixModule());
-        if(!s.isEmpty()) {
-            throw new ConfigurationException("Error in Completions Keywords Not Imported Prefix Module:\n" + s);
-        }
         s = settings.validateRobotCompletionsKeywordsFormat(component.getRobotCompletionsKeywordsFormat());
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Completions Keywords Format:\n" + s);
+        }
+        s = settings.validateRobotCompletionsKeywordsPrefixImportName(component.getRobotCompletionsKeywordsPrefixImportName());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Completions Keywords Prefix Import Name:\n" + s);
         }
         s = settings.validateRobotCompletionsKeywordsArgumentsSeparator(component.getRobotCompletionsKeywordsArgumentsSeparator());
         if(!s.isEmpty()) {
@@ -834,8 +834,8 @@ public class RobotProjectPreferencesPage implements Configurable {
         settings.setRobotCompletionsSectionHeadersForm(component.getRobotCompletionsSectionHeadersForm());
         settings.setRobotCompletionsKeywordsNotImportedEnable(component.getRobotCompletionsKeywordsNotImportedEnable());
         settings.setRobotCompletionsKeywordsNotImportedAddImport(component.getRobotCompletionsKeywordsNotImportedAddImport());
-        settings.setRobotCompletionsKeywordsNotImportedPrefixModule(component.getRobotCompletionsKeywordsNotImportedPrefixModule());
         settings.setRobotCompletionsKeywordsFormat(component.getRobotCompletionsKeywordsFormat());
+        settings.setRobotCompletionsKeywordsPrefixImportName(component.getRobotCompletionsKeywordsPrefixImportName());
         settings.setRobotCompletionsKeywordsArgumentsSeparator(component.getRobotCompletionsKeywordsArgumentsSeparator());
         settings.setRobotWorkspaceSymbolsOnlyForOpenDocs(component.getRobotWorkspaceSymbolsOnlyForOpenDocs());
         settings.setRobotQuickFixKeywordTemplate(component.getRobotQuickFixKeywordTemplate());

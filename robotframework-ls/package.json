@@ -557,11 +557,6 @@
                     "default": true,
                     "description": "Defines whether to actually add import for completions showing keywords not currently imported."
                 },
-                "robot.completions.keywordsNotImported.prefixModule": {
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Defines whether completions showing keywords not currently imported should prefix completions with the module name."
-                },
                 "robot.completions.keywords.format": {
                     "type": "string",
                     "default": "",
@@ -572,6 +567,11 @@
                         "ALL UPPER",
                         "all lower"
                     ]
+                },
+                "robot.completions.keywords.prefixImportName": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Defines whether completions showing keywords should prefix completions with the module name."
                 },
                 "robot.completions.keywords.argumentsSeparator": {
                     "type": "string",

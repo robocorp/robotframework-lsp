@@ -386,3 +386,13 @@ def remote_library(server_port):
     yield server.server_port
     server.stop()
     server_thread.join()
+
+
+@pytest.fixture
+def debug_cache_deps():
+    from robocorp_ls_core.options import BaseOptions
+
+    original = BaseOptions.DEBUG_CACHE_DEPS
+    BaseOptions.DEBUG_CACHE_DEPS = True
+    yield
+    BaseOptions.DEBUG_CACHE_DEPS = original

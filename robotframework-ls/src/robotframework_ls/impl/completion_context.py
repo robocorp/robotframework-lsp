@@ -110,6 +110,7 @@ class CompletionContext(object):
             IVariablesFromArgumentsFileLoader
         ] = (),
         lsp_messages: Optional[LSPMessages] = None,
+        tracing: Optional[bool] = False,
     ) -> None:
         if col is Sentinel.SENTINEL or line is Sentinel.SENTINEL:
             assert (
@@ -141,6 +142,7 @@ class CompletionContext(object):
         self._monitor = monitor or NULL
         self.type = CompletionType.regular
         self.lsp_messages = lsp_messages
+        self.tracing = tracing
 
         # Note: it's None until it's requested in obtain_symbols_cache_reverse_index().
         # At that point it's obtained and synchronized accordingly (then, any copy
@@ -425,6 +427,12 @@ class CompletionContext(object):
         ret = []
         for library_import in ast_utils.iter_library_imports(ast):
             if library_import.node.name:
+                if self.tracing:
+                    log.debug(
+                        "Found import node (in get_imported_libraries): %s (alias: %s)",
+                        library_import.node.name,
+                        library_import.node.alias,
+                    )
                 ret.append(library_import.node)
         return tuple(ret)
 

@@ -31,6 +31,7 @@ class _Collector(AbstractKeywordCollector):
         from robot.api import Token
         from robotframework_ls.impl.robot_lsp_constants import (
             OPTION_ROBOT_COMPLETION_KEYWORDS_ARGUMENTS_SEPARATOR,
+            OPTION_ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME,
         )
 
         token_str = keyword_usage.token.value
@@ -53,10 +54,17 @@ class _Collector(AbstractKeywordCollector):
 
         config = completion_context.config
         self._arguments_separator = "    "
+        self._prefix_with_module = False
         if config:
             self._arguments_separator = config.get_setting(
                 OPTION_ROBOT_COMPLETION_KEYWORDS_ARGUMENTS_SEPARATOR, str, "    "
             ).replace(r"\t", "\t")
+
+            self._prefix_with_module = config.get_setting(
+                OPTION_ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME, bool, False
+            )
+
+        self._is_dotted_keyword_name = "." in token_str
         self._matcher = RobotStringMatcher(token_str)
         self._scope_matchers = build_matchers_with_resource_or_library_scope(token_str)
         config = completion_context.config
@@ -102,6 +110,34 @@ class _Collector(AbstractKeywordCollector):
 
                 text = f"{text}{self._arguments_separator}${{{i + 1}:{arg_name}}}"
 
+        if keyword_found.library_name:
+            use_libname = keyword_found.library_alias
+            if not use_libname:
+                use_libname = keyword_found.library_name
+            if self._prefix_with_module:
+                text = f"{use_libname}.{text}"
+
+                if self._is_dotted_keyword_name:
+                    # Note: the label must also be updated because we're
+                    # going to replace from the start, so, the start
+                    # from the label must also match as it'll be used
+                    # in the filtering.
+                    label = f"{use_libname}.{label}"
+                else:
+                    label = f"{label} ({use_libname})"
+            else:
+                label = f"{label} ({use_libname})"
+
+        elif keyword_found.resource_name:
+            if self._prefix_with_module:
+                text = f"{keyword_found.resource_name}.{text}"
+                if self._is_dotted_keyword_name:
+                    label = f"{keyword_found.resource_name}.{label}"
+                else:
+                    label = f"{label} ({keyword_found.resource_name})"
+            else:
+                label = f"{label} ({keyword_found.resource_name})"
+
         text_edit: TextEditTypedDict = {
             "range": {
                 "start": {
@@ -112,12 +148,6 @@ class _Collector(AbstractKeywordCollector):
             },
             "newText": text,
         }
-
-        if keyword_found.library_name:
-            label = f"{label} ({keyword_found.library_name})"
-
-        elif keyword_found.resource_name:
-            label = f"{label} ({keyword_found.resource_name})"
 
         return {
             "label": label,
@@ -133,7 +163,12 @@ class _Collector(AbstractKeywordCollector):
             for matcher in self._scope_matchers:
                 if matcher.accepts_keyword(keyword_found):
                     # +1 for the dot
-                    col_delta = len(matcher.resource_or_library_name) + 1
+                    if self._prefix_with_module:
+                        # If we're going to prefix with the module, replace
+                        # it completely and not from the dot.
+                        col_delta = 0
+                    else:
+                        col_delta = len(matcher.resource_or_library_name) + 1
                     break
             else:
                 return  # i.e.: don't add completion

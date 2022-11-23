@@ -338,8 +338,16 @@ def _collect_libraries_keywords(
     from robocorp_ls_core.lsp import CompletionItemKind
 
     libspec_manager: LibspecManager = completion_context.workspace.libspec_manager
+    tracing = completion_context.tracing
 
     for library_info in library_infos:
+        if tracing:
+            log.debug(
+                "Collected library info: name: %s - alias: %s",
+                library_info.name,
+                library_info.alias,
+            )
+
         completion_context.check_cancelled()
 
         library_doc_or_error: ILibraryDocOrError = (
@@ -369,6 +377,13 @@ def _collect_libraries_keywords(
             for keyword in library_doc.keywords:
                 keyword_name = keyword.name
                 if collector.accepts(keyword_name):
+                    if tracing:
+                        log.debug(
+                            "Accepted keyword name: %s (libname: %s, libalias: %s)",
+                            keyword_name,
+                            library_info.name,
+                            library_info.alias,
+                        )
 
                     keyword_args: Sequence[IKeywordArg] = ()
                     if keyword.args:

@@ -137,16 +137,16 @@ SETTINGS = {
         "default": True,
         "description": "Defines whether to actually add import for completions showing keywords not currently imported.",
     },
-    "robot.completions.keywordsNotImported.prefixModule": {
-        "type": "boolean",
-        "default": False,
-        "description": "Defines whether completions showing keywords not currently imported should prefix completions with the module name.",
-    },
     "robot.completions.keywords.format": {
         "type": "string",
         "default": "",
         "description": "Defines how keyword completions should be applied.\nOne of: First upper, Title Case, ALL UPPER, all lower.",
         "enum": ["First upper", "Title Case", "ALL UPPER", "all lower"],
+    },
+    "robot.completions.keywords.prefixImportName": {
+        "type": "boolean",
+        "default": False,
+        "description": "Defines whether completions showing keywords should prefix completions with the module name.",
     },
     "robot.completions.keywords.argumentsSeparator": {
         "type": "string",

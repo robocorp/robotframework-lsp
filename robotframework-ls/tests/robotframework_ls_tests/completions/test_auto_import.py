@@ -136,12 +136,12 @@ def test_completion_with_auto_import_dont_prefix_library(
     from robotframework_ls.impl import auto_import_completions
     from robotframework_ls.robot_config import RobotConfig
     from robotframework_ls.impl.robot_generated_lsp_constants import (
-        OPTION_ROBOT_COMPLETIONS_KEYWORDS_NOT_IMPORTED_PREFIX_MODULE,
+        OPTION_ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME,
     )
 
     cases.copy_to("case1", workspace_dir)
     config = RobotConfig()
-    config.update({OPTION_ROBOT_COMPLETIONS_KEYWORDS_NOT_IMPORTED_PREFIX_MODULE: True})
+    config.update({OPTION_ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME: True})
 
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
     doc = workspace.put_doc("case1.robot")

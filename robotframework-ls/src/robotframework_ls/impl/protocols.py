@@ -914,6 +914,8 @@ class ILocalizationInfo(Protocol):
 
 
 class ICompletionContext(Protocol):
+    tracing: bool
+
     def __init__(
         self,
         doc,

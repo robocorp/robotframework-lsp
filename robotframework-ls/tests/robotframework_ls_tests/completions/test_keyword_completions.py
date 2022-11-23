@@ -518,7 +518,7 @@ Test
         CompletionContext(doc, workspace=workspace.ws)
     )
     assert [completion["label"] for completion in completions] == [
-        "Append To List (Collections)"
+        "Append To List (Col1)"
     ]
 
 
@@ -642,9 +642,7 @@ def test_keyword_completions_lib_with_params(workspace, libspec_manager, cases):
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)
     )
-    assert sorted([comp["label"] for comp in completions]) == [
-        "Foo Method (LibWithParams)"
-    ]
+    assert sorted([comp["label"] for comp in completions]) == ["Foo Method (Lib)"]
 
 
 def test_keyword_completions_lib_with_params_slash(workspace, libspec_manager, cases):
@@ -707,9 +705,7 @@ def test_simple_with_params(workspace, libspec_manager, cases):
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)
     )
-    assert sorted([comp["label"] for comp in completions]) == [
-        "Foo Method (LibWithParams)"
-    ]
+    assert sorted([comp["label"] for comp in completions]) == ["Foo Method (Lib)"]
 
 
 def _check_should_be_completions(doc, ws, **kwargs):
@@ -882,9 +878,9 @@ def test_keyword_completions_remote_library(workspace, libspec_manager, remote_l
 
     completions = keyword_completions.complete(completion_context)
     assert sorted([comp["label"] for comp in completions]) == [
-        "Stop Remote Server (Remote)",
-        "Validate String (Remote)",
-        "Verify That Remote Is Running (Remote)",
+        "Stop Remote Server (a)",
+        "Validate String (a)",
+        "Verify That Remote Is Running (a)",
     ]
 
 
@@ -918,9 +914,7 @@ My Test
         assert not completions
     else:
         assert len(completions) == 1
-        assert sorted([comp["label"] for comp in completions]) == [
-            "Foo Method (LibWithParams)"
-        ]
+        assert sorted([comp["label"] for comp in completions]) == ["Foo Method (Lib)"]
 
 
 def test_keyword_completions_library_with_params_resolves_var(
@@ -954,9 +948,7 @@ My Test
     completions = keyword_completions.complete(completion_context)
 
     assert len(completions) == 1
-    assert sorted([comp["label"] for comp in completions]) == [
-        "Foo Method (LibWithParams)"
-    ]
+    assert sorted([comp["label"] for comp in completions]) == ["Foo Method (Lib)"]
 
 
 @pytest.mark.parametrize("lib_param", ["bar", "foo"])
@@ -997,7 +989,7 @@ My Test
     completions = keyword_completions.complete(completion_context)
     assert len(completions) == 1
     assert sorted([comp["label"] for comp in completions]) == [
-        f"{lib_param.title()} Method (LibWithParams)"
+        f"{lib_param.title()} Method (Lib{lib_param.title()})"
     ]
 
 
@@ -1045,6 +1037,112 @@ My Keyword
 *** Test Case ***
 My Test
     My Keyword    $v1    $v2"""
+    )
+
+
+@pytest.mark.parametrize(
+    "scenario",
+    [
+        "basic",
+        "already_dotted",
+        "with_alias",
+        "with_alias_already_dotted",
+        "with_resource",
+        "dotted_with_resource",
+        "builtin",
+    ],
+)
+def test_apply_keyword_with_module_prefix(
+    workspace, libspec_manager, scenario, debug_cache_deps
+):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.robot_generated_lsp_constants import (
+        OPTION_ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME,
+    )
+    from robotframework_ls.robot_config import RobotConfig
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    workspace.put_doc(
+        "my/case1.robot",
+        """
+*** Keywords ***
+My Keyword
+    No Operation""",
+    )
+
+    if scenario == "basic":
+        curr_call = "Copy Dict"
+        library_or_resource_import = "Library    Collections"
+        result = "Collections.Copy Dictionary    ${1:dictionary}"
+        label = "Copy Dictionary (Collections)"
+
+    elif scenario == "already_dotted":
+        curr_call = "Collections.Copy Dict"
+        library_or_resource_import = "Library    Collections"
+        result = "Collections.Copy Dictionary    ${1:dictionary}"
+        label = "Collections.Copy Dictionary"
+
+    elif scenario == "with_alias":
+        curr_call = "Copy Dict"
+        library_or_resource_import = "Library    Collections  WITH NAME   Col"
+        result = "Col.Copy Dictionary    ${1:dictionary}"
+        label = "Copy Dictionary (Col)"
+
+    elif scenario == "with_alias_already_dotted":
+        curr_call = "Col.Copy Dict"
+        library_or_resource_import = "Library    Collections  WITH NAME   Col"
+        result = "Col.Copy Dictionary    ${1:dictionary}"
+        label = "Col.Copy Dictionary"
+
+    elif scenario == "with_resource":
+        curr_call = "My Keyw"
+        library_or_resource_import = "Resource    ./my/case1.robot"
+        result = "case1.My Keyword"
+        label = "My Keyword (case1)"
+
+    elif scenario == "dotted_with_resource":
+        curr_call = "case1.My Keyw"
+        library_or_resource_import = "Resource    ./my/case1.robot"
+        result = "case1.My Keyword"
+        label = "case1.My Keyword"
+
+    elif scenario == "builtin":
+        curr_call = "BuiltIn.Log To Cons"
+        library_or_resource_import = ""
+        result = "BuiltIn.Log To Console    ${1:message}"
+        label = "BuiltIn.Log To Console"
+
+    doc = workspace.put_doc(
+        "case2.robot",
+        f"""*** Settings ***
+{library_or_resource_import}
+
+*** Test Cases ***
+Test
+    {curr_call}""",
+    )
+
+    config = RobotConfig()
+    config.update({OPTION_ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME: True})
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws, config=config, tracing=True)
+    )
+
+    assert len(completions) == 1
+    assert completions[0]["label"] == label
+
+    apply_completion(doc, completions[0])
+
+    assert (
+        doc.source
+        == f"""*** Settings ***
+{library_or_resource_import}
+
+*** Test Cases ***
+Test
+    {result}"""
     )
 
 

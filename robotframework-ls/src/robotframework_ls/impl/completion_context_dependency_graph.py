@@ -14,6 +14,9 @@ from robotframework_ls.impl.robot_constants import BUILTIN_LIB
 from robocorp_ls_core.callbacks import Callback
 from robocorp_ls_core import uris
 import os
+from robocorp_ls_core.robotframework_log import get_logger
+
+log = get_logger(__name__)
 
 
 class _Memo(object):
@@ -230,8 +233,15 @@ class CompletionContextDependencyGraph:
                 args = ast_utils.get_library_arguments_serialized(library)
                 node = library
 
+                resolved_name = curr_ctx.token_value_resolving_variables(name_tok)
+                if curr_ctx.tracing:
+                    log.debug(
+                        "Collecting library with resolved name: %s (alias: %s)",
+                        resolved_name,
+                        alias,
+                    )
                 lib_info = LibraryDependencyInfo(
-                    curr_ctx.token_value_resolving_variables(name_tok),
+                    resolved_name,
                     alias,
                     False,
                     args,

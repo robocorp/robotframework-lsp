@@ -5,11 +5,16 @@ NEXT
 
 - `Robot Output` view is filled with contents of the run.
 
+- New Setting to define whether completions showing keywords should prefix completions with the import name:
+
+  - `robot.completions.keywords.prefixImportName` 
+
 - New Settings to configure completions from keywords not currently imported in the current module:
 
   - `robot.completions.keywordsNotImported.enable`: Defines whether to show completions for keywords not currently imported (adds the proper import when applied).
   - `robot.completions.keywordsNotImported.addImport`: Defines whether to actually add import for completions showing keywords not currently imported.
-  - `robot.completions.keywordsNotImported.prefixModule`: Defines whether completions showing keywords not currently imported should prefix completions with the module name.
+  
+
 
 ### Bugfixes
 
