@@ -110,7 +110,7 @@ class CompletionContext(object):
             IVariablesFromArgumentsFileLoader
         ] = (),
         lsp_messages: Optional[LSPMessages] = None,
-        tracing: Optional[bool] = False,
+        tracing: bool = False,
     ) -> None:
         if col is Sentinel.SENTINEL or line is Sentinel.SENTINEL:
             assert (

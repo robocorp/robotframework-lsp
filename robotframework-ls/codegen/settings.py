@@ -130,12 +130,12 @@ SETTINGS = {
     "robot.completions.keywordsNotImported.enable": {
         "type": "boolean",
         "default": True,
-        "description": "Defines whether to show completions for keywords not currently imported (adds the proper import when applied).",
+        "description": "Defines whether to show completions for keywords not currently imported (adds the proper import statement when applied).",
     },
     "robot.completions.keywordsNotImported.addImport": {
         "type": "boolean",
         "default": True,
-        "description": "Defines whether to actually add import for completions showing keywords not currently imported.",
+        "description": "Defines whether to actually add the import statement when applying completions showing keywords not currently imported.",
     },
     "robot.completions.keywords.format": {
         "type": "string",
@@ -147,6 +147,11 @@ SETTINGS = {
         "type": "boolean",
         "default": False,
         "description": "Defines whether completions showing keywords should prefix completions with the module name.",
+    },
+    "robot.completions.keywords.prefixImportNameIgnore": {
+        "type": "array",
+        "default": [],
+        "description": 'Defines module names for which the name should not be prefixed when applying a completion (i.e.: ["builtin"]).',
     },
     "robot.completions.keywords.argumentsSeparator": {
         "type": "string",

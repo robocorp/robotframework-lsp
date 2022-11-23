@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Container
 
 from robocorp_ls_core.protocols import check_implements
 from robocorp_ls_core.robotframework_log import get_logger
@@ -14,6 +14,7 @@ from robocorp_ls_core.lsp import (
     CompletionItemTypedDict,
     InsertTextFormat,
 )
+from robotframework_ls.impl.text_utilities import normalize_robot_name
 
 
 log = get_logger(__name__)
@@ -32,6 +33,7 @@ class _Collector(AbstractKeywordCollector):
         from robotframework_ls.impl.robot_lsp_constants import (
             OPTION_ROBOT_COMPLETION_KEYWORDS_ARGUMENTS_SEPARATOR,
             OPTION_ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME,
+            OPTION_ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME_IGNORE,
         )
 
         token_str = keyword_usage.token.value
@@ -54,14 +56,24 @@ class _Collector(AbstractKeywordCollector):
 
         config = completion_context.config
         self._arguments_separator = "    "
-        self._prefix_with_module = False
+        self._prefix_with_import_name = False
+        self._prefix_with_import_name_ignore: Container[str] = ()
         if config:
             self._arguments_separator = config.get_setting(
                 OPTION_ROBOT_COMPLETION_KEYWORDS_ARGUMENTS_SEPARATOR, str, "    "
             ).replace(r"\t", "\t")
 
-            self._prefix_with_module = config.get_setting(
+            self._prefix_with_import_name = config.get_setting(
                 OPTION_ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME, bool, False
+            )
+
+            self._prefix_with_import_name_ignore = set(
+                normalize_robot_name(x)
+                for x in config.get_setting(
+                    OPTION_ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME_IGNORE,
+                    (list, tuple),
+                    (),
+                )
             )
 
         self._is_dotted_keyword_name = "." in token_str
@@ -114,27 +126,43 @@ class _Collector(AbstractKeywordCollector):
             use_libname = keyword_found.library_alias
             if not use_libname:
                 use_libname = keyword_found.library_name
-            if self._prefix_with_module:
-                text = f"{use_libname}.{text}"
+            if self._prefix_with_import_name:
 
                 if self._is_dotted_keyword_name:
                     # Note: the label must also be updated because we're
                     # going to replace from the start, so, the start
                     # from the label must also match as it'll be used
                     # in the filtering.
+                    text = f"{use_libname}.{text}"
                     label = f"{use_libname}.{label}"
                 else:
-                    label = f"{label} ({use_libname})"
+                    if (
+                        normalize_robot_name(use_libname)
+                        in self._prefix_with_import_name_ignore
+                    ):
+                        # Don't change the text...
+                        label = f"{label} ({use_libname})"
+                    else:
+                        text = f"{use_libname}.{text}"
+                        label = f"{label} ({use_libname})"
             else:
                 label = f"{label} ({use_libname})"
 
         elif keyword_found.resource_name:
-            if self._prefix_with_module:
-                text = f"{keyword_found.resource_name}.{text}"
+            if self._prefix_with_import_name:
                 if self._is_dotted_keyword_name:
+                    text = f"{keyword_found.resource_name}.{text}"
                     label = f"{keyword_found.resource_name}.{label}"
                 else:
-                    label = f"{label} ({keyword_found.resource_name})"
+                    if (
+                        normalize_robot_name(keyword_found.resource_name)
+                        in self._prefix_with_import_name_ignore
+                    ):
+                        # Don't change the text...
+                        label = f"{label} ({keyword_found.resource_name})"
+                    else:
+                        text = f"{keyword_found.resource_name}.{text}"
+                        label = f"{label} ({keyword_found.resource_name})"
             else:
                 label = f"{label} ({keyword_found.resource_name})"
 
@@ -163,7 +191,7 @@ class _Collector(AbstractKeywordCollector):
             for matcher in self._scope_matchers:
                 if matcher.accepts_keyword(keyword_found):
                     # +1 for the dot
-                    if self._prefix_with_module:
+                    if self._prefix_with_import_name:
                         # If we're going to prefix with the module, replace
                         # it completely and not from the dot.
                         col_delta = 0

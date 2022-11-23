@@ -1050,6 +1050,9 @@ My Test
         "with_resource",
         "dotted_with_resource",
         "builtin",
+        "builtin_add",
+        "builtin_skip",
+        "builtin_dont_skip_due_to_dot",
     ],
 )
 def test_apply_keyword_with_module_prefix(
@@ -1059,6 +1062,7 @@ def test_apply_keyword_with_module_prefix(
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.robot_generated_lsp_constants import (
         OPTION_ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME,
+        OPTION_ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME_IGNORE,
     )
     from robotframework_ls.robot_config import RobotConfig
 
@@ -1070,6 +1074,9 @@ def test_apply_keyword_with_module_prefix(
 My Keyword
     No Operation""",
     )
+
+    config = RobotConfig()
+    config_options = {OPTION_ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME: True}
 
     if scenario == "basic":
         curr_call = "Copy Dict"
@@ -1113,6 +1120,32 @@ My Keyword
         result = "BuiltIn.Log To Console    ${1:message}"
         label = "BuiltIn.Log To Console"
 
+    elif scenario == "builtin_add":
+        curr_call = "Log To Cons"
+        library_or_resource_import = ""
+        result = "BuiltIn.Log To Console    ${1:message}"
+        label = "Log To Console (BuiltIn)"
+
+    elif scenario == "builtin_skip":
+        curr_call = "Log To Cons"
+        library_or_resource_import = ""
+        result = "Log To Console    ${1:message}"
+        label = "Log To Console (BuiltIn)"
+        config_options[OPTION_ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME_IGNORE] = [
+            "builtin"
+        ]
+
+    elif scenario == "builtin_dont_skip_due_to_dot":
+        curr_call = "Builtin.Log To Cons"
+        library_or_resource_import = ""
+        result = "BuiltIn.Log To Console    ${1:message}"
+        label = "BuiltIn.Log To Console"
+        config_options[OPTION_ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME_IGNORE] = [
+            "builtin"
+        ]
+
+    config.update(config_options)
+
     doc = workspace.put_doc(
         "case2.robot",
         f"""*** Settings ***
@@ -1122,9 +1155,6 @@ My Keyword
 Test
     {curr_call}""",
     )
-
-    config = RobotConfig()
-    config.update({OPTION_ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME: True})
 
     completions = keyword_completions.complete(
         CompletionContext(doc, workspace=workspace.ws, config=config, tracing=True)

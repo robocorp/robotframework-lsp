@@ -60,10 +60,40 @@ class Config(object):
         try:
             s = self._full_settings[key]
             if not isinstance(s, expected_type):
+                if isinstance(expected_type, tuple):
+                    # Don't try to make a cast if a tuple of classes was passed.
+                    if default is not Sentinel.SENTINEL:
+                        return default
+
+                    raise KeyError(
+                        "Expected %s to be a setting of type: %s. Found: %s"
+                        % (key, expected_type, type(s))
+                    )
+
                 try:
+                    if expected_type in (list, tuple):
+                        if expected_type == list and isinstance(s, tuple):
+                            return expected_type(s)
+
+                        if expected_type == tuple and isinstance(s, list):
+                            return expected_type(s)
+
+                        # Don't try to make a cast for list or tuple (we don't
+                        # want a string to end up being a list of chars).
+                        if default is not Sentinel.SENTINEL:
+                            return default
+
+                        raise KeyError(
+                            "Expected %s to be a setting of type: %s. Found: %s"
+                            % (key, expected_type, type(s))
+                        )
+
                     # Check if we can cast it...
-                    s = expected_type(s)
+                    return expected_type(s)
                 except:
+                    if default is not Sentinel.SENTINEL:
+                        return default
+
                     raise KeyError(
                         "Expected %s to be a setting of type: %s. Found: %s"
                         % (key, expected_type, type(s))

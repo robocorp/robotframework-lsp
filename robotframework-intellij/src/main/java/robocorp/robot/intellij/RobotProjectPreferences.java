@@ -47,6 +47,7 @@ class RobotProjectState {
     public String robotCompletionsKeywordsNotImportedAddImport = "";
     public String robotCompletionsKeywordsFormat = "";
     public String robotCompletionsKeywordsPrefixImportName = "";
+    public String robotCompletionsKeywordsPrefixImportNameIgnore = "";
     public String robotCompletionsKeywordsArgumentsSeparator = "";
     public String robotWorkspaceSymbolsOnlyForOpenDocs = "";
     public String robotQuickFixKeywordTemplate = "";
@@ -87,6 +88,7 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
     public static final String ROBOT_COMPLETIONS_KEYWORDS_NOT_IMPORTED_ADD_IMPORT = "robot.completions.keywordsNotImported.addImport";
     public static final String ROBOT_COMPLETIONS_KEYWORDS_FORMAT = "robot.completions.keywords.format";
     public static final String ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME = "robot.completions.keywords.prefixImportName";
+    public static final String ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME_IGNORE = "robot.completions.keywords.prefixImportNameIgnore";
     public static final String ROBOT_COMPLETIONS_KEYWORDS_ARGUMENTS_SEPARATOR = "robot.completions.keywords.argumentsSeparator";
     public static final String ROBOT_WORKSPACE_SYMBOLS_ONLY_FOR_OPEN_DOCS = "robot.workspaceSymbolsOnlyForOpenDocs";
     public static final String ROBOT_QUICK_FIX_KEYWORD_TEMPLATE = "robot.quickFix.keywordTemplate";
@@ -129,6 +131,7 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         robotState.robotCompletionsKeywordsNotImportedAddImport = getRobotCompletionsKeywordsNotImportedAddImport();
         robotState.robotCompletionsKeywordsFormat = getRobotCompletionsKeywordsFormat();
         robotState.robotCompletionsKeywordsPrefixImportName = getRobotCompletionsKeywordsPrefixImportName();
+        robotState.robotCompletionsKeywordsPrefixImportNameIgnore = getRobotCompletionsKeywordsPrefixImportNameIgnore();
         robotState.robotCompletionsKeywordsArgumentsSeparator = getRobotCompletionsKeywordsArgumentsSeparator();
         robotState.robotWorkspaceSymbolsOnlyForOpenDocs = getRobotWorkspaceSymbolsOnlyForOpenDocs();
         robotState.robotQuickFixKeywordTemplate = getRobotQuickFixKeywordTemplate();
@@ -169,6 +172,7 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         setRobotCompletionsKeywordsNotImportedAddImport(robotState.robotCompletionsKeywordsNotImportedAddImport);
         setRobotCompletionsKeywordsFormat(robotState.robotCompletionsKeywordsFormat);
         setRobotCompletionsKeywordsPrefixImportName(robotState.robotCompletionsKeywordsPrefixImportName);
+        setRobotCompletionsKeywordsPrefixImportNameIgnore(robotState.robotCompletionsKeywordsPrefixImportNameIgnore);
         setRobotCompletionsKeywordsArgumentsSeparator(robotState.robotCompletionsKeywordsArgumentsSeparator);
         setRobotWorkspaceSymbolsOnlyForOpenDocs(robotState.robotWorkspaceSymbolsOnlyForOpenDocs);
         setRobotQuickFixKeywordTemplate(robotState.robotQuickFixKeywordTemplate);
@@ -435,6 +439,15 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
             
             try {
                 jsonObject.add(ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME, new JsonPrimitive(Boolean.parseBoolean(robotCompletionsKeywordsPrefixImportName)));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotCompletionsKeywordsPrefixImportNameIgnore.isEmpty()){
+            Gson g = new Gson();
+            try {
+                jsonObject.add(ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME_IGNORE, g.fromJson(robotCompletionsKeywordsPrefixImportNameIgnore, JsonArray.class));
             } catch(Exception e) {
                 LOG.error(e);
             }
@@ -1870,6 +1883,53 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             try {
                 listener.onChanged(ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME, old, s);
+            } catch (CancelledException e) {
+                // just ignore at this point
+            }
+        }
+    }
+    
+    private String robotCompletionsKeywordsPrefixImportNameIgnore = "";
+
+    public @NotNull String getRobotCompletionsKeywordsPrefixImportNameIgnore() {
+        return robotCompletionsKeywordsPrefixImportNameIgnore;
+    }
+
+    public @Nullable JsonArray getRobotCompletionsKeywordsPrefixImportNameIgnoreAsJson() {
+        if(robotCompletionsKeywordsPrefixImportNameIgnore.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return g.fromJson(robotCompletionsKeywordsPrefixImportNameIgnore, JsonArray.class);
+    }
+
+    public @NotNull String validateRobotCompletionsKeywordsPrefixImportNameIgnore(String robotCompletionsKeywordsPrefixImportNameIgnore) {
+        if(robotCompletionsKeywordsPrefixImportNameIgnore.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            g.fromJson(robotCompletionsKeywordsPrefixImportNameIgnore, JsonArray.class);
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotCompletionsKeywordsPrefixImportNameIgnore(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotCompletionsKeywordsPrefixImportNameIgnore)) {
+            return;
+        }
+        String old = robotCompletionsKeywordsPrefixImportNameIgnore;
+        robotCompletionsKeywordsPrefixImportNameIgnore = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            try {
+                listener.onChanged(ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME_IGNORE, old, s);
             } catch (CancelledException e) {
                 // just ignore at this point
             }
