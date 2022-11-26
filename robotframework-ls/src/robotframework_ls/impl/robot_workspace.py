@@ -289,6 +289,7 @@ class WorkspaceIndexer(object):
         self._reindex_manager = _ReindexManager()
         self._disposed = threading.Event()
         self.symbols_cache_reverse_index = SymbolsCacheReverseIndex()
+        self._full_index_watcher = None
 
         if collect_tests:
             assert endpoint is not None
@@ -303,6 +304,8 @@ class WorkspaceIndexer(object):
 
         if filename and filename.endswith(ROBOT_FILE_EXTENSIONS):
             uri = uris.from_fs_path(filename)
+            if self._full_index_watcher is not None:
+                self._full_index_watcher.append(uri)
             self._reindex_manager.request_uri_collection(uri)
             self.symbols_cache_reverse_index.notify_uri_changed(uri)
 
@@ -419,6 +422,8 @@ class WorkspaceIndexer(object):
         self.symbols_cache_reverse_index.dispose()
 
     def on_updated_document(self, doc_uri: str):
+        if self._full_index_watcher is not None:
+            self._full_index_watcher.append(doc_uri)
         self._reindex_manager.request_uri_collection(doc_uri)
         self.symbols_cache_reverse_index.notify_uri_changed(doc_uri)
 
@@ -467,6 +472,7 @@ class WorkspaceIndexer(object):
             else:
 
                 def iter_in():
+                    self._full_index_watcher = []
                     doc_uris = set()
                     for doc_uri in workspace.get_open_docs_uris():
                         doc_uris.add(doc_uri)
@@ -475,8 +481,15 @@ class WorkspaceIndexer(object):
                     for uri in workspace.iter_all_doc_uris_in_workspace(
                         ROBOT_FILE_EXTENSIONS
                     ):
+                        if self._full_index_watcher:
+                            uri = self._full_index_watcher.pop()
+                            doc_uris.add(uri)
+                            yield uri
+
                         if uri not in doc_uris:
                             yield uri
+
+                    self._full_index_watcher = None
 
         for uri in iter_in():
             if not uri:
