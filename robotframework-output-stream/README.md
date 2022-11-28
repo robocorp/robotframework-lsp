@@ -162,6 +162,17 @@ Basic message types are:
     
     `V 1`             - Identifies version 1 of the log
 
+### ID: Identifier and part for this run.
+
+    Provides a unique id for the run (which should be the same even if the
+    file is split among multiple files) as well as the identification of
+    which is the current part.
+    
+    Example:
+    
+    `ID: 1|36ac1f85-6d32-45b0-8ebf-3bbf8d7482f2`     1st part with identifier 36ac1f85-6d32-45b0-8ebf-3bbf8d7482f2.
+    `ID: 2|36ac1f85-6d32-45b0-8ebf-3bbf8d7482f2`     2nd part with identifier 36ac1f85-6d32-45b0-8ebf-3bbf8d7482f2.
+
 ### I: Info(info_as_json_string)
 
     Example:

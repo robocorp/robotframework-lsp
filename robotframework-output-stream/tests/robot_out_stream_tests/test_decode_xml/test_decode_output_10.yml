@@ -2,6 +2,9 @@
   version: '1'
 - initial_time: '2022-11-03T08:31:39.003'
   message_type: T
+- id: gen-from-output-xml
+  message_type: ID
+  part: 1
 - info: Generated from output.xml
   message_type: I
 - info: Robot 5.0rc1 (Python 3.8.1 on win32)

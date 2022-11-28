@@ -49,7 +49,7 @@ def _decode(message_definition, level_diff=0):
         i = s.find(":")
         decode = "oid"
         if i != -1:
-            s, decode = s.split(":")
+            s, decode = s.split(":", 1)
         names.append(s)
         if decode == "oid":
             name_to_decode[s] = _decode_oid
@@ -68,7 +68,7 @@ def _decode(message_definition, level_diff=0):
 
     def dec_impl(decoder, message):
         decoder.level += level_diff
-        splitted = message.split("|")
+        splitted = message.split("|", len(names) - 1)
         ret = {}
         for i, s in enumerate(splitted):
             name = names[i]
@@ -96,6 +96,7 @@ def decode_memo(decoder, message):
 _MESSAGE_TYPE_INFO = {
     "V": lambda _decoder, message: {"version": message},
     "I": lambda _decoder, message: {"info": json.loads(message)},
+    "ID": _decode("part:int, id:str"),
     "T": decode_time,
     "M": decode_memo,
     "L": _decode("level:str, message:oid, time_delta_in_seconds:float"),

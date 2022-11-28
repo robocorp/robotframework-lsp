@@ -15,13 +15,15 @@ build_contents_locally = False
 
 
 @contextmanager
-def after(obj, method_name, callback):
+def before(obj, method_name, callback):
     original_method = getattr(obj, method_name)
 
     @functools.wraps(original_method)
     def new_method(*args, **kwargs):
-        ret = original_method(*args, **kwargs)
-        callback(*args, **kwargs)
+        rf_stream = args[0]
+        other_args = args[1:]
+        callback(rf_stream, other_args, kwargs)
+        ret = original_method(rf_stream, *other_args, **kwargs)
         return ret
 
     setattr(obj, method_name, new_method)
@@ -57,10 +59,11 @@ def run_with_listener(
 
     created = []
 
-    def on_created(robot_out_stream, *args, **kwargs):
+    def on_created(robot_out_stream, args, kwargs):
+        kwargs["__uuid__"] = "1234-uuid-in-tests"
         created.append(robot_out_stream)
 
-    with after(RFStream, "__init__", on_created):
+    with before(RFStream, "__init__", on_created):
         outdir_to_listener = str(outdir).replace(":", "<COLON>")
         if robot_file is None:
             robot_file = datadir / "robot1.robot"
@@ -103,17 +106,24 @@ def test_rotate_logs(datadir):
 
     name_to_file = dict((f.name, f) for f in files)
     assert set(name_to_file.keys()) == {"output_3.rfstream", "output_4.rfstream"}
-    output_2 = name_to_file["output_3.rfstream"]
+    output_3 = name_to_file["output_3.rfstream"]
 
     # Check that replay suite/test/keyword are properly sent on rotate.
     expect_types = {"RS", "RT", "RK"}
-    with output_2.open("r") as stream:
+    found_ids_part_3 = []
+    with output_3.open("r") as stream:
         for msg in iter_decoded_log_format(stream):
+            if msg["message_type"] == "ID":
+                found_ids_part_3.append(msg)
             expect_types.discard(msg["message_type"])
             if not expect_types:
                 break
         else:
             raise AssertionError(f"Some expected messages not found: {expect_types}")
+
+    assert found_ids_part_3 == [
+        {"id": "1234-uuid-in-tests", "message_type": "ID", "part": 3}
+    ]
 
 
 def test_robot_out_stream(datadir):

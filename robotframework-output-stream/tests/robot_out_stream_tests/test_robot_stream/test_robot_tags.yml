@@ -2,6 +2,9 @@
   version: '1'
 - initial_time: '2022-10-31T10:00:00.000'
   message_type: T
+- id: 1234-uuid-in-tests
+  message_type: ID
+  part: 1
 - message_type: SS
   name: Robot7
   suite_id: s1

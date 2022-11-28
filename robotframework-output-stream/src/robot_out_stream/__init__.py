@@ -42,7 +42,8 @@ class RFStream:
     def __init__(self, *args, **kwargs):
         from robot_out_stream._impl import _RobotOutputImpl, _Config
 
-        config = _Config()
+        # Note: expected to be used just when used in-memory.
+        config = _Config(kwargs.get("__uuid__"))
 
         check_args = ["--dir=", "--max-file-size=", "--max-files=", "--log="]
         for arg in args:

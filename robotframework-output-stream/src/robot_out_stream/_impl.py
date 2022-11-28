@@ -28,6 +28,7 @@ class _Config:
     max_file_size_in_bytes: int
     max_files: int
     log_html: Optional[str]
+    uuid: str
 
     # Loaded from constructor kwargs (to be used
     # only when used as an API).
@@ -35,7 +36,12 @@ class _Config:
     initial_time: Optional[datetime.datetime] = None
     additional_info: Optional[Sequence[str]] = None
 
-    def __init__(self):
+    def __init__(self, uuid=None):
+        if uuid is None:
+            import uuid as uuid_module
+
+            uuid = f"{uuid_module.uuid1()}"
+        self.uuid = uuid
         self.output_dir = "./out_"
 
 
@@ -128,6 +134,7 @@ class _RobotOutputImpl:
         self._current_memo: Dict[str, str] = {}
 
         self._config = config
+        self._id = config.uuid
 
         if config.output_dir is None:
             self._output_dir = None
@@ -157,6 +164,7 @@ class _RobotOutputImpl:
         if self._output_dir is not None:
             self._rotate_output()
         else:
+            self._current_entry = 1
             self._write_on_start_or_after_rotate()
 
     @property
@@ -198,6 +206,7 @@ class _RobotOutputImpl:
         self._write_with_separator(
             "T ", (self._initial_time.isoformat(timespec="milliseconds"),)
         )
+        self._write_with_separator("ID ", (f"{self._current_entry}", self._id))
         if self._config.additional_info:
             for info in self._config.additional_info:
                 self._write_json("I ", info)

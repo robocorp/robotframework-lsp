@@ -588,6 +588,7 @@ def convert_xml_to_rfstream(source, write: Optional[Callable[[str], None]] = Non
             __write__=write,
             __initial_time__=initial_time,
             __additional_info__=[f"Generated from output.xml"],
+            __uuid__="gen-from-output-xml",
         )
         kwargs["--dir"] = "None"
         listener = RFStream(**kwargs)

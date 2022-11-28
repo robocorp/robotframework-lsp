@@ -65,7 +65,7 @@ function _decode(message_definiton) {
         const i = s.indexOf(":");
         let decode = "oid";
         if (i != -1) {
-            [s, decode] = s.split(":");
+            [s, decode] = s.split(":", 2);
         }
         names.push(s);
         if (decode === "oid") {
@@ -82,7 +82,7 @@ function _decode(message_definiton) {
     }
 
     function _decImpl(decoder, message) {
-        const splitted = message.split("|");
+        const splitted = message.split("|", names.length);
         const ret = {};
         for (let index = 0; index < splitted.length; index++) {
             const s = splitted[index];
@@ -111,8 +111,11 @@ const end_keyword = _decode("status:oid, time_delta_in_seconds:float");
 
 const decode_log = _decode("level:str, message:oid, time_delta_in_seconds:float");
 
+const id_decode = _decode("part:int, id:str");
+
 const _MESSAGE_TYPE_INFO = {
     "V": version_decode,
+    "ID": id_decode,
     "I": simple_decode,
     "T": decode_time,
     "M": decode_memo,
