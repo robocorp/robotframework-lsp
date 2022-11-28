@@ -28,6 +28,10 @@
   message_type: AS
 - argument: '2'
   message_type: KA
+- level: I
+  message: ${a} = 2
+  message_type: L
+  time_delta_in_seconds: 0.044
 - message_type: S
   start_time_delta: 0.043
 - message_type: EK

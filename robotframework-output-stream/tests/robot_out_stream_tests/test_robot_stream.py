@@ -243,3 +243,7 @@ def test_robot_try_except(datadir, data_regression):
 )
 def test_robot_return(datadir, data_regression):
     check(datadir, data_regression, "robot10.robot")
+
+
+def test_robot_embed_img(datadir, data_regression):
+    check(datadir, data_regression, "robot11.robot")

@@ -30,6 +30,14 @@
   message_type: AS
 - argument: '[2,3]'
   message_type: KA
+- level: I
+  message: ${a} = 2
+  message_type: L
+  time_delta_in_seconds: 0.046
+- level: I
+  message: ${b} = 3
+  message_type: L
+  time_delta_in_seconds: 0.048
 - message_type: S
   start_time_delta: 0.046
 - message_type: EK

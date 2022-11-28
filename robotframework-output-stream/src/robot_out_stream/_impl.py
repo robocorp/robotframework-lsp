@@ -401,10 +401,16 @@ class _RobotOutputImpl:
         )
         self._stack_handler.pop()
 
-    def log_message(self, level, message, time_delta):
+    def log_message(self, level, message, time_delta, html):
         oid = self._obtain_id
+
+        msg_type = "L "
+        if html in ("true", "yes", 1, True):
+            # From output.xml it's "true", from listener it's "yes".
+            msg_type = "LH "
+
         self._write_with_separator(
-            "L ",
+            msg_type,
             [
                 # ERROR = E
                 # FAIL = F

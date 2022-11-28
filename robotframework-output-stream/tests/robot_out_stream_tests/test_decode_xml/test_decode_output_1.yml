@@ -47,6 +47,10 @@
   message_type: KA
 - argument: Hello#How are!you
   message_type: KA
+- level: I
+  message: ${split} = ['Hello', 'How are', 'you']
+  message_type: L
+  time_delta_in_seconds: 0.055
 - message_type: S
   start_time_delta: 0.055
 - message_type: EK
@@ -62,6 +66,10 @@
   time_delta_in_seconds: -1.0
 - argument: ${split}
   message_type: KA
+- level: I
+  message: '[''Hello'', ''How are'', ''you'']'
+  message_type: L
+  time_delta_in_seconds: 0.059
 - message_type: S
   start_time_delta: 0.058
 - message_type: EK

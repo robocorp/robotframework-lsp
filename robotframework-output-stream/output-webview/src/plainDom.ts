@@ -50,7 +50,7 @@ export function getDataTreeId(element: HTMLLIElement | HTMLUListElement) {
     return element.getAttribute("data-tree-id");
 }
 
-function htmlToElement(html) {
+export function htmlToElement(html) {
     var template = document.createElement("template");
     html = html.trim(); // Never return a text node of whitespace as the result
     template.innerHTML = html;

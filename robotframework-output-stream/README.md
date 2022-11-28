@@ -287,6 +287,17 @@ Basic message types are:
     
     `L E|a|0.123`
 
+### LH: Provide an html log message
+
+    Same as "L" but interned message is expected to be an html which can be
+    embedded in the final log.html.
+    
+    i.e.: the message can be something as:
+    
+    <img alt="screenshot" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABAAAAAEgCAIAAACl65ZFAAEAAElEQVR4nOz9d7R..."/>
+    
+    In which case the img would be embedded as an image in the final log.html.
+
 ### S: Specify the start time (of the containing suite/test/task/keyword)
 
     Spec: `start_time_delta:float`

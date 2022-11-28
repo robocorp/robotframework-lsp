@@ -282,8 +282,9 @@ class RFStream:
             # in 'message' and not 'log_message').
             return
 
+        html = message.get("html")
         return self._robot_output_impl.log_message(
-            level, message["message"], self._get_time_delta(message)
+            level, message["message"], self._get_time_delta(message), html
         )
 
     def message(self, message):

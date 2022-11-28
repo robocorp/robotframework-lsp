@@ -99,6 +99,7 @@ _MESSAGE_TYPE_INFO = {
     "T": decode_time,
     "M": decode_memo,
     "L": _decode("level:str, message:oid, time_delta_in_seconds:float"),
+    "LH": _decode("level:str, message:oid, time_delta_in_seconds:float"),
     "SS": _decode(
         "name:oid, suite_id:oid, suite_source:oid, time_delta_in_seconds:float",
         level_diff=+1,

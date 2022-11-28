@@ -527,6 +527,7 @@ class _XmlSaxParser(xml.sax.handler.ContentHandler):
 
         level = self._curr_message_attrs["level"]
         timestamp = self._curr_message_attrs["timestamp"]
+        html = self._curr_message_attrs.get("html")
 
         self._chars = []
         self._curr_message_attrs = None
@@ -538,10 +539,11 @@ class _XmlSaxParser(xml.sax.handler.ContentHandler):
             return
         self._found_logs.add(key)
 
-        self._listener.message(
+        self._listener.log_message(
             {
                 "level": level,
                 "message": content,
+                "html": html,
                 "timedelta": compute_timedelta(self._listener.initial_time, timestamp),
             }
         )

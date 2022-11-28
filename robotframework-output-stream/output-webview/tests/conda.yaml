@@ -16,6 +16,7 @@ dependencies:
     - robotframework-browser==13.6.0  # https://github.com/MarketSquare/robotframework-browser/releases
     - rpaframework==17.4.0            # https://rpaframework.org/releasenotes.html
     - robotframework-stacktrace==0.4.1
+    - robotframework-output-stream==0.0.1
 
 rccPostInstall:
   - rfbrowser init                    # Initialize Playwright

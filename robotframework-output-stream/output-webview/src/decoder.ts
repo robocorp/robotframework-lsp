@@ -127,6 +127,7 @@ const _MESSAGE_TYPE_INFO = {
     "EK": end_keyword,
     "KA": _decode("argument:oid"),
     "L": decode_log,
+    "LH": decode_log,
     "AS": _decode("assign:oid"),
     "TG": _decode("tag:oid"),
     "S": _decode("start_time_delta:float"),

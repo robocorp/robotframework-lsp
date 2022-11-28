@@ -44,6 +44,18 @@ Test Scenario 3
     Check Labels    1
     Check Tree Items Text    Robot1.Simple Task
 
+Test Scenario 4
+    [Documentation]
+    ...    A scenario with a screenshot.
+    Open Output View For Tests
+    Setup Scenario    ${CURDIR}/_resources/case4.rfstream
+    # Sleep    100000
+    Check Image
+    Check Tree Items Text    Scenario Generator.Screenshot test
+    ...    KEYWORD - RPA.Desktop.Take Screenshot | output/test_screenshot.png | embed\=True
+    ...    Saved screenshot as 'output\\test_screenshot.png'
+    ...    ${EMPTY}
+
 
 *** Keywords ***
 Check Integers Equal
@@ -91,3 +103,7 @@ Check Tree Items Text
     [Arguments]    @{expected_text_items}
     ${text_items}=    Get Text From Tree Items
     Should Be Equal    ${text_items}    ${expected_text_items}
+
+Check Image
+    ${element_count}=    RPA.Browser.Playwright.Get Element Count    img
+    Check Integers Equal    1    ${element_count}

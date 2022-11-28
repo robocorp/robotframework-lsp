@@ -36,6 +36,10 @@
   message_type: AS
 - argument: retval
   message_type: KA
+- level: I
+  message: ${value} = retval
+  message_type: L
+  time_delta_in_seconds: 0.038
 - message_type: S
   start_time_delta: 0.038
 - message_type: EK
@@ -55,6 +59,10 @@
   message_type: KA
 - argument: a
   message_type: KA
+- level: I
+  message: ${rem} = retvl
+  message_type: L
+  time_delta_in_seconds: 0.041
 - message_type: S
   start_time_delta: 0.04
 - message_type: EK

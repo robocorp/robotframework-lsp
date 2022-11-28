@@ -15,6 +15,7 @@ import {
     createSpan,
     createSummary,
     createUL,
+    htmlToElement,
 } from "./plainDom";
 import { IContentAdded, IMessageNode, IOpts, ITreeState } from "./protocols";
 
@@ -72,7 +73,14 @@ export function addTreeContent(
 
     const span: HTMLSpanElement = createSpan();
     span.setAttribute("role", "button");
-    span.textContent = content;
+    if (decodedMessage.message_type === "LH") {
+        console.log("LH output");
+        const htmlContents = htmlToElement(content);
+        span.appendChild(htmlContents);
+    } else {
+        console.log("L output");
+        span.textContent = content;
+    }
     summaryDiv.appendChild(span);
 
     if (opts.onClickReference) {

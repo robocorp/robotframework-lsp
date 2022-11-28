@@ -49,10 +49,6 @@
   message_type: KA
 - argument: level=ERROR
   message_type: KA
-- level: E
-  message: Some error message
-  message_type: L
-  time_delta_in_seconds: 0.05
 - message_type: S
   start_time_delta: 0.05
 - message_type: EK
@@ -74,8 +70,3 @@
 - message_type: ES
   status: PASS
   time_delta_in_seconds: -1.0
-- level: E
-  message: 'Error in file ''x:\vscode-robot\robotframework-lsp\robotframework-output-stream\tests\robot_out_stream_tests\test_robot_out_stream\sub\another_sub.robot''
-    on line 2: Library ''lib_not_there.py'' does not exist.'
-  message_type: L
-  time_delta_in_seconds: 0.045

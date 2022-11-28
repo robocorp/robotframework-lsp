@@ -287,6 +287,7 @@ export class TreeBuilder {
                 }
                 break;
             case "L":
+            case "LH":
                 // A bit different because it's always leaf and based on 'level', not 'status'.
                 const level = msg.decoded["level"];
                 const iLevel = getIntLevelFromLevelStr(level);
