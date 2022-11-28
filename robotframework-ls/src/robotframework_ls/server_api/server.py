@@ -233,6 +233,9 @@ class RobotFrameworkServerApi(PythonLanguageServer):
                 OPTION_ROBOT_VARIABLES_LOAD_FROM_ARGUMENTS_FILE, str, ""
             ).strip()
             if not variables_from_arguments_files:
+                log.debug(
+                    "%s not specified", OPTION_ROBOT_VARIABLES_LOAD_FROM_ARGUMENTS_FILE
+                )
                 self._variables_from_arguments_files_loader = []
 
             else:
@@ -244,11 +247,22 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
                 for v in variables_from_arguments_files.split(","):
                     v = v.strip()
+                    if not v:
+                        continue
                     created_variables_from_arguments_files.append(
                         VariablesFromArgumentsFileLoader(v)
                     )
+                created_variables_from_arguments_files = tuple(
+                    created_variables_from_arguments_files
+                )
                 self._variables_from_arguments_files_loader = (
                     created_variables_from_arguments_files
+                )
+
+                log.debug(
+                    "%s loaders: %s",
+                    OPTION_ROBOT_VARIABLES_LOAD_FROM_ARGUMENTS_FILE,
+                    created_variables_from_arguments_files,
                 )
         except:
             log.exception(
