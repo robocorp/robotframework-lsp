@@ -14,7 +14,7 @@ export interface IState {
     runIdLRU: string[];
 }
 
-export type IFilterLevel = "FAIL" | "WARN" | "PASS";
+export type IFilterLevel = "FAIL" | "WARN" | "PASS" | "NOT RUN";
 
 export interface IOpts {
     runId: string;
@@ -47,7 +47,7 @@ export interface IContentAdded {
 
     // Updated when the status or level for an element is set (usually at the end).
     // When a given item finishes updating it'll update its parent accordingly.
-    // 0 = pass, 1= warn, 2=error
+    // -1=not run 0 = pass, 1= warn, 2=error
     maxLevelFoundInHierarchy: number;
 }
 

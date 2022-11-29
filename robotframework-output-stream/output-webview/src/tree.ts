@@ -116,7 +116,7 @@ export function addTreeContent(
         lineno,
         appendContentChild: undefined,
         decodedMessage,
-        maxLevelFoundInHierarchy: 0,
+        maxLevelFoundInHierarchy: -1,
         summaryDiv,
     };
     ret["appendContentChild"] = createUlIfNeededAndAppendChild.bind(ret);

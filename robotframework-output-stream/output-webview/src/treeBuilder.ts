@@ -110,7 +110,7 @@ export class TreeBuilder {
             "lineno": undefined,
             "decodedMessage": undefined,
             "appendContentChild": addToRoot,
-            "maxLevelFoundInHierarchy": 0,
+            "maxLevelFoundInHierarchy": -1,
             "summaryDiv": undefined,
         };
         this.stack.push(this.parent);
@@ -233,7 +233,6 @@ export class TreeBuilder {
                 break;
             case "SK":
                 // start keyword
-
                 this.messageNode = { "parent": this.messageNode, "message": msg };
                 let libname = msg.decoded["libname"];
                 if (libname) {
@@ -262,7 +261,7 @@ export class TreeBuilder {
                 this.stack.pop();
                 this.parent = this.stack.at(-1);
                 this.onEndUpdateMaxLevelFoundInHierarchyFromStatus(currT, this.parent, msg);
-                this.onEndSetStatusOrRemove(this.opts, currT, msg.decoded);
+                this.onEndSetStatusOrRemove(this.opts, currT, msg.decoded, this.parent, false);
                 this.summaryBuilder.onTestEndUpdateSummary(msg);
                 break;
             case "EK": // end keyword
@@ -271,7 +270,8 @@ export class TreeBuilder {
                 this.stack.pop();
                 this.parent = this.stack.at(-1);
                 this.onEndUpdateMaxLevelFoundInHierarchyFromStatus(currK, this.parent, msg);
-                this.onEndSetStatusOrRemove(this.opts, currK, msg.decoded);
+                this.onEndSetStatusOrRemove(this.opts, currK, msg.decoded, this.parent, true);
+
                 break;
             case "S":
                 // Update the start time from the current message.
@@ -326,9 +326,30 @@ export class TreeBuilder {
         }
     }
 
-    private onEndSetStatusOrRemove(opts: IOpts, current: IContentAdded, endDecodedMsg: object) {
+    /**
+     * @param removeIfTooBig if the parent is too big, we may remove the element
+     * even if it'd be shown according to the current filter.
+     */
+    private onEndSetStatusOrRemove(
+        opts: IOpts,
+        current: IContentAdded,
+        endDecodedMsg: object,
+        parent: IContentAdded,
+        removeIfTooBig: boolean
+    ) {
         const status = endDecodedMsg["status"];
         if (acceptLevel(opts, current.maxLevelFoundInHierarchy)) {
+            if (removeIfTooBig) {
+                if (current.maxLevelFoundInHierarchy <= 0) {
+                    // TODO: Remove pass/not run and add some placeholder to note it was removed...
+                    // const MAX_ELEMENT_COUNT = 5;
+                    // if (parent.ul.childElementCount > MAX_ELEMENT_COUNT) {
+                    //     current.li.remove();
+                    //     return;
+                    // }
+                }
+            }
+
             const summary = current.summary;
             addStatus(current, status);
 

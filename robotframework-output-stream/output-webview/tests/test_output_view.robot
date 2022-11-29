@@ -12,8 +12,8 @@ Test Teardown       Close Browser
 
 
 *** Variables ***
-# ${HEADLESS}     False
-${HEADLESS}    True
+# ${HEADLESS}    False
+${HEADLESS}     True
 
 
 *** Test Cases ***
@@ -49,12 +49,30 @@ Test Scenario 4
     ...    A scenario with a screenshot.
     Open Output View For Tests
     Setup Scenario    ${CURDIR}/_resources/case4.rfstream
-    # Sleep    100000
     Check Image
     Check Tree Items Text    Scenario Generator.Screenshot test
     ...    KEYWORD - RPA.Desktop.Take Screenshot | output/test_screenshot.png | embed\=True
     ...    Saved screenshot as 'output\\test_screenshot.png'
     ...    ${EMPTY}
+
+Test Scenario 5
+    [Documentation]
+    ...    A scenario with many elements in a FOR (some not run).
+    Open Output View For Tests
+    Setup Scenario    ${CURDIR}/_resources/case5.rfstream
+    ${text_items}=    Get Text From Labels
+    Log    ${text_items}
+    ${text_items}=    Remove Duplicates    ${text_items}
+    Should Not Contain    ${text_items}    NOT RUN
+    ${expected}=    Evaluate    ['PASS', 'LOG INFO', 'LOG ERROR']
+    Should Be Equal As Strings    ${expected}    ${text_items}
+
+    RPA.Browser.Playwright.Select Options By    \#filterLevel    value    NOT RUN
+    ${text_items}=    Get Text From Labels
+    ${text_items}=    Remove Duplicates    ${text_items}
+    Should Contain    ${text_items}    NOT RUN
+    ${expected}=    Evaluate    ['PASS', 'LOG INFO', 'NOT RUN', 'LOG ERROR']
+    Should Be Equal As Strings    ${expected}    ${text_items}
 
 
 *** Keywords ***
@@ -85,14 +103,24 @@ Setup Scenario
     ...    window['setupScenario'](${contents_as_json});
     ...    }
 
-Get Text From Tree Items
+Get Text From Elements
+    [Arguments]    ${elements}
     ${lst}=    Builtin.Create List
-    ${elements}=    RPA.Browser.Playwright.Get Elements    .span_link
     FOR    ${element}    IN    @{elements}
         ${txt}=    RPA.Browser.Playwright.Get Text    ${element}
         Append To List    ${lst}    ${txt}
     END
     RETURN    ${lst}
+
+Get Text From Tree Items
+    ${elements}=    RPA.Browser.Playwright.Get Elements    .span_link
+    ${txt}=    Get Text From Elements    ${elements}
+    RETURN    ${txt}
+
+Get Text From Labels
+    ${elements}=    RPA.Browser.Playwright.Get Elements    .label
+    ${txt}=    Get Text From Elements    ${elements}
+    RETURN    ${txt}
 
 Check Labels
     [Arguments]    ${expected_number_of_labels}
