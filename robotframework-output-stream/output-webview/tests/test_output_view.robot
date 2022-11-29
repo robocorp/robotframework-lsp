@@ -60,22 +60,29 @@ Test Scenario 5
     ...    A scenario with many elements in a FOR (some not run).
     Open Output View For Tests
     Setup Scenario    ${CURDIR}/_resources/case5.rfstream
-    ${text_items}=    Get Text From Labels
-    Log    ${text_items}
-    ${text_items}=    Remove Duplicates    ${text_items}
-    Should Not Contain    ${text_items}    NOT RUN
-    ${expected}=    Evaluate    ['PASS', 'LOG INFO', 'LOG ERROR']
-    Should Be Equal As Strings    ${expected}    ${text_items}
+    # Default filtering is PASS.
+    Check Labels From Pass Onwards
 
+    # Change filtering to NOT RUN.
     RPA.Browser.Playwright.Select Options By    \#filterLevel    value    NOT RUN
+    Check Labels From Not Run Onwards
+
+
+*** Keywords ***
+Check Labels From Not Run Onwards
     ${text_items}=    Get Text From Labels
     ${text_items}=    Remove Duplicates    ${text_items}
     Should Contain    ${text_items}    NOT RUN
     ${expected}=    Evaluate    ['PASS', 'LOG INFO', 'NOT RUN', 'LOG ERROR']
     Should Be Equal As Strings    ${expected}    ${text_items}
 
+Check Labels From Pass Onwards
+    ${text_items}=    Get Text From Labels
+    ${text_items}=    Remove Duplicates    ${text_items}
+    Should Not Contain    ${text_items}    NOT RUN
+    ${expected}=    Evaluate    ['PASS', 'LOG INFO', 'LOG ERROR']
+    Should Be Equal As Strings    ${expected}    ${text_items}
 
-*** Keywords ***
 Check Integers Equal
     [Arguments]    ${a}    ${b}
     ${a}=    Convert To Integer    ${a}
