@@ -5,6 +5,8 @@ NEXT
 
 - `Robot Output` view is now automatically filled with contents of the run.
 
+- Code completion is now provided for the library name and resource name.
+
 - New Setting to configure keyword completions:
 
   - `robot.completions.keywords.prefixImportName`: Define whether completions showing keywords should prefix completions with the import name when applied.

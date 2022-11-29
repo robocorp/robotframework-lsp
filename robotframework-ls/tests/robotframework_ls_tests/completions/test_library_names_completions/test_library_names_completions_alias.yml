@@ -1,0 +1,13 @@
+- insertText: Alpha
+  insertTextFormat: 2
+  kind: 9
+  label: Alpha
+  textEdit:
+    newText: Alpha
+    range:
+      end:
+        character: 6
+        line: 5
+      start:
+        character: 4
+        line: 5

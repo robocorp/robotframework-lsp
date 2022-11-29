@@ -1,0 +1,13 @@
+- insertText: Mylibrary
+  insertTextFormat: 2
+  kind: 9
+  label: Mylibrary
+  textEdit:
+    newText: Mylibrary
+    range:
+      end:
+        character: 7
+        line: 5
+      start:
+        character: 4
+        line: 5
