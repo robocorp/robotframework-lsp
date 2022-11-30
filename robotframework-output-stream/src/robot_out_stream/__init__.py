@@ -3,7 +3,7 @@ import json
 from typing import Optional, Any
 import sys
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 version_info = [int(x) for x in __version__.split(".")]
 
 
