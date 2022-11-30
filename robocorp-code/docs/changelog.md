@@ -1,3 +1,9 @@
+NEXT
+-----------------------------
+
+- Robot runs now appear in the `Robot Output` view.
+- Upgrades to robocorp-inspector.
+
 New in 0.39.0 (2022-11-02)
 -----------------------------
 
