@@ -119,7 +119,8 @@ Setup Scenario
     ...    }
 
 Get Text From Elements
-    [Arguments]    ${elements}
+    [Arguments]    ${locator}
+    ${elements}=    RPA.Browser.Playwright.Get Elements     ${locator}
     ${lst}=    Builtin.Create List
     FOR    ${element}    IN    @{elements}
         ${txt}=    RPA.Browser.Playwright.Get Text    ${element}
@@ -128,13 +129,11 @@ Get Text From Elements
     RETURN    ${lst}
 
 Get Text From Tree Items
-    ${elements}=    RPA.Browser.Playwright.Get Elements    .span_link
-    ${txt}=    Get Text From Elements    ${elements}
+    ${txt}=    Get Text From Elements    .span_link
     RETURN    ${txt}
 
 Get Text From Labels
-    ${elements}=    RPA.Browser.Playwright.Get Elements    .label
-    ${txt}=    Get Text From Elements    ${elements}
+    ${txt}=    Get Text From Elements    .label
     RETURN    ${txt}
 
 Check Labels

@@ -598,7 +598,8 @@ def main():
     robot_args = args[3:]
 
     # Always add the listener (because even when not debugging we want
-    # to be able to provide output messages for logging).
+    # to be able to provide output messages for logging as well as
+    # information to be show in the `Robot Output` View).
     robot_args = [
         "--listener=robotframework_debug_adapter.listeners.DebugListener",
         "--listener=robotframework_debug_adapter.listeners.DebugListenerV2",

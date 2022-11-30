@@ -19,14 +19,15 @@
  */
 import * as vscode from "vscode";
 import { OUTPUT_CHANNEL } from "../channel";
+import { nextRunId } from "../testview";
 
 class Contents {
-    public runId: string;
+    public uniqueRunId: string;
     public label: string;
     private contents: string[];
 
-    constructor(runId: string, label: string, contents: string) {
-        this.runId = runId;
+    constructor(uniqueRunId: string, label: string, contents: string) {
+        this.uniqueRunId = uniqueRunId;
         this.label = label;
         this.contents = [contents];
     }
@@ -67,10 +68,10 @@ class OutputViewState {
 
     workspaceState: vscode.Memento | undefined = undefined;
 
-    currentRunId: string | undefined;
+    currentRunUniqueId: string | undefined;
 
-    // NOTE: runIds is a FIFO
-    runIds: string[] = [];
+    // NOTE: uniqueRunIds is a FIFO
+    uniqueRunIds: string[] = [];
 
     runIdToContents: Map<string, Contents> = new Map();
 
@@ -86,22 +87,22 @@ class OutputViewState {
     }
 
     updateAfterVisible() {
-        if (this.currentRunId !== undefined) {
-            this.setCurrentRunId(this.currentRunId);
+        if (this.currentRunUniqueId !== undefined) {
+            this.setCurrentRunId(this.currentRunUniqueId);
         }
     }
 
-    async setCurrentRunId(runId: string) {
-        this.currentRunId = runId;
+    async setCurrentRunId(uniqueRunId: string) {
+        this.currentRunUniqueId = uniqueRunId;
         const webview = this.webview;
         if (webview !== undefined) {
-            const contents = this.runIdToContents.get(runId);
+            const contents = this.runIdToContents.get(uniqueRunId);
             if (contents === undefined) {
-                OUTPUT_CHANNEL.appendLine("No contents registered for runId: " + runId);
+                OUTPUT_CHANNEL.appendLine("No contents registered for runId: " + uniqueRunId);
                 return;
             }
             const allRunIdsToLabel: object = {};
-            for (const rId of this.runIds) {
+            for (const rId of this.uniqueRunIds) {
                 const c = this.runIdToContents.get(rId);
                 if (c !== undefined) {
                     allRunIdsToLabel[rId] = c.label;
@@ -111,7 +112,7 @@ class OutputViewState {
                 type: "request",
                 command: "setContents",
                 "initialContents": contents.getFullContents(),
-                "runId": runId,
+                "runId": uniqueRunId,
                 "allRunIdsToLabel": allRunIdsToLabel,
             };
             webview.postMessage(msg);
@@ -121,23 +122,23 @@ class OutputViewState {
     /**
      * @param runId the run id which should be tracked.
      */
-    public async addRun(runId: string, label: string, contents: string) {
-        this.runIds.push(runId);
+    public async addRun(uniqueRunId: string, label: string, contents: string) {
+        this.uniqueRunIds.push(uniqueRunId);
         const MAX_RUNS_SHOWN = 15;
-        while (this.runIds.length > MAX_RUNS_SHOWN) {
-            // NOTE: runIds is a FIFO
+        while (this.uniqueRunIds.length > MAX_RUNS_SHOWN) {
+            // NOTE: uniqueRunIds is a FIFO
             let removeI = 0;
-            let removeRunId = this.runIds[removeI];
+            let removeRunId = this.uniqueRunIds[removeI];
             this.runIdToContents.delete(removeRunId);
-            this.runIds.splice(removeI, 1);
+            this.uniqueRunIds.splice(removeI, 1);
         }
 
-        this.runIdToContents.set(runId, new Contents(runId, label, contents));
-        await this.setCurrentRunId(runId);
+        this.runIdToContents.set(uniqueRunId, new Contents(uniqueRunId, label, contents));
+        await this.setCurrentRunId(uniqueRunId);
     }
 
-    public async setRunLabel(runId: string, label: string) {
-        const contents = this.runIdToContents.get(runId);
+    public async setRunLabel(uniqueRunId: string, label: string) {
+        const contents = this.runIdToContents.get(uniqueRunId);
         if (contents !== undefined) {
             contents.label = label;
 
@@ -146,7 +147,7 @@ class OutputViewState {
                 const msg: IUpdateLabelRequest = {
                     type: "request",
                     command: "updateLabel",
-                    "runId": runId,
+                    "runId": uniqueRunId,
                     "label": label,
                 };
                 webview.postMessage(msg);
@@ -154,19 +155,19 @@ class OutputViewState {
         }
     }
 
-    public async appendToRunContents(runId: string, line: string) {
-        const runContents = this.runIdToContents.get(runId);
+    public async appendToRunContents(uniqueRunId: string, line: string) {
+        const runContents = this.runIdToContents.get(uniqueRunId);
         if (runContents !== undefined) {
             runContents.addContent(line);
         }
-        if (runId === this.currentRunId) {
+        if (uniqueRunId === this.currentRunUniqueId) {
             const webview = this.webview;
             if (webview !== undefined) {
                 const msg: IAppendContentsRequest = {
                     type: "request",
                     command: "appendContents",
                     "appendContents": line,
-                    "runId": runId,
+                    "runId": uniqueRunId,
                 };
                 webview.postMessage(msg);
             }
@@ -177,14 +178,26 @@ class OutputViewState {
 export let globalOutputViewState: OutputViewState;
 
 function isRelatedSession(session: vscode.DebugSession) {
-    return session.configuration.type === "robotframework-lsp" && session.configuration.runId !== undefined;
+    return session.configuration.type === "robotframework-lsp";
 }
 
 /**
  * Must provide a unique id that is different even across restarts.
  */
 function getUniqueId(session: vscode.DebugSession) {
-    return session.id + session.configuration.runId;
+    return session.id;
+}
+
+function getLabel(session: vscode.DebugSession): string {
+    let label = session.configuration.runId;
+    if (!label) {
+        label = session.configuration.label;
+        if (!label) {
+            label = nextRunId();
+            session.configuration.label = label;
+        }
+    }
+    return label;
 }
 
 export async function setupDebugSessionOutViewIntegration(context: vscode.ExtensionContext) {
@@ -192,13 +205,15 @@ export async function setupDebugSessionOutViewIntegration(context: vscode.Extens
 
     vscode.debug.onDidStartDebugSession((session: vscode.DebugSession) => {
         if (isRelatedSession(session)) {
-            globalOutputViewState.addRun(getUniqueId(session), session.configuration.runId, "");
+            const label = getLabel(session);
+            globalOutputViewState.addRun(getUniqueId(session), label, "");
         }
     });
 
     vscode.debug.onDidTerminateDebugSession((session: vscode.DebugSession) => {
         if (isRelatedSession(session)) {
-            globalOutputViewState.setRunLabel(getUniqueId(session), session.configuration.runId + " (finished)");
+            const label = getLabel(session);
+            globalOutputViewState.setRunLabel(getUniqueId(session), label + " (finished)");
         }
     });
 
@@ -206,9 +221,9 @@ export async function setupDebugSessionOutViewIntegration(context: vscode.Extens
         if (isRelatedSession(event.session)) {
             if (event.event === "rfStream") {
                 // OUTPUT_CHANNEL.appendLine("Received event: " + event.event + " -- " + JSON.stringify(event.body));
-                const runId = getUniqueId(event.session);
+                const uniqueRunId = getUniqueId(event.session);
                 const msg = event.body["msg"];
-                globalOutputViewState.appendToRunContents(runId, msg);
+                globalOutputViewState.appendToRunContents(uniqueRunId, msg);
             }
         }
     });

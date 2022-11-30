@@ -83,9 +83,9 @@ interface ITestData {
 const testData = new WeakMap<vscode.TestItem, ITestData>(); // Actually weak key map.
 
 let lastRunId = 0;
-function nextRunId(): string {
+export function nextRunId(): string {
     lastRunId += 1;
-    return `TestRun: ${lastRunId}`;
+    return `Run: ${lastRunId}`;
 }
 
 const runIdToTestRun = new Map<string, vscode.TestRun>();
