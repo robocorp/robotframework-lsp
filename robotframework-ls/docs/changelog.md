@@ -3,7 +3,12 @@ NEXT
 
 ### New features
 
-- `Robot Output` view is now automatically filled with contents of the run.
+- `Robot Output` view:
+
+  - Now shows the contents of the current run in real time.
+  - Can filter out keywords with `NOT RUN` status.
+  - Hides iteration nodes after the 50th iteration (only if marked as `PASS` or `NOT RUN`).
+  - Embeds HTML contents from log entries with `html=true`. 
 
 - Code completion is now provided for the library name and resource name.
 

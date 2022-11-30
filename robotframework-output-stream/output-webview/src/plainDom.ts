@@ -50,6 +50,22 @@ export function getDataTreeId(element: HTMLLIElement | HTMLUListElement) {
     return element.getAttribute("data-tree-id");
 }
 
+export function liMarkedAsHidden(
+    element: HTMLLIElement | HTMLUListElement,
+    markAsHidden: boolean | undefined = undefined
+) {
+    if (markAsHidden === undefined) {
+        // getter
+        return element.getAttribute("data-hidden") === "1";
+    }
+    // setter
+    if (markAsHidden) {
+        element.setAttribute("data-hidden", "1");
+    } else {
+        element.removeAttribute("data-hidden");
+    }
+}
+
 export function htmlToElement(html) {
     var template = document.createElement("template");
     html = html.trim(); // Never return a text node of whitespace as the result

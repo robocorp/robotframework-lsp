@@ -17,7 +17,38 @@ import {
     createUL,
     htmlToElement,
 } from "./plainDom";
-import { IContentAdded, IMessageNode, IOpts, ITreeState } from "./protocols";
+import { IContentAdded, ILiNodesCreated, IMessageNode, IOpts, ITreeState } from "./protocols";
+
+export function createLiAndNodesBelow(open: boolean, liTreeId: string): ILiNodesCreated {
+    // <li>
+    //   <details open>
+    //     <summary>
+    //          <span></span>
+    //     </summary>
+    //   </details>
+    // </li>
+
+    const li: HTMLLIElement = createLI(liTreeId);
+    const details: HTMLDetailsElement = createDetails();
+
+    if (open) {
+        details.open = open;
+    }
+    const summary = createSummary();
+    const summaryDiv = createDiv();
+    summaryDiv.classList.add("summaryDiv");
+    summary.appendChild(summaryDiv);
+
+    li.appendChild(details);
+    details.appendChild(summary);
+    details.classList.add("NO_CHILDREN");
+
+    const span: HTMLSpanElement = createSpan();
+    span.setAttribute("role", "button");
+    summaryDiv.appendChild(span);
+
+    return { li, details, summary, summaryDiv, span };
+}
 
 /**
  * When we add content we initially add it as an item with the NO_CHILDREN class
@@ -45,43 +76,26 @@ export function addTreeContent(
     // </li>
 
     const treeState: ITreeState = opts.state.runIdToTreeState[opts.runId];
-    let openNodes = {};
-    if (treeState) {
-        openNodes = treeState.openNodes;
-    }
-
     const liTreeId = "li_" + id;
-    const li: HTMLLIElement = createLI(liTreeId);
-
-    const details: HTMLDetailsElement = createDetails();
-
-    if (open) {
-        details.open = open;
-    } else {
-        if (openNodes[liTreeId]) {
-            details.open = true;
+    if (treeState) {
+        const openNodes = treeState.openNodes;
+        if (openNodes) {
+            open = openNodes[liTreeId];
         }
     }
-    const summary = createSummary();
-    const summaryDiv = createDiv();
-    summaryDiv.classList.add("summaryDiv");
-    summary.appendChild(summaryDiv);
+    const created = createLiAndNodesBelow(open, liTreeId);
+    const li = created.li;
+    const details = created.details;
+    const summary = created.summary;
+    const summaryDiv = created.summaryDiv;
+    const span = created.span;
 
-    li.appendChild(details);
-    details.appendChild(summary);
-    details.classList.add("NO_CHILDREN");
-
-    const span: HTMLSpanElement = createSpan();
-    span.setAttribute("role", "button");
     if (decodedMessage.message_type === "LH") {
-        console.log("LH output");
         const htmlContents = htmlToElement(content);
         span.appendChild(htmlContents);
     } else {
-        console.log("L output");
         span.textContent = content;
     }
-    summaryDiv.appendChild(span);
 
     if (opts.onClickReference) {
         span.classList.add("span_link");

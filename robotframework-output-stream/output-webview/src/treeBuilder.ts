@@ -2,10 +2,10 @@ import { Decoder, iter_decoded_log_format, IMessage } from "./decoder";
 import { getIntLevelFromLevelStr, addLevel } from "./handleLevel";
 import { acceptLevel, getIntLevelFromStatus, addStatus, addTime } from "./handleStatus";
 import { getOpts } from "./options";
-import { selectById, divById, createUL } from "./plainDom";
+import { selectById, divById, createUL, getDataTreeId, createSpan, liMarkedAsHidden } from "./plainDom";
 import { IOpts, IContentAdded, IMessageNode } from "./protocols";
 import { SummaryBuilder } from "./summaryBuilder";
-import { addTreeContent } from "./tree";
+import { addTreeContent, createLiAndNodesBelow } from "./tree";
 
 /**
  * Helpers to make sure that we only have 1 active tree builder.
@@ -341,12 +341,46 @@ export class TreeBuilder {
         if (acceptLevel(opts, current.maxLevelFoundInHierarchy)) {
             if (removeIfTooBig) {
                 if (current.maxLevelFoundInHierarchy <= 0) {
-                    // TODO: Remove pass/not run and add some placeholder to note it was removed...
-                    // const MAX_ELEMENT_COUNT = 5;
-                    // if (parent.ul.childElementCount > MAX_ELEMENT_COUNT) {
-                    //     current.li.remove();
-                    //     return;
-                    // }
+                    // Remove pass/not run and add some placeholder to note it was removed if there
+                    // are too many elements under a given parent.
+                    const MAX_ELEMENT_COUNT = 50;
+                    if (parent.ul.childElementCount > MAX_ELEMENT_COUNT) {
+                        const textContent = current.span.textContent;
+                        if (textContent && textContent.toLowerCase().includes("iteration")) {
+                            const beforeCurrLi: HTMLLIElement = <HTMLLIElement>current.li.previousSibling;
+                            const id = getDataTreeId(current.li);
+                            current.li.remove();
+
+                            if (liMarkedAsHidden(beforeCurrLi)) {
+                                const el = beforeCurrLi.getElementsByClassName("FINAL_SPAN")[0];
+                                el.textContent = current.span.textContent;
+                            } else {
+                                const created = createLiAndNodesBelow(false, id);
+                                created.span.textContent = current.span.textContent;
+
+                                created.summary.classList.add("HIDDEN");
+
+                                const span1: HTMLSpanElement = createSpan();
+                                span1.setAttribute("role", "button");
+                                span1.textContent = "...";
+                                span1.classList.add("label");
+                                span1.classList.add("HIDDEN");
+                                span1.classList.add("inline");
+
+                                created.summaryDiv.appendChild(span1);
+
+                                const span2: HTMLSpanElement = createSpan();
+                                span2.setAttribute("role", "button");
+                                span2.classList.add("FINAL_SPAN");
+                                created.summaryDiv.appendChild(span2);
+
+                                addStatus(created, "HIDDEN");
+                                liMarkedAsHidden(created.li, true);
+                                parent.ul.appendChild(created.li);
+                            }
+                            return;
+                        }
+                    }
                 }
             }
 

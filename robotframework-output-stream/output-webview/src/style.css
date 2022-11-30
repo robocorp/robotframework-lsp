@@ -13,6 +13,9 @@
     --error-background-color: var(--vscode-terminalCommandDecoration-errorBackground, rgb(201, 28, 28));
     --error-color: var(--vscode-button-foreground, white);
 
+    --hidden-background-color: var(--vscode-foobarcolornotthere, rgb(243, 152, 16));
+    --hidden-color: var(--vscode-button-foreground, white);
+
     /* background-color: var(--vscode-inputValidation-infoBorder); */
     /* background-color: var(--vscode-testing-iconPassed); */
     --pass-background-color: var(--vscode-terminalCommandDecoration-successBackground, rgb(36, 47, 202));
@@ -181,6 +184,21 @@ a:active {
     background-color: var(--warn-background-color);
     color: var(--warn-color);
     font-weight: bolder;
+}
+
+.label.HIDDEN {
+    border-radius: 3px;
+    background-color: var(--hidden-background-color);
+    color: var(--hidden-color);
+    font-weight: bolder;
+}
+.label.HIDDEN.inline {
+    margin-left: 5px;
+}
+
+summary.HIDDEN {
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
 .label.NOT_RUN {

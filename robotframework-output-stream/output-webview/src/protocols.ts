@@ -32,7 +32,31 @@ export interface IOpts {
     appendedContents: string[];
 }
 
+export interface ILiNodesCreated {
+    // <li>
+    //   <details open>
+    //     <summary>
+    //          <span></span>
+    //     </summary>
+    //   </details>
+    // </li>
+    li: HTMLLIElement;
+    details: HTMLDetailsElement;
+    summary: HTMLElement;
+    summaryDiv: HTMLDivElement;
+    span: HTMLElement;
+}
+
 export interface IContentAdded {
+    // <li>
+    //   <details open>
+    //     <summary>
+    //          <span></span>
+    //     </summary>
+    //     <ul>
+    //     </ul>
+    //   </details>
+    // </li>
     ul: HTMLUListElement;
     li: HTMLLIElement;
     details: HTMLDetailsElement;

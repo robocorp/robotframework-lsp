@@ -1,6 +1,6 @@
-import { IContentAdded, IOpts } from "./protocols";
+import { IContentAdded, ILiNodesCreated, IOpts } from "./protocols";
 
-export function addStatus(current: IContentAdded, status: string) {
+export function addStatus(current: IContentAdded | ILiNodesCreated, status: string) {
     const span = document.createElement("span");
     span.textContent = status;
     span.classList.add("label");

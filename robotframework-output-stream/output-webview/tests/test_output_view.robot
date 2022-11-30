@@ -17,7 +17,7 @@ ${HEADLESS}     True
 
 
 *** Test Cases ***
-Test Scenario 1
+Test Scenario 1 simple
     [Documentation]
     ...    A simple scenario where the output view is opened with a
     ...    single test which passed without any keywords.
@@ -26,7 +26,7 @@ Test Scenario 1
     Check Labels    1
     Check Tree Items Text    Robot1.Simple Task
 
-Test Scenario 2
+Test Scenario 2 restart
     [Documentation]
     ...    A simple scenario where the output view is opened with a
     ...    single test which passed without any keywords (with ignored restart).
@@ -35,7 +35,7 @@ Test Scenario 2
     Check Labels    1
     Check Tree Items Text    Robot1.Simple Task
 
-Test Scenario 3
+Test Scenario 3 only restart
     [Documentation]
     ...    A simple scenario where the output view is opened with a
     ...    single test which passed without any keywords (just with restart).
@@ -44,7 +44,7 @@ Test Scenario 3
     Check Labels    1
     Check Tree Items Text    Robot1.Simple Task
 
-Test Scenario 4
+Test Scenario 4 screenshot
     [Documentation]
     ...    A scenario with a screenshot.
     Open Output View For Tests
@@ -55,7 +55,7 @@ Test Scenario 4
     ...    Saved screenshot as 'output\\test_screenshot.png'
     ...    ${EMPTY}
 
-Test Scenario 5
+Test Scenario 5 filtering NOT RUN
     [Documentation]
     ...    A scenario with many elements in a FOR (some not run).
     Open Output View For Tests
@@ -67,20 +67,28 @@ Test Scenario 5
     RPA.Browser.Playwright.Select Options By    \#filterLevel    value    NOT RUN
     Check Labels From Not Run Onwards
 
+Test Scenario 5 hide too many loops
+    [Documentation]
+    ...    A scenario with many elements in a FOR (some not run).
+    Open Output View For Tests
+    Setup Scenario    ${CURDIR}/_resources/case5.rfstream
+    ${text_items}=    Get Text From Labels
+    BuiltIn.Should Contain X Times    ${text_items}    HIDDEN    19
+
 
 *** Keywords ***
 Check Labels From Not Run Onwards
     ${text_items}=    Get Text From Labels
     ${text_items}=    Remove Duplicates    ${text_items}
     Should Contain    ${text_items}    NOT RUN
-    ${expected}=    Evaluate    ['PASS', 'LOG INFO', 'NOT RUN', 'LOG ERROR']
+    ${expected}=    Evaluate    ['PASS', 'LOG INFO', 'NOT RUN', 'LOG ERROR', 'HIDDEN', '...']
     Should Be Equal As Strings    ${expected}    ${text_items}
 
 Check Labels From Pass Onwards
     ${text_items}=    Get Text From Labels
     ${text_items}=    Remove Duplicates    ${text_items}
     Should Not Contain    ${text_items}    NOT RUN
-    ${expected}=    Evaluate    ['PASS', 'LOG INFO', 'LOG ERROR']
+    ${expected}=    Evaluate    ['PASS', 'LOG INFO', 'LOG ERROR', 'HIDDEN', '...']
     Should Be Equal As Strings    ${expected}    ${text_items}
 
 Check Integers Equal
