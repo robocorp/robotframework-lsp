@@ -67,7 +67,7 @@ async function enableWindowsLongPathSupport(rccLocation: string) {
             await sleep(100);
         } catch (error) {
             // Expected error (it means we need an elevated shell to run the command).
-            runAsAdmin(rccLocation, ["configure", "longpaths", "--enable"], { ...process.env });
+            await runAsAdmin(rccLocation, ["configure", "longpaths", "--enable"], { ...process.env });
             // Wait a second for the command to be executed as admin before proceeding.
             await sleep(1000);
         }
