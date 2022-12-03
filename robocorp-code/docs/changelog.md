@@ -1,3 +1,8 @@
+New in 0.40.1 (2022-12-03)
+-----------------------------
+
+- Fixed issue enabling long path support on Windows requiring elevated shell.
+
 New in 0.40.0 (2022-12-03)
 -----------------------------
 
