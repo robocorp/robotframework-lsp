@@ -137,6 +137,9 @@ async function obtainTestItem(uri: Uri, name: string): Promise<TestItem | undefi
     if (!testItem) {
         const msg = "Unable to obtain test item from: " + uri + " - " + name;
         OUTPUT_CHANNEL.appendLine(msg);
+        for (const t of tests) {
+            OUTPUT_CHANNEL.appendLine(`Collected: ${JSON.stringify(t)}`);
+        }
         window.showErrorMessage(msg);
     }
 
