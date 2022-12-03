@@ -1,3 +1,21 @@
+New in 1.6.0 (2022-12-03)
+-----------------------------
+
+### New features
+
+- Code completion is now provided for the library name and resource name.
+
+- New Setting to configure keyword completions:
+
+  - `robot.completions.keywords.prefixImportName`: Define whether completions showing keywords should prefix completions with the import name when applied.
+  - `robot.completions.keywords.prefixImportNameIgnore`: Allows defining import names which should not be prefixed for keyword completions. i.e.: `["builtin"]`.
+
+- New Settings to configure completions from keywords *not currently imported* in the current module (a.k.a.: auto-imports):
+
+  - `robot.completions.keywordsNotImported.enable`: Defines whether to show completions for keywords not currently imported (adds the proper import when applied).
+  - `robot.completions.keywordsNotImported.addImport`: Defines whether to actually add the import statement when applying completions showing keywords not currently imported.
+
+
 New in 1.5.0 (2022-11-09)
 -----------------------------
 

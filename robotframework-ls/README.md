@@ -44,10 +44,10 @@ Reporting Issues
 See: [Reporting Issue](docs/reporting_issues.md) for details on how to report some issue in the `Robot Framework Language Server`.
 
 
-Features (1.5.0)
+Features (1.6.0)
 -----------------
 
-- Robot Output View (shows output details for the current output.xml -- note: currently in beta). 
+- Robot Output View (shows output details for the current test run and output.xml -- note: currently in beta). 
 - Robot Documentation View (shows documentation for the current editor selection).
 - Test Explorer support in VSCode.
 - Interactive Console: a REPL for interactively experimenting with Robot Framework (for VSCode).
