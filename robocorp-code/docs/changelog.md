@@ -1,4 +1,4 @@
-NEXT
+New in 0.40.0 (2022-12-03)
 -----------------------------
 
 - Robot runs now appear in the `Robot Output` view.
