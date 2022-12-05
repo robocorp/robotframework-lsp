@@ -1,3 +1,11 @@
+NEXT
+-----------------------------
+
+### New features
+
+- Improvement in the sorting of completions (completions which start with the current prefix appear first). [#812](https://github.com/robocorp/robotframework-lsp/issues/812)
+
+
 New in 1.6.0 (2022-12-03)
 -----------------------------
 

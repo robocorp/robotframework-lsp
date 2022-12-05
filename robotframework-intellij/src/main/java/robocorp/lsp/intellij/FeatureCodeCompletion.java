@@ -131,8 +131,8 @@ public class FeatureCodeCompletion extends CompletionContributor {
             return lineToCursor;
         }
 
-        public LSPPrefixMatcher(String lineToCursor) {
-            super(getPrefix(lineToCursor));
+        public LSPPrefixMatcher(String prefix) {
+            super(prefix);
             normalizedPrefix = normalizeRobotName(myPrefix);
         }
 
@@ -156,6 +156,12 @@ public class FeatureCodeCompletion extends CompletionContributor {
         @Override
         public @NotNull PrefixMatcher cloneWithPrefix(@NotNull String prefix) {
             return new LSPPrefixMatcher(prefix);
+        }
+
+        @Override
+        public boolean isStartMatch(String name) {
+            name = normalizeRobotName(name);
+            return name.startsWith(normalizedPrefix);
         }
     }
 
@@ -214,8 +220,8 @@ public class FeatureCodeCompletion extends CompletionContributor {
                         return null;
                     }
 
-                    @NotNull CompletionResultSet completionResult = result.withPrefixMatcher(new LSPPrefixMatcher(lineToCursor));
-
+                    String prefix = LSPPrefixMatcher.getPrefix(lineToCursor);
+                    @NotNull CompletionResultSet completionResult = result.withPrefixMatcher(new LSPPrefixMatcher(prefix));
                     completionResult.startBatch();
                     try {
                         if (res.getLeft() != null) {
