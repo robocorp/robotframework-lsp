@@ -7,15 +7,15 @@ To release a new version:
 
 - Create release branch (`git branch -D release-robocorp-code&git checkout -b release-robocorp-code`)
 
-- Update version (`python -m dev set-version 0.40.1`).
+- Update version (`python -m dev set-version 0.40.2`).
 
 - Update README.md to add notes on features/fixes.
 
 - Update changelog.md to add notes on features/fixes and set release date.
 
 - Push contents to release branch, get the build in https://github.com/robocorp/robotframework-lsp/actions and install locally to test.
-  - `mu acp Release Robocorp Code 0.40.1` 
+  - `mu acp Release Robocorp Code 0.40.2` 
 
 - Rebase with master (`git checkout master&git rebase release-robocorp-code`).
 
-- Create a tag (`git tag robocorp-code-0.40.1`) and push it.
+- Create a tag (`git tag robocorp-code-0.40.2`) and push it.
