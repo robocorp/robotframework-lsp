@@ -1,3 +1,9 @@
+New in 0.40.2 (2022-12-05)
+-----------------------------
+
+- Fixed regression where `noDebug` was not being properly set in generated launch. 
+
+
 New in 0.40.1 (2022-12-03)
 -----------------------------
 

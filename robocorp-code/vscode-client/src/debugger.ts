@@ -164,6 +164,7 @@ export class RobocorpCodeDebugConfigurationProvider implements DebugConfiguratio
         }
 
         // OUTPUT_CHANNEL.appendLine("Launching with: " + JSON.stringify(result));
+        result['noDebug'] = debugConfiguration.noDebug;
 
         return result;
     }
