@@ -12,7 +12,6 @@ jobs:
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v2
-        
       - name: Set up Python 3.8
         uses: actions/setup-python@v1
         with:
@@ -23,7 +22,7 @@ jobs:
         with:
           node-version: 16.x
 
-      - name: Install black
+      - name: Install pip deps
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r robocorp-code/dev_requirements.txt
@@ -60,10 +59,6 @@ jobs:
         run: |
           black --check ./robocorp-python-ls-core --exclude=vendored --exclude=libs
           
-      - name: Black check robotframework-output-stream
-        run: |
-          black --check ./robotframework-output-stream --exclude=vendored --exclude=libs
-          
       - name: mypy create env
         run: |
           python -m venv .venv
@@ -72,22 +67,19 @@ jobs:
           python -m pip install -r robocorp-code/tests/test_requirements.txt
           python -m pip install -r robocorp-code/dev_requirements.txt
           python -m pip install robotframework
+          python -m pip install robotframework-output-stream
           
           echo $PWD/robotframework-ls/src > .venv/lib/python3.8/site-packages/rf_src.pth
           echo $PWD/robocorp-code/src >> .venv/lib/python3.8/site-packages/rf_src.pth
           echo $PWD/robocorp-python-ls-core/src >> .venv/lib/python3.8/site-packages/rf_src.pth
-          echo $PWD/robotframework-output-stream/src >> .venv/lib/python3.8/site-packages/rf_src.pth
           echo $PWD/robotframework-ls/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
           echo $PWD/robocorp-code/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
           echo $PWD/robocorp-python-ls-core/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
-          echo $PWD/robotframework-output-stream/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
-          
 
       - name: mypy robocorp-code
         run: |
           source ./.venv/bin/activate
           mypy --follow-imports=silent --show-column-numbers $PWD/robocorp-code/src $PWD/robocorp-code/tests  $PWD/robocorp-code/codegen
-          
 
       - name: mypy robocorp-python-ls-core
         run: |
@@ -98,11 +90,6 @@ jobs:
         run: |
           source ./.venv/bin/activate
           mypy --follow-imports=silent --show-column-numbers $PWD/robotframework-ls/src $PWD/robotframework-ls/tests
-          
-      - name: mypy robotframework-output-stream
-        run: |
-          source ./.venv/bin/activate
-          mypy --follow-imports=silent --show-column-numbers $PWD/robotframework-output-stream/src $PWD/robotframework-output-stream/tests
           
       - name: mypy robotframework-interactive
         run: |

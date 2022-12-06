@@ -1,6 +1,0 @@
-/browser
-**/playwright-log.txt
-/tests/browser
-/tests/playwright-log.txt
-/output-webview/dist-test
-/output-webview/dist

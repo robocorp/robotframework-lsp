@@ -255,38 +255,31 @@ class Dev(object):
         import shutil
         import subprocess
 
+        vendored_dir = os.path.join(
+            os.path.dirname(__file__), "src", "robotframework_ls", "vendored"
+        )
+
         vendored_src, vendored_webview = self.remove_robot_out_stream()
 
-        src_core = os.path.join(
-            os.path.dirname(__file__),
-            "..",
-            "robotframework-output-stream",
-            "src",
-            "robot_out_stream",
-        )
-        print("=== Copying from: %s to %s" % (src_core, vendored_src))
-
-        shutil.copytree(src_core, vendored_src)
-
-        src_webview = os.path.abspath(
-            os.path.join(
-                os.path.dirname(__file__),
-                "..",
-                "robotframework-output-stream",
-                "output-webview",
-            )
-        )
-        print("=== Yarn install")
-        shell = sys.platform == "win32"
-        subprocess.check_call(["yarn", "install"], cwd=src_webview, shell=shell)
-
-        print("=== Building with webpack in: %s" % (vendored_webview,))
-        subprocess.check_call(
-            ["yarn", "build-prod", "--env", f"target={vendored_webview}"],
-            cwd=src_webview,
-            shell=shell,
+        # Always get the latest version.
+        subprocess.call(
+            [sys.executable]
+            + "-m pip install robotframework-output-stream --no-deps --target .".split(),
+            cwd=vendored_dir,
         )
 
+        sys.path.insert(0, vendored_src)
+        import index
+
+        sys.path.remove(vendored_src)
+
+        os.makedirs(vendored_webview, exist_ok=True)
+        with open(
+            os.path.join(vendored_webview, "index.html"), "w", encoding="utf-8"
+        ) as stream:
+            stream.write(index.INDEX_HTML_CONTENTS)
+
+        assert os.path.exists(vendored_src), f"{vendored_src} does not exist."
         assert os.path.exists(vendored_webview), f"{vendored_webview} does not exist."
         print(f"Files found in: {vendored_webview}")
         for f in os.listdir(vendored_webview):

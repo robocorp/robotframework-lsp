@@ -13,7 +13,9 @@
             "path": "../../robotframework-interactive"
         },
         {
-            "path": "../../robotframework-output-stream"
+            // In dev mode we expect robotframework-output-stream to be cloned
+            // in the same dir where robotframework-lsp is cloned.
+            "path": "../../../robotframework-output-stream"
         },
         {
             "path": "../../example-vscode"
