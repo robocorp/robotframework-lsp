@@ -1,0 +1,15 @@
+- - my.robot
+  - - range:
+        end:
+          character: 20
+          line: 7
+        start:
+          character: 0
+          line: 7
+    - range:
+        end:
+          character: 15
+          line: 3
+        start:
+          character: 4
+          line: 3

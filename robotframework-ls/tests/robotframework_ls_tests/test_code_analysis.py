@@ -2718,6 +2718,32 @@ Keyword 2
     _collect_errors(workspace, doc, data_regression, config=config)
 
 
+def test_code_analysis_no_unused_keyword(workspace, libspec_manager, data_regression):
+    from robotframework_ls.robot_config import RobotConfig
+    from robotframework_ls.impl.robot_generated_lsp_constants import (
+        OPTION_ROBOT_LINT_UNUSED_KEYWORD,
+    )
+
+    config = RobotConfig()
+    config.update({OPTION_ROBOT_LINT_UNUSED_KEYWORD: True})
+    libspec_manager.config = config
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("my.robot")
+    doc.source = """
+*** Test Cases ***
+My Test
+    my task 222
+
+
+*** Keywords ***
+My task ${something}
+    Log    ${something}
+    """
+
+    _collect_errors(workspace, doc, data_regression, config=config, basename="no_error")
+
+
 def test_code_analysis_unused_change(
     workspace, libspec_manager, data_regression, workspace_dir
 ):

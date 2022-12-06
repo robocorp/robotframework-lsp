@@ -156,9 +156,12 @@ def iter_keyword_usage_references_in_doc(
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl.find_definition import find_definition
     from robotframework_ls.impl.text_utilities import normalize_robot_name
+    from robotframework_ls.impl.text_utilities import matches_name_with_variables
 
     ast = doc.get_ast()
     if ast is not None:
+        has_var_in_name = "{" in normalized_name
+
         # Dict with normalized name -> whether it was found or not previously.
         found_in_this_doc: Dict[str, bool] = {}
 
@@ -174,7 +177,15 @@ def iter_keyword_usage_references_in_doc(
             else:
                 keword_name_not_dotted = keword_name_possibly_dotted
 
-            if normalize_robot_name(keword_name_not_dotted) == normalized_name:
+            keword_name_not_dotted_normalized = normalize_robot_name(
+                keword_name_not_dotted
+            )
+            if keword_name_not_dotted_normalized == normalized_name or (
+                has_var_in_name
+                and matches_name_with_variables(
+                    keword_name_not_dotted_normalized, normalized_name
+                )
+            ):
                 found_once_in_this_doc = found_in_this_doc.get(
                     keword_name_possibly_dotted
                 )

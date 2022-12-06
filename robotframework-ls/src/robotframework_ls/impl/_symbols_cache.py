@@ -31,6 +31,8 @@ class BaseSymbolsCache:
         global_variables_defined: Optional[Set[str]] = None,
         variable_references: Optional[Set[str]] = None,
     ):
+        from robocorp_ls_core.cache import LRUCache
+
         self._uri = uri
         if library_info is not None:
             self._library_info = weakref.ref(library_info)
@@ -44,6 +46,8 @@ class BaseSymbolsCache:
 
         self._json_list = json_list
         self._keywords_used = keywords_used
+        self._check_name_with_vars_cache_usage: LRUCache[str, bool] = LRUCache()
+        self._check_name_with_vars_cache_usage_lock = threading.Lock()
 
         if global_variables_defined is None:
             global_variables_defined = set()
@@ -62,7 +66,34 @@ class BaseSymbolsCache:
         return self._uri
 
     def has_keyword_usage(self, normalized_keyword_name: str) -> bool:
-        return normalized_keyword_name in self._keywords_used
+        ret = normalized_keyword_name in self._keywords_used
+        if ret or "{" not in normalized_keyword_name:
+            return ret
+
+        with self._check_name_with_vars_cache_usage_lock:
+            # The LRU is not thread safe, so, we need a lock (not ideal though as
+            # it's slow)... using lru_cache would be thread safe, but we don't want to put
+            # 'self' in it (so, we'd need some tricks to use it).
+            # For now just use a lock for simplicity.
+            found_in_cache = self._check_name_with_vars_cache_usage.get(
+                normalized_keyword_name, None
+            )
+            if found_in_cache is not None:
+                return found_in_cache
+
+            from robotframework_ls.impl.text_utilities import (
+                matches_name_with_variables,
+            )
+
+            for keyword_name_used in self._keywords_used:
+                if matches_name_with_variables(
+                    keyword_name_used, normalized_keyword_name
+                ):
+                    ret = True
+                    break
+
+            self._check_name_with_vars_cache_usage[normalized_keyword_name] = ret
+        return ret
 
     def has_global_variable_definition(self, normalized_variable_name: str) -> bool:
         return normalized_variable_name in self._global_variables_defined

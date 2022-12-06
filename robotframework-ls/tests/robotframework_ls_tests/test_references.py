@@ -101,6 +101,34 @@ def test_references_with_name_2(workspace, libspec_manager, data_regression):
     check_data_regression(result, data_regression)
 
 
+def test_references_keyword_with_vars(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.references import references
+
+    workspace.set_root("case2", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.put_doc("my.robot")
+    doc.source = """
+*** Test Cases ***
+My Test
+    my task 222
+
+
+*** Keywords ***
+My task ${something}
+    Log    ${something}
+    """
+
+    line = doc.find_line_with_contents("My task ${something}")
+
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=4
+    )
+    result = references(completion_context, include_declaration=True)
+    assert result
+
+    check_data_regression(result, data_regression)
+
+
 def test_references_multiple(workspace, libspec_manager, data_regression):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.references import references
