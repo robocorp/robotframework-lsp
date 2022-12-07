@@ -1265,3 +1265,99 @@ My Keyword
 My Test
     [Template]    My Keyword"""
     )
+
+
+def test_apply_keyword_arguments_builtin(workspace):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.robot_config import RobotConfig
+    from robotframework_ls.impl.robot_lsp_constants import (
+        OPTION_ROBOT_COMPLETION_KEYWORDS_ARGUMENTS_SEPARATOR,
+    )
+
+    workspace.set_root("case2")
+    config = RobotConfig()
+    config.update({OPTION_ROBOT_COMPLETION_KEYWORDS_ARGUMENTS_SEPARATOR: "\t"})
+
+    doc = workspace.put_doc(
+        "case2.robot",
+        """*** Keywords ***
+My Keyword ${something}
+    Log to console    ${something}
+
+*** Test Case ***
+My Test
+    My Keyw""",
+    )
+
+    line, col = doc.get_last_line_col()
+
+    completions = keyword_completions.complete(
+        CompletionContext(
+            doc, workspace=workspace.ws, line=line, col=col, config=config
+        )
+    )
+    assert sorted([comp["label"] for comp in completions]) == [
+        "My Keyword ${something} (case2)",
+    ]
+
+    apply_completion(doc, completions[0])
+
+    assert (
+        doc.source
+        == """*** Keywords ***
+My Keyword ${something}
+    Log to console    ${something}
+
+*** Test Case ***
+My Test
+    My Keyword ${1:\$something}"""
+    )
+
+
+def test_apply_keyword_arguments_builtin_2(workspace):
+    from robotframework_ls.impl import keyword_completions
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.robot_config import RobotConfig
+    from robotframework_ls.impl.robot_lsp_constants import (
+        OPTION_ROBOT_COMPLETION_KEYWORDS_ARGUMENTS_SEPARATOR,
+    )
+
+    workspace.set_root("case2")
+    config = RobotConfig()
+    config.update({OPTION_ROBOT_COMPLETION_KEYWORDS_ARGUMENTS_SEPARATOR: "\t"})
+
+    doc = workspace.put_doc(
+        "case2.robot",
+        """*** Keywords ***
+My Keyword ${something} another ${var2} finish
+    Log to console    ${something}
+
+*** Test Case ***
+My Test
+    My Keyw""",
+    )
+
+    line, col = doc.get_last_line_col()
+
+    completions = keyword_completions.complete(
+        CompletionContext(
+            doc, workspace=workspace.ws, line=line, col=col, config=config
+        )
+    )
+    assert sorted([comp["label"] for comp in completions]) == [
+        "My Keyword ${something} another ${var2} finish (case2)",
+    ]
+
+    apply_completion(doc, completions[0])
+
+    assert (
+        doc.source
+        == """*** Keywords ***
+My Keyword ${something} another ${var2} finish
+    Log to console    ${something}
+
+*** Test Case ***
+My Test
+    My Keyword ${1:\$something} another ${2:\$var2} finish"""
+    )

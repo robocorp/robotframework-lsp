@@ -95,6 +95,7 @@ class _Collector(AbstractKeywordCollector):
         self, keyword_found: IKeywordFound, selection, token, col_delta=0
     ) -> CompletionItemTypedDict:
         from robotframework_ls.impl.protocols import IKeywordArg
+        from robotframework_ls.impl.variable_resolve import iter_robot_variable_matches
 
         label = keyword_found.keyword_name
 
@@ -104,6 +105,19 @@ class _Collector(AbstractKeywordCollector):
             label = self._convert_keyword_format(label)
 
         text = label
+        replace_idx = 0
+        if "{" in text:
+            new_text = []
+            var_match = None
+            for var_match, _ in iter_robot_variable_matches(text):
+                new_text.append(var_match.before)
+                if var_match.name:
+                    replace_idx += 1
+                    new_text.append(f"${{{replace_idx}:\\${var_match.base}}}")
+
+            if var_match is not None:
+                new_text.append(var_match.after)
+                text = "".join(new_text)
 
         if self._add_arguments:
             arg: IKeywordArg
@@ -120,7 +134,8 @@ class _Collector(AbstractKeywordCollector):
                     arg_name.replace("$", "\\$").replace("{", "").replace("}", "")
                 )
 
-                text = f"{text}{self._arguments_separator}${{{i + 1}:{arg_name}}}"
+                replace_idx += 1
+                text = f"{text}{self._arguments_separator}${{{replace_idx}:{arg_name}}}"
 
         if keyword_found.library_name:
             use_libname = keyword_found.library_alias
