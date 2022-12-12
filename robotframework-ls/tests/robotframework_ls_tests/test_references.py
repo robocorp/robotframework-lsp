@@ -261,6 +261,34 @@ Keyword
     check_data_regression(result, data_regression)
 
 
+def test_references_variable_in_keyword_call(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.references import references
+
+    workspace.set_root("case2", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.put_doc(
+        "case2.robot",
+        """
+*** Keywords ***
+Keyword
+    ${foo}=    set variable    bar
+    Log    ${foo}
+    
+    Keyword with ${foo} Embedded
+    """,
+    )
+    line = doc.find_line_with_contents("${foo}=    set variable    bar")
+    col = len("    ${f")
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+    result = references(completion_context, include_declaration=True)
+    assert result
+    check_data_regression(result, data_regression)
+
+
 def test_references_variables_named_arguments_different_doc(
     workspace, libspec_manager, data_regression
 ):

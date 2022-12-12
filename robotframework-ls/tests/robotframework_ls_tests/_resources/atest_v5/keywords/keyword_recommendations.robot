@@ -362,6 +362,7 @@ Missing separator between keyword and arguments
     ...    Did you try using keyword 'BuiltIn.Should Be Equal' and \
     ...    forgot to use enough whitespace between keyword and arguments?
     Should Be Equal ${variable} 42
+#!                    ^^^^^^^^ Undefined variable: variable
 
 Missing separator between keyword and arguments with multiple matches
     [Documentation]    FAIL
@@ -370,6 +371,7 @@ Missing separator between keyword and arguments with multiple matches
     ...    'BuiltIn.Should Be Equal As Integers' and \
     ...    forgot to use enough whitespace between keyword and arguments?
     Should Be Equal As Integers ${variable} 42
+#!                                ^^^^^^^^ Undefined variable: variable
 
 *** Keywords ***
 A User Keyword

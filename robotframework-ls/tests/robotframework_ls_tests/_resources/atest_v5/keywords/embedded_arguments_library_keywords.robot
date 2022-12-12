@@ -47,6 +47,8 @@ Embedded Arguments as List And Dict Variables
 Non-Existing Variable in Embedded Arguments
     [Documentation]    FAIL Variable '${non existing}' not found.
     User ${non existing} Selects ${variables} From Webshop
+#!         ^^^^^^^^^^^^ Undefined variable: non existing
+#!                                 ^^^^^^^^^ Undefined variable: variables
 
 Custom Embedded Argument Regexp
     [Documentation]    FAIL No keyword with name 'Result of a + b is fail' found.
@@ -132,6 +134,8 @@ Embedded And Positional Arguments Do Not Work Together
 Keyword with embedded args cannot be used as "normal" keyword
     [Documentation]    FAIL Variable '\${user}' not found.
     User ${user} Selects ${item} From Webshop
+#!         ^^^^ Undefined variable: user
+#!                         ^^^^ Undefined variable: item
 
 Embedded argument count must match accepted arguments
     [Documentation]  FAIL No keyword with name 'Wrong number of embedded args' found.

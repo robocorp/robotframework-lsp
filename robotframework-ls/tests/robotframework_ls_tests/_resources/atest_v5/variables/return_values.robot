@@ -368,6 +368,7 @@ Invalid assign with assign mark
 Too many assign marks
     [Documentation]    FAIL No keyword with name '\${oops}==' found.
     ${oops}==    Set Variable    whatever
+#!    ^^^^ Undefined variable: oops
 
 *** Keywords ***
 Assign multiple variables

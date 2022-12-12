@@ -27,3 +27,4 @@ Keyword with embedded arguments defined twice fails at run-time: Called with exa
     ...    ${INDENT}Embedded \${arguments match} TWICE
     ...    ${INDENT}Embedded \${arguments} twice
     Embedded ${arguments match} twice
+#!             ^^^^^^^^^^^^^^^ Undefined variable: arguments match

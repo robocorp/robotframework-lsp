@@ -1232,6 +1232,12 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
                             if _is_store_keyword(node_info.node):
                                 continue
 
+                    if token.type == token.KEYWORD:
+                        # Keyword calls may also have variables (unfortunately
+                        # RF doesn't tokenize it with that type, so, we have
+                        # to apply a workaround to change the type).
+                        token = copy_token_replacing(token, type=token.NAME)
+
                     if token.type in (token.ARGUMENT, token.NAME):
                         for tok in tokenize_variables(token):
                             if tok.type == token.VARIABLE:

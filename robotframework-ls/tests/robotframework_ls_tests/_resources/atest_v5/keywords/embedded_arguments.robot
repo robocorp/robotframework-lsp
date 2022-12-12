@@ -47,22 +47,30 @@ Embedded Arguments as List And Dict Variables
 Non-Existing Variable in Embedded Arguments
     [Documentation]    FAIL Variable '${non existing}' not found.
     User ${non existing} Selects ${variables} From Webshop
+#!         ^^^^^^^^^^^^ Undefined variable: non existing
+#!                                 ^^^^^^^^^ Undefined variable: variables
 
 Invalid List Variable as Embedded Argument
     [Documentation]    FAIL Value of variable '\@{TEST NAME}' is not list or list-like.
     User @{TEST NAME} Selects ${whatever} From Webshop
+#!                              ^^^^^^^^ Undefined variable: whatever
 
 Invalid Dict Variable as Embedded Argument
     [Documentation]    FAIL Value of variable '\&{TEST NAME}' is not dictionary or dictionary-like.
     User &{TEST NAME} Selects ${whatever} From Webshop
+#!                              ^^^^^^^^ Undefined variable: whatever
 
 Non-Existing Variable in Embedded Arguments and Positional Arguments
     [Documentation]    FAIL Keyword 'User \${user} Selects \${item} From Webshop' expected 0 arguments, got 2.
     User ${non existing} Selects ${variables} From Webshop    invalid    args
+#!         ^^^^^^^^^^^^ Undefined variable: non existing
+#!                                 ^^^^^^^^^ Undefined variable: variables
 
 Non-Existing Variable in Embedded Arguments and in Positional Arguments
     [Documentation]    FAIL Variable '\${nonex pos}' not found.
     User ${nonex emb} Selects ${variables} From Webshop    ${nonex pos}
+#!         ^^^^^^^^^ Undefined variable: nonex emb
+#!                              ^^^^^^^^^ Undefined variable: variables
 #!                                                           ^^^^^^^^^ Undefined variable: nonex pos
 
 Custom Embedded Argument Regexp
@@ -108,10 +116,12 @@ Custom Regexp Matching Variables When Regexp Does No Match Them
 Regexp Extensions Are Not Supported
     [Documentation]    FAIL Regexp extensions are not allowed in embedded arguments.
     Regexp extensions like ${x:(?x)re} are not supported
+#!                           ^ Undefined variable: x
 
 Invalid Custom Regexp
     [Documentation]    FAIL STARTS: Compiling embedded arguments regexp failed:
     Invalid ${x:(} Regexp
+#!            ^ Undefined variable: x
 
 Escaping Values Given As Embedded Arguments
     ${name}    ${item} =    User \${nonex} Selects \\ From Webshop
@@ -153,10 +163,13 @@ Embedded And Positional Arguments Do Not Work Together
 Keyword with embedded args cannot be used as "normal" keyword
     [Documentation]    FAIL Variable '${user}' not found.
     User ${user} Selects ${item} From Webshop
+#!         ^^^^ Undefined variable: user
+#!                         ^^^^ Undefined variable: item
 
 Creating keyword with both normal and embedded arguments fails
     [Documentation]    FAIL Keyword cannot have both normal and embedded arguments.
     Keyword with ${embedded} and normal args is invalid    arg1    arg2
+#!                 ^^^^^^^^ Undefined variable: embedded
 
 Keyword Matching Multiple Keywords In Test Case File
     [Documentation]    FAIL Test case file contains multiple keywords matching name 'foo+tc+bar-tc-zap':
