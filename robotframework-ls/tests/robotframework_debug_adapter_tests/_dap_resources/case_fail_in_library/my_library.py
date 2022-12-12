@@ -1,2 +1,2 @@
 def fail_here():
-    raise AssertionError('foobar')
+    raise AssertionError("foobar")

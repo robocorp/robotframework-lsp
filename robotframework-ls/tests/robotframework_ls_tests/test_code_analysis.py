@@ -949,7 +949,7 @@ def test_code_analysis_ignore_eq_after_slash(
 ):
     workspace.set_root("case_argspec_expand", libspec_manager=libspec_manager)
     doc = workspace.put_doc("case_argspec_expand.robot")
-    doc.source = """
+    doc.source = r"""
 *** Test Cases ***
 My Test Case 2
     My Keyword 2    options \= value
@@ -1445,7 +1445,7 @@ def test_vars_not_undefined(workspace, libspec_manager, data_regression):
     workspace.set_root("case2", libspec_manager=libspec_manager)
 
     doc = workspace.put_doc("case2.robot")
-    doc.source = """
+    doc.source = r"""
 *** Variables ***
 @{DEFAULT_LIST}     @{EMPTY}
 
@@ -1653,7 +1653,7 @@ def test_code_analysis_default_var_based_on_previous(
 ):
     workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.put_doc("case2.robot")
-    doc.source = """
+    doc.source = r"""
 *** Test Cases ***
 Demo
     Default With Variable Based On Earlier Argument
@@ -1796,7 +1796,7 @@ Test
 def test_vars_in_parameters_defined(workspace, libspec_manager, data_regression):
     workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.put_doc("case2.robot")
-    doc.source = """
+    doc.source = r"""
 *** Test Cases ***
 Example
     I execute "ls"
@@ -2544,7 +2544,7 @@ def test_keyword_regexp(workspace, libspec_manager, data_regression):
     workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.put_doc("case.robot")
 
-    doc.source = """
+    doc.source = r"""
 *** Test Case ***
 My Test
     Today is Tuesday and tomorrow is Wednesday

@@ -46,6 +46,7 @@ from robotframework_ls.impl.robot_constants import (
     ROBOT_AND_TXT_FILE_EXTENSIONS,
 )
 import time
+import sys
 
 
 @lru_cache(None)
@@ -906,7 +907,6 @@ class _RobotDebuggerImpl(object):
 
     # 4.0 versions where the lineno is available on the V2 listener
     def end_keyword_v2(self, name, attributes):
-
         if attributes.get("status") == "NOT RUN":
             return
 
@@ -1020,7 +1020,7 @@ class _RobotDebuggerImpl(object):
         if self._is_control_step(entry_type):
             self._stop_on_stack_len += 1
 
-        if source is None or lineno is None:
+        if not source or lineno is None:
             # RunKeywordIf doesn't have a source, so, just show the caller source.
             for entry in reversed(self._stack_ctx_entries_deque):
                 if source is None:
@@ -1148,7 +1148,56 @@ class _RobotDebuggerImpl(object):
         )
 
     def end_suite(self, data, result):
-        self._stack_ctx_entries_deque.pop()
+        self._pop("SUITE", data.name)
+
+    def _pop(self, entry_type, name):
+        if not self._stack_ctx_entries_deque:
+            log.critical(
+                f"Robot Debugger Warning: unable to pop {entry_type} - {name} (empty queue)."
+            )
+        else:
+            stack_entry = self._stack_ctx_entries_deque[-1]
+            if stack_entry.entry_type == entry_type and stack_entry.name == name:
+                self._stack_ctx_entries_deque.pop()
+            else:
+                for i, stack_entry in enumerate(
+                    reversed(self._stack_ctx_entries_deque)
+                ):
+                    if (
+                        stack_entry.entry_type == entry_type
+                        and stack_entry.name == name
+                    ):
+                        for _ in range(i):
+                            stack_entry = self._stack_ctx_entries_deque.pop()
+                            log.critical(
+                                f"Robot Debugger Warning: {stack_entry.entry_type} - {stack_entry.name} did not have a corresponding pop."
+                            )
+
+                        # The current one (which is a match).
+                        self._stack_ctx_entries_deque.pop()
+                        return
+
+                if entry_type in ("TEST", "SUITE"):
+                    for i, stack_entry in enumerate(
+                        reversed(self._stack_ctx_entries_deque)
+                    ):
+                        if stack_entry.entry_type == entry_type:
+                            for _ in range(i):
+                                stack_entry = self._stack_ctx_entries_deque.pop()
+                                log.critical(
+                                    f"Robot Debugger Warning: {stack_entry.entry_type} - {stack_entry.name} did not have a corresponding pop."
+                                )
+
+                            # The current one (which is a partial match).
+                            stack_entry = self._stack_ctx_entries_deque.pop()
+                            log.critical(
+                                f"Robot Debugger Warning: {stack_entry.entry_type} - {stack_entry.name} pop just by type. Actual request: {entry_type} - {name}"
+                            )
+                            return
+
+                log.critical(
+                    f"Robot Debugger Warning: unable to pop {entry_type} - {name} because it does not match the current top: {stack_entry.entry_type} - {stack_entry.name}"
+                )
 
     def start_test(self, data, result):
         self._stack_ctx_entries_deque.append(
@@ -1156,7 +1205,7 @@ class _RobotDebuggerImpl(object):
         )
 
     def end_test(self, data, result):
-        self._stack_ctx_entries_deque.pop()
+        self._pop("TEST", data.name)
 
     def log_message(self, message, skip_error=True):
         from robotframework_debug_adapter.message_utils import (
