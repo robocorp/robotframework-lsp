@@ -232,3 +232,42 @@ def test_events_listener_ignore(debugger_api: _DebuggerAPI):
     assert debugger_api.read(EndSuiteEvent)
 
     debugger_api.read(TerminatedEvent)
+
+
+def test_failure_message_from_library(debugger_api: _DebuggerAPI):
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import InitializeResponse
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import StartSuiteEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import StartTestEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import LogMessageEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import EndSuiteEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import EndTestEvent
+
+    initialize_response: InitializeResponse = debugger_api.initialize()
+    target = debugger_api.get_dap_case_file("case_fail_in_library/fail_at_robot.robot")
+    debugger_api.target = target
+
+    debugger_api.launch(
+        target,
+        debug=False,
+        args=[
+            "--listener=robotframework_debug_adapter.events_listener.EventsListenerV2",
+            "--listener=robotframework_debug_adapter.events_listener.EventsListenerV3",
+            "--loglevel",
+            "DEBUG",
+        ],
+    )
+    debugger_api.configuration_done()
+
+    assert debugger_api.read(StartSuiteEvent)
+    assert debugger_api.read(StartTestEvent)
+    log_msg = debugger_api.read(LogMessageEvent)
+    assert log_msg.body.message.strip() == "222"
+    log_msg = debugger_api.read(LogMessageEvent)
+    assert "(my_library.Fail Here)" in log_msg.body.message
+    log_msg = debugger_api.read(LogMessageEvent)
+    assert "Traceback" in log_msg.body.message
+    assert debugger_api.read(EndTestEvent)
+    assert debugger_api.read(EndSuiteEvent)
+
+    debugger_api.read(TerminatedEvent)

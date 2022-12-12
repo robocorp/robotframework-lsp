@@ -1,3 +1,6 @@
+import traceback
+
+
 class _Callback(object):
     def __init__(self):
         self._callbacks = []
@@ -7,7 +10,12 @@ class _Callback(object):
 
     def __call__(self, *args, **kwargs):
         for c in self._callbacks:
-            c(*args, **kwargs)
+            try:
+                c(*args, **kwargs)
+            except:
+                # If something goes bad calling some callback, just print
+                # it and keep on going to the next one.
+                traceback.print_exc()
 
 
 class DebugListener(object):

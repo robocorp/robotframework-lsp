@@ -926,3 +926,17 @@ def test_launch_unicode(debugger_api: _DebuggerAPI):
 
     if not isinstance(msg, TerminatedEvent):
         debugger_api.read(TerminatedEvent)
+
+
+def test_failure_message_from_library(debugger_api: _DebuggerAPI):
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import InitializeResponse
+
+    initialize_response: InitializeResponse = debugger_api.initialize()
+    target = debugger_api.get_dap_case_file("case_fail_in_library/fail_at_robot.robot")
+    debugger_api.target = target
+
+    debugger_api.launch(target, debug=True)
+    debugger_api.configuration_done()
+
+    debugger_api.read(TerminatedEvent)
