@@ -776,11 +776,11 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
             const major = parseInt(splitted[0]);
             const minor = parseInt(splitted[1]);
             const micro = parseInt(splitted[2]);
-            if (major < 1 || (major == 1 && (minor < 1 || (minor == 1 && micro < 1)))) {
+            if (major < 1 || (major == 1 && (minor < 7 || (minor == 7 && micro < 0)))) {
                 const msg =
                     "Unable to initialize the Robocorp Code extension because the Robot Framework Language Server version (" +
                     version +
-                    ") is not compatible with this version of Robocorp Code. Robot Framework Language Server 1.1.1 or newer is required. Please update to proceed. ";
+                    ") is not compatible with this version of Robocorp Code. Robot Framework Language Server 1.7.0 or newer is required. Please update to proceed. ";
                 OUTPUT_CHANNEL.appendLine(msg);
                 C.useErrorStubs = true;
                 notifyOfInitializationErrorShowOutputTab(msg);
