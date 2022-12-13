@@ -476,12 +476,15 @@ def test_compute_robot_launch_from_robocorp_code_launch(
     assert result["success"]
     r = result["result"]
 
-    assert os.path.samefile(
-        r["target"], cases.get_path("custom_envs/simple-web-scraper/tasks")
-    )
+    assert r["target"] == "<target-in-args>"
     assert os.path.samefile(r["cwd"], cases.get_path("custom_envs/simple-web-scraper"))
+    assert os.path.samefile(
+        cases.get_path("custom_envs/simple-web-scraper/tasks"),
+        os.path.join(r["cwd"], r["args"][-1]),
+    )
     del r["target"]
     del r["cwd"]
+    r["args"].pop(-1)
 
     assert r == {
         "type": "robotframework-lsp",

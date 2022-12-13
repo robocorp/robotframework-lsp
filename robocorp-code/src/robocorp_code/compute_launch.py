@@ -157,41 +157,14 @@ def compute_robot_launch_from_robocorp_code_launch(
                 "result": None,
             }
 
-        target_last = args[-1]
-        if not os.path.isabs(target_last):
-            target_last = os.path.abspath(
-                os.path.join(os.path.dirname(robot), target_last)
-            )
-
-        if os.path.exists(target_last):
-            target = target_last
-            args = args[:-1]  # i.e.: Remove python -m robot ... target
-        else:
-            # Not the last...also check if the first argument is the target.
-            target_first = args[0]
-
-            if not os.path.isabs(target_first):
-                target_first = os.path.abspath(
-                    os.path.join(os.path.dirname(robot), target_first)
-                )
-
-            if os.path.exists(target_first):
-                target = target_first
-                args = args[1:]  # i.e.: Remove python -m robot ... target ...
-
-            else:
-                return {
-                    "success": False,
-                    "message": (
-                        f"Expected the first/last argument to be the robot file/directory to be executed. Found: first:{target_first}, last:{target_last}"
-                    ),
-                    "result": None,
-                }
-
         if additional_pythonpath_entries:
+            pythonpath_args = []
             for s in additional_pythonpath_entries:
-                args.append("--pythonpath")
-                args.append(s)
+                pythonpath_args.append("--pythonpath")
+                pythonpath_args.append(s)
+
+            args = pythonpath_args + args
+        target = "<target-in-args>"
 
         result = {
             "type": "robotframework-lsp",

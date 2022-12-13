@@ -150,10 +150,14 @@ def compute_cmd_line_and_env(
     """
     Note that cwd and target MUST be absolute at this point.
     """
-
-    # This will be used if make_suite is not specified.
-    target_args: List[str] = target if isinstance(target, list) else [target]
-    new_target_args: List[str] = target_args[:]
+    new_target_args: List[str]
+    if target == "<target-in-args>":
+        new_target_args = []
+        make_suite = False  # We cannot make a suite because we don't have the target.
+    else:
+        # This will be used if make_suite is not specified.
+        target_args: List[str] = target if isinstance(target, list) else [target]
+        new_target_args = target_args[:]
 
     import sys
 
@@ -360,30 +364,30 @@ class LaunchProcess(object):
         try:
             if not target:
                 return mark_invalid("target not provided in launch.")
+            if target != "<target-in-args>":
+                new_target = []
 
-            new_target = []
+                if not isinstance(target, list):
+                    target = [target]
 
-            if not isinstance(target, list):
-                target = [target]
+                for t in target:
+                    if not os.path.isabs(t):
+                        if not self._cwd:
+                            return mark_invalid(
+                                f"Target: {t} is relative and cwd was not given."
+                            )
 
-            for t in target:
-                if not os.path.isabs(t):
-                    if not self._cwd:
-                        return mark_invalid(
-                            f"Target: {t} is relative and cwd was not given."
-                        )
+                        t = os.path.abspath(os.path.join(self._cwd, t))
+                    else:
+                        # This will also normalize
+                        t = os.path.abspath(t)
 
-                    t = os.path.abspath(os.path.join(self._cwd, t))
-                else:
-                    # This will also normalize
-                    t = os.path.abspath(t)
+                    if not os.path.exists(t):
+                        return mark_invalid(f"File: {t} does not exist.")
 
-                if not os.path.exists(t):
-                    return mark_invalid(f"File: {t} does not exist.")
+                    new_target.append(t)
 
-                new_target.append(t)
-
-            target = new_target
+                target = new_target
         except Exception as e:
             msg = f"Error checking if target ({target}) exists:\n{e}"
             log.exception(msg)
@@ -395,6 +399,11 @@ class LaunchProcess(object):
                     t = target[0]
                 else:
                     t = target
+
+                if t == "<target-in-args>":
+                    return mark_invalid(
+                        f"When target is <target-in-args>, the cwd must be specified."
+                    )
 
                 if os.path.isdir(t):
                     dirname = t
