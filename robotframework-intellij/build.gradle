@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '1.6.0'
+version '1.7.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -50,7 +50,7 @@ intellij {
 patchPluginXml {
     changeNotes = """
     <p>
-    <strong>Release 1.6.0</strong>
+    <strong>Release 1.7.0</strong>
     </p>
     
     <ul>
@@ -58,18 +58,18 @@ patchPluginXml {
     
     <li><strong>Features</strong></li>
     <ul>
-    <li>Code completion is now provided for the library name and resource name.</li>
-    <li>New Setting to configure keyword completions:</li>
+      <li>Improvement in the sorting of completions (completions which start with the current prefix appear first).</li>
+      <li>It's possible to make a launch with a target in the arguments by specifying &lt;target-in-args&gt; as the target.</li>
+    </ul>
+    <br/>
+    <li><strong>Bug Fixes</strong></li>
     <ul>
-        <li><strong>robot.completions.keywords.prefixImportName</strong>: Define whether completions showing keywords should prefix completions with the import name when applied.</li>
-        <li><strong>robot.completions.keywords.prefixImportNameIgnore</strong>: Allows defining import names which should not be prefixed for keyword completions. i.e.: <strong>["builtin"]</strong>.</li>
+      <li>Properly collect references for keywords with variables in the name.</li>
+      <li>Add placeholders when completing keywords with variables in the name.</li>
+      <li>If there's some error in a debugger callback, don't break execution.</li>
+      <li>Find references for variables embedded in keywords.</li>
     </ul>
-    <li>New Settings to configure completions from keywords <strong>not currently imported</strong> in the current module (a.k.a.: auto-imports):</li>
-    <ul>
-        <li><strong>robot.completions.keywordsNotImported.enable</strong>: Defines whether to show completions for keywords not currently imported (adds the proper import when applied).</li>
-        <li><strong>robot.completions.keywordsNotImported.addImport</strong>: Defines whether to actually add the import statement when applying completions showing keywords not currently imported.</li>
-    </ul>
-    </ul>
+    <br/>
     
     
     

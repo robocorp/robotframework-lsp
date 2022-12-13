@@ -1,7 +1,8 @@
-NEXT
+New in 0.41.0 (2022-12-13)
 -----------------------------
 
 - RCC was upgraded to `v11.33.2`.
+- Support for launching RCC when target is not the last argument.
 
 
 New in 0.40.2 (2022-12-05)

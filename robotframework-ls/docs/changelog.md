@@ -1,3 +1,18 @@
+New in 1.7.0 (2022-12-13)
+-----------------------------
+
+### New features
+
+- It's possible to make a launch with a target in the arguments by specifying `<target-in-args>` as the target.
+
+### Bugfixes
+
+- Properly collect references for keywords with variables in the name. [#827](https://github.com/robocorp/robotframework-lsp/issues/827)
+- Add placeholders when completing keywords with variables in the name. [#824](https://github.com/robocorp/robotframework-lsp/issues/824)
+- If there's some error in a debugger callback, don't break execution. [#841](https://github.com/robocorp/robotframework-lsp/issues/841)
+- Find references for variables embedded in keywords. [#825](https://github.com/robocorp/robotframework-lsp/issues/825)
+
+
 New in 1.6.0 (2022-12-03)
 -----------------------------
 
