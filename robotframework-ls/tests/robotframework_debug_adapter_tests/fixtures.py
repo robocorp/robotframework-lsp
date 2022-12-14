@@ -69,6 +69,29 @@ def dap_log_file(dap_logs_dir):
     yield filename
 
 
+@pytest.fixture(autouse=True)
+def _check_error_in_callback():
+    from robotframework_debug_adapter.listeners import _Callback
+
+    prev = _Callback.on_exception
+
+    found = []
+
+    def on_exception(*args, **kwargs):
+        import traceback
+        from io import StringIO
+
+        s = StringIO()
+        traceback.print_exc(file=s)
+        found.append(s.getvalue())
+
+    _Callback.on_exception = on_exception
+    yield
+    _Callback.on_exception = prev
+
+    assert not found
+
+
 @pytest.fixture
 def dap_process_stderr_file(dap_logs_dir):
     filename = str(dap_logs_dir.join("robotframework_dap_tests_stderr.log"))

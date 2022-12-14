@@ -1,3 +1,11 @@
+NEXT
+-----------------------------
+
+### Bugfixes
+
+- Debugger: Fixed issue where the stack of the debugger could end up being unsynchronized.
+
+
 New in 1.7.0 (2022-12-13)
 -----------------------------
 

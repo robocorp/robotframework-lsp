@@ -899,17 +899,14 @@ class _RobotDebuggerImpl(object):
         name = attributes["kwname"]
         args = attributes["args"]
         entry_type = attributes.get("type", "KEYWORD")
-        if attributes.get("status") == "NOT RUN":
-            return
         if not args:
             args = []
-        self._before_run_step(ctx, name, entry_type, lineno, source, args)
+        self._before_run_step(
+            ctx, name, entry_type, lineno, source, args, attributes.get("status")
+        )
 
     # 4.0 versions where the lineno is available on the V2 listener
     def end_keyword_v2(self, name, attributes):
-        if attributes.get("status") == "NOT RUN":
-            return
-
         self._after_run_step()
 
     # 3.x versions where the lineno is NOT available on the V2 listener
@@ -934,14 +931,17 @@ class _RobotDebuggerImpl(object):
             lineno = control_flow_stmt.lineno
             source = control_flow_stmt.source
         except AttributeError:
-            return
+            lineno = -1
+            source = None
 
         try:
             args = control_flow_stmt.args
         except AttributeError:
             args = []
         entry_type = "KEYWORD"
-        self._before_run_step(ctx, name, entry_type, lineno, source, args)
+        self._before_run_step(
+            ctx, name, entry_type, lineno, source, args, status="NOT AVAILABLE"
+        )
 
     # 3.x versions where the lineno is NOT available on the V2 listener
     def after_control_flow_stmt(self, control_flow_stmt, ctx, *args, **kwargs):
@@ -959,14 +959,17 @@ class _RobotDebuggerImpl(object):
             lineno = step.lineno
             source = step.source
         except AttributeError:
-            return
+            lineno = -1
+            source = None
         try:
             args = step.args
         except AttributeError:
             args = []
         ctx = runner._context
         entry_type = "KEYWORD"
-        self._before_run_step(ctx, name, entry_type, lineno, source, args)
+        self._before_run_step(
+            ctx, name, entry_type, lineno, source, args, status="NOT AVAILABLE"
+        )
 
     def after_keyword_runner(self, runner, step, *args, **kwargs):
         self._after_run_step()
@@ -983,14 +986,17 @@ class _RobotDebuggerImpl(object):
             lineno = step.lineno
             source = step.source
         except AttributeError:
-            return
+            lineno = -1
+            source = None
         try:
             args = step.args
         except AttributeError:
             args = []
         ctx = step_runner._context
         entry_type = "KEYWORD"
-        self._before_run_step(ctx, name, entry_type, lineno, source, args)
+        self._before_run_step(
+            ctx, name, entry_type, lineno, source, args, status="NOT AVAILABLE"
+        )
 
     # 3.x versions where the lineno is NOT available on the V2 listener
     def after_run_step(self, step_runner, step, name=None):
@@ -1010,7 +1016,7 @@ class _RobotDebuggerImpl(object):
             "WHILE",
         )
 
-    def _before_run_step(self, ctx, name, entry_type, lineno, source, args):
+    def _before_run_step(self, ctx, name, entry_type, lineno, source, args, status):
         if entry_type == "KEYWORD":
             self._ignore_failures_in_stack.push(name)
 
@@ -1019,6 +1025,11 @@ class _RobotDebuggerImpl(object):
 
         if self._is_control_step(entry_type):
             self._stop_on_stack_len += 1
+
+        if source and not source.endswith(ROBOT_AND_TXT_FILE_EXTENSIONS):
+            robot_init = os.path.join(source, "__init__.robot")
+            if os.path.exists(robot_init):
+                source = robot_init
 
         if not source or lineno is None:
             # RunKeywordIf doesn't have a source, so, just show the caller source.
@@ -1029,17 +1040,19 @@ class _RobotDebuggerImpl(object):
                     lineno = entry.lineno
                 break
 
-        if not source:
-            return
-        if not source.endswith(ROBOT_AND_TXT_FILE_EXTENSIONS):
-            robot_init = os.path.join(source, "__init__.robot")
-            if os.path.exists(robot_init):
-                source = robot_init
         self._stack_ctx_entries_deque.append(
             _StepEntry(
-                name, lineno, source, args, ctx.variables.current, entry_type, ctx
+                name,
+                lineno,
+                source if source else "<not available>",
+                args,
+                ctx.variables.current,
+                entry_type,
+                ctx,
             )
         )
+        if not source or status == "NOT RUN":
+            return
         if self._skip_breakpoints:
             return
 
@@ -1152,7 +1165,7 @@ class _RobotDebuggerImpl(object):
 
     def _pop(self, entry_type, name):
         if not self._stack_ctx_entries_deque:
-            log.critical(
+            self._log_critical_stack(
                 f"Robot Debugger Warning: unable to pop {entry_type} - {name} (empty queue)."
             )
         else:
@@ -1169,7 +1182,7 @@ class _RobotDebuggerImpl(object):
                     ):
                         for _ in range(i):
                             stack_entry = self._stack_ctx_entries_deque.pop()
-                            log.critical(
+                            self._log_critical_stack(
                                 f"Robot Debugger Warning: {stack_entry.entry_type} - {stack_entry.name} did not have a corresponding pop."
                             )
 
@@ -1184,20 +1197,23 @@ class _RobotDebuggerImpl(object):
                         if stack_entry.entry_type == entry_type:
                             for _ in range(i):
                                 stack_entry = self._stack_ctx_entries_deque.pop()
-                                log.critical(
+                                self._log_critical_stack(
                                     f"Robot Debugger Warning: {stack_entry.entry_type} - {stack_entry.name} did not have a corresponding pop."
                                 )
 
                             # The current one (which is a partial match).
                             stack_entry = self._stack_ctx_entries_deque.pop()
-                            log.critical(
+                            self._log_critical_stack(
                                 f"Robot Debugger Warning: {stack_entry.entry_type} - {stack_entry.name} pop just by type. Actual request: {entry_type} - {name}"
                             )
                             return
 
-                log.critical(
+                self._log_critical_stack(
                     f"Robot Debugger Warning: unable to pop {entry_type} - {name} because it does not match the current top: {stack_entry.entry_type} - {stack_entry.name}"
                 )
+
+    def _log_critical_stack(self, msg):
+        log.critical(msg)
 
     def start_test(self, data, result):
         self._stack_ctx_entries_deque.append(

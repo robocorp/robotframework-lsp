@@ -2,6 +2,9 @@ import traceback
 
 
 class _Callback(object):
+
+    on_exception = None
+
     def __init__(self):
         self._callbacks = []
 
@@ -16,6 +19,9 @@ class _Callback(object):
                 # If something goes bad calling some callback, just print
                 # it and keep on going to the next one.
                 traceback.print_exc()
+                on_exception = self.on_exception
+                if on_exception is not None:
+                    on_exception()
 
 
 class DebugListener(object):

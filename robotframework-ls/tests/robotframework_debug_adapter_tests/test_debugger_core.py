@@ -885,3 +885,37 @@ def test_debugger_core_evaluate_at_except_break(
     ]
     # Note: Robot Framework considers it as passed even though an error was logged...
     assert code == 0
+
+
+@pytest.mark.skipif(
+    not IS_ROBOT_5_ONWARDS, reason="While statement only available in RF 5 onwards."
+)
+def test_debugger_core_no_hit_while(debugger_api, debugger_impl, run_robot_cli) -> None:
+    from robotframework_debug_adapter.debugger_impl import _RobotDebuggerImpl
+    from robocorp_ls_core.basic import after
+    from robotframework_debug_adapter.debugger_impl import RobotBreakpoint
+
+    target = debugger_api.get_dap_case_file("case_while_no_hit.robot")
+    debugger_api.target = target
+
+    busy_wait = DummyBusyWait(debugger_impl)
+    debugger_impl.busy_wait = busy_wait
+
+    line = debugger_api.get_line_index_with_content("Break 1")
+    debugger_impl.set_breakpoints(target, RobotBreakpoint(line))
+
+    busy_wait.on_wait = []
+
+    impl: _RobotDebuggerImpl = debugger_impl
+
+    found = []
+
+    def after_log_critical_stack(*args, **kwargs):
+        found.append(f"{args} - {kwargs}")
+
+    with after(impl, "_log_critical_stack", after_log_critical_stack):
+        code = run_robot_cli(target)
+
+        assert code == 0
+
+    assert not found
