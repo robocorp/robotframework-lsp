@@ -1,6 +1,6 @@
 from typing import List, Container
 
-from robocorp_ls_core.protocols import check_implements
+from robocorp_ls_core.protocols import check_implements, IDocumentSelection
 from robocorp_ls_core.robotframework_log import get_logger
 from robotframework_ls.impl.protocols import (
     ICompletionContext,
@@ -92,7 +92,12 @@ class _Collector(AbstractKeywordCollector):
         return False
 
     def _create_completion_item_from_keyword(
-        self, keyword_found: IKeywordFound, selection, token, col_delta=0
+        self,
+        keyword_found: IKeywordFound,
+        selection: IDocumentSelection,
+        token,
+        prefix_with_import_name: bool,
+        col_delta: int = 0,
     ) -> CompletionItemTypedDict:
         from robotframework_ls.impl.protocols import IKeywordArg
         from robotframework_ls.impl.variable_resolve import iter_robot_variable_matches
@@ -121,7 +126,7 @@ class _Collector(AbstractKeywordCollector):
 
         if self._add_arguments:
             arg: IKeywordArg
-            for i, arg in enumerate(keyword_found.keyword_args):
+            for _i, arg in enumerate(keyword_found.keyword_args):
                 if (
                     arg.is_keyword_arg
                     or arg.is_star_arg
@@ -141,7 +146,7 @@ class _Collector(AbstractKeywordCollector):
             use_libname = keyword_found.library_alias
             if not use_libname:
                 use_libname = keyword_found.library_name
-            if self._prefix_with_import_name:
+            if prefix_with_import_name:
 
                 if self._is_dotted_keyword_name:
                     # Note: the label must also be updated because we're
@@ -164,7 +169,7 @@ class _Collector(AbstractKeywordCollector):
                 label = f"{label} ({use_libname})"
 
         elif keyword_found.resource_name:
-            if self._prefix_with_import_name:
+            if prefix_with_import_name:
                 if self._is_dotted_keyword_name:
                     text = f"{keyword_found.resource_name}.{text}"
                     label = f"{keyword_found.resource_name}.{label}"
@@ -200,24 +205,41 @@ class _Collector(AbstractKeywordCollector):
             "insertTextFormat": InsertTextFormat.Snippet,
         }
 
-    def on_keyword(self, keyword_found):
+    def on_keyword(self, keyword_found: IKeywordFound):
         col_delta = 0
+
         if not self._matcher.accepts_keyword_name(keyword_found.keyword_name):
             for matcher in self._scope_matchers:
                 if matcher.accepts_keyword(keyword_found):
                     # +1 for the dot
-                    if self._prefix_with_import_name:
-                        # If we're going to prefix with the module, replace
-                        # it completely and not from the dot.
-                        col_delta = 0
-                    else:
-                        col_delta = len(matcher.resource_or_library_name) + 1
+                    col_delta = len(matcher.resource_or_library_name) + 1
                     break
             else:
                 return  # i.e.: don't add completion
 
+        prefix_with_import_name = self._prefix_with_import_name
+
+        if prefix_with_import_name:
+            if keyword_found.keyword_ast is not None:
+                keyword_completion_context = keyword_found.completion_context
+                if keyword_completion_context is not None:
+                    if (
+                        keyword_completion_context.doc.uri
+                        == self.completion_context.doc.uri
+                    ):
+                        prefix_with_import_name = False
+
+        if prefix_with_import_name:
+            # If we're going to prefix with the module, replace
+            # it completely and not from the dot.
+            col_delta = 0
+
         item = self._create_completion_item_from_keyword(
-            keyword_found, self.selection, self.token, col_delta=col_delta
+            keyword_found,
+            self.selection,
+            self.token,
+            prefix_with_import_name,
+            col_delta=col_delta,
         )
 
         self.completion_context.assign_documentation_resolve(

@@ -1053,6 +1053,7 @@ My Test
         "builtin_add",
         "builtin_skip",
         "builtin_dont_skip_due_to_dot",
+        "keyword_from_current_file",
     ],
 )
 def test_apply_keyword_with_module_prefix(
@@ -1077,6 +1078,7 @@ My Keyword
 
     config = RobotConfig()
     config_options = {OPTION_ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME: True}
+    keyword_section = ""
 
     if scenario == "basic":
         curr_call = "Copy Dict"
@@ -1144,12 +1146,25 @@ My Keyword
             "builtin"
         ]
 
+    elif scenario == "keyword_from_current_file":
+        keyword_section = """
+*** Keywords ***
+Some keyword in this module
+    No Operation
+"""
+        curr_call = "Some keyword i"
+        library_or_resource_import = ""
+        result = "Some keyword in this module"
+        label = "Some keyword in this module (case2)"
+
     config.update(config_options)
 
     doc = workspace.put_doc(
         "case2.robot",
         f"""*** Settings ***
 {library_or_resource_import}
+
+{keyword_section}
 
 *** Test Cases ***
 Test
@@ -1169,6 +1184,8 @@ Test
         doc.source
         == f"""*** Settings ***
 {library_or_resource_import}
+
+{keyword_section}
 
 *** Test Cases ***
 Test
