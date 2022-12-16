@@ -30,12 +30,16 @@ I'm happy to announce the release of `Robot Framework Language Server 1.7.3`.
 
 *## New features*
 
+- It's possible to make a launch with a target in the arguments by specifying `<target-in-args>` as the target (useful if the target is in an arguments file).
 
 *## Bugfixes*
 
-- Snippets take into account the value of `robot.completions.keywords.argumentsSeparator`. [#723](https://github.com/robocorp/robotframework-lsp/issues/723)
-- Completions properly presented for `Variables` under `*** Settings ***`. [#744](https://github.com/robocorp/robotframework-lsp/issues/744)
-- *[VSCode]* Flow Explorer can now follow keywords defined in other files.
+- Properly collect references for keywords with variables in the name. [#827](https://github.com/robocorp/robotframework-lsp/issues/827)
+- Add placeholders when completing keywords with variables in the name. [#824](https://github.com/robocorp/robotframework-lsp/issues/824)
+- Find references for variables embedded in keywords. [#825](https://github.com/robocorp/robotframework-lsp/issues/825)
+- Don't prefix module name for keywords in the current module. [#843](https://github.com/robocorp/robotframework-lsp/issues/843)
+- Debugger: Fixed issue where the stack of the debugger could end up being unsynchronized.
+- Debugger: If there's some error in a debugger callback, don't break execution. [#841](https://github.com/robocorp/robotframework-lsp/issues/841)
 
 
 Official clients supported: `VSCode` and `Intellij`.
