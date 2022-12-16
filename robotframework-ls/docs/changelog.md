@@ -1,9 +1,10 @@
-NEXT
+New in 1.7.3 (2022-12-16)
 -----------------------------
 
 ### Bugfixes
 
 - Debugger: Fixed issue where the stack of the debugger could end up being unsynchronized.
+- Don't prefix module name for keywords in the current module. [#843](https://github.com/robocorp/robotframework-lsp/issues/843)
 
 
 New in 1.7.0 (2022-12-13)

@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '1.7.0'
+version '1.7.3'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -50,24 +50,16 @@ intellij {
 patchPluginXml {
     changeNotes = """
     <p>
-    <strong>Release 1.7.0</strong>
+    <strong>Release 1.7.3</strong>
     </p>
     
     <ul>
     
     
-    <li><strong>Features</strong></li>
+    <li><strong>Bugfixes</strong></li>
     <ul>
-      <li>Improvement in the sorting of completions (completions which start with the current prefix appear first).</li>
-      <li>It's possible to make a launch with a target in the arguments by specifying &lt;target-in-args&gt; as the target.</li>
-    </ul>
-    <br/>
-    <li><strong>Bug Fixes</strong></li>
-    <ul>
-      <li>Properly collect references for keywords with variables in the name.</li>
-      <li>Add placeholders when completing keywords with variables in the name.</li>
-      <li>If there's some error in a debugger callback, don't break execution.</li>
-      <li>Find references for variables embedded in keywords.</li>
+        <li>Debugger: Fixed issue where the stack of the debugger could end up being unsynchronized.</li>
+        <li>Don&#39;t prefix module name for keywords in the current module. <a href="https://github.com/robocorp/robotframework-lsp/issues/843">#843</a></li>
     </ul>
     <br/>
     
