@@ -267,11 +267,21 @@ class RobocorpLanguageServer(PythonLanguageServer):
                     as_dict = json.loads(json_contents)
                     checks = as_dict.get("checks", [])
                     found = []
+
+                    CategoryLockFile = 1020
+                    CategoryLockPid = 1021
+
                     if isinstance(checks, (list, tuple)):
                         for check in checks:
                             if isinstance(check, dict):
                                 status = check.get("status", "ok").lower()
+
                                 if status != "ok":
+                                    if check.get("category") in (
+                                        CategoryLockFile,
+                                        CategoryLockPid,
+                                    ):
+                                        continue
 
                                     # Default is error (for fail/fatal)
                                     severity = DiagnosticSeverity.Error
