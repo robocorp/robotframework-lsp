@@ -150,18 +150,23 @@
                 },
                 "robocorp.verifyLSP": {
                     "type": "boolean",
-                    "default": "true",
+                    "default": true,
                     "description": "Verify if the Robot Framework Language Server is installed?"
                 },
                 "robocorp.autoSetPythonExtensionInterpreter": {
                     "type": "boolean",
-                    "default": "true",
+                    "default": true,
                     "description": "If a file in a Robot is opened, the python extension interpreter is automatically set to match the Robot interpreter."
                 },
                 "robocorp.autoSetPythonExtensionDisableActivateTerminal": {
                     "type": "boolean",
-                    "default": "true",
+                    "default": true,
                     "description": "Automatically sets the value of \"python.terminal.activateEnvironment\" to false to avoid wrong auto-activation when Robot terminal is created."
+                },
+                "robocorp.proceedWithLongPathsDisabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enables Robocorp Code to be started even with long paths disabled."
                 }
             }
         },

@@ -11,7 +11,7 @@ import { Timing, sleep } from "./time";
 import { execFilePromise, ExecFileReturn, mergeEnviron } from "./subprocess";
 import * as roboConfig from "./robocorpSettings";
 import { runAsAdmin } from "./extensionCreateEnv";
-import { showSubmitIssueUI } from "./submitIssue";
+import { getProceedwithlongpathsdisabled } from "./robocorpSettings";
 
 let lastPrintedRobocorpHome: string = "";
 
@@ -36,7 +36,12 @@ export async function getRobocorpHome(): Promise<string> {
 }
 
 export function createEnvWithRobocorpHome(robocorpHome: string): { [key: string]: string | null } {
-    let env: { [key: string]: string | null } = mergeEnviron({ "ROBOCORP_HOME": robocorpHome });
+    const base = { "ROBOCORP_HOME": robocorpHome };
+    if (getProceedwithlongpathsdisabled()) {
+        base["ROBOCORP_OVERRIDE_SYSTEM_REQUIREMENTS"] = "1";
+    }
+
+    let env: { [key: string]: string | null } = mergeEnviron(base);
     return env;
 }
 
@@ -120,7 +125,7 @@ async function downloadRcc(
             throw new Error("Currently only Linux amd64 is supported.");
         }
     }
-    const RCC_VERSION = "v11.33.2";
+    const RCC_VERSION = "v11.36.0";
     const prefix = "https://downloads.robocorp.com/rcc/releases/" + RCC_VERSION;
     const url: string = prefix + relativePath;
     return await download(url, progress, token, location);
@@ -292,11 +297,27 @@ export const STATUS_FATAL = "fatal";
 export const STATUS_FAIL = "fail";
 export const STATUS_WARNING = "warning";
 
+// RCC categories:
+// https://github.com/robocorp/rcc/blob/master/common/categories.go#L4-L14
+
+const CategoryUndefined: number = 0;
+const CategoryLongPath: number = 1010;
+const CategoryLockFile: number = 1020;
+const CategoryLockPid: number = 1021;
+const CategoryPathCheck: number = 1030;
+const CategoryHolotreeShared: number = 2010;
+const CategoryRobocorpHome: number = 3010;
+const CategoryNetworkDNS: number = 4010;
+const CategoryNetworkLink: number = 4020;
+const CategoryNetworkHEAD: number = 4030;
+const CategoryNetworkCanary: number = 4040;
+
 export interface CheckDiagnostic {
     type: string;
     status: string; // ok | fatal | fail | warning
     message: string;
     url: string;
+    category: number; // See CategoryXXX constants above.
 }
 
 export class RCCDiagnostics {
@@ -311,8 +332,21 @@ export class RCCDiagnostics {
 
         for (const check of checks) {
             if (check.status != STATUS_OK) {
+                if (check.status === STATUS_WARNING) {
+                    if (check.category === CategoryLockFile || check.category === CategoryLockPid) {
+                        // We ignore warnings for Locks because they may happen as part of the
+                        // regular operation (because RCC may leave those around as leftovers when RCC
+                        // is killed).
+                        continue;
+                    }
+                }
+
+                if (check.category === CategoryLongPath) {
+                    // We deal with long paths as a part of the startup process.
+                    continue;
+                }
                 this.failedChecks.push(check);
-                if (check.type == "RPA" && check.message.indexOf("ROBOCORP_HOME") != -1) {
+                if (check.category === CategoryRobocorpHome) {
                     this.roboHomeOk = false;
                 }
             }
@@ -331,14 +365,48 @@ export async function runConfigDiagnostics(
     rccLocation: string,
     robocorpHome: string | undefined
 ): Promise<RCCDiagnostics | undefined> {
+    let configureLongpathsOutput: ExecFileReturn | undefined = undefined;
+    let timing = new Timing();
     try {
-        let timing = new Timing();
         let env = mergeEnviron({ "ROBOCORP_HOME": robocorpHome });
-        let configureLongpathsOutput: ExecFileReturn = await execFilePromise(
+        configureLongpathsOutput = await execFilePromise(
             rccLocation,
             ["configure", "diagnostics", "-j", "--controller", "RobocorpCode"],
             { env: env }
         );
+        let outputAsJSON = JSON.parse(configureLongpathsOutput.stdout);
+        let checks: CheckDiagnostic[] = outputAsJSON.checks;
+        let details: Map<string, string> = outputAsJSON.details;
+
+        const ret = new RCCDiagnostics(checks, details);
+
+        // Ok, we've been able to parse the JSON. Let's print the output in a format that's not
+        // difficult to visually parse afterwards.
+        OUTPUT_CHANNEL.appendLine("RCC Diagnostics:");
+        for (const [key, value] of Object.entries(outputAsJSON)) {
+            if (key === "checks") {
+                OUTPUT_CHANNEL.appendLine("  RCC Checks:");
+                for (const check of checks) {
+                    OUTPUT_CHANNEL.appendLine(
+                        `    ${check.type.padEnd(10)} - ${check.status.padEnd(7)} - ${check.message} (${
+                            check.category
+                        })`
+                    );
+                }
+            } else if (key === "details") {
+                OUTPUT_CHANNEL.appendLine("  RCC Details:");
+                for (const [detailsKey, detailsValue] of Object.entries(details)) {
+                    OUTPUT_CHANNEL.appendLine(`    ${detailsKey.padEnd(40)} - ${detailsValue}`);
+                }
+            } else {
+                OUTPUT_CHANNEL.appendLine(`  RCC ${JSON.stringify(key)}:`);
+                // We didn't expect this, let's just print it as json.
+                OUTPUT_CHANNEL.appendLine(`    ${JSON.stringify(value)}`);
+            }
+        }
+        return ret;
+    } catch (error) {
+        logError("Error getting RCC diagnostics.", error, "RCC_DIAGNOSTICS");
         OUTPUT_CHANNEL.appendLine(
             "RCC Diagnostics:" +
                 "\nStdout:\n" +
@@ -349,13 +417,6 @@ export async function runConfigDiagnostics(
                 timing.getTotalElapsedAsStr() +
                 " to obtain diagnostics."
         );
-
-        let outputAsJSON = JSON.parse(configureLongpathsOutput.stdout);
-        let checks: CheckDiagnostic[] = outputAsJSON.checks;
-        let details: Map<string, string> = outputAsJSON.details;
-        return new RCCDiagnostics(checks, details);
-    } catch (error) {
-        logError("Error getting RCC diagnostics.", error, "RCC_DIAGNOSTICS");
         return undefined;
     }
 }
@@ -569,7 +630,7 @@ export async function collectBaseEnv(
                 try {
                     execFileReturn = await execFilePromise(
                         rccLocation,
-                        ["holotree", "shared", "--enable"],
+                        ["holotree", "shared", "--enable", "--once"],
                         { "env": env },
                         { "showOutputInteractively": true }
                     );
@@ -581,7 +642,7 @@ export async function collectBaseEnv(
                         "Cancel"
                     );
                     if (response == "Retry as admin") {
-                        runAsAdmin(rccLocation, ["holotree", "shared", "--enable"], env);
+                        await runAsAdmin(rccLocation, ["holotree", "shared", "--enable", "--once"], env);
                     }
                 }
 

@@ -19,6 +19,7 @@ import {
 import { Timing } from "./time";
 import { execFilePromise, ExecFileReturn } from "./subprocess";
 import { sleep } from "./time";
+import { getProceedwithlongpathsdisabled, setProceedwithlongpathsdisabled } from "./robocorpSettings";
 
 export async function runAsAdmin(rccLocation: string, args: string[], env) {
     try {
@@ -113,17 +114,29 @@ async function verifyLongPathSupportOnWindows(rccLocation: string): Promise<bool
     }
     if (process.platform == "win32") {
         while (true) {
+            const proceed: boolean = getProceedwithlongpathsdisabled();
+            if (proceed) {
+                return true;
+            }
+
             let enabled: boolean = await isLongPathSupportEnabledOnWindows(rccLocation);
 
             if (!enabled) {
-                const YES = "Yes (requires elevated shell)";
+                const YES = "Yes (requires admin)";
                 const MANUALLY = "Open manual instructions";
+                const NO = "No (don't warn again)";
 
                 let result = await window.showErrorMessage(
-                    "Windows long paths support (required by Robocorp Code) is not enabled. Would you like to have Robocorp Code enable it now?",
-                    { "modal": true },
+                    "Windows long paths support is not enabled. Would you like to have Robocorp Code enable it now?",
+                    {
+                        "modal": true,
+                        "detail":
+                            "Note: it's possible to  proceed without enabling long paths, but keep in mind that may " +
+                            "result in failures creating environments or running Robots if a dependency has long paths.",
+                    },
                     YES,
-                    MANUALLY
+                    MANUALLY,
+                    NO
                     // Auto-cancel in modal
                 );
                 if (result == YES) {
@@ -148,6 +161,9 @@ async function verifyLongPathSupportOnWindows(rccLocation: string): Promise<bool
                     }
                 } else if (result == MANUALLY) {
                     await env.openExternal(Uri.parse("https://robocorp.com/docs/troubleshooting/windows-long-path"));
+                } else if (result == NO) {
+                    await setProceedwithlongpathsdisabled(true);
+                    return true;
                 } else {
                     // Cancel
                     OUTPUT_CHANNEL.appendLine(
