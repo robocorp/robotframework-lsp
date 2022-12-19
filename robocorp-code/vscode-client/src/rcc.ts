@@ -12,6 +12,7 @@ import { execFilePromise, ExecFileReturn, mergeEnviron } from "./subprocess";
 import * as roboConfig from "./robocorpSettings";
 import { runAsAdmin } from "./extensionCreateEnv";
 import { getProceedwithlongpathsdisabled } from "./robocorpSettings";
+import { GLOBAL_STATE } from "./extension";
 
 let lastPrintedRobocorpHome: string = "";
 
@@ -341,6 +342,13 @@ export class RCCDiagnostics {
                     }
                 }
 
+                if (check.category === CategoryLockFile) {
+                    // We ignore all errors related to lock files (even errors)
+                    // due to: https://github.com/robocorp/rcc/issues/43
+                    // -- Running rcc.exe config diagnostics in a clean machine gives errors related to locks.
+                    continue;
+                }
+
                 if (check.category === CategoryLongPath) {
                     // We deal with long paths as a part of the startup process.
                     continue;
@@ -589,6 +597,66 @@ export async function feedbackAnyError(errorSource: string, errorCode: string) {
 }
 
 /**
+ * Note: it's possible that even after enabling this function the holotree isn't shared
+ * if the user doesn't have permissions and can't run as admin.
+ */
+async function enableHolotreeShared(rccLocation: string, env) {
+    const IGNORE_HOLOTREE_SHARED_ENABLE_FAILURE = "IGNORE_HOLOTREE_SHARED_ENABLE_FAILURE";
+
+    try {
+        // Enable the holotree shared mode: this changes permissions so that more than one
+        // user may write to the holotree (usually in C:\ProgramData\robocorp\ht).
+        try {
+            const execFileReturn: ExecFileReturn = await execFilePromise(
+                rccLocation,
+                ["holotree", "shared", "--enable", "--once"],
+                { "env": env },
+                { "showOutputInteractively": true }
+            );
+            OUTPUT_CHANNEL.appendLine("Enabled shared holotree");
+        } catch (err) {
+            if (!GLOBAL_STATE.get(IGNORE_HOLOTREE_SHARED_ENABLE_FAILURE)) {
+                const RETRY_AS_ADMIN = "Retry as admin";
+                const IGNORE = "Ignore (don't ask again)";
+                let response = await window.showWarningMessage(
+                    "It was not possible to enable the holotree shared mode. How do you want to proceed?",
+                    {
+                        "modal": true,
+                        "detail":
+                            "It is Ok to ignore if environments won't be shared with other users in this machine.",
+                    },
+                    RETRY_AS_ADMIN,
+                    IGNORE
+                );
+                if (response === RETRY_AS_ADMIN) {
+                    await runAsAdmin(rccLocation, ["holotree", "shared", "--enable", "--once"], env);
+                } else if (response === IGNORE) {
+                    await GLOBAL_STATE.update(IGNORE_HOLOTREE_SHARED_ENABLE_FAILURE, true);
+                }
+            }
+        }
+    } catch (err) {
+        logError("Error while enabling shared holotree.", err, "ERROR_ENABLE_SHARED_HOLOTREE");
+    }
+}
+
+async function initHolotree(rccLocation: string, env): Promise<boolean> {
+    try {
+        const execFileReturn = await execFilePromise(
+            rccLocation,
+            ["holotree", "init"],
+            { "env": env },
+            { "showOutputInteractively": true }
+        );
+        OUTPUT_CHANNEL.appendLine("Set user to use shared holotree");
+        return true;
+    } catch (err) {
+        logError("Error while initializing shared holotree.", err, "ERROR_INITIALIZE_SHARED_HOLOTREE");
+        return false;
+    }
+}
+
+/**
  * This function creates the base holotree space with RCC and then returns its info
  * to start up the language server.
  *
@@ -621,60 +689,54 @@ export async function collectBaseEnv(
     }
     const USE_PROGRAM_DATA_SHARED = true;
     if (USE_PROGRAM_DATA_SHARED) {
+        let execFileReturn: ExecFileReturn;
+        const env = createEnvWithRobocorpHome(robocorpHome);
+
         if (!rccDiagnostics.holotreeShared) {
             // i.e.: if the shared mode is still not enabled, enable it, download the
             // base environment .zip and import it.
-            const env = createEnvWithRobocorpHome(robocorpHome);
-            try {
-                let execFileReturn: ExecFileReturn;
+            await enableHolotreeShared(rccLocation, env);
+
+            const holotreeInitOk: boolean = await initHolotree(rccLocation, env);
+            if (holotreeInitOk) {
+                // Download and import into holotree.
+                const zipDownloadLocation = await getBaseAsZipDownloadLocation();
+                let downloadOk: boolean = false;
                 try {
-                    execFileReturn = await execFilePromise(
-                        rccLocation,
-                        ["holotree", "shared", "--enable", "--once"],
-                        { "env": env },
-                        { "showOutputInteractively": true }
-                    );
-                    OUTPUT_CHANNEL.appendLine("Enabled shared holotree");
+                    if (!(await fileExists(zipDownloadLocation))) {
+                        await window.withProgress(
+                            {
+                                location: ProgressLocation.Notification,
+                                title: "Download base environment.",
+                                cancellable: false,
+                            },
+                            async (progress, token) => await downloadBaseAsZip(progress, token, zipDownloadLocation)
+                        );
+                    }
+                    downloadOk = await fileExists(zipDownloadLocation);
                 } catch (err) {
-                    let response = await window.showWarningMessage(
-                        "It was not possible to enable the holotree shared mode. How do you want to proceed?",
-                        "Retry as admin",
-                        "Cancel"
-                    );
-                    if (response == "Retry as admin") {
-                        await runAsAdmin(rccLocation, ["holotree", "shared", "--enable", "--once"], env);
+                    logError("Error while downloading shared holotree.", err, "ERROR_DOWNLOAD_BASE_ZIP");
+                }
+                if (downloadOk) {
+                    try {
+                        let timing = new Timing();
+                        execFileReturn = await execFilePromise(
+                            rccLocation,
+                            ["holotree", "import", zipDownloadLocation],
+                            { "env": env },
+                            { "showOutputInteractively": true }
+                        );
+                        OUTPUT_CHANNEL.appendLine(
+                            "Took: " + timing.getTotalElapsedAsStr() + " to import base holotree."
+                        );
+                    } catch (err) {
+                        logError(
+                            "Error while importing base zip into holotree.",
+                            err,
+                            "ERROR_IMPORT_BASE_ZIP_HOLOTREE"
+                        );
                     }
                 }
-
-                execFileReturn = await execFilePromise(
-                    rccLocation,
-                    ["holotree", "init"],
-                    { "env": env },
-                    { "showOutputInteractively": true }
-                );
-                OUTPUT_CHANNEL.appendLine("Set user to use shared holotree");
-
-                const zipDownloadLocation = await getBaseAsZipDownloadLocation();
-                if (!(await fileExists(zipDownloadLocation))) {
-                    await window.withProgress(
-                        {
-                            location: ProgressLocation.Notification,
-                            title: "Download base environment.",
-                            cancellable: false,
-                        },
-                        async (progress, token) => await downloadBaseAsZip(progress, token, zipDownloadLocation)
-                    );
-                }
-                let timing = new Timing();
-                execFileReturn = await execFilePromise(
-                    rccLocation,
-                    ["holotree", "import", zipDownloadLocation],
-                    { "env": env },
-                    { "showOutputInteractively": true }
-                );
-                OUTPUT_CHANNEL.appendLine("Took: " + timing.getTotalElapsedAsStr() + " to import base holotree.");
-            } catch (err) {
-                logError("Error while enabling shared holotree.", err, "ERROR_ENABLE_SHARED_HOLOTREE");
             }
         }
     }

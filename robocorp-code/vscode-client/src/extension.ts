@@ -704,8 +704,10 @@ let langServer: LanguageClient;
 let C: CommandRegistry;
 export let globalCachedPythonInfo: InterpreterInfo;
 const langServerMutex: Mutex = new Mutex();
+export let GLOBAL_STATE: undefined | vscode.Memento = undefined;
 
 export async function activate(context: ExtensionContext) {
+    GLOBAL_STATE = context.globalState;
     let timing = new Timing();
     OUTPUT_CHANNEL.appendLine("Activating Robocorp Code extension.");
     C = new CommandRegistry(context);
