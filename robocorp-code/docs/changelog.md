@@ -1,7 +1,7 @@
 NEXT
 -----------------------------
 
-- RCC was upgraded to `v11.33.2`.
+- RCC was upgraded to `v11.36.3`.
 - No longer showing warnings regarding locks at startup.
 - It's now possible to proceed even with long paths disabled. 
 
