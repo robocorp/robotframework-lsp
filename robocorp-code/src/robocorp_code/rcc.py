@@ -565,7 +565,22 @@ class Rcc(object):
         args.append(workspace_id)
 
         args.append("--minutes")
-        args.append("120")
+
+        config_provider = self._config_provider()
+        config: Optional[IConfig] = None
+        timeout = 120
+        if config_provider is not None:
+            config = config_provider.config
+            if config:
+                from robocorp_code.settings import (
+                    ROBOCORP_VAULT_TOKEN_TIMEOUT_IN_MINUTES,
+                )
+
+                timeout = config.get_setting(
+                    ROBOCORP_VAULT_TOKEN_TIMEOUT_IN_MINUTES, int, 120
+                )
+
+        args.append(f"${timeout}")
 
         error_action_result = self._add_account_to_args(args)
         if error_action_result is not None:

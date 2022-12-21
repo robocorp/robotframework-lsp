@@ -98,6 +98,12 @@ SETTINGS = [
         "Enables Robocorp Code to be started even with long paths disabled.",
         setting_type="boolean",
     ),
+    Setting(
+        "robocorp.vaultTokenTimeoutInMinutes",
+        120,
+        "Specifies the timeout for the token generated to access the vault when a launch is made.",
+        setting_type="number",
+    ),
 ]
 
 

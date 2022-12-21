@@ -4,6 +4,7 @@ NEXT
 - RCC was upgraded to `v11.36.3`.
 - No longer showing warnings regarding locks at startup.
 - It's now possible to proceed even with long paths disabled. 
+- New setting: `robocorp.vaultTokenTimeoutInMinutes` can be used to change the timeout for the token used for vault access when launching.
 
 New in 0.41.0 (2022-12-13)
 -----------------------------

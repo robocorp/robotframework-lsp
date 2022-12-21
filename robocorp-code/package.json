@@ -167,6 +167,11 @@
                     "type": "boolean",
                     "default": false,
                     "description": "Enables Robocorp Code to be started even with long paths disabled."
+                },
+                "robocorp.vaultTokenTimeoutInMinutes": {
+                    "type": "number",
+                    "default": 120,
+                    "description": "Specifies the timeout for the token generated to access the vault when a launch is made."
                 }
             }
         },

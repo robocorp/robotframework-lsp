@@ -20,6 +20,7 @@ export const ROBOCORP_VERIFY_LSP = "robocorp.verifyLSP";
 export const ROBOCORP_AUTO_SET_PYTHON_EXTENSION_INTERPRETER = "robocorp.autoSetPythonExtensionInterpreter";
 export const ROBOCORP_AUTO_SET_PYTHON_EXTENSION_DISABLE_ACTIVATE_TERMINAL = "robocorp.autoSetPythonExtensionDisableActivateTerminal";
 export const ROBOCORP_PROCEED_WITH_LONG_PATHS_DISABLED = "robocorp.proceedWithLongPathsDisabled";
+export const ROBOCORP_VAULT_TOKEN_TIMEOUT_IN_MINUTES = "robocorp.vaultTokenTimeoutInMinutes";
 
 export function getLanguageServerTcpPort(): number {
     let key = ROBOCORP_LANGUAGE_SERVER_TCP_PORT;
@@ -179,6 +180,21 @@ export function getProceedwithlongpathsdisabled(): boolean {
 
 export async function setProceedwithlongpathsdisabled(value): Promise<void> {
     let key = ROBOCORP_PROCEED_WITH_LONG_PATHS_DISABLED;
+    let i = key.lastIndexOf('.');
+
+    let config = workspace.getConfiguration(key.slice(0, i));
+    await config.update(key.slice(i + 1), value, ConfigurationTarget.Global);
+}
+
+
+export function getVaulttokentimeoutinminutes(): number {
+    let key = ROBOCORP_VAULT_TOKEN_TIMEOUT_IN_MINUTES;
+    return get<number>(key);
+}
+
+
+export async function setVaulttokentimeoutinminutes(value): Promise<void> {
+    let key = ROBOCORP_VAULT_TOKEN_TIMEOUT_IN_MINUTES;
     let i = key.lastIndexOf('.');
 
     let config = workspace.getConfiguration(key.slice(0, i));
