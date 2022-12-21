@@ -397,6 +397,7 @@ async function convertProject() {
 
         // let the user decide what should be converted
         switch (vendor) {
+            case vendorMap["UiPath"]:
             case vendorMap["Automation Anywhere 360"]: {
                 const folderToConvert: Uri[] = await window.showOpenDialog({
                     "canSelectFolders": true,
@@ -414,8 +415,7 @@ async function convertProject() {
                 conversionResult = await converterBundle.convert(vendor, undefined, options);
                 break;
             }
-            case vendorMap["Blue Prism"]:
-            case vendorMap["UiPath"]: {
+            case vendorMap["Blue Prism"]: {
                 const fileToConvert: Uri[] = await window.showOpenDialog({
                     "canSelectFolders": false,
                     "canSelectFiles": true,
