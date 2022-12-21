@@ -587,11 +587,11 @@ class _DebuggerAPI(object):
 def dap_resources_dir(tmpdir_factory):
     from robocorp_ls_core.copytree import copytree_dst_exists
 
-    basename = u"dap áéíóú"
+    basename = "dap áéíóú"
     copy_to = str(tmpdir_factory.mktemp(basename))
 
     f = __file__
-    original_resources_dir = os.path.join(os.path.dirname(f), u"_dap_resources")
+    original_resources_dir = os.path.join(os.path.dirname(f), "_dap_resources")
     assert os.path.exists(original_resources_dir)
 
     copytree_dst_exists(original_resources_dir, copy_to)

@@ -15,7 +15,6 @@ if sys.version_info[:2] < (3, 8):
     class TypedDict(object):
         pass
 
-
 else:
     from typing import Protocol
     from typing import TypedDict

@@ -13,7 +13,7 @@ def test_formatting_basic(data_regression):
     )
     from robocorp_ls_core.workspace import Document
 
-    contents = u"""
+    contents = """
 ***Settings***
 [Documentation]Some doc
 
@@ -21,7 +21,7 @@ def test_formatting_basic(data_regression):
 Check
     Call  1  2"""
     new_contents = robot_source_format(contents)
-    assert u"*** Settings ***" in new_contents
+    assert "*** Settings ***" in new_contents
 
     text_edits = create_text_edit_from_diff(contents, new_contents)
 

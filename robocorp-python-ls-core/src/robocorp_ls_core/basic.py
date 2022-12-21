@@ -90,7 +90,6 @@ if sys.platform == "win32":
                 kernel32.CloseHandle(process)
         return False
 
-
 else:
     import errno
 

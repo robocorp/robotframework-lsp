@@ -54,7 +54,7 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         return True
 
     def initialize(
-        self, msg_id=None, process_id=None, root_uri=u"", workspace_folders=()
+        self, msg_id=None, process_id=None, root_uri="", workspace_folders=()
     ):
         from robocorp_ls_core.options import NO_TIMEOUT, USE_TIMEOUTS
 

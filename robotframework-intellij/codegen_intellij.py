@@ -1,5 +1,6 @@
 import os
-TEMPLATE_ROBOT_PREFERENCES_PAGE = '''package robocorp.robot.intellij;
+
+TEMPLATE_ROBOT_PREFERENCES_PAGE = """package robocorp.robot.intellij;
 
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -141,9 +142,9 @@ public class {{ class_ }} implements Configurable {
         settings.{{ preference['setter_name'] }}(component.{{ preference['getter_name']}}());{% endfor %}
     }
 }
-'''
+"""
 
-TEMPLATE_ROBOT_PREFERENCES = '''package robocorp.robot.intellij;
+TEMPLATE_ROBOT_PREFERENCES = """package robocorp.robot.intellij;
 
 import com.google.gson.*;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -284,13 +285,14 @@ public class {{ class_ }} implements PersistentStateComponent<RobotState> {
     }
 
 }
-'''
+"""
 
 
 def camel_to_snake(name):
     import re
-    name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', name).lower()
+
+    name = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
+    return re.sub("([a-z0-9])([A-Z])", r"\1_\2", name).lower()
 
 
 IGNORE_PREFERENCES_NOT_APPLICABLE_TO_INTELLIJ = (
@@ -302,7 +304,7 @@ IGNORE_PREFERENCES_NOT_APPLICABLE_TO_INTELLIJ = (
     "robot.run.peekError.level",
     "robot.run.peekError.showSummary",
     "robot.run.peekError.showErrorsInCallers",
-    )
+)
 
 
 def main():
@@ -312,130 +314,195 @@ def main():
 
     preferences = []
     this_dir = os.path.dirname(__file__)
-    with open(os.path.join(this_dir, '..', 'robotframework-ls', 'package.json')) as stream:
+    with open(
+        os.path.join(this_dir, "..", "robotframework-ls", "package.json")
+    ) as stream:
         package_json = json.load(stream)
-        properties = package_json['contributes']['configuration']['properties']
+        properties = package_json["contributes"]["configuration"]["properties"]
         for prop_name, prop_value in properties.items():
             if prop_name in IGNORE_PREFERENCES_NOT_APPLICABLE_TO_INTELLIJ:
                 continue
 
-            description = prop_value.get('description', '').replace('"', '\\"')
-            description = description.replace('Requires a restart to take effect.', '')
-            final_desc = ''
-            description = description.replace('\n', ' ')
-            description = description.replace('(', '\\n(')
-            description = description.replace('\\n(s)', '(s)')  # Undo the (s) case
-            for i, d in enumerate(description.split('\\n')):
+            description = prop_value.get("description", "").replace('"', '\\"')
+            description = description.replace("Requires a restart to take effect.", "")
+            final_desc = ""
+            description = description.replace("\n", " ")
+            description = description.replace("(", "\\n(")
+            description = description.replace("\\n(s)", "(s)")  # Undo the (s) case
+            for i, d in enumerate(description.split("\\n")):
                 if i > 0:
-                    final_desc += '\\n'
+                    final_desc += "\\n"
                 line_len = 100
-                if prop_name == 'robot.completions.keywords.format':
-                    i = d.index('One of')
-                    d = '\\n'.join((d[:i].strip(), d[i:].strip()))
+                if prop_name == "robot.completions.keywords.format":
+                    i = d.index("One of")
+                    d = "\\n".join((d[:i].strip(), d[i:].strip()))
 
                 else:
-                    d = '\\n'.join(textwrap.wrap(d, line_len))
+                    d = "\\n".join(textwrap.wrap(d, line_len))
                 final_desc += d
-            if prop_value['type'] in ['array', 'object']:
-                final_desc += '\\nNote: expected format: JSON ' + prop_value['type'].title()
-            elif prop_value['type'] in ['boolean']:
-                final_desc += '\\nNote: expected \'true\' or \'false\''
+            if prop_value["type"] in ["array", "object"]:
+                final_desc += (
+                    "\\nNote: expected format: JSON " + prop_value["type"].title()
+                )
+            elif prop_value["type"] in ["boolean"]:
+                final_desc += "\\nNote: expected 'true' or 'false'"
 
-            final_desc += '\\n'
+            final_desc += "\\n"
 
-            prop_value['dotted_name'] = prop_name
-            prop_value['constant_name'] = camel_to_snake(prop_name).replace('.', '_').replace('-', '_').upper()
-            visible_name = prop_name.replace('robot.', '')
-            prop_value['visible_name'] = camel_to_snake(visible_name).replace('.', ' ').replace('-', ' ').replace('_', ' ').title()
-            base_name = camel_to_snake(prop_name).replace('.', ' ').replace('-', ' ').replace('_', ' ').title().replace(' ', '')
-            java_name = prop_value['java_name'] = base_name[0].lower() + base_name[1:]
-            prop_value['getter_name'] = 'get' + base_name[0].upper() + base_name[1:]
-            prop_value['setter_name'] = 'set' + base_name[0].upper() + base_name[1:]
-            prop_value['validate_name'] = 'validate' + base_name[0].upper() + base_name[1:]
+            prop_value["dotted_name"] = prop_name
+            prop_value["constant_name"] = (
+                camel_to_snake(prop_name).replace(".", "_").replace("-", "_").upper()
+            )
+            visible_name = prop_name.replace("robot.", "")
+            prop_value["visible_name"] = (
+                camel_to_snake(visible_name)
+                .replace(".", " ")
+                .replace("-", " ")
+                .replace("_", " ")
+                .title()
+            )
+            base_name = (
+                camel_to_snake(prop_name)
+                .replace(".", " ")
+                .replace("-", " ")
+                .replace("_", " ")
+                .title()
+                .replace(" ", "")
+            )
+            java_name = prop_value["java_name"] = base_name[0].lower() + base_name[1:]
+            prop_value["getter_name"] = "get" + base_name[0].upper() + base_name[1:]
+            prop_value["setter_name"] = "set" + base_name[0].upper() + base_name[1:]
+            prop_value["validate_name"] = (
+                "validate" + base_name[0].upper() + base_name[1:]
+            )
 
-            if prop_value['type'] == 'array':
-                json_load = f'g.fromJson({java_name}, JsonArray.class)'
-                prop_value['java_json_type'] = 'JsonArray'
+            if prop_value["type"] == "array":
+                json_load = f"g.fromJson({java_name}, JsonArray.class)"
+                prop_value["java_json_type"] = "JsonArray"
 
-            elif prop_value['type'] == 'object':
-                json_load = f'g.fromJson({java_name}, JsonObject.class)'
-                prop_value['java_json_type'] = 'JsonObject'
+            elif prop_value["type"] == "object":
+                json_load = f"g.fromJson({java_name}, JsonObject.class)"
+                prop_value["java_json_type"] = "JsonObject"
 
-            elif prop_value['type'] == 'string':
-                json_load = f'new JsonPrimitive({java_name})'
-                prop_value['java_json_type'] = 'JsonPrimitive'
+            elif prop_value["type"] == "string":
+                json_load = f"new JsonPrimitive({java_name})"
+                prop_value["java_json_type"] = "JsonPrimitive"
 
-            elif prop_value['type'] == 'number':
-                json_load = f'new JsonPrimitive(Integer.parseInt({java_name}))'
-                prop_value['java_json_type'] = 'JsonPrimitive'
+            elif prop_value["type"] == "number":
+                json_load = f"new JsonPrimitive(Integer.parseInt({java_name}))"
+                prop_value["java_json_type"] = "JsonPrimitive"
 
-            elif prop_value['type'] == 'boolean':
-                json_load = f'new JsonPrimitive(Boolean.parseBoolean({java_name}))'
-                prop_value['java_json_type'] = 'JsonPrimitive'
+            elif prop_value["type"] == "boolean":
+                json_load = f"new JsonPrimitive(Boolean.parseBoolean({java_name}))"
+                prop_value["java_json_type"] = "JsonPrimitive"
 
             else:
-                raise AssertionError('Unhandled type: ' + prop_value['type'])
+                raise AssertionError("Unhandled type: " + prop_value["type"])
 
-            prop_value['description'] = final_desc
-            prop_value['json_load'] = json_load
+            prop_value["description"] = final_desc
+            prop_value["json_load"] = json_load
 
             preferences.append(prop_value)
 
-    #------------------------------------------------------------------------------
-    target = os.path.join(this_dir, 'src', 'main', 'java', 'robocorp', 'robot', 'intellij', 'RobotPreferencesPage.java')
+    # ------------------------------------------------------------------------------
+    target = os.path.join(
+        this_dir,
+        "src",
+        "main",
+        "java",
+        "robocorp",
+        "robot",
+        "intellij",
+        "RobotPreferencesPage.java",
+    )
     kwargs = dict(
-        preferences_component_class='RobotPreferencesComponent',
-        class_='RobotPreferencesPage',
-        preferred_focused_component='robotLanguageServerPython',
-        display_name='Robot Framework (Global)',
-        preferences_class='RobotPreferences',
+        preferences_component_class="RobotPreferencesComponent",
+        class_="RobotPreferencesPage",
+        preferred_focused_component="robotLanguageServerPython",
+        display_name="Robot Framework (Global)",
+        preferences_class="RobotPreferences",
         require_project=False,
     )
-    new_contents = Template(TEMPLATE_ROBOT_PREFERENCES_PAGE).render(preferences=preferences, **kwargs)
-    with open(target, 'w') as stream:
+    new_contents = Template(TEMPLATE_ROBOT_PREFERENCES_PAGE).render(
+        preferences=preferences, **kwargs
+    )
+    with open(target, "w") as stream:
         stream.write(new_contents)
-    print('Written: ', target)
+    print("Written: ", target)
 
-    #------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------
     kwargs = dict(
-        preferences_component_class='RobotProjectPreferencesComponent',
-        class_='RobotProjectPreferencesPage',
-        preferred_focused_component='robotPythonExecutable',
-        display_name='Robot Framework (Project)',
-        preferences_class='RobotProjectPreferences',
+        preferences_component_class="RobotProjectPreferencesComponent",
+        class_="RobotProjectPreferencesPage",
+        preferred_focused_component="robotPythonExecutable",
+        display_name="Robot Framework (Project)",
+        preferences_class="RobotProjectPreferences",
         require_project=True,
     )
-    target = os.path.join(this_dir, 'src', 'main', 'java', 'robocorp', 'robot', 'intellij', 'RobotProjectPreferencesPage.java')
+    target = os.path.join(
+        this_dir,
+        "src",
+        "main",
+        "java",
+        "robocorp",
+        "robot",
+        "intellij",
+        "RobotProjectPreferencesPage.java",
+    )
     project_preferences = preferences
-    new_contents = Template(TEMPLATE_ROBOT_PREFERENCES_PAGE).render(preferences=project_preferences, **kwargs)
-    with open(target, 'w') as stream:
+    new_contents = Template(TEMPLATE_ROBOT_PREFERENCES_PAGE).render(
+        preferences=project_preferences, **kwargs
+    )
+    with open(target, "w") as stream:
         stream.write(new_contents)
-    print('Written: ', target)
+    print("Written: ", target)
 
-    #------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------
     kwargs = dict(
-        class_='RobotPreferences',
-        preferences_class='RobotPreferences',
+        class_="RobotPreferences",
+        preferences_class="RobotPreferences",
         require_project=False,
     )
-    target = os.path.join(this_dir, 'src', 'main', 'java', 'robocorp', 'robot', 'intellij', 'RobotPreferences.java')
-    new_contents = Template(TEMPLATE_ROBOT_PREFERENCES).render(preferences=preferences, **kwargs)
-    with open(target, 'w') as stream:
+    target = os.path.join(
+        this_dir,
+        "src",
+        "main",
+        "java",
+        "robocorp",
+        "robot",
+        "intellij",
+        "RobotPreferences.java",
+    )
+    new_contents = Template(TEMPLATE_ROBOT_PREFERENCES).render(
+        preferences=preferences, **kwargs
+    )
+    with open(target, "w") as stream:
         stream.write(new_contents)
-    print('Written: ', target)
+    print("Written: ", target)
 
-    #------------------------------------------------------------------------------
+    # ------------------------------------------------------------------------------
     kwargs = dict(
-        class_='RobotProjectPreferences',
-        preferences_class='RobotProjectPreferences',
+        class_="RobotProjectPreferences",
+        preferences_class="RobotProjectPreferences",
         require_project=True,
     )
-    target = os.path.join(this_dir, 'src', 'main', 'java', 'robocorp', 'robot', 'intellij', 'RobotProjectPreferences.java')
-    new_contents = Template(TEMPLATE_ROBOT_PREFERENCES).render(preferences=project_preferences, **kwargs)
-    with open(target, 'w') as stream:
+    target = os.path.join(
+        this_dir,
+        "src",
+        "main",
+        "java",
+        "robocorp",
+        "robot",
+        "intellij",
+        "RobotProjectPreferences.java",
+    )
+    new_contents = Template(TEMPLATE_ROBOT_PREFERENCES).render(
+        preferences=project_preferences, **kwargs
+    )
+    with open(target, "w") as stream:
         stream.write(new_contents)
-    print('Written: ', target)
+    print("Written: ", target)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

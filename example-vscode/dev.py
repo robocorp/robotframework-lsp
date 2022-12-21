@@ -46,7 +46,6 @@ def _fix_contents_version(contents, version):
 
 
 class Dev(object):
-
     def set_version(self, version):
         """
         Sets a new version for robotframework-lsp in all the needed files.

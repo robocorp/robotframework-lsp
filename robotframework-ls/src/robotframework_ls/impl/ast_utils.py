@@ -383,7 +383,6 @@ if typing.TYPE_CHECKING:
     class _AST_CLASS(INode, Protocol):
         pass
 
-
 else:
     # We know that the AST we're dealing with is the INode.
     # We can't use runtime_checkable on Python 3.7 though.

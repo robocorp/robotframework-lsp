@@ -35,20 +35,20 @@ def doc():
 
 
 def test_document_empty_edit():
-    doc = Document("file:///uri", u"")
+    doc = Document("file:///uri", "")
     change = TextDocumentContentChangeEvent(
-        Range(Position(0, 0), Position(0, 0)), 0, u"f"
+        Range(Position(0, 0), Position(0, 0)), 0, "f"
     )
     doc.apply_change(change)
-    assert doc.source == u"f"
+    assert doc.source == "f"
 
 
 def test_document_end_of_file_edit():
     old = ["print 'a'\n", "print 'b'\n"]
-    doc = Document("file:///uri", u"".join(old))
+    doc = Document("file:///uri", "".join(old))
 
     change = TextDocumentContentChangeEvent(
-        Range(Position(2, 0), Position(2, 0)), 0, u"o"
+        Range(Position(2, 0), Position(2, 0)), 0, "o"
     )
     doc.apply_change(change)
 
@@ -56,12 +56,12 @@ def test_document_end_of_file_edit():
 
 
 def test_document_line_edit():
-    doc = Document("file:///uri", u"itshelloworld")
+    doc = Document("file:///uri", "itshelloworld")
     change = TextDocumentContentChangeEvent(
-        Range(Position(0, 3), Position(0, 8)), 0, u"goodbye"
+        Range(Position(0, 3), Position(0, 8)), 0, "goodbye"
     )
     doc.apply_change(change)
-    assert doc.source == u"itsgoodbyeworld"
+    assert doc.source == "itsgoodbyeworld"
 
 
 def test_document_lines(doc):
@@ -71,9 +71,9 @@ def test_document_lines(doc):
 
 def test_document_multiline_edit():
     old = ["def hello(a, b):\n", "    print a\n", "    print b\n"]
-    doc = Document("file:///uri", u"".join(old))
+    doc = Document("file:///uri", "".join(old))
     change = TextDocumentContentChangeEvent(
-        Range(Position(1, 4), Position(2, 11)), 0, u"print a, b"
+        Range(Position(1, 4), Position(2, 11)), 0, "print a, b"
     )
     doc.apply_change(change)
 
@@ -86,7 +86,7 @@ def test_document_props(doc):
 
 
 def test_document_source_unicode():
-    document_mem = Document(DOC_URI, u"my source")
+    document_mem = Document(DOC_URI, "my source")
     document_disk = Document(DOC_URI)
     assert isinstance(document_mem.source, type(document_disk.source))
 

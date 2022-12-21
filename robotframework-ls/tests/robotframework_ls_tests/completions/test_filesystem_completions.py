@@ -104,10 +104,10 @@ def test_library_completions_absolute(
     workspace.set_root(workspace_dir, libspec_manager=libspec_manager)
 
     directory = workspace_dir
-    directory = directory.replace(u"\\", u"/")
+    directory = directory.replace("\\", "/")
 
     doc = workspace.put_doc("case1.robot")
-    doc.source = u"""*** Settings ***
+    doc.source = """*** Settings ***
 Library           %s/""" % (
         directory,
     )

@@ -208,13 +208,13 @@ class Dev(object):
 
         new_content = re.sub(
             r"\(docs/",
-            fr"(https://github.com/robocorp/robotframework-lsp/tree/{tag}/robocorp-code/docs/",
+            rf"(https://github.com/robocorp/robotframework-lsp/tree/{tag}/robocorp-code/docs/",
             content,
         )
 
         new_content = re.sub(
             r"\(images/",
-            fr"(https://raw.githubusercontent.com/robocorp/robotframework-lsp/{tag}/robocorp-code/images/",
+            rf"(https://raw.githubusercontent.com/robocorp/robotframework-lsp/{tag}/robocorp-code/images/",
             content,
         )
 

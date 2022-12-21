@@ -55,4 +55,3 @@ def test_exit_with_parent_process_died(
     wait_for_test_condition(lambda: not is_process_alive(dummy_process.pid))
     wait_for_test_condition(lambda: not is_process_alive(language_server_process.pid))
     language_server_io.require_exit_messages = False
-

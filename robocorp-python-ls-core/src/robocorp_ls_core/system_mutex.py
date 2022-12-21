@@ -187,7 +187,6 @@ if sys.platform == "win32":
         def release_mutex(self):
             self._release_mutex()
 
-
 else:  # Linux
     import os
     import fcntl  # @UnresolvedImport

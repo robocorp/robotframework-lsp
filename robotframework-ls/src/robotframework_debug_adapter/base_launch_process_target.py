@@ -11,7 +11,6 @@ if sys.version_info[:2] < (3, 8):
     class Protocol(object):
         pass
 
-
 else:
     from typing import Protocol
 
