@@ -416,20 +416,22 @@ async function convertProject() {
             }
             case vendorMap["Blue Prism"]:
             case vendorMap["UiPath"]: {
-                const folderToConvert: Uri[] = await window.showOpenDialog({
-                    "canSelectFolders": true,
-                    "canSelectFiles": false,
+                const fileToConvert: Uri[] = await window.showOpenDialog({
+                    "canSelectFolders": false,
+                    "canSelectFiles": true,
                     "canSelectMany": false,
-                    "openLabel": `Select a ${vendor} project to convert`,
+                    "openLabel": `Select a ${vendor} file to convert`,
                 });
-                if (!folderToConvert || folderToConvert.length === 0) {
+                if (!fileToConvert || fileToConvert.length === 0) {
                     return;
                 }
-                const uri = folderToConvert[0];
+                const uri = fileToConvert[0];
+                const bytes = await workspace.fs.readFile(uri);
+                const contents = new TextDecoder("utf-8").decode(bytes);
                 const options = {
-                    projectFolderPath: uri.fsPath,
+                    objectImplFile: converterLocation.pathToConvertYaml,
                 };
-                conversionResult = await converterBundle.convert(vendor, undefined, options);
+                conversionResult = await converterBundle.convert(vendor, contents, options);
                 break;
             }
             default:
