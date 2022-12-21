@@ -580,7 +580,7 @@ class Rcc(object):
                     ROBOCORP_VAULT_TOKEN_TIMEOUT_IN_MINUTES, int, 120
                 )
 
-        args.append(f"${timeout}")
+        args.append(f"{timeout}")
 
         error_action_result = self._add_account_to_args(args)
         if error_action_result is not None:
