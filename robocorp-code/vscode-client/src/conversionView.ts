@@ -56,7 +56,6 @@ export async function showConvertUI(
         return;
     }
 
-
     const wsFolders: ReadonlyArray<vscode.WorkspaceFolder> = vscode.workspace.workspaceFolders;
     let ws: vscode.WorkspaceFolder;
     let outputFolder = "";
@@ -65,25 +64,25 @@ export async function showConvertUI(
         outputFolder = ws.uri.fsPath;
     }
 
-    const typeToLastOptions = new Map<RPATypes, ConversionInfoLastOptions>;
+    const typeToLastOptions = new Map<RPATypes, ConversionInfoLastOptions>();
     typeToLastOptions[RPATypes.uipath] = {
         "input": [], // files or folders
         "analysisResults": "",
         "generationResults": "",
         "outputFolder": outputFolder,
-    }
+    };
     typeToLastOptions[RPATypes.blueprism] = {
         "input": [], // files or folders
         "analysisResults": "",
         "generationResults": "",
         "outputFolder": outputFolder,
-    }
+    };
     typeToLastOptions[RPATypes.a360] = {
         "input": [], // files or folders
         "analysisResults": "",
         "generationResults": "",
         "outputFolder": outputFolder,
-    }
+    };
 
     const conversionInfo: ConversionInfo = {
         "inputType": RPATypes.uipath,
@@ -92,10 +91,8 @@ export async function showConvertUI(
         "generationResults": "",
         "outputFolder": outputFolder,
 
-        "typeToLastOptions": typeToLastOptions
+        "typeToLastOptions": typeToLastOptions,
     };
-
-
 
     panel.webview.html = getWebviewContent(conversionInfo);
     panel.webview.onDidReceiveMessage(
@@ -107,7 +104,7 @@ export async function showConvertUI(
                     const currentOutputFolder = message.currentOutputFolder;
                     const defaultUri = vscode.Uri.file(currentOutputFolder);
                     let outputFolder = "";
-                    try{
+                    try {
                         uris = await vscode.window.showOpenDialog({
                             "canSelectFolders": true,
                             "canSelectFiles": false,
@@ -115,10 +112,10 @@ export async function showConvertUI(
                             "openLabel": `Select output folder`,
                             "defaultUri": defaultUri,
                         });
-                        if(uris && uris.length > 0){
+                        if (uris && uris.length > 0) {
                             outputFolder = uris[0].fsPath;
                         }
-                    }finally{
+                    } finally {
                         panel.webview.postMessage({ command: "setOutputFolder", "outputFolder": outputFolder });
                     }
                     return;

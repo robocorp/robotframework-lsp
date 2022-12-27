@@ -119,6 +119,8 @@
         // or the value filled by vscode).
         let globalConversionInfo = {};
 
+        // Helpers --------------------------------
+
         function escapeHtml(unsafe) {
             return unsafe
                 .replaceAll("&", "&amp;")
@@ -154,6 +156,8 @@
             errorEl.innerHTML = err;
             errorEl.style.display = "block";
         }
+
+        // Update UI or data functions --------------------------
 
         function saveInfoForCurrentDataSelection() {
             const currOptions = {
@@ -201,20 +205,6 @@
             outputFolderText.value = globalConversionInfo.outputFolder;
         }
 
-        function onClickRemove(fileAsBase64) {
-            const filename = fromBase64(fileAsBase64);
-            const index = globalConversionInfo.input.indexOf(filename);
-            if (index >= 0) {
-                globalConversionInfo.input.splice(index, 1);
-            } else {
-                console.log("Error: could not find item to remove: " + filename);
-                for (const it of globalConversionInfo.input) {
-                    console.log("Item found: " + it);
-                }
-            }
-            updateFilesFromData();
-        }
-
         function updateAllFromData() {
             updateFilesFromData();
             updateOutputFolderFromData();
@@ -235,12 +225,11 @@
             }
         }
 
-        function onChangedInputBotFormat() {
-            saveInfoForCurrentDataSelection();
-            globalConversionInfo.inputType = getCurrentUIType();
-            restoreInfoForCurrentDataSelection();
-            updateAllFromData();
-        }
+        const TYPE_TO_CAPTION = {
+            "uipath": "UiPath",
+            "blueprism": "Blue Prism",
+            "a360": "Automation Anywhere 360",
+        };
 
         function isCurrentTypeEntryFolders() {
             if (getCurrentUIType() === "blueprism") {
@@ -249,18 +238,21 @@
             return true;
         }
 
-        const TYPE_TO_CAPTION = {
-            "uipath": "UiPath",
-            "blueprism": "Blue Prism",
-            "a360": "Automation Anywhere 360",
-        };
-
         function getCurrentUIType() {
             return document.getElementById("inputBotFormat").value;
         }
 
         function getCurrentUICaption() {
             return TYPE_TO_CAPTION[getCurrentUIType()];
+        }
+
+        // Callbacks for JS actions ------------------------------
+
+        function onChangedInputBotFormat() {
+            saveInfoForCurrentDataSelection();
+            globalConversionInfo.inputType = getCurrentUIType();
+            restoreInfoForCurrentDataSelection();
+            updateAllFromData();
         }
 
         function onClickAdd() {
@@ -278,6 +270,20 @@
                 console.log("On click add");
                 handleAddFileOrFolderCommand({ "input": ["c:/temp/bar"] });
             }
+        }
+
+        function onClickRemove(fileAsBase64) {
+            const filename = fromBase64(fileAsBase64);
+            const index = globalConversionInfo.input.indexOf(filename);
+            if (index >= 0) {
+                globalConversionInfo.input.splice(index, 1);
+            } else {
+                console.log("Error: could not find item to remove: " + filename);
+                for (const it of globalConversionInfo.input) {
+                    console.log("Item found: " + it);
+                }
+            }
+            updateFilesFromData();
         }
 
         function onClickOutputFolder() {
@@ -300,6 +306,8 @@
             const text = outputFolderText.value;
             globalConversionInfo.outputFolder = text;
         }
+
+        // Handle messages sent from the client --------------------------
 
         function handleOutputFolderCommand(message) {
             try {
@@ -352,6 +360,8 @@
             }
         });
     </script>
+
+    <!-- Actual Body ---------------------------------------------- -->
 
     <body>
         <div id="root">
