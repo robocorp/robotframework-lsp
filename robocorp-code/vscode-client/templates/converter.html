@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Convert third party RPA to Robocorp Robot</title>
+        <style>
+            :root {
+                --fg-color: var(--vscode-editor-foreground, black);
+                --bg-color: var(--vscode-editor-background, white);
+                --error-color: var(--vscode-terminalCommandDecoration-errorBackground, rgb(201, 28, 28));
+            }
+
+            body {
+                font-family: var(--vscode-editor-font-family);
+                font-weight: var(--vscode-editor-font-weight);
+                font-size: var(--vscode-editor-font-size);
+                color: var(--fg-color);
+                background-color: var(--bg-color);
+            }
+
+            .divEntry {
+                display: inline-grid;
+                grid-gap: 5px;
+                width: 600px;
+            }
+
+            .filelabel {
+                display: inline-flex;
+            }
+
+            #addBt {
+                margin-left: 10px;
+                margin-top: auto;
+            }
+
+            #analysisDiv {
+                margin-top: 30px;
+            }
+
+            input {
+                color: var(--vscode-editor-foreground);
+                background-color: var(--vscode-editor-background);
+                border-width: 1px;
+                border-color: var(--vscode-editor-foreground);
+                padding: 5px;
+            }
+
+            .remove {
+                display: block;
+                text-align: center;
+                border-radius: 5px;
+                font-weight: bold;
+                border-color: var(--vscode-editor-foreground);
+                margin-left: 5px;
+                text-decoration: none;
+                color: var(--error-color);
+            }
+
+            select {
+                color: var(--vscode-editor-foreground);
+                background-color: var(--vscode-editor-background);
+                border-width: 1px;
+                border-color: var(--vscode-editor-foreground);
+                padding: 5px;
+                margin-bottom: 10px;
+            }
+
+            div label {
+                margin-top: 15px;
+            }
+
+            #submit {
+                margin-top: 15px;
+            }
+        </style>
+    </head>
+
+    <script id="data" type="application/json">
+        {
+            "inputType": "uipath",
+            "input": ["c:/temp/file.uipath", "c:/temp/file2.uipath"],
+            "analysisResults": "",
+            "generationResults": "",
+            "typeToLastOptions": {
+                "input": [],
+                "analysisResults": "",
+                "generationResults": ""
+            }
+        }
+    </script>
+
+    <script type="application/javascript">
+        let globalConversionInfo = {
+            "inputType": "uipath",
+            "input": [],
+            "analysisResults": "",
+            "generationResults": "",
+            "typeToLastOptions": {
+                "input": [],
+                "analysisResults": "",
+                "generationResults": "",
+            },
+        };
+
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;")
+                .replaceAll("'", "&#039;");
+        }
+        function toBase64(s) {
+            const codeUnits = new Uint16Array(s.length);
+            for (let i = 0; i < codeUnits.length; i++) {
+                codeUnits[i] = s.charCodeAt(i);
+            }
+            return btoa(String.fromCharCode(...new Uint8Array(codeUnits.buffer)));
+        }
+        function fromBase64(s) {
+            const binary = atob(s);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < bytes.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return String.fromCharCode(...new Uint16Array(bytes.buffer));
+        }
+
+        let vscode;
+        try {
+            vscode = acquireVsCodeApi();
+        } catch (err) {
+            // ignore
+        }
+        function showError(err) {
+            const errorEl = document.getElementById("error");
+            errorEl.innerHTML = err;
+            errorEl.style.display = "block";
+        }
+
+        function saveInfoForCurrentSelection() {
+            const options = {
+                "input": getCurrentFilesOrFoldersInput(),
+            };
+            globalConversionInfo.typeToLastOptions[globalConversionInfo.inputType] = {};
+        }
+
+        function updateFilesFromData() {
+            const parentElement = document.getElementById("inputFilesOrFolders");
+            parentElement.replaceChildren();
+
+            for (const it of globalConversionInfo["input"]) {
+                var template = document.createElement("template");
+                // const basename = it.split(/[\\/]/).pop();
+                const asBase64 = toBase64(it);
+                const html = `<div>
+            <input class="fileCheck" type="checkbox" checked="true" data-file="${asBase64}" style="display:none"/>
+            <label class="filelabel">&#8226; ${escapeHtml(
+                it
+            )} <a href="#" class="remove" onClick="onClickRemove('${asBase64}')">(X)</a></label>
+        </div>`;
+
+                template.innerHTML = html.trim();
+                parentElement.appendChild(template.content.firstChild);
+            }
+        }
+
+        function onClickRemove(fileAsBase64) {
+            const filename = fromBase64(fileAsBase64);
+            const index = globalConversionInfo.input.indexOf(filename);
+            if (index >= 0) {
+                globalConversionInfo.input.splice(index, 1);
+            } else {
+                console.log("Error: could not find item to remove: " + filename);
+                for (const it of globalConversionInfo.input) {
+                    console.log("Item found: " + it);
+                }
+            }
+            updateFilesFromData();
+        }
+
+        function updateLabelFilesOrFolders() {
+            const el = document.getElementById("labelFilesOrFolders");
+            const caption = getCurrentCaption();
+            if (isCurrentTypeEntryFolders()) {
+                el.textContent = `Input folders with ${caption} projects to be converted:`;
+            } else {
+                el.textContent = `Input files  with ${caption} projects to be converted:`;
+            }
+        }
+
+        function onChangedInputBotFormat() {
+            saveInfoForCurrentSelection();
+            updateLabelFilesOrFolders();
+        }
+
+        function isCurrentTypeEntryFolders() {
+            if (getCurrentType() === "blueprism") {
+                return false;
+            }
+            return true;
+        }
+
+        const TYPE_TO_CAPTION = {
+            "uipath": "UiPath",
+            "blueprism": "Blue Prism",
+            "a360": "Automation Anywhere 360",
+        };
+
+        function getCurrentType() {
+            return document.getElementById("inputBotFormat").value;
+        }
+
+        function getCurrentCaption() {
+            return TYPE_TO_CAPTION[getCurrentType()];
+        }
+
+        function onClickAdd() {
+            if (vscode) {
+                // Disable button while sending.
+                const submitBt = document.getElementById("addBt");
+                submitBt.value = "Waiting for project selection...";
+                submitBt.disabled = true;
+                vscode.postMessage({
+                    command: "onClickAdd",
+                    contents: {
+                        "type": getCurrentType(),
+                    },
+                });
+            } else {
+                console.log("On click add");
+                handleAddFileOrFolderCommand({ "input": ["c:/temp/bar"] });
+            }
+        }
+
+        function handleAddFileOrFolderCommand(message) {
+            try {
+                const set = new Set();
+                const input = message.input;
+                for (const it of globalConversionInfo.input) {
+                    if (set.has(it)) {
+                        continue;
+                    }
+                    set.add(it);
+                }
+
+                for (const it of input) {
+                    if (set.has(it)) {
+                        continue;
+                    }
+                    set.add(it);
+                    globalConversionInfo.input.push(it);
+                }
+                updateFilesFromData();
+            } finally {
+                // Re-enable button after sending.
+                const submitBt = document.getElementById("addBt");
+                submitBt.disabled = false;
+                submitBt.value = "Add";
+            }
+        }
+
+        window.addEventListener("message", (event) => {
+            const message = event.data;
+
+            switch (message.command) {
+                case "addFileOrFolder":
+                    handleAddFileOrFolderCommand(message);
+                    break;
+            }
+        });
+    </script>
+
+    <body>
+        <div id="root">
+            <div>Convert third party RPA to Robocorp Robot<br /><br /></div>
+            <div>
+                Note: we strongly suggest that
+                <a href="https://robocorp.com/docs/conversion">https://robocorp.com/docs/conversion</a> is read prior to
+                starting a conversion.<br /><br />
+            </div>
+            <div>
+                Also, it's interesting that you've:<br />
+                &#8226; Finished the
+                <a href="https://robocorp.com/docs/courses">Robocorp certification courses</a>.<br />
+                &#8226; Understand the <a href="https://robocorp.com/docs/libraries">Robocorp libraries</a>.<br />
+                &#8226; Read the documentation related to
+                <a href="https://robocorp.com/docs/development-guide/qa-and-best-practices/sharing-libraries"
+                    >Sharing libraries</a
+                >.
+            </div>
+            <br />
+
+            <div id="inputBotDiv" class="divEntry">
+                <label>Input bot format:</label>
+                <br />
+                <select id="inputBotFormat" onchange="onChangedInputBotFormat()">
+                    <option value="uipath">UIPath</option>
+                    <option value="blueprism">Blue Prism</option>
+                    <option value="a360">Automation Anywhere 360</option>
+                </select>
+            </div>
+            <br />
+
+            <div id="addFilesOrFoldersDiv" class="divEntry">
+                <!-- 
+                Note: the label below should be changed to Input files or Input folders 
+                depending on the input type.
+            -->
+                <div style="display: flex">
+                    <label id="labelFilesOrFolders">Input</label>
+                    <input value="Add" style="flex-grow: 1" type="submit" id="addBt" onclick="onClickAdd()" />
+                </div>
+                <div id="inputFilesOrFolders"></div>
+            </div>
+            <br />
+
+            <div id="analysisDiv" class="divEntry">
+                <input value="Analyze" type="submit" id="analyzeBt" onclick="onClickAnalyze()" />
+                <div id="analysisResults">Analysis results:</div>
+            </div>
+            <br />
+
+            <div id="conversionDiv" class="divEntry">
+                <input value="Convert to Robot" type="submit" id="convertBt" onclick="onClickConvert()" />
+                <div id="conversionResults">Conversion results:</div>
+            </div>
+            <br />
+        </div>
+        <br />
+        <br />
+        <br />
+        <br />
+    </body>
+
+    <script>
+        const data = document.getElementById("data").innerText;
+        globalConversionInfo = JSON.parse(data);
+
+        updateFilesFromData();
+        updateLabelFilesOrFolders();
+    </script>
+</html>
