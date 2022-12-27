@@ -56,24 +56,33 @@ export async function showConvertUI(
         return;
     }
 
+
+    const wsFolders: ReadonlyArray<vscode.WorkspaceFolder> = vscode.workspace.workspaceFolders;
+    let ws: vscode.WorkspaceFolder;
+    let outputFolder = "";
+    if (wsFolders !== undefined && wsFolders.length >= 1) {
+        ws = wsFolders[0];
+        outputFolder = ws.uri.fsPath;
+    }
+
     const typeToLastOptions = new Map<RPATypes, ConversionInfoLastOptions>;
     typeToLastOptions[RPATypes.uipath] = {
         "input": [], // files or folders
         "analysisResults": "",
         "generationResults": "",
-        "outputFolder": "",
+        "outputFolder": outputFolder,
     }
     typeToLastOptions[RPATypes.blueprism] = {
         "input": [], // files or folders
         "analysisResults": "",
         "generationResults": "",
-        "outputFolder": "",
+        "outputFolder": outputFolder,
     }
     typeToLastOptions[RPATypes.a360] = {
         "input": [], // files or folders
         "analysisResults": "",
         "generationResults": "",
-        "outputFolder": "",
+        "outputFolder": outputFolder,
     }
 
     const conversionInfo: ConversionInfo = {
@@ -81,22 +90,38 @@ export async function showConvertUI(
         "input": [],
         "analysisResults": "",
         "generationResults": "",
-        "outputFolder": "",
+        "outputFolder": outputFolder,
 
         "typeToLastOptions": typeToLastOptions
     };
 
-    const wsFolders: ReadonlyArray<vscode.WorkspaceFolder> = vscode.workspace.workspaceFolders;
-    let ws: vscode.WorkspaceFolder;
-    if (wsFolders !== undefined && wsFolders.length >= 1) {
-        ws = wsFolders[0];
-        conversionInfo.outputFolder = ws.uri.fsPath;
-    }
+
 
     panel.webview.html = getWebviewContent(conversionInfo);
     panel.webview.onDidReceiveMessage(
         async (message) => {
+            let uris: vscode.Uri[];
+
             switch (message.command) {
+                case "onClickOutputFolder":
+                    const currentOutputFolder = message.currentOutputFolder;
+                    const defaultUri = vscode.Uri.file(currentOutputFolder);
+                    let outputFolder = "";
+                    try{
+                        uris = await vscode.window.showOpenDialog({
+                            "canSelectFolders": true,
+                            "canSelectFiles": false,
+                            "canSelectMany": false,
+                            "openLabel": `Select output folder`,
+                            "defaultUri": defaultUri,
+                        });
+                        if(uris && uris.length > 0){
+                            outputFolder = uris[0].fsPath;
+                        }
+                    }finally{
+                        panel.webview.postMessage({ command: "setOutputFolder", "outputFolder": outputFolder });
+                    }
+                    return;
                 case "onClickAdd":
                     let input: string[] = [];
                     try {
@@ -107,7 +132,6 @@ export async function showConvertUI(
                             vscode.window.showErrorMessage("Error: unable to handle type: " + type);
                             return;
                         }
-                        let uris: vscode.Uri[];
                         if (type === RPATypes.blueprism) {
                             // select files
                             uris = await vscode.window.showOpenDialog({

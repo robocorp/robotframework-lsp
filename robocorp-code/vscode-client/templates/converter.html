@@ -38,6 +38,14 @@
                 margin-top: 30px;
             }
 
+            #conversionDiv {
+                margin-top: 30px;
+            }
+
+            #outputFolderDiv {
+                margin-top: 20px;
+            }
+
             input {
                 color: var(--vscode-editor-foreground);
                 background-color: var(--vscode-editor-background);
@@ -152,6 +160,7 @@
                 "input": globalConversionInfo.input,
                 "analysisResults": globalConversionInfo.analysisResults,
                 "generationResults": globalConversionInfo.generationResults,
+                "outputFolder": globalConversionInfo.outputFolder,
             };
             globalConversionInfo.typeToLastOptions[globalConversionInfo.inputType] = currOptions;
         }
@@ -161,6 +170,10 @@
             globalConversionInfo.input = lastOptions.input;
             globalConversionInfo.analysisResults = lastOptions.analysisResults;
             globalConversionInfo.generationResults = lastOptions.generationResults;
+            if (lastOptions.outputFolder) {
+                // Keep the same output folder (just set it if it was already saved for the other type).
+                globalConversionInfo.outputFolder = lastOptions.outputFolder;
+            }
         }
 
         function updateFilesFromData() {
@@ -172,15 +185,20 @@
                 // const basename = it.split(/[\\/]/).pop();
                 const asBase64 = toBase64(it);
                 const html = `<div>
-            <input class="fileCheck" type="checkbox" checked="true" data-file="${asBase64}" style="display:none"/>
-            <label class="filelabel">&#8226; ${escapeHtml(
-                it
-            )} <a href="#" class="remove" onClick="onClickRemove('${asBase64}')">(X)</a></label>
-        </div>`;
+                    <input class="fileCheck" type="checkbox" checked="true" data-file="${asBase64}" style="display:none"/>
+                    <label class="filelabel">&#8226; ${escapeHtml(
+                        it
+                    )} <a href="#" class="remove" onClick="onClickRemove('${asBase64}')">(X)</a></label>
+                        </div>`;
 
                 template.innerHTML = html.trim();
                 parentElement.appendChild(template.content.firstChild);
             }
+        }
+
+        function updateOutputFolderFromData() {
+            const outputFolderText = document.getElementById("outputFolderText");
+            outputFolderText.value = globalConversionInfo.outputFolder;
         }
 
         function onClickRemove(fileAsBase64) {
@@ -199,16 +217,21 @@
 
         function updateAllFromData() {
             updateFilesFromData();
+            updateOutputFolderFromData();
             updateLabelFilesOrFoldersFromUI();
         }
 
         function updateLabelFilesOrFoldersFromUI() {
+            const addBt = document.getElementById("addBt");
             const el = document.getElementById("labelFilesOrFolders");
             const caption = getCurrentUICaption();
+
             if (isCurrentTypeEntryFolders()) {
                 el.textContent = `Input folders with ${caption} projects to be converted:`;
+                addBt.value = `Select folder(s)`;
             } else {
                 el.textContent = `Input files  with ${caption} projects to be converted:`;
+                addBt.value = `Select file(s)`;
             }
         }
 
@@ -243,9 +266,8 @@
         function onClickAdd() {
             if (vscode) {
                 // Disable button while sending.
-                const submitBt = document.getElementById("addBt");
-                submitBt.value = "Waiting for project selection...";
-                submitBt.disabled = true;
+                const addBt = document.getElementById("addBt");
+                addBt.disabled = true;
                 vscode.postMessage({
                     command: "onClickAdd",
                     contents: {
@@ -255,6 +277,39 @@
             } else {
                 console.log("On click add");
                 handleAddFileOrFolderCommand({ "input": ["c:/temp/bar"] });
+            }
+        }
+
+        function onClickOutputFolder() {
+            if (vscode) {
+                // Disable button while sending.
+                const outputFolderBt = document.getElementById("outputFolderBt");
+                outputFolderBt.disabled = true;
+                vscode.postMessage({
+                    command: "onClickOutputFolder",
+                    currentOutputFolder: globalConversionInfo.outputFolder,
+                });
+            } else {
+                console.log("On click output folder");
+                handleOutputFolderCommand({ "outputFolder": "" });
+            }
+        }
+
+        function onOutputFolderTextChanged() {
+            const outputFolderText = document.getElementById("outputFolderText");
+            const text = outputFolderText.value;
+            globalConversionInfo.outputFolder = text;
+        }
+
+        function handleOutputFolderCommand(message) {
+            try {
+                if (message.outputFolder) {
+                    globalConversionInfo.outputFolder = message.outputFolder;
+                    updateOutputFolderFromData();
+                }
+            } finally {
+                const outputFolderBt = document.getElementById("outputFolderBt");
+                outputFolderBt.disabled = false;
             }
         }
 
@@ -279,9 +334,8 @@
                 updateFilesFromData();
             } finally {
                 // Re-enable button after sending.
-                const submitBt = document.getElementById("addBt");
-                submitBt.disabled = false;
-                submitBt.value = "Add";
+                const addBt = document.getElementById("addBt");
+                addBt.disabled = false;
             }
         }
 
@@ -291,6 +345,9 @@
             switch (message.command) {
                 case "addFileOrFolder":
                     handleAddFileOrFolderCommand(message);
+                    break;
+                case "setOutputFolder":
+                    handleOutputFolderCommand(message);
                     break;
             }
         });
@@ -333,10 +390,31 @@
                 depending on the input type.
             -->
                 <div style="display: flex">
-                    <label id="labelFilesOrFolders">Input</label>
-                    <input value="Add" style="flex-grow: 1" type="submit" id="addBt" onclick="onClickAdd()" />
+                    <label id="labelFilesOrFolders" style="flex-grow: 1">Input</label>
+                    <input value="Select" type="submit" id="addBt" onclick="onClickAdd()" />
                 </div>
                 <div id="inputFilesOrFolders"></div>
+            </div>
+            <br />
+
+            <div id="outputFolderDiv" class="divEntry">
+                <label>Output folder:</label>
+                <div style="display: flex">
+                    <input
+                        value=""
+                        style="flex-grow: 1"
+                        type="text"
+                        id="outputFolderText"
+                        oninput="onOutputFolderTextChanged()"
+                    />
+                    <input
+                        value="..."
+                        style="margin-left: 5px; padding-left: 10px; padding-right: 10px"
+                        type="submit"
+                        id="outputFolderBt"
+                        onclick="onClickOutputFolder()"
+                    />
+                </div>
             </div>
             <br />
 
