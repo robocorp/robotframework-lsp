@@ -82,26 +82,34 @@
             "input": ["c:/temp/file.uipath", "c:/temp/file2.uipath"],
             "analysisResults": "",
             "generationResults": "",
+            "outputFolder": "",
             "typeToLastOptions": {
-                "input": [],
-                "analysisResults": "",
-                "generationResults": ""
+                "uipath": {
+                    "input": [],
+                    "analysisResults": "",
+                    "generationResults": "",
+                    "outputFolder": ""
+                },
+                "blueprism": {
+                    "input": [],
+                    "analysisResults": "",
+                    "generationResults": "",
+                    "outputFolder": ""
+                },
+                "a360": {
+                    "input": [],
+                    "analysisResults": "",
+                    "generationResults": "",
+                    "outputFolder": ""
+                }
             }
         }
     </script>
 
     <script type="application/javascript">
-        let globalConversionInfo = {
-            "inputType": "uipath",
-            "input": [],
-            "analysisResults": "",
-            "generationResults": "",
-            "typeToLastOptions": {
-                "input": [],
-                "analysisResults": "",
-                "generationResults": "",
-            },
-        };
+        // To be filled afterwards with the actual info (obtained from #data -- which could be a stub
+        // or the value filled by vscode).
+        let globalConversionInfo = {};
 
         function escapeHtml(unsafe) {
             return unsafe
@@ -139,11 +147,20 @@
             errorEl.style.display = "block";
         }
 
-        function saveInfoForCurrentSelection() {
-            const options = {
-                "input": getCurrentFilesOrFoldersInput(),
+        function saveInfoForCurrentDataSelection() {
+            const currOptions = {
+                "input": globalConversionInfo.input,
+                "analysisResults": globalConversionInfo.analysisResults,
+                "generationResults": globalConversionInfo.generationResults,
             };
-            globalConversionInfo.typeToLastOptions[globalConversionInfo.inputType] = {};
+            globalConversionInfo.typeToLastOptions[globalConversionInfo.inputType] = currOptions;
+        }
+
+        function restoreInfoForCurrentDataSelection() {
+            const lastOptions = globalConversionInfo.typeToLastOptions[globalConversionInfo.inputType];
+            globalConversionInfo.input = lastOptions.input;
+            globalConversionInfo.analysisResults = lastOptions.analysisResults;
+            globalConversionInfo.generationResults = lastOptions.generationResults;
         }
 
         function updateFilesFromData() {
@@ -180,9 +197,14 @@
             updateFilesFromData();
         }
 
-        function updateLabelFilesOrFolders() {
+        function updateAllFromData() {
+            updateFilesFromData();
+            updateLabelFilesOrFoldersFromUI();
+        }
+
+        function updateLabelFilesOrFoldersFromUI() {
             const el = document.getElementById("labelFilesOrFolders");
-            const caption = getCurrentCaption();
+            const caption = getCurrentUICaption();
             if (isCurrentTypeEntryFolders()) {
                 el.textContent = `Input folders with ${caption} projects to be converted:`;
             } else {
@@ -191,12 +213,14 @@
         }
 
         function onChangedInputBotFormat() {
-            saveInfoForCurrentSelection();
-            updateLabelFilesOrFolders();
+            saveInfoForCurrentDataSelection();
+            globalConversionInfo.inputType = getCurrentUIType();
+            restoreInfoForCurrentDataSelection();
+            updateAllFromData();
         }
 
         function isCurrentTypeEntryFolders() {
-            if (getCurrentType() === "blueprism") {
+            if (getCurrentUIType() === "blueprism") {
                 return false;
             }
             return true;
@@ -208,12 +232,12 @@
             "a360": "Automation Anywhere 360",
         };
 
-        function getCurrentType() {
+        function getCurrentUIType() {
             return document.getElementById("inputBotFormat").value;
         }
 
-        function getCurrentCaption() {
-            return TYPE_TO_CAPTION[getCurrentType()];
+        function getCurrentUICaption() {
+            return TYPE_TO_CAPTION[getCurrentUIType()];
         }
 
         function onClickAdd() {
@@ -225,7 +249,7 @@
                 vscode.postMessage({
                     command: "onClickAdd",
                     contents: {
-                        "type": getCurrentType(),
+                        "type": getCurrentUIType(),
                     },
                 });
             } else {
@@ -337,8 +361,6 @@
     <script>
         const data = document.getElementById("data").innerText;
         globalConversionInfo = JSON.parse(data);
-
-        updateFilesFromData();
-        updateLabelFilesOrFolders();
+        updateAllFromData();
     </script>
 </html>

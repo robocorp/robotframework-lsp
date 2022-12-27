@@ -14,9 +14,9 @@ interface ConversionInfoLastOptions {
 }
 
 enum RPATypes {
-    "uipath",
-    "blueprism",
-    "a360",
+    uipath = "uipath",
+    blueprism = "blueprism",
+    a360 = "a360",
 }
 
 const TYPE_TO_CAPTION = {
@@ -31,7 +31,7 @@ interface ConversionInfo {
     analysisResults: string;
     generationResults: string;
     outputFolder: string;
-    typeToLastOptions: ConversionInfoLastOptions;
+    typeToLastOptions: Map<RPATypes, ConversionInfoLastOptions>;
 }
 
 let panel: vscode.WebviewPanel | undefined = undefined;
@@ -56,6 +56,26 @@ export async function showConvertUI(
         return;
     }
 
+    const typeToLastOptions = new Map<RPATypes, ConversionInfoLastOptions>;
+    typeToLastOptions[RPATypes.uipath] = {
+        "input": [], // files or folders
+        "analysisResults": "",
+        "generationResults": "",
+        "outputFolder": "",
+    }
+    typeToLastOptions[RPATypes.blueprism] = {
+        "input": [], // files or folders
+        "analysisResults": "",
+        "generationResults": "",
+        "outputFolder": "",
+    }
+    typeToLastOptions[RPATypes.a360] = {
+        "input": [], // files or folders
+        "analysisResults": "",
+        "generationResults": "",
+        "outputFolder": "",
+    }
+
     const conversionInfo: ConversionInfo = {
         "inputType": RPATypes.uipath,
         "input": [],
@@ -63,12 +83,7 @@ export async function showConvertUI(
         "generationResults": "",
         "outputFolder": "",
 
-        "typeToLastOptions": {
-            "input": [], // files or folders
-            "analysisResults": "",
-            "generationResults": "",
-            "outputFolder": "",
-        },
+        "typeToLastOptions": typeToLastOptions
     };
 
     const wsFolders: ReadonlyArray<vscode.WorkspaceFolder> = vscode.workspace.workspaceFolders;
@@ -98,7 +113,7 @@ export async function showConvertUI(
                             uris = await vscode.window.showOpenDialog({
                                 "canSelectFolders": false,
                                 "canSelectFiles": true,
-                                "canSelectMany": false,
+                                "canSelectMany": true,
                                 "openLabel": `Select a ${vendor} file project to convert`,
                             });
                         } else {
@@ -106,7 +121,7 @@ export async function showConvertUI(
                             uris = await vscode.window.showOpenDialog({
                                 "canSelectFolders": true,
                                 "canSelectFiles": false,
-                                "canSelectMany": false,
+                                "canSelectMany": true,
                                 "openLabel": `Select a ${vendor} folder project to convert`,
                             });
                         }
