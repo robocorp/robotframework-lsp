@@ -11,6 +11,7 @@ import {
 import { resolveInterpreter } from "./activities";
 import { logError, OUTPUT_CHANNEL } from "./channel";
 import { handleProgressMessage } from "./progress";
+import { ActionResult, InterpreterInfo } from "./protocols";
 import { getAutosetpythonextensioninterpreter } from "./robocorpSettings";
 
 export async function autoUpdateInterpreter(docUri: Uri) {

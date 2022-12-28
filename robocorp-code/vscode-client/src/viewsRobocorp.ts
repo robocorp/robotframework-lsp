@@ -5,6 +5,7 @@ import { ROBOCORP_SUBMIT_ISSUE } from "./robocorpCommands";
 import { TREE_VIEW_ROBOCORP_CLOUD_TREE } from "./robocorpViews";
 import { getWorkspaceDescription } from "./ask";
 import { logError } from "./channel";
+import { ActionResult, IAccountInfo, IVaultInfo } from "./protocols";
 
 export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry> {
     private _onDidChangeTreeData: vscode.EventEmitter<CloudEntry | null> = new vscode.EventEmitter<CloudEntry | null>();

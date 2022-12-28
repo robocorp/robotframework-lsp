@@ -1,3 +1,10 @@
+NEXT
+-----------------------------
+
+- New UI for Conversion accelerator from third party RPA to Robocorp Robot.
+- Renamed action to `Conversion Accelerator from third party RPA to Robocorp Robot`.
+
+
 New in 0.42.0 (2022-12-22)
 -----------------------------
 

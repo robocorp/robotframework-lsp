@@ -241,8 +241,14 @@ class Dev(object):
 
         readme = os.path.join(os.path.dirname(__file__), "LICENSE.txt")
         with open(readme, "w") as f:
-            output = subprocess.check_output([rcc_location, "man", "eula"])
-            f.write(output.decode("utf-8"))
+            output = subprocess.check_output([rcc_location, "man", "license"])
+            decoded = output.decode("utf-8")
+            assert "Robocorp End User License Agreement" in decoded
+            assert (
+                "This EULA is the final, complete and exclusive agreement of the parties"
+                in decoded
+            )
+            f.write(decoded)
 
     def local_install(self):
         """

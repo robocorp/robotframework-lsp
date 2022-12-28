@@ -1,8 +1,9 @@
 import * as roboCommands from "./robocorpCommands";
-import { commands, env, window, MessageOptions } from "vscode";
+import { commands, env, window } from "vscode";
 import { listAndAskRobotSelection } from "./activities";
 import { getSelectedLocator, getSelectedRobot, LocatorEntry, RobotEntry } from "./viewsCommon";
 import { OUTPUT_CHANNEL } from "./channel";
+import { LocalRobotMetadataInfo, ActionResult } from "./protocols";
 
 export async function copySelectedToClipboard(locator?: LocatorEntry) {
     let locatorSelected: LocatorEntry | undefined = locator || (await getSelectedLocator());

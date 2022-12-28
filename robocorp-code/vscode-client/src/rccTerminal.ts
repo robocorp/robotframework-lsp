@@ -1,4 +1,4 @@
-import { commands, Progress, ProgressLocation, window } from "vscode";
+import { Progress, ProgressLocation, window } from "vscode";
 import { OUTPUT_CHANNEL } from "./channel";
 import * as pathModule from "path";
 import { listAndAskRobotSelection, resolveInterpreter } from "./activities";
@@ -6,6 +6,7 @@ import { getRccLocation } from "./rcc";
 import { mergeEnviron } from "./subprocess";
 import { getAutosetpythonextensiondisableactivateterminal } from "./robocorpSettings";
 import { disablePythonTerminalActivateEnvironment } from "./pythonExtIntegration";
+import { LocalRobotMetadataInfo, ActionResult, InterpreterInfo } from "./protocols";
 
 export async function askAndCreateRccTerminal() {
     let robot: LocalRobotMetadataInfo = await listAndAskRobotSelection(

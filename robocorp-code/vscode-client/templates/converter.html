@@ -22,7 +22,11 @@
             .divEntry {
                 display: inline-grid;
                 grid-gap: 5px;
-                width: 600px;
+                width: 800px;
+            }
+
+            pre {
+                width: 800px;
             }
 
             .filelabel {
@@ -31,6 +35,8 @@
 
             #addBt {
                 margin-left: 10px;
+                padding-left: 20px;
+                padding-right: 20px;
                 margin-top: auto;
             }
 
@@ -88,25 +94,21 @@
         {
             "inputType": "uipath",
             "input": ["c:/temp/file.uipath", "c:/temp/file2.uipath"],
-            "analysisResults": "",
             "generationResults": "",
             "outputFolder": "",
             "typeToLastOptions": {
                 "uipath": {
                     "input": [],
-                    "analysisResults": "",
                     "generationResults": "",
                     "outputFolder": ""
                 },
                 "blueprism": {
                     "input": [],
-                    "analysisResults": "",
                     "generationResults": "",
                     "outputFolder": ""
                 },
                 "a360": {
                     "input": [],
-                    "analysisResults": "",
                     "generationResults": "",
                     "outputFolder": ""
                 }
@@ -118,6 +120,7 @@
         // To be filled afterwards with the actual info (obtained from #data -- which could be a stub
         // or the value filled by vscode).
         let globalConversionInfo = {};
+        const DEBUG = false;
 
         // Helpers --------------------------------
 
@@ -150,11 +153,9 @@
             vscode = acquireVsCodeApi();
         } catch (err) {
             // ignore
-        }
-        function showError(err) {
-            const errorEl = document.getElementById("error");
-            errorEl.innerHTML = err;
-            errorEl.style.display = "block";
+            if (DEBUG) {
+                console.log("VSCode API not available.");
+            }
         }
 
         // Update UI or data functions --------------------------
@@ -162,7 +163,6 @@
         function saveInfoForCurrentDataSelection() {
             const currOptions = {
                 "input": globalConversionInfo.input,
-                "analysisResults": globalConversionInfo.analysisResults,
                 "generationResults": globalConversionInfo.generationResults,
                 "outputFolder": globalConversionInfo.outputFolder,
             };
@@ -172,12 +172,28 @@
         function restoreInfoForCurrentDataSelection() {
             const lastOptions = globalConversionInfo.typeToLastOptions[globalConversionInfo.inputType];
             globalConversionInfo.input = lastOptions.input;
-            globalConversionInfo.analysisResults = lastOptions.analysisResults;
             globalConversionInfo.generationResults = lastOptions.generationResults;
             if (lastOptions.outputFolder) {
                 // Keep the same output folder (just set it if it was already saved for the other type).
                 globalConversionInfo.outputFolder = lastOptions.outputFolder;
             }
+        }
+
+        function updateTypeFromData() {
+            const inputBotFormatSelect = document.getElementById("inputBotFormat");
+            inputBotFormatSelect.value = globalConversionInfo.inputType;
+        }
+
+        function updateConversionResultFromData() {
+            const conversionResultsDiv = document.getElementById("conversionResults");
+            let txt = globalConversionInfo.generationResults;
+            const lines = [];
+            for (let line of txt.split(/\r?\n|\r|\n/g)) {
+                if (!line.startsWith("\tat ")) {
+                    lines.push(line);
+                }
+            }
+            conversionResultsDiv.textContent = lines.join("\n");
         }
 
         function updateFilesFromData() {
@@ -206,6 +222,8 @@
         }
 
         function updateAllFromData() {
+            updateTypeFromData();
+            updateConversionResultFromData();
             updateFilesFromData();
             updateOutputFolderFromData();
             updateLabelFilesOrFoldersFromUI();
@@ -248,11 +266,28 @@
 
         // Callbacks for JS actions ------------------------------
 
+        function persistState() {
+            if (vscode) {
+                if (DEBUG) {
+                    console.log("Persist state.");
+                }
+
+                vscode.setState(globalConversionInfo);
+                vscode.postMessage({
+                    command: "persistState",
+                    contents: globalConversionInfo,
+                });
+            } else {
+                console.log("persistState");
+            }
+        }
+
         function onChangedInputBotFormat() {
             saveInfoForCurrentDataSelection();
             globalConversionInfo.inputType = getCurrentUIType();
             restoreInfoForCurrentDataSelection();
             updateAllFromData();
+            persistState();
         }
 
         function onClickAdd() {
@@ -284,6 +319,7 @@
                 }
             }
             updateFilesFromData();
+            persistState();
         }
 
         function onClickOutputFolder() {
@@ -305,15 +341,58 @@
             const outputFolderText = document.getElementById("outputFolderText");
             const text = outputFolderText.value;
             globalConversionInfo.outputFolder = text;
+            persistState();
+        }
+
+        function onClickConvert() {
+            if (vscode) {
+                // Disable button while sending.
+                const outputFolderBt = document.getElementById("outputFolderBt");
+                outputFolderBt.disabled = true;
+                const conversionResultsDiv = document.getElementById("conversionResults");
+                conversionResultsDiv.textContent = "Please wait, making analysis/conversion...";
+                vscode.postMessage({
+                    command: "onClickConvert",
+                    contents: {
+                        outputFolder: globalConversionInfo.outputFolder,
+                        inputType: globalConversionInfo.inputType,
+                        input: globalConversionInfo.input,
+                    },
+                });
+            } else {
+                console.log("On click convert");
+            }
         }
 
         // Handle messages sent from the client --------------------------
+
+        function handleConversionFinishedCommand(result) {
+            try {
+                if (!result) {
+                    globalConversionInfo.generationResults = "Error. Returned message does not have 'result'.";
+                    updateConversionResultFromData();
+                    persistState();
+                    return;
+                }
+                let message = result.message;
+                if (!message) {
+                    message = "Error. Returned message does not have 'message'.";
+                }
+                globalConversionInfo.generationResults = message;
+                updateConversionResultFromData();
+                persistState();
+            } finally {
+                const outputFolderBt = document.getElementById("outputFolderBt");
+                outputFolderBt.disabled = false;
+            }
+        }
 
         function handleOutputFolderCommand(message) {
             try {
                 if (message.outputFolder) {
                     globalConversionInfo.outputFolder = message.outputFolder;
                     updateOutputFolderFromData();
+                    persistState();
                 }
             } finally {
                 const outputFolderBt = document.getElementById("outputFolderBt");
@@ -340,6 +419,7 @@
                     globalConversionInfo.input.push(it);
                 }
                 updateFilesFromData();
+                persistState();
             } finally {
                 // Re-enable button after sending.
                 const addBt = document.getElementById("addBt");
@@ -357,6 +437,10 @@
                 case "setOutputFolder":
                     handleOutputFolderCommand(message);
                     break;
+                case "conversionFinished":
+                    handleConversionFinishedCommand(message.result);
+                    break;
+                    globalConversionInfo.generationResults = result.message;
             }
         });
     </script>
@@ -365,21 +449,23 @@
 
     <body>
         <div id="root">
-            <div>Convert third party RPA to Robocorp Robot<br /><br /></div>
+            <br />
+            <div>Conversion Accelerator from Third party RPA to Robocorp Robot<br /><br /></div>
             <div>
-                Note: we strongly suggest that
-                <a href="https://robocorp.com/docs/conversion">https://robocorp.com/docs/conversion</a> is read prior to
-                starting a conversion.<br /><br />
-            </div>
-            <div>
-                Also, it's interesting that you've:<br />
-                &#8226; Finished the
-                <a href="https://robocorp.com/docs/courses">Robocorp certification courses</a>.<br />
-                &#8226; Understand the <a href="https://robocorp.com/docs/libraries">Robocorp libraries</a>.<br />
-                &#8226; Read the documentation related to
-                <a href="https://robocorp.com/docs/development-guide/qa-and-best-practices/sharing-libraries"
-                    >Sharing libraries</a
-                >.
+                Note: before starting a conversion it's strongly suggest that you:
+                <ul>
+                    <li>
+                        Read <a href="https://robocorp.com/docs/conversion">https://robocorp.com/docs/conversion</a>.
+                    </li>
+                    <li>Finish the <a href="https://robocorp.com/docs/courses">Robocorp certification courses</a>.</li>
+                    <li>Understand the <a href="https://robocorp.com/docs/libraries">Robocorp libraries</a>.</li>
+                    <li>
+                        Read the documentation related to
+                        <a href="https://robocorp.com/docs/development-guide/qa-and-best-practices/sharing-libraries"
+                            >Sharing libraries</a
+                        >.
+                    </li>
+                </ul>
             </div>
             <br />
 
@@ -419,7 +505,7 @@
                     />
                     <input
                         value="..."
-                        style="margin-left: 5px; padding-left: 10px; padding-right: 10px"
+                        style="margin-left: 5px; padding-left: 20px; padding-right: 20px"
                         type="submit"
                         id="outputFolderBt"
                         onclick="onClickOutputFolder()"
@@ -428,15 +514,15 @@
             </div>
             <br />
 
-            <div id="analysisDiv" class="divEntry">
+            <!-- <div id="analysisDiv" class="divEntry">
                 <input value="Analyze" type="submit" id="analyzeBt" onclick="onClickAnalyze()" />
                 <div id="analysisResults">Analysis results:</div>
             </div>
-            <br />
+            <br /> -->
 
             <div id="conversionDiv" class="divEntry">
                 <input value="Convert to Robot" type="submit" id="convertBt" onclick="onClickConvert()" />
-                <div id="conversionResults">Conversion results:</div>
+                <pre id="conversionResults">Conversion results:</pre>
             </div>
             <br />
         </div>
@@ -448,7 +534,23 @@
 
     <script>
         const data = document.getElementById("data").innerText;
-        globalConversionInfo = JSON.parse(data);
+        let loadedState = false;
+        if (vscode) {
+            const state = vscode.getState();
+            if (state) {
+                loadedState = true;
+                globalConversionInfo = state;
+                if (DEBUG) {
+                    console.log("Load state from VSCode api.");
+                }
+            }
+        }
+        if (!loadedState) {
+            if (DEBUG) {
+                console.log("Load state embedded in page.");
+            }
+            globalConversionInfo = JSON.parse(data);
+        }
         updateAllFromData();
     </script>
 </html>

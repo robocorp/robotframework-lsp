@@ -144,8 +144,6 @@ import { Mutex } from "./mutex";
 import { mergeEnviron } from "./subprocess";
 import { feedback } from "./rcc";
 import { showSubmitIssueUI } from "./submitIssue";
-import { ensureConvertBundle } from "./conversion";
-import { TextDecoder } from "util";
 import { showConvertUI } from "./conversionView";
 
 interface InterpreterInfo {
@@ -339,138 +337,6 @@ async function cloudLogoutAndRefresh() {
     refreshCloudTreeView();
 }
 
-async function convertProject(context: ExtensionContext) {
-    const DEFAULT_ERROR_MSG = `
-            Could not convert project.
-            Please check the output logs for more details.
-            `;
-    const DEFAULT_ERROR_STATUS = "Error while converting project.";
-
-    const convertBundlePromise = ensureConvertBundle();
-
-    await showConvertUI(context, convertBundlePromise);
-    // try {
-    //     // let the user decide where the conversion result will be saved
-    //     const wsFolders: ReadonlyArray<WorkspaceFolder> = workspace.workspaceFolders;
-    //     let ws: WorkspaceFolder;
-    //     if (wsFolders !== undefined && wsFolders.length == 1) {
-    //         ws = wsFolders[0];
-    //     } else {
-    //         ws = await window.showWorkspaceFolderPick({
-    //             "placeHolder": "Please select the workspace folder for the conversion output",
-    //             "ignoreFocusOut": true,
-    //         });
-    //     }
-    //     if (!ws) {
-    //         // exit conversion if there is no workspace
-    //         window.showErrorMessage(
-    //             `No workspace found for the conversion output.
-    //             Please open a folder in the current window.`
-    //         );
-    //         return;
-    //     }
-    //     const destination = Uri.joinPath(ws.uri, "converted");
-
-    //     // let the user decide what type of project will be converted
-    //     const vendorMap = {
-    //         "Blue Prism": "blueprism",
-    //         "UiPath": "uipath",
-    //         "Automation Anywhere 360": "a360",
-    //     };
-    //     const items = Object.keys(vendorMap);
-    //     const selectedFormat = await window.showQuickPick(items, {
-    //         "placeHolder": `Please select the bot format`,
-    //         "canPickMany": false,
-    //         "ignoreFocusOut": true,
-    //     });
-    //     if (!selectedFormat) {
-    //         // exit conversion if there is no format selected
-    //         return;
-    //     }
-
-    //     // actual converson
-    //     const converterLocation = await convertBundlePromise;
-    //     if (!converterLocation) {
-    //         throw new Error("There was an issue downloading the converter bundle. Please try again.");
-    //     }
-    //     const converterBundle = require(converterLocation.pathToExecutable);
-
-    //     let conversionResult: ConversionResult = null;
-    //     const vendor = vendorMap[selectedFormat];
-
-    //     // let the user decide what should be converted
-    //     switch (vendor) {
-    //         case vendorMap["UiPath"]:
-    //         case vendorMap["Automation Anywhere 360"]: {
-    //             const folderToConvert: Uri[] = await window.showOpenDialog({
-    //                 "canSelectFolders": true,
-    //                 "canSelectFiles": false,
-    //                 "canSelectMany": false,
-    //                 "openLabel": `Select a ${vendor} project to convert`,
-    //             });
-    //             if (!folderToConvert || folderToConvert.length === 0) {
-    //                 return;
-    //             }
-    //             const uri = folderToConvert[0];
-    //             const options = {
-    //                 projectFolderPath: uri.fsPath,
-    //             };
-    //             conversionResult = await converterBundle.convert(vendor, undefined, options);
-    //             break;
-    //         }
-    //         case vendorMap["Blue Prism"]: {
-    //             const fileToConvert: Uri[] = await window.showOpenDialog({
-    //                 "canSelectFolders": false,
-    //                 "canSelectFiles": true,
-    //                 "canSelectMany": false,
-    //                 "openLabel": `Select a ${vendor} file to convert`,
-    //             });
-    //             if (!fileToConvert || fileToConvert.length === 0) {
-    //                 return;
-    //             }
-    //             const uri = fileToConvert[0];
-    //             const bytes = await workspace.fs.readFile(uri);
-    //             const contents = new TextDecoder("utf-8").decode(bytes);
-    //             const options = {
-    //                 objectImplFile: converterLocation.pathToConvertYaml,
-    //             };
-    //             conversionResult = await converterBundle.convert(vendor, contents, options);
-    //             break;
-    //         }
-    //         default:
-    //             throw new Error(`Unknown format ${vendor}`);
-    //     }
-
-    //     if (!converterBundle.isSuccessful(conversionResult)) {
-    //         logError(
-    //             "Error converting file to Robocorp Robot",
-    //             new Error((<ConversionFailure>conversionResult).error),
-    //             "EXT_CONVERT_PROJECT"
-    //         );
-    //         window.showErrorMessage(DEFAULT_ERROR_MSG);
-    //         OUTPUT_CHANNEL.show();
-    //         return;
-    //     }
-    //     const populate_action: ActionResult<string> = await commands.executeCommand(
-    //         "robocorp.saveConvertedProject.internal",
-    //         {
-    //             "destinationFolderURI": destination.toString(),
-    //             "conversionResult": conversionResult,
-    //             "projectSourceVendor": vendorMap[selectedFormat],
-    //         }
-    //     );
-    //     if (!populate_action.success) {
-    //         throw new Error(populate_action.message);
-    //     }
-    //     window.showInformationMessage("Project conversion succeeded, saved inside ${workspace}/converted.");
-    // } catch (err) {
-    //     logError(DEFAULT_ERROR_STATUS, err, "EXT_CONVERT_PROJECT");
-    //     window.showErrorMessage(DEFAULT_ERROR_MSG);
-    //     OUTPUT_CHANNEL.show();
-    //     return;
-    // }
-}
-
 function registerRobocorpCodeCommands(C: CommandRegistry, context: ExtensionContext) {
     C.register(ROBOCORP_GET_LANGUAGE_SERVER_PYTHON, () => getLanguageServerPython());
     C.register(ROBOCORP_GET_LANGUAGE_SERVER_PYTHON_INFO, () => getLanguageServerPythonInfo());
@@ -514,7 +380,7 @@ function registerRobocorpCodeCommands(C: CommandRegistry, context: ExtensionCont
     C.register(ROBOCORP_OPEN_FLOW_EXPLORER_TREE_SELECTION, (robot: RobotEntry) =>
         commands.executeCommand("robot.openFlowExplorer", Uri.file(robot.robot.directory).toString())
     );
-    C.register(ROBOCORP_CONVERT_PROJECT, async () => convertProject(context));
+    C.register(ROBOCORP_CONVERT_PROJECT, async () => await showConvertUI(context));
     C.register(ROBOCORP_CREATE_RCC_TERMINAL_TREE_SELECTION, (robot: RobotEntry) =>
         views.createRccTerminalTreeSelection(robot)
     );

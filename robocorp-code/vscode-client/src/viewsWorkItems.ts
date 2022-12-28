@@ -9,6 +9,7 @@ import { getCurrRobotDir, RobotSelectionTreeDataProviderBase } from "./viewsRobo
 import { resolveInterpreter } from "./activities";
 import { feedback } from "./rcc";
 import { ResourcesTreeDataProvider } from "./viewsResources";
+import { WorkItem, WorkItemsInfo, ActionResultWorkItems, InterpreterInfo, LibraryVersionInfoDict } from "./protocols";
 
 const WORK_ITEM_TEMPLATE = `[
   {

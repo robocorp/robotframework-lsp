@@ -21,6 +21,7 @@ import {
 } from "./robocorpCommands";
 import { globalCachedPythonInfo } from "./extension";
 import { disablePythonTerminalActivateEnvironment } from "./pythonExtIntegration";
+import { InterpreterInfo } from "./protocols";
 
 interface ActionResult {
     success: boolean;

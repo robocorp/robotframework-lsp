@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { OUTPUT_CHANNEL } from "./channel";
 import { InspectorType, InspectorTypes } from "./inspector";
+import { ActionResult } from "./protocols";
 import * as roboCommands from "./robocorpCommands";
 import { getSelectedRobot, LocatorEntry, RobotEntry } from "./viewsCommon";
 

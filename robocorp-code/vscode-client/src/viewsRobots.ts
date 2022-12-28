@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { OUTPUT_CHANNEL } from "./channel";
 import { uriExists } from "./files";
+import { LocalRobotMetadataInfo, ActionResult } from "./protocols";
 import * as roboCommands from "./robocorpCommands";
 import { basename, getSelectedRobot, RobotEntry, RobotEntryType } from "./viewsCommon";
 

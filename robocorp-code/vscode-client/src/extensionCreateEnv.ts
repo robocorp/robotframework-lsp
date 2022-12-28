@@ -20,6 +20,7 @@ import { Timing } from "./time";
 import { execFilePromise, ExecFileReturn } from "./subprocess";
 import { sleep } from "./time";
 import { getProceedwithlongpathsdisabled, setProceedwithlongpathsdisabled } from "./robocorpSettings";
+import { InterpreterInfo } from "./protocols";
 
 export async function runAsAdmin(rccLocation: string, args: string[], env) {
     try {

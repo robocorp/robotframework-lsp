@@ -1,5 +1,6 @@
 import * as roboCommands from "./robocorpCommands";
 import { commands, QuickPickItem, window } from "vscode";
+import { WorkspaceInfo, IVaultInfo, ListWorkspacesActionResult } from "./protocols";
 
 export interface QuickPickItemWithAction extends QuickPickItem {
     action: any;

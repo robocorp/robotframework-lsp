@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { LocalRobotMetadataInfo } from "./protocols";
 import { getLocatorSingleTreeSelection } from "./viewsResources";
 
 /**

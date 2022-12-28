@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 import { cloudLogin } from "./activities";
 import { selectWorkspace } from "./ask";
 import { feedback } from "./rcc";
+import { ActionResult } from "./protocols";
 
 export async function connectVault() {
     let isLoginNeededActionResult: ActionResult<boolean> = await vscode.commands.executeCommand(

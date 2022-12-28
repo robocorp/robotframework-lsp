@@ -25,6 +25,18 @@ import {
 } from "./ask";
 import { feedback, feedbackRobocorpCodeError, getEndpointUrl } from "./rcc";
 import { refreshCloudTreeView } from "./viewsRobocorp";
+import {
+    ActionResult,
+    ActionResultWorkItems,
+    InterpreterInfo,
+    IVaultInfo,
+    LibraryVersionInfoDict,
+    LocalRobotMetadataInfo,
+    PackageInfo,
+    RobotTemplate,
+    WorkItemsInfo,
+    WorkspaceInfo,
+} from "./protocols";
 
 export async function cloudLogin(): Promise<boolean> {
     let loggedIn: boolean;

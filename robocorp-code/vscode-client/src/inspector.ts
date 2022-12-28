@@ -8,6 +8,7 @@ import { execFilePromise, ExecFileReturn, mergeEnviron } from "./subprocess";
 import { OUTPUT_CHANNEL } from "./channel";
 import { ChildProcess } from "child_process";
 import { feedback } from "./rcc";
+import { LocalRobotMetadataInfo } from "./protocols";
 
 export enum InspectorType {
     Browser = "browser",

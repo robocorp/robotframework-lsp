@@ -6,6 +6,7 @@ import { readFileSync } from "fs";
 import * as vscode from "vscode";
 import { logError } from "./channel";
 import { getExtensionRelativeFile } from "./files";
+import { ActionResult, IAccountInfo } from "./protocols";
 import { CollectedLogs, collectIssueLogs, submitIssue } from "./rcc";
 import { ROBOCORP_GET_LINKED_ACCOUNT_INFO_INTERNAL } from "./robocorpCommands";
 

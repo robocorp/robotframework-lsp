@@ -2,6 +2,7 @@ import * as assert from "assert";
 import * as path from "path";
 import * as vscode from "vscode";
 import { WorkspaceFolder } from "vscode";
+import { ActionResult, LocalRobotMetadataInfo } from "../../protocols";
 import { ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL } from "../../robocorpCommands";
 import { sleep } from "../../time";
 
