@@ -9,8 +9,9 @@ dependencies:
 
     # https://pip.pypa.io/en/stable/news/
     - pip=22.1.2
+
     - pywin32=303
 
     - pip:
-          - robocorp-inspector==0.8.3
+          - robocorp-inspector==0.8.4
           - robotframework==4.1
