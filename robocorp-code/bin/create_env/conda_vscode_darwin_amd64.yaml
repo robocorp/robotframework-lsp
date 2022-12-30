@@ -4,15 +4,9 @@ channels:
     - conda-forge
 
 dependencies:
-    - python=3.9.13
-    - openssl>=3.0.7
-
-    # https://pip.pypa.io/en/stable/news/
-    - pip=22.1.2
-
-    # https://anaconda.org/conda-forge/python.app/files
-    - python.app=1.3
-
+    - python=3.9.13 # https://pyreadiness.org/3.9/
+    - pip=22.1.2 # https://pip.pypa.io/en/stable/news/
+    - python.app=1.3 # https://anaconda.org/conda-forge/python.app/files
     - pip:
-          - robocorp-inspector==0.8.4
-          - robotframework==4.1
+          - robocorp-inspector==0.8.4 # https://github.com/robocorp/inspector/blob/master/CHANGELOG.md
+          - robotframework==4.1 # https://github.com/robotframework/robotframework/blob/master/doc/releasenotes/rf-4.1.rst
