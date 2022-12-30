@@ -7,7 +7,6 @@ dependencies:
     - python=3.9.13 # https://pyreadiness.org/3.9/
     - pip=22.1.2 # https://pip.pypa.io/en/stable/news/
     - pyside2=5.15.7 # https://wiki.qt.io/Qt_for_Python
-    - openssl=1.1.1s # https://www.openssl.org/news/cl111.txt
     - pip:
           - robocorp-inspector==0.8.4 # https://github.com/robocorp/inspector/blob/master/CHANGELOG.md
           - robotframework==4.1 # https://github.com/robotframework/robotframework/blob/master/doc/releasenotes/rf-4.1.rst
