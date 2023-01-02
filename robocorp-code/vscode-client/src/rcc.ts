@@ -616,22 +616,24 @@ async function enableHolotreeShared(rccLocation: string, env) {
             OUTPUT_CHANNEL.appendLine("Enabled shared holotree");
         } catch (err) {
             if (!GLOBAL_STATE.get(IGNORE_HOLOTREE_SHARED_ENABLE_FAILURE)) {
-                const RETRY_AS_ADMIN = "Retry as admin";
-                const IGNORE = "Ignore (don't ask again)";
-                let response = await window.showWarningMessage(
-                    "It was not possible to enable the holotree shared mode. How do you want to proceed?",
-                    {
-                        "modal": true,
-                        "detail":
-                            "It is Ok to ignore if environments won't be shared with other users in this machine.",
-                    },
-                    RETRY_AS_ADMIN,
-                    IGNORE
-                );
-                if (response === RETRY_AS_ADMIN) {
-                    await runAsAdmin(rccLocation, ["holotree", "shared", "--enable", "--once"], env);
-                } else if (response === IGNORE) {
-                    await GLOBAL_STATE.update(IGNORE_HOLOTREE_SHARED_ENABLE_FAILURE, true);
+                if (process.platform == "win32") {
+                    const RETRY_AS_ADMIN = "Retry as admin";
+                    const IGNORE = "Ignore (don't ask again)";
+                    let response = await window.showWarningMessage(
+                        "It was not possible to enable the holotree shared mode. How do you want to proceed?",
+                        {
+                            "modal": true,
+                            "detail":
+                                "It is Ok to ignore if environments won't be shared with other users in this machine.",
+                        },
+                        RETRY_AS_ADMIN,
+                        IGNORE
+                    );
+                    if (response === RETRY_AS_ADMIN) {
+                        await runAsAdmin(rccLocation, ["holotree", "shared", "--enable", "--once"], env);
+                    } else if (response === IGNORE) {
+                        await GLOBAL_STATE.update(IGNORE_HOLOTREE_SHARED_ENABLE_FAILURE, true);
+                    }
                 }
             }
         }
