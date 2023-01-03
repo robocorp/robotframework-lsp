@@ -280,67 +280,106 @@ export async function convertAndSaveResults(
                 outputRelativePath: join(nextBasename, "api"),
             });
 
-            rpaConversionCommands.push({
-                vendor: Format.AAV11,
-                command: CommandType.Convert,
-                projects: projects,
-                onProgress: undefined,
-                tempFolder: join(nextBasename, "temp"),
-                outputRelativePath: join(nextBasename, "conversion"),
-            });
+            for (const it of opts.input) {
+                rpaConversionCommands.push({
+                    vendor: Format.AAV11,
+                    command: CommandType.Convert,
+                    projects: [it],
+                    onProgress: undefined,
+                    tempFolder: join(nextBasename, "temp"),
+                    outputRelativePath: join(nextBasename, "conversion", basename(it)),
+                });
+            }
             break;
     }
-    const results: ConversionResult[] = [];
 
-    for (const command of rpaConversionCommands) {
-        const conversionResult: ConversionResult = await conversionMain(converterBundle, command);
-        if (!isSuccessful(conversionResult)) {
-            const message = (<ConversionFailure>conversionResult).error;
-            logError("Error converting file to Robocorp Robot", new Error(message), "EXT_CONVERT_PROJECT");
+    return await window.withProgress(
+        {
+            location: ProgressLocation.Notification,
+            title: `${RPA_TYPE_TO_CAPTION[opts.inputType]} conversion`,
+            cancellable: true,
+        },
+
+        async (progress: Progress<{ message?: string; increment?: number }>, token: CancellationToken) => {
+            const COMMAND_TO_LABEL = {
+                "Generate": "Generate API",
+                "Convert": "Convert",
+                "Analyse": "Analyse",
+            };
+            // If we got here, things worked, let's write it to the filesystem.
+            const outputDirsWrittenTo = new Set<string>();
+
+            const results: ConversionResult[] = [];
+            const steps: number = rpaConversionCommands.length;
+            let incrementStep: number = 0;
+            let currStep: number = 0;
+
+            for (const command of rpaConversionCommands) {
+                currStep += 1;
+                progress.report({
+                    message: `Step (${currStep}/${steps}): ${COMMAND_TO_LABEL[command.command]}`,
+                    increment: incrementStep,
+                });
+                incrementStep = 100 / steps;
+                // Give the UI a chance to show the progress.
+                await new Promise((r) => setTimeout(r, 5));
+
+                const conversionResult: ConversionResult = await conversionMain(converterBundle, command);
+                if (!isSuccessful(conversionResult)) {
+                    const message = (<ConversionFailure>conversionResult).error;
+                    logError("Error converting file to Robocorp Robot", new Error(message), "EXT_CONVERT_PROJECT");
+                    return {
+                        "success": false,
+                        "message": message,
+                    };
+                }
+                conversionResult.outputDir = join(opts.outputFolder, command.outputRelativePath);
+                results.push(conversionResult);
+
+                if (token.isCancellationRequested) {
+                    return {
+                        "success": false,
+                        "message": "Operation cancelled.",
+                    };
+                }
+            }
+
+            for (const result of results) {
+                const okResult: ConversionSuccess = <ConversionSuccess>result;
+                const files = okResult?.files;
+
+                await makeDirs(result.outputDir);
+                outputDirsWrittenTo.add(result.outputDir);
+                if (files && files.length > 0) {
+                    for (const f of files) {
+                        await writeToFile(join(result.outputDir, f.filename), f.content);
+                    }
+                }
+                const images = okResult?.images;
+                if (images && images.length > 0) {
+                    for (const f of images) {
+                        await writeToFile(join(result.outputDir, f.filename), f.content);
+                    }
+                }
+
+                if (okResult.report) {
+                    await writeToFile(join(result.outputDir, okResult.report.filename), okResult.report.content);
+                }
+            }
+
+            progress.report({ increment: incrementStep });
+
+            const outputDirsWrittenToStr = [];
+            for (const s of outputDirsWrittenTo) {
+                outputDirsWrittenToStr.push(s);
+            }
+            const d: Date = new Date();
             return {
                 "success": false,
-                "message": message,
+                "message":
+                    `Conversion succeeded.\n\nFinished: ${d.toISOString()}.\n\nWritten to directories:\n\n` +
+                    outputDirsWrittenToStr.join("\n"),
             };
         }
-        conversionResult.outputDir = join(opts.outputFolder, command.outputRelativePath);
-        results.push(conversionResult);
-    }
-
-    // If we got here, things worked, let's write it to the filesystem.
-    const outputDirsWrittenTo = new Set<string>();
-    for (const result of results) {
-        const okResult: ConversionSuccess = <ConversionSuccess>result;
-        const files = okResult?.files;
-
-        await makeDirs(result.outputDir);
-        outputDirsWrittenTo.add(result.outputDir);
-        if (files && files.length > 0) {
-            for (const f of files) {
-                await writeToFile(join(result.outputDir, f.filename), f.content);
-            }
-        }
-        const images = okResult?.images;
-        if (images && images.length > 0) {
-            for (const f of images) {
-                await writeToFile(join(result.outputDir, f.filename), f.content);
-            }
-        }
-
-        if (okResult.report) {
-            await writeToFile(join(result.outputDir, okResult.report.filename), okResult.report.content);
-        }
-    }
-
-    const outputDirsWrittenToStr = [];
-    for (const s of outputDirsWrittenTo) {
-        outputDirsWrittenToStr.push(s);
-    }
-
-    const d: Date = new Date();
-    return {
-        "success": false,
-        "message":
-            `Conversion succeeded.\n\nFinished: ${d.toISOString()}.\n\nWritten to directories:\n\n` +
-            outputDirsWrittenToStr.join("\n"),
-    };
+    );
 }
