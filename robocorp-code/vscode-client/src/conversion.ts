@@ -35,12 +35,14 @@ export enum RPATypes {
     uipath = "uipath",
     blueprism = "blueprism",
     a360 = "a360",
+    aav11 = "aav11",
 }
 
 export const RPA_TYPE_TO_CAPTION = {
     "uipath": "UiPath",
     "blueprism": "Blue Prism",
     "a360": "Automation Anywhere 360",
+    "aav11": "Automation Anywhere 11",
 };
 
 export async function conversionMain(converterBundle, command: RPAConversionCommand): Promise<ConversionResult> {
@@ -255,6 +257,37 @@ export async function convertAndSaveResults(
                     outputRelativePath: join(nextBasename, basename(it)),
                 });
             }
+            break;
+        case RPATypes.aav11:
+            nextBasename = await findNextBasenameIn(opts.outputFolder, "converted-aav11");
+            const projects: Array<string> = opts.input;
+
+            rpaConversionCommands.push({
+                vendor: Format.AAV11,
+                command: CommandType.Analyse,
+                projects: projects,
+                onProgress: undefined,
+                tempFolder: join(nextBasename, "temp"),
+                outputRelativePath: join(nextBasename, "analysis"),
+            });
+
+            rpaConversionCommands.push({
+                vendor: Format.AAV11,
+                command: CommandType.Generate,
+                projects: projects,
+                onProgress: undefined,
+                tempFolder: join(nextBasename, "temp"),
+                outputRelativePath: join(nextBasename, "api"),
+            });
+
+            rpaConversionCommands.push({
+                vendor: Format.AAV11,
+                command: CommandType.Convert,
+                projects: projects,
+                onProgress: undefined,
+                tempFolder: join(nextBasename, "temp"),
+                outputRelativePath: join(nextBasename, "conversion"),
+            });
             break;
     }
     const results: ConversionResult[] = [];

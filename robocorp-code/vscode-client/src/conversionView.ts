@@ -59,24 +59,20 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
     }
 
     const typeToLastOptions = new Map<RPATypes, ConversionInfoLastOptions>();
-    typeToLastOptions[RPATypes.uipath] = {
-        "input": [], // files or folders
-        "generationResults": "",
-        "outputFolder": outputFolder,
-        "apiFolder": apiFolder,
-    };
-    typeToLastOptions[RPATypes.blueprism] = {
-        "input": [], // files or folders
-        "generationResults": "",
-        "outputFolder": outputFolder,
-        "apiFolder": apiFolder,
-    };
-    typeToLastOptions[RPATypes.a360] = {
-        "input": [], // files or folders
-        "generationResults": "",
-        "outputFolder": outputFolder,
-        "apiFolder": apiFolder,
-    };
+
+    function generateDefaultOptions(): ConversionInfoLastOptions {
+        return {
+            "input": [], // files for BP, folders for others.
+            "generationResults": "",
+            "outputFolder": outputFolder,
+            "apiFolder": apiFolder,
+        };
+    }
+
+    typeToLastOptions[RPATypes.uipath] = generateDefaultOptions();
+    typeToLastOptions[RPATypes.blueprism] = generateDefaultOptions();
+    typeToLastOptions[RPATypes.a360] = generateDefaultOptions();
+    typeToLastOptions[RPATypes.aav11] = generateDefaultOptions();
 
     let conversionInfo: ConversionInfo = {
         "inputType": RPATypes.uipath,
@@ -97,7 +93,12 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
         if (conversionInfo.apiFolder === undefined) {
             conversionInfo.apiFolder = "";
         }
-        for (const [key, val] of typeToLastOptions.entries()) {
+
+        if (conversionInfo.typeToLastOptions[RPATypes.aav11] === undefined) {
+            conversionInfo.typeToLastOptions[RPATypes.aav11] = generateDefaultOptions();
+        }
+
+        for (const [key, val] of Object.entries(conversionInfo.typeToLastOptions)) {
             if (val.apiFolder === undefined) {
                 val.apiFolder = "";
             }
@@ -206,7 +207,8 @@ async function onClickAdd(contents: { type: RPATypes }): Promise<string[]> {
         vscode.window.showErrorMessage("Error: unable to handle type: " + type);
         return input;
     }
-    if (type === RPATypes.blueprism) {
+
+    if (type === RPATypes.blueprism || type === RPATypes.aav11) {
         // select files
         uris = await vscode.window.showOpenDialog({
             "canSelectFolders": false,

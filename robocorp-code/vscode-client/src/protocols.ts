@@ -199,10 +199,22 @@ export interface BlueprismConvertCommand {
     outputRelativePath: string; // Used internally in Robocorp Code
 }
 
+export interface AAV11ConvertCommand {
+    command: CommandType.Convert;
+    vendor: Format.AAV11;
+    /* path to aapkg files */
+    projects: Array<string>;
+    tempFolder: string;
+    onProgress: Progress;
+    outputRelativePath: string; // Used internally in Robocorp Code
+}
+
 export interface AAV11GenerateCommand {
     command: CommandType.Generate;
     vendor: Format.AAV11;
-    folders: Array<string>;
+    /* path to aapkg files */
+    projects: Array<string>;
+    tempFolder: string;
     onProgress: Progress;
     outputRelativePath: string; // Used internally in Robocorp Code
 }
@@ -210,7 +222,9 @@ export interface AAV11GenerateCommand {
 export interface AAV11AnalyseCommand {
     command: CommandType.Analyse;
     vendor: Format.AAV11;
-    folders: Array<string>;
+    /* path to aapkg files */
+    projects: Array<string>;
+    tempFolder: string;
     onProgress: Progress;
     outputRelativePath: string; // Used internally in Robocorp Code
 }
@@ -218,6 +232,6 @@ export interface AAV11AnalyseCommand {
 export type BlueprismCommand = BlueprismConvertCommand;
 export type UiPathCommand = UiPathConvertCommand;
 export type A360Command = A360ConvertCommand;
-export type AAV11Command = AAV11GenerateCommand | AAV11AnalyseCommand;
+export type AAV11Command = AAV11ConvertCommand | AAV11GenerateCommand | AAV11AnalyseCommand;
 
 export type RPAConversionCommand = BlueprismCommand | UiPathCommand | A360Command | AAV11Command;

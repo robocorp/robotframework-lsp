@@ -120,6 +120,12 @@
                     "outputFolder": "",
                     "apiFolder": ""
                 }
+                "aav11": {
+                    "input": [],
+                    "generationResults": "",
+                    "outputFolder": "",
+                    "apiFolder": ""
+                }
             }
         }
     </script>
@@ -270,10 +276,12 @@
             "uipath": "UiPath",
             "blueprism": "Blue Prism",
             "a360": "Automation Anywhere 360",
+            "aav11": "Automation Anywhere 11",
         };
 
         function isCurrentTypeEntryFolders() {
-            if (getCurrentUIType() === "blueprism") {
+            const curr = getCurrentUIType();
+            if (curr === "blueprism" || curr == "aav11") {
                 return false;
             }
             return true;
@@ -541,6 +549,7 @@
                     <option value="uipath">UIPath</option>
                     <option value="blueprism">Blue Prism</option>
                     <option value="a360">Automation Anywhere 360</option>
+                    <option value="aav11">Automation Anywhere 11</option>
                 </select>
             </div>
 
