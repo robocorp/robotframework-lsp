@@ -130,7 +130,7 @@ def get_json_contents():
         },
         "devDependencies": {
             "@types/mocha": "^2.2.32",
-            "@types/node": "^13.0.00",
+            "@types/node": "^15.0.00",
             "@types/vscode": "1.65.0",
             "@types/adm-zip": "^0.5.0",
             "@types/rimraf": "^3.0.2",

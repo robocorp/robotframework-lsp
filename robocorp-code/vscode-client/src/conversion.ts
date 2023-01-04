@@ -15,7 +15,7 @@ import {
 } from "./files";
 import { download } from "./rcc";
 import { basename, join } from "path";
-import { logError } from "./channel";
+import { logError, OUTPUT_CHANNEL } from "./channel";
 import { TextDecoder } from "util";
 import {
     CommandType,
@@ -26,6 +26,7 @@ import {
     isSuccessful,
     RPAConversionCommand,
 } from "./protocols";
+import { rmdirSync, rmSync } from "fs";
 
 export const CONVERSION_STATUS = {
     alreadyCheckedVersion: false,
@@ -194,192 +195,241 @@ export async function convertAndSaveResults(
     // /output_folder/converted-uipath-1/analysis
     // /output_folder/converted-uipath-1/generated
 
-    let nextBasename: string;
-    switch (opts.inputType) {
-        case RPATypes.uipath:
-            nextBasename = await findNextBasenameIn(opts.outputFolder, "converted-uipath");
-            for (const it of opts.input) {
-                rpaConversionCommands.push({
-                    vendor: Format.UIPATH,
-                    command: CommandType.Convert,
-                    projectFolderPath: it,
-                    onProgress: undefined,
-                    outputRelativePath: join(nextBasename, basename(it)),
-                });
-            }
-            break;
-        case RPATypes.blueprism:
-            nextBasename = await findNextBasenameIn(opts.outputFolder, "converted-blueprism");
-            for (const it of opts.input) {
-                let contents = "";
-                try {
-                    if (!(await fileExists(it))) {
+    const cleanups = [];
+
+    try {
+        let nextBasename: string;
+        switch (opts.inputType) {
+            case RPATypes.uipath:
+                nextBasename = await findNextBasenameIn(opts.outputFolder, "converted-uipath");
+                for (const it of opts.input) {
+                    rpaConversionCommands.push({
+                        vendor: Format.UIPATH,
+                        command: CommandType.Convert,
+                        projectFolderPath: it,
+                        onProgress: undefined,
+                        outputRelativePath: join(nextBasename, basename(it)),
+                    });
+                }
+                break;
+            case RPATypes.blueprism:
+                nextBasename = await findNextBasenameIn(opts.outputFolder, "converted-blueprism");
+                for (const it of opts.input) {
+                    let contents = "";
+                    try {
+                        if (!(await fileExists(it))) {
+                            return {
+                                "success": false,
+                                "message": `${it} does not exist.`,
+                            };
+                        }
+                        const uri = Uri.file(it);
+                        const bytes = await workspace.fs.readFile(uri);
+                        contents = new TextDecoder("utf-8").decode(bytes);
+                    } catch (err) {
+                        const message = "Unable to read: " + it + "\n" + err.message;
+                        logError(message, err, "ERROR_READ_BLUEPRISM_FILE");
                         return {
                             "success": false,
-                            "message": `${it} does not exist.`,
+                            "message": message,
                         };
                     }
-                    const uri = Uri.file(it);
-                    const bytes = await workspace.fs.readFile(uri);
-                    contents = new TextDecoder("utf-8").decode(bytes);
-                } catch (err) {
-                    const message = "Unable to read: " + it + "\n" + err.message;
-                    logError(message, err, "ERROR_READ_BLUEPRISM_FILE");
-                    return {
-                        "success": false,
-                        "message": message,
-                    };
+
+                    rpaConversionCommands.push({
+                        vendor: Format.BLUEPRISM,
+                        command: CommandType.Convert,
+                        releaseFileContent: contents,
+                        // This isn't added right now because it requires more work (both in explaining to the user as well
+                        // as the implementation).
+                        // We should collect all the keywords from files in a folder and then merge it with what's available
+                        // at converterLocation.pathToConvertYaml and create a new yaml to pass on to the converter.
+                        // apiImplementationFolderPath: opts.apiFolder,
+                        apiImplementationFolderPath: converterLocation.pathToConvertYaml,
+                        onProgress: undefined,
+                        outputRelativePath: join(nextBasename, basename(it)),
+                    });
                 }
+                break;
+            case RPATypes.a360:
+                nextBasename = await findNextBasenameIn(opts.outputFolder, "converted-a360");
+                for (const it of opts.input) {
+                    rpaConversionCommands.push({
+                        vendor: Format.A360,
+                        command: CommandType.Convert,
+                        projectFolderPath: it,
+                        onProgress: undefined,
+                        outputRelativePath: join(nextBasename, basename(it)),
+                    });
+                }
+                break;
+            case RPATypes.aav11:
+                nextBasename = await findNextBasenameIn(opts.outputFolder, "converted-aav11");
+                const projects: Array<string> = opts.input;
+                const tempDir: string = join(opts.outputFolder, nextBasename, "temp");
+                await makeDirs(tempDir);
 
-                rpaConversionCommands.push({
-                    vendor: Format.BLUEPRISM,
-                    command: CommandType.Convert,
-                    releaseFileContent: contents,
-                    // This isn't added right now because it requires more work (both in explaining to the user as well
-                    // as the implementation).
-                    // We should collect all the keywords from files in a folder and then merge it with what's available
-                    // at converterLocation.pathToConvertYaml and create a new yaml to pass on to the converter.
-                    // apiImplementationFolderPath: opts.apiFolder,
-                    apiImplementationFolderPath: converterLocation.pathToConvertYaml,
-                    onProgress: undefined,
-                    outputRelativePath: join(nextBasename, basename(it)),
+                cleanups.push(() => {
+                    try {
+                        rmSync(tempDir, { recursive: true, force: true, maxRetries: 1 });
+                    } catch (err) {
+                        OUTPUT_CHANNEL.appendLine("Error deleting: " + tempDir + ": " + err.message);
+                    }
                 });
-            }
-            break;
-        case RPATypes.a360:
-            nextBasename = await findNextBasenameIn(opts.outputFolder, "converted-a360");
-            for (const it of opts.input) {
-                rpaConversionCommands.push({
-                    vendor: Format.A360,
-                    command: CommandType.Convert,
-                    projectFolderPath: it,
-                    onProgress: undefined,
-                    outputRelativePath: join(nextBasename, basename(it)),
-                });
-            }
-            break;
-        case RPATypes.aav11:
-            nextBasename = await findNextBasenameIn(opts.outputFolder, "converted-aav11");
-            const projects: Array<string> = opts.input;
 
-            rpaConversionCommands.push({
-                vendor: Format.AAV11,
-                command: CommandType.Analyse,
-                projects: projects,
-                onProgress: undefined,
-                tempFolder: join(nextBasename, "temp"),
-                outputRelativePath: join(nextBasename, "analysis"),
-            });
-
-            rpaConversionCommands.push({
-                vendor: Format.AAV11,
-                command: CommandType.Generate,
-                projects: projects,
-                onProgress: undefined,
-                tempFolder: join(nextBasename, "temp"),
-                outputRelativePath: join(nextBasename, "api"),
-            });
-
-            for (const it of opts.input) {
                 rpaConversionCommands.push({
                     vendor: Format.AAV11,
-                    command: CommandType.Convert,
-                    projects: [it],
+                    command: CommandType.Analyse,
+                    projects: projects,
                     onProgress: undefined,
-                    tempFolder: join(nextBasename, "temp"),
-                    outputRelativePath: join(nextBasename, "conversion", basename(it)),
+                    tempFolder: tempDir,
+                    outputRelativePath: join(nextBasename, "analysis"),
                 });
-            }
-            break;
-    }
 
-    return await window.withProgress(
-        {
-            location: ProgressLocation.Notification,
-            title: `${RPA_TYPE_TO_CAPTION[opts.inputType]} conversion`,
-            cancellable: true,
-        },
-
-        async (progress: Progress<{ message?: string; increment?: number }>, token: CancellationToken) => {
-            const COMMAND_TO_LABEL = {
-                "Generate": "Generate API",
-                "Convert": "Convert",
-                "Analyse": "Analyse",
-            };
-            // If we got here, things worked, let's write it to the filesystem.
-            const outputDirsWrittenTo = new Set<string>();
-
-            const results: ConversionResult[] = [];
-            const steps: number = rpaConversionCommands.length;
-            let incrementStep: number = 0;
-            let currStep: number = 0;
-
-            for (const command of rpaConversionCommands) {
-                currStep += 1;
-                progress.report({
-                    message: `Step (${currStep}/${steps}): ${COMMAND_TO_LABEL[command.command]}`,
-                    increment: incrementStep,
+                rpaConversionCommands.push({
+                    vendor: Format.AAV11,
+                    command: CommandType.Generate,
+                    projects: projects,
+                    onProgress: undefined,
+                    tempFolder: tempDir,
+                    outputRelativePath: join(nextBasename, "api"),
                 });
-                incrementStep = 100 / steps;
-                // Give the UI a chance to show the progress.
-                await new Promise((r) => setTimeout(r, 5));
 
-                const conversionResult: ConversionResult = await conversionMain(converterBundle, command);
-                if (!isSuccessful(conversionResult)) {
-                    const message = (<ConversionFailure>conversionResult).error;
-                    logError("Error converting file to Robocorp Robot", new Error(message), "EXT_CONVERT_PROJECT");
-                    return {
-                        "success": false,
-                        "message": message,
-                    };
+                for (const it of opts.input) {
+                    rpaConversionCommands.push({
+                        vendor: Format.AAV11,
+                        command: CommandType.Convert,
+                        projects: [it],
+                        onProgress: undefined,
+                        tempFolder: tempDir,
+                        outputRelativePath: join(nextBasename, "conversion", basename(it)),
+                    });
                 }
-                conversionResult.outputDir = join(opts.outputFolder, command.outputRelativePath);
-                results.push(conversionResult);
-
-                if (token.isCancellationRequested) {
-                    return {
-                        "success": false,
-                        "message": "Operation cancelled.",
-                    };
-                }
-            }
-
-            for (const result of results) {
-                const okResult: ConversionSuccess = <ConversionSuccess>result;
-                const files = okResult?.files;
-
-                await makeDirs(result.outputDir);
-                outputDirsWrittenTo.add(result.outputDir);
-                if (files && files.length > 0) {
-                    for (const f of files) {
-                        await writeToFile(join(result.outputDir, f.filename), f.content);
-                    }
-                }
-                const images = okResult?.images;
-                if (images && images.length > 0) {
-                    for (const f of images) {
-                        await writeToFile(join(result.outputDir, f.filename), f.content);
-                    }
-                }
-
-                if (okResult.report) {
-                    await writeToFile(join(result.outputDir, okResult.report.filename), okResult.report.content);
-                }
-            }
-
-            progress.report({ increment: incrementStep });
-
-            const outputDirsWrittenToStr = [];
-            for (const s of outputDirsWrittenTo) {
-                outputDirsWrittenToStr.push(s);
-            }
-            const d: Date = new Date();
-            return {
-                "success": false,
-                "message":
-                    `Conversion succeeded.\n\nFinished: ${d.toISOString()}.\n\nWritten to directories:\n\n` +
-                    outputDirsWrittenToStr.join("\n"),
-            };
+                break;
         }
-    );
+
+        return await window.withProgress(
+            {
+                location: ProgressLocation.Notification,
+                title: `${RPA_TYPE_TO_CAPTION[opts.inputType]} conversion`,
+                cancellable: true,
+            },
+
+            async (progress: Progress<{ message?: string; increment?: number }>, token: CancellationToken) => {
+                const COMMAND_TO_LABEL = {
+                    "Generate": "Generate API",
+                    "Convert": "Convert",
+                    "Analyse": "Analyse",
+                };
+                // If we got here, things worked, let's write it to the filesystem.
+                const outputDirsWrittenTo = new Set<string>();
+
+                const results: ConversionResult[] = [];
+                const steps: number = rpaConversionCommands.length;
+                let incrementStep: number = 0;
+                let currStep: number = 0;
+
+                for (const command of rpaConversionCommands) {
+                    currStep += 1;
+                    progress.report({
+                        message: `Step (${currStep}/${steps}): ${COMMAND_TO_LABEL[command.command]}`,
+                        increment: incrementStep,
+                    });
+                    incrementStep = 100 / steps;
+                    // Give the UI a chance to show the progress.
+                    await new Promise((r) => setTimeout(r, 5));
+
+                    const conversionResult: ConversionResult = await conversionMain(converterBundle, command);
+                    if (!isSuccessful(conversionResult)) {
+                        const message = (<ConversionFailure>conversionResult).error;
+                        logError("Error converting file to Robocorp Robot", new Error(message), "EXT_CONVERT_PROJECT");
+                        return {
+                            "success": false,
+                            "message": message,
+                        };
+                    }
+                    conversionResult.outputDir = join(opts.outputFolder, command.outputRelativePath);
+                    results.push(conversionResult);
+
+                    if (token.isCancellationRequested) {
+                        return {
+                            "success": false,
+                            "message": "Operation cancelled.",
+                        };
+                    }
+                }
+
+                const filesWritten: string[] = [];
+
+                for (const result of results) {
+                    const okResult: ConversionSuccess = <ConversionSuccess>result;
+                    const files = okResult?.files;
+
+                    await makeDirs(result.outputDir);
+                    outputDirsWrittenTo.add(result.outputDir);
+                    if (files && files.length > 0) {
+                        for (const f of files) {
+                            filesWritten.push(join(result.outputDir, f.filename));
+                            await writeToFile(join(result.outputDir, f.filename), f.content);
+                        }
+                    }
+                    const images = okResult?.images;
+                    if (images && images.length > 0) {
+                        for (const f of images) {
+                            filesWritten.push(join(result.outputDir, f.filename));
+                            await writeToFile(join(result.outputDir, f.filename), f.content);
+                        }
+                    }
+
+                    if (okResult.report) {
+                        filesWritten.push(join(result.outputDir, okResult.report.filename));
+                        await writeToFile(join(result.outputDir, okResult.report.filename), okResult.report.content);
+                    }
+                }
+
+                progress.report({ increment: incrementStep });
+
+                const outputDirsWrittenToStr: string[] = [];
+                for (const s of outputDirsWrittenTo) {
+                    outputDirsWrittenToStr.push(s);
+                }
+                const d: Date = new Date();
+
+                const readmePath = join(opts.outputFolder, nextBasename, "README.md");
+                await writeToFile(
+                    readmePath,
+                    `Generated: ${d.toISOString()}
+----------------------------------
+
+Sources
+----------------------------------
+${opts.input.join("\n")}
+
+Created Directories
+----------------------------------
+${outputDirsWrittenToStr.join("\n")}
+
+Created Files
+----------------------------------
+${filesWritten.join("\n")}
+`
+                );
+
+                while (cleanups.length > 0) {
+                    const c = cleanups.pop();
+                    c.call();
+                }
+
+                return {
+                    "success": false,
+                    "message":
+                        `Conversion succeeded.\n\nFinished: ${d.toISOString()}.\n\nWritten to directories:\n\n` +
+                        outputDirsWrittenToStr.join("\n"),
+                };
+            }
+        );
+    } finally {
+        for (const c of cleanups) {
+            c.call();
+        }
+    }
 }

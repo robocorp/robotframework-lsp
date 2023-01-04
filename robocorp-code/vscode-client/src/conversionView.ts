@@ -3,6 +3,7 @@
  * https://code.visualstudio.com/api/extension-guides/webview
  */
 import { readFileSync } from "fs";
+import { dirname } from "path";
 import * as vscode from "vscode";
 import { logError } from "./channel";
 import { ensureConvertBundle, convertAndSaveResults, RPATypes, RPA_TYPE_TO_CAPTION } from "./conversion";
@@ -25,12 +26,15 @@ interface ConversionInfo {
 }
 
 let panel: vscode.WebviewPanel | undefined = undefined;
+let globalState: vscode.Memento = undefined;
 
 export async function showConvertUI(context: vscode.ExtensionContext) {
     const convertBundlePromise: Promise<{
         pathToExecutable: string;
         pathToConvertYaml?: string;
     }> = ensureConvertBundle();
+
+    globalState = context.globalState;
 
     if (!panel) {
         panel = vscode.window.createWebviewPanel(
@@ -199,6 +203,10 @@ async function onClickApiFolder(currentApiFolder: any): Promise<string> {
 }
 
 async function onClickAdd(contents: { type: RPATypes }): Promise<string[]> {
+    const MEMENTO_KEY = `lastFolderFor${contents.type}`;
+    const stored: string | undefined = globalState.get(MEMENTO_KEY);
+    const lastFolder: vscode.Uri | undefined = stored ? vscode.Uri.file(stored) : undefined;
+
     let uris: vscode.Uri[];
     let input: string[] = [];
     const type: RPATypes = contents["type"];
@@ -215,7 +223,14 @@ async function onClickAdd(contents: { type: RPATypes }): Promise<string[]> {
             "canSelectFiles": true,
             "canSelectMany": true,
             "openLabel": `Select a ${vendor} file project to convert`,
+            "defaultUri": lastFolder,
         });
+        if (uris && uris.length > 0) {
+            globalState.update(MEMENTO_KEY, dirname(uris[0].fsPath));
+            for (const uri of uris) {
+                input.push(uri.fsPath);
+            }
+        }
     } else {
         // select folders
         uris = await vscode.window.showOpenDialog({
@@ -223,11 +238,13 @@ async function onClickAdd(contents: { type: RPATypes }): Promise<string[]> {
             "canSelectFiles": false,
             "canSelectMany": true,
             "openLabel": `Select a ${vendor} folder project to convert`,
+            "defaultUri": lastFolder,
         });
-    }
-    if (uris && uris.length > 0) {
-        for (const uri of uris) {
-            input.push(uri.fsPath);
+        if (uris && uris.length > 0) {
+            globalState.update(MEMENTO_KEY, uris[0].fsPath);
+            for (const uri of uris) {
+                input.push(uri.fsPath);
+            }
         }
     }
     return input;

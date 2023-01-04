@@ -348,7 +348,9 @@
                 for (const it of globalConversionInfo.input) {
                     console.log("Item found: " + it);
                 }
+                return;
             }
+            clearResultsAndUpdateUI();
             updateUIFilesFromData();
             persistState();
         }
@@ -448,6 +450,7 @@
         function handleOutputFolderCommand(message) {
             try {
                 if (message.outputFolder) {
+                    clearResultsAndUpdateUI();
                     globalConversionInfo.outputFolder = message.outputFolder;
                     updateUIOutputFolderFromData();
                     persistState();
@@ -461,6 +464,7 @@
         function handleApiFolderCommand(message) {
             try {
                 if (message.apiFolder) {
+                    clearResultsAndUpdateUI();
                     globalConversionInfo.apiFolder = message.apiFolder;
                     updateUIApiFolderFromData();
                     persistState();
@@ -471,26 +475,34 @@
             }
         }
 
+        function clearResultsAndUpdateUI() {
+            globalConversionInfo.generationResults = "";
+            updateUIConversionResultFromData();
+        }
+
         function handleAddFileOrFolderCommand(message) {
             try {
-                const set = new Set();
-                const input = message.input;
-                for (const it of globalConversionInfo.input) {
-                    if (set.has(it)) {
-                        continue;
+                if (message.input && message.input.length > 0) {
+                    clearResultsAndUpdateUI();
+                    const set = new Set();
+                    const input = message.input;
+                    for (const it of globalConversionInfo.input) {
+                        if (set.has(it)) {
+                            continue;
+                        }
+                        set.add(it);
                     }
-                    set.add(it);
-                }
 
-                for (const it of input) {
-                    if (set.has(it)) {
-                        continue;
+                    for (const it of input) {
+                        if (set.has(it)) {
+                            continue;
+                        }
+                        set.add(it);
+                        globalConversionInfo.input.push(it);
                     }
-                    set.add(it);
-                    globalConversionInfo.input.push(it);
+                    updateUIFilesFromData();
+                    persistState();
                 }
-                updateUIFilesFromData();
-                persistState();
             } finally {
                 // Re-enable button after sending.
                 const addBt = document.getElementById("addBt");
