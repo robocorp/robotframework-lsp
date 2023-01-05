@@ -3,7 +3,7 @@ import os
 import sys
 from typing import Optional
 
-USE_TIMEOUTS = True
+USE_TIMEOUTS: bool = True
 if "GITHUB_WORKFLOW" not in os.environ:
     if "pydevd" in sys.modules:
         USE_TIMEOUTS = False

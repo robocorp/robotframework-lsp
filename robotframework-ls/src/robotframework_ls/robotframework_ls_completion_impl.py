@@ -9,7 +9,6 @@ from robocorp_ls_core.protocols import (
     IIdMessageMatcher,
 )
 from robocorp_ls_core.robotframework_log import get_logger
-from robotframework_ls.constants import DEFAULT_COMPLETIONS_TIMEOUT
 from robocorp_ls_core.lsp import CompletionItemTypedDict
 
 
@@ -51,6 +50,8 @@ class _RobotFrameworkLsCompletionImpl(object):
         monitor: IMonitor,
     ) -> list:
         from robocorp_ls_core.client_base import wait_for_message_matchers
+        from robotframework_ls.ls_timeouts import get_timeout
+        from robotframework_ls.ls_timeouts import TimeoutReason
 
         ls = self._weak_robot_framework_ls()
         if not ls:
@@ -67,6 +68,9 @@ class _RobotFrameworkLsCompletionImpl(object):
             log.critical("Unable to find document (%s) for completions." % (doc_uri,))
             return []
 
+        config = ls.config
+        completions_timeout = get_timeout(config, TimeoutReason.completion)
+
         completions = []
 
         # Asynchronous completion.
@@ -77,7 +81,7 @@ class _RobotFrameworkLsCompletionImpl(object):
             message_matchers,
             monitor,
             rf_api_client.request_cancel,
-            DEFAULT_COMPLETIONS_TIMEOUT,
+            completions_timeout,
         )
         for message_matcher in accepted_message_matchers:
             msg = message_matcher.msg

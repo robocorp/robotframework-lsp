@@ -214,6 +214,36 @@ SETTINGS = {
         "default": True,
         "description": "Defines whether a message should be shown at each keyword caller when a keyword fails.",
     },
+    "robot.timeout.use": {
+        "type": "boolean",
+        "default": True,
+        "description": "Determines whether timeouts should be used or not in the language server (consider disabling timeouts on really slow machines).",
+    },
+    "robot.timeout.general": {
+        "type": "number",
+        "default": 20,
+        "description": "This is the timeout used for most requests in the language server. Set to 0 to disable it.",
+    },
+    "robot.timeout.completions": {
+        "type": "number",
+        "default": 12,
+        "description": "This is the timeout used for code completion requests. Set to 0 to disable it.",
+    },
+    "robot.timeout.codeFormatting": {
+        "type": "number",
+        "default": 20,
+        "description": "This is the timeout used for code formatting requests. Set to 0 to disable it.",
+    },
+    "robot.timeout.collectDocsTimeout": {
+        "type": "number",
+        "default": 60,
+        "description": "This is the timeout used for collecting documentation to show in the ROBOT DOCUMENTATION view. Set to 0 to disable it.",
+    },
+    "robot.timeout.listTestsTimeout": {
+        "type": "number",
+        "default": 40,
+        "description": "This is the timeout used for listing the tests from a robot file. Set to 0 to disable it.",
+    },
 }
 
 

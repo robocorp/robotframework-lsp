@@ -9,11 +9,6 @@ from robocorp_ls_core.basic import (
 )
 import os
 import time
-from robotframework_ls.constants import (
-    DEFAULT_COMPLETIONS_TIMEOUT,
-    DEFAULT_COLLECT_DOCS_TIMEOUT,
-    DEFAULT_LIST_TESTS_TIMEOUT,
-)
 from robocorp_ls_core.robotframework_log import get_logger
 from typing import Any, Optional, Dict, Sequence, Set, ContextManager, Union
 from robocorp_ls_core.protocols import (
@@ -26,6 +21,7 @@ from robocorp_ls_core.protocols import (
     IProgressReporter,
     ActionResultDict,
     IFuture,
+    Sentinel,
 )
 from pathlib import Path
 from robotframework_ls.ep_providers import (
@@ -570,6 +566,9 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     def _collect_robot_documentation(
         self, opts
     ) -> Union[ActionResultDict, "partial[Any]"]:
+        from robotframework_ls.ls_timeouts import get_timeout
+        from robotframework_ls.ls_timeouts import TimeoutReason
+
         uri = opts.get("uri")
         if not uri:
             return dict(success=False, message="uri not provided", result=None)
@@ -589,11 +588,12 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         rf_api_client = self._server_manager.get_others_api_client(uri)
         if rf_api_client is not None:
+            timeout = get_timeout(self.config, TimeoutReason.collect_docs_timeout)
             func = partial(
                 self._threaded_api_request_no_doc,
                 rf_api_client,
                 "request_collect_robot_documentation",
-                __timeout__=DEFAULT_COLLECT_DOCS_TIMEOUT,
+                __timeout__=timeout,
                 doc_uri=uri,
                 library_name=library_name,
                 line=line,
@@ -905,16 +905,20 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
     @command_dispatcher("robot.listTests")
     def _list_tests(self, *arguments):
+        from robotframework_ls.ls_timeouts import get_timeout
+        from robotframework_ls.ls_timeouts import TimeoutReason
+
         doc_uri = arguments[0]["uri"]
 
         rf_api_client = self._server_manager.get_others_api_client(doc_uri)
         if rf_api_client is not None:
+            timeout = get_timeout(self.config, TimeoutReason.list_tests_timeout)
             func = partial(
                 self._threaded_api_request_no_doc,
                 rf_api_client,
                 "request_list_tests",
                 doc_uri=doc_uri,
-                __timeout__=DEFAULT_LIST_TESTS_TIMEOUT,
+                __timeout__=timeout,
             )
             func = require_monitor(func)
             return func
@@ -957,6 +961,9 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
     def m_text_document__formatting(
         self, textDocument=None, options=None
     ) -> Optional[list]:
+        from robotframework_ls.ls_timeouts import get_timeout
+        from robotframework_ls.ls_timeouts import TimeoutReason
+
         doc_uri = textDocument["uri"]
 
         source_format_rf_api_client = self._server_manager.get_others_api_client(
@@ -974,7 +981,8 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
                 "Error requesting code formatting (message_matcher==None)."
             )
         curtime = time.time()
-        maxtime = curtime + DEFAULT_COMPLETIONS_TIMEOUT
+        config = self.config
+        maxtime = curtime + get_timeout(config, TimeoutReason.code_formatting)
 
         # i.e.: wait X seconds for the code format and bail out if we
         # can't get it.
@@ -1084,12 +1092,14 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         request_method_name: str,
         doc_uri: str,
         monitor: IMonitor,
-        __timeout__=DEFAULT_COMPLETIONS_TIMEOUT,
+        __timeout__=Sentinel.USE_DEFAULT_TIMEOUT,
         __log__=False,
         __convert_result__=None,
         **kwargs,
     ):
         from robocorp_ls_core.client_base import wait_for_message_matcher
+        from robotframework_ls.ls_timeouts import get_timeout
+        from robotframework_ls.ls_timeouts import TimeoutReason
 
         func = getattr(rf_api_client, request_method_name)
 
@@ -1113,6 +1123,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             log.debug("Message matcher for %s returned None.", request_method_name)
             return None
 
+        __timeout__ = get_timeout(self.config, TimeoutReason.general, __timeout__)
         if wait_for_message_matcher(
             message_matcher,
             rf_api_client.request_cancel,
@@ -1141,11 +1152,13 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         rf_api_client: IRobotFrameworkApiClient,
         request_method_name: str,
         monitor: Optional[IMonitor],
-        __timeout__=DEFAULT_COMPLETIONS_TIMEOUT,
+        __timeout__=Sentinel.USE_DEFAULT_TIMEOUT,
         __convert_result__=None,
         **kwargs,
     ):
         from robocorp_ls_core.client_base import wait_for_message_matcher
+        from robotframework_ls.ls_timeouts import TimeoutReason
+        from robotframework_ls.ls_timeouts import get_timeout
 
         func = getattr(rf_api_client, request_method_name)
 
@@ -1154,6 +1167,8 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         if message_matcher is None:
             log.debug("Message matcher for %s returned None.", request_method_name)
             return None
+
+        __timeout__ = get_timeout(self.config, TimeoutReason.general, __timeout__)
 
         if wait_for_message_matcher(
             message_matcher,

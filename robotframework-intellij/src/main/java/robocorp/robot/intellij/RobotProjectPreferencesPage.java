@@ -54,6 +54,12 @@ class RobotProjectPreferencesComponent {
     private final JBTextField robotWorkspaceSymbolsOnlyForOpenDocs = new JBTextField();
     private final JBTextField robotQuickFixKeywordTemplate = new JBTextField();
     private final JBTextField robotLanguage = new JBTextField();
+    private final JBTextField robotTimeoutUse = new JBTextField();
+    private final JBTextField robotTimeoutGeneral = new JBTextField();
+    private final JBTextField robotTimeoutCompletions = new JBTextField();
+    private final JBTextField robotTimeoutCodeFormatting = new JBTextField();
+    private final JBTextField robotTimeoutCollectDocsTimeout = new JBTextField();
+    private final JBTextField robotTimeoutListTestsTimeout = new JBTextField();
 
     public RobotProjectPreferencesComponent() {
         panel = FormBuilder.createFormBuilder()
@@ -125,6 +131,18 @@ class RobotProjectPreferencesComponent {
                 .addComponent(createJTextArea("The template to be used for keyword creation in quick fixes.\n"))
                 .addLabeledComponent(new JBLabel("Language"), robotLanguage, 1, false)
                 .addComponent(createJTextArea("Language(s) to be used in Robot Framework\n(passed as the --language argument for robot when launching).\nNote: expected format: JSON Array\n"))
+                .addLabeledComponent(new JBLabel("Timeout Use"), robotTimeoutUse, 1, false)
+                .addComponent(createJTextArea("Determines whether timeouts should be used or not in the language server\n(consider disabling timeouts on really slow machines).\nNote: expected 'true' or 'false'\n"))
+                .addLabeledComponent(new JBLabel("Timeout General"), robotTimeoutGeneral, 1, false)
+                .addComponent(createJTextArea("This is the timeout used for most requests in the language server. Set to 0 to disable it.\n"))
+                .addLabeledComponent(new JBLabel("Timeout Completions"), robotTimeoutCompletions, 1, false)
+                .addComponent(createJTextArea("This is the timeout used for code completion requests. Set to 0 to disable it.\n"))
+                .addLabeledComponent(new JBLabel("Timeout Code Formatting"), robotTimeoutCodeFormatting, 1, false)
+                .addComponent(createJTextArea("This is the timeout used for code formatting requests. Set to 0 to disable it.\n"))
+                .addLabeledComponent(new JBLabel("Timeout Collect Docs Timeout"), robotTimeoutCollectDocsTimeout, 1, false)
+                .addComponent(createJTextArea("This is the timeout used for collecting documentation to show in the ROBOT DOCUMENTATION view. Set\nto 0 to disable it.\n"))
+                .addLabeledComponent(new JBLabel("Timeout List Tests Timeout"), robotTimeoutListTestsTimeout, 1, false)
+                .addComponent(createJTextArea("This is the timeout used for listing the tests from a robot file. Set to 0 to disable it.\n"))
                 
                 .addComponentFillVertically(new JPanel(), 0)
                 .getPanel();
@@ -455,6 +473,60 @@ class RobotProjectPreferencesComponent {
         robotLanguage.setText(newText);
     }
     
+    @NotNull
+    public String getRobotTimeoutUse() {
+        return robotTimeoutUse.getText();
+    }
+
+    public void setRobotTimeoutUse (@NotNull String newText) {
+        robotTimeoutUse.setText(newText);
+    }
+    
+    @NotNull
+    public String getRobotTimeoutGeneral() {
+        return robotTimeoutGeneral.getText();
+    }
+
+    public void setRobotTimeoutGeneral (@NotNull String newText) {
+        robotTimeoutGeneral.setText(newText);
+    }
+    
+    @NotNull
+    public String getRobotTimeoutCompletions() {
+        return robotTimeoutCompletions.getText();
+    }
+
+    public void setRobotTimeoutCompletions (@NotNull String newText) {
+        robotTimeoutCompletions.setText(newText);
+    }
+    
+    @NotNull
+    public String getRobotTimeoutCodeFormatting() {
+        return robotTimeoutCodeFormatting.getText();
+    }
+
+    public void setRobotTimeoutCodeFormatting (@NotNull String newText) {
+        robotTimeoutCodeFormatting.setText(newText);
+    }
+    
+    @NotNull
+    public String getRobotTimeoutCollectDocsTimeout() {
+        return robotTimeoutCollectDocsTimeout.getText();
+    }
+
+    public void setRobotTimeoutCollectDocsTimeout (@NotNull String newText) {
+        robotTimeoutCollectDocsTimeout.setText(newText);
+    }
+    
+    @NotNull
+    public String getRobotTimeoutListTestsTimeout() {
+        return robotTimeoutListTestsTimeout.getText();
+    }
+
+    public void setRobotTimeoutListTestsTimeout (@NotNull String newText) {
+        robotTimeoutListTestsTimeout.setText(newText);
+    }
+    
 
 }
 
@@ -633,6 +705,30 @@ public class RobotProjectPreferencesPage implements Configurable {
             return true;
         }
         
+        if(!settings.getRobotTimeoutUse().equals(component.getRobotTimeoutUse())){
+            return true;
+        }
+        
+        if(!settings.getRobotTimeoutGeneral().equals(component.getRobotTimeoutGeneral())){
+            return true;
+        }
+        
+        if(!settings.getRobotTimeoutCompletions().equals(component.getRobotTimeoutCompletions())){
+            return true;
+        }
+        
+        if(!settings.getRobotTimeoutCodeFormatting().equals(component.getRobotTimeoutCodeFormatting())){
+            return true;
+        }
+        
+        if(!settings.getRobotTimeoutCollectDocsTimeout().equals(component.getRobotTimeoutCollectDocsTimeout())){
+            return true;
+        }
+        
+        if(!settings.getRobotTimeoutListTestsTimeout().equals(component.getRobotTimeoutListTestsTimeout())){
+            return true;
+        }
+        
         return false;
     }
 
@@ -679,6 +775,12 @@ public class RobotProjectPreferencesPage implements Configurable {
         component.setRobotWorkspaceSymbolsOnlyForOpenDocs(settings.getRobotWorkspaceSymbolsOnlyForOpenDocs());
         component.setRobotQuickFixKeywordTemplate(settings.getRobotQuickFixKeywordTemplate());
         component.setRobotLanguage(settings.getRobotLanguage());
+        component.setRobotTimeoutUse(settings.getRobotTimeoutUse());
+        component.setRobotTimeoutGeneral(settings.getRobotTimeoutGeneral());
+        component.setRobotTimeoutCompletions(settings.getRobotTimeoutCompletions());
+        component.setRobotTimeoutCodeFormatting(settings.getRobotTimeoutCodeFormatting());
+        component.setRobotTimeoutCollectDocsTimeout(settings.getRobotTimeoutCollectDocsTimeout());
+        component.setRobotTimeoutListTestsTimeout(settings.getRobotTimeoutListTestsTimeout());
     }
 
     @Override
@@ -827,6 +929,30 @@ public class RobotProjectPreferencesPage implements Configurable {
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Language:\n" + s);
         }
+        s = settings.validateRobotTimeoutUse(component.getRobotTimeoutUse());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Timeout Use:\n" + s);
+        }
+        s = settings.validateRobotTimeoutGeneral(component.getRobotTimeoutGeneral());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Timeout General:\n" + s);
+        }
+        s = settings.validateRobotTimeoutCompletions(component.getRobotTimeoutCompletions());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Timeout Completions:\n" + s);
+        }
+        s = settings.validateRobotTimeoutCodeFormatting(component.getRobotTimeoutCodeFormatting());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Timeout Code Formatting:\n" + s);
+        }
+        s = settings.validateRobotTimeoutCollectDocsTimeout(component.getRobotTimeoutCollectDocsTimeout());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Timeout Collect Docs Timeout:\n" + s);
+        }
+        s = settings.validateRobotTimeoutListTestsTimeout(component.getRobotTimeoutListTestsTimeout());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Timeout List Tests Timeout:\n" + s);
+        }
         
         settings.setRobotLanguageServerPython(component.getRobotLanguageServerPython());
         settings.setRobotLanguageServerArgs(component.getRobotLanguageServerArgs());
@@ -862,5 +988,11 @@ public class RobotProjectPreferencesPage implements Configurable {
         settings.setRobotWorkspaceSymbolsOnlyForOpenDocs(component.getRobotWorkspaceSymbolsOnlyForOpenDocs());
         settings.setRobotQuickFixKeywordTemplate(component.getRobotQuickFixKeywordTemplate());
         settings.setRobotLanguage(component.getRobotLanguage());
+        settings.setRobotTimeoutUse(component.getRobotTimeoutUse());
+        settings.setRobotTimeoutGeneral(component.getRobotTimeoutGeneral());
+        settings.setRobotTimeoutCompletions(component.getRobotTimeoutCompletions());
+        settings.setRobotTimeoutCodeFormatting(component.getRobotTimeoutCodeFormatting());
+        settings.setRobotTimeoutCollectDocsTimeout(component.getRobotTimeoutCollectDocsTimeout());
+        settings.setRobotTimeoutListTestsTimeout(component.getRobotTimeoutListTestsTimeout());
     }
 }
