@@ -1,4 +1,4 @@
-NEXT
+New in 0.43.0 (2023-01-05)
 -----------------------------
 
 - New UI for Conversion accelerator from third party RPA to Robocorp Robot.
