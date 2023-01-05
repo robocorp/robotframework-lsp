@@ -112,6 +112,31 @@ _SNIPPETS_RF5 = {
         "body": [r"WHILE<sp>${1:expression}", "    $0", "END"],
         "description": "Snippet of a WHILE statement",
     },
+    "WHILE STATEMENT UNLIMITED": {
+        "prefix": "WHILE",
+        "body": [r"WHILE<sp>${1:expression}<sp>limit=NONE", "    $0", "END"],
+        "description": "Snippet of a WHILE statement with limit=NONE",
+    },
+    "CONTINUE": {
+        "prefix": "CONTINUE",
+        "body": ["CONTINUE"],
+        "description": "Snippet for CONTINUE",
+    },
+    "BREAK": {
+        "prefix": "BREAK",
+        "body": ["BREAK"],
+        "description": "Snippet for BREAK",
+    },
+    "RETURN": {
+        "prefix": "RETURN",
+        "body": ["RETURN"],
+        "description": "Snippet for RETURN",
+    },
+    "ELSE": {
+        "prefix": "ELSE",
+        "body": ["ELSE"],
+        "description": "Snippet for ELSE",
+    },
 }
 
 _SNIPPETS_SORTED = None

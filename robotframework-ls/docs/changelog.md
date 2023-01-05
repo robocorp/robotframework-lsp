@@ -1,3 +1,11 @@
+NEXT
+-----------------------------
+
+### New features
+
+- New snippet completions for WHILE without limit, CONTINUE, BREAK, RETURN, ELSE. [#856](https://github.com/robocorp/robotframework-lsp/issues/856)
+
+
 New in 1.7.3 (2022-12-16)
 -----------------------------
 

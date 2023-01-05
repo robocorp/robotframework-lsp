@@ -1,4 +1,23 @@
 - deprecated: false
+  documentation: 'Snippet for CONTINUE
+
+
+    CONTINUE'
+  insertText: CONTINUE
+  insertTextFormat: 2
+  kind: 15
+  label: CONTINUE
+  preselect: false
+  textEdit:
+    newText: CONTINUE
+    range:
+      end:
+        character: 1
+        line: 0
+      start:
+        character: 0
+        line: 0
+- deprecated: false
   documentation: "Snippet of a FOR IN ENUMERATE loop.\n\nA for loop that iterates\
     \ over a list of values and assigns the iteration index to the first and the value\
     \ to the second variable per iteration.\n\nFOR  ${${1:index}}  ${${2:element}}\
@@ -49,6 +68,25 @@
   preselect: false
   textEdit:
     newText: "IF  ${${1:var1}} == ${${1:var2}}\n    $0\nEND"
+    range:
+      end:
+        character: 1
+        line: 0
+      start:
+        character: 0
+        line: 0
+- deprecated: false
+  documentation: 'Snippet for RETURN
+
+
+    RETURN'
+  insertText: RETURN
+  insertTextFormat: 2
+  kind: 15
+  label: RETURN
+  preselect: false
+  textEdit:
+    newText: RETURN
     range:
       end:
         character: 1
