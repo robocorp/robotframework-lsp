@@ -146,7 +146,7 @@ function getBaseAsZipBasename() {
     } else {
         // Linux
         if (process.arch === "x64") {
-            basename = "8336ba8b457c5acf_linux_amd64.zip";
+            basename = "f6203c4c6abbadb5_linux_amd64.zip";
         } else {
             throw new Error("Currently only Linux amd64 is supported.");
         }
