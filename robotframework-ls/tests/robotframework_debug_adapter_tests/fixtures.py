@@ -282,14 +282,30 @@ class _DebuggerAPI(object):
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ContinueArguments
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ContinueResponse
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import ContinuedEvent
 
         arguments = ContinueArguments(thread_id)
         self.write(ContinueRequest(arguments))
         expected = [ContinueResponse]
+        expected.extend(additional_accepted)
+
         if accept_terminated:
             expected.append(TerminatedEvent)
-        expected.extend(additional_accepted)
-        return self.read(expect_class=tuple(expected))
+            expected.append(ContinuedEvent)
+
+            continued_response = None
+            terminated_event = None
+            while continued_response is None or terminated_event is None:
+                msg = self.read(expect_class=tuple(expected))
+                if isinstance(msg, ContinueResponse):
+                    continued_response = msg
+                elif isinstance(msg, TerminatedEvent):
+                    terminated_event = msg
+
+            return continued_response
+        else:
+            msg = self.read(expect_class=tuple(expected))
+            return msg
 
     def launch(
         self,
