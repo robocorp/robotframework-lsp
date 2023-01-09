@@ -137,7 +137,7 @@ import {
 import { installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
 import { connectVault, disconnectVault } from "./vault";
-import { getLanguageServerPythonInfoUncached } from "./extensionCreateEnv";
+import { CACHE_KEY_LAST_WORKED, getLanguageServerPythonInfoUncached } from "./extensionCreateEnv";
 import { registerDebugger } from "./debugger";
 import { clearRCCEnvironments, clearRobocorpCodeCaches, computeEnvsToCollect } from "./clear";
 import { Mutex } from "./mutex";
@@ -740,6 +740,8 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
         // may not be available.
         OUTPUT_CHANNEL.appendLine("Waiting for Robocorp Code (python) language server to finish activating...");
         await langServer.onReady();
+        // If it started properly, mark that it worked.
+        GLOBAL_STATE.update(CACHE_KEY_LAST_WORKED, true);
         OUTPUT_CHANNEL.appendLine(
             "Took: " + startLsTiming.getTotalElapsedAsStr() + " to initialize Robocorp Code Language Server."
         );
@@ -769,15 +771,31 @@ async function getLanguageServerPython(): Promise<string | undefined> {
     return info.pythonExe;
 }
 
+// Helper to avoid 2 asyncs starting up the process to get the pyhon info.
+let globalGetLanguageServerPythonInfoUncachedPromise: Promise<InterpreterInfo | undefined>;
+
 export async function getLanguageServerPythonInfo(): Promise<InterpreterInfo | undefined> {
     if (globalCachedPythonInfo) {
         return globalCachedPythonInfo;
     }
-    let cachedPythonInfo = await getLanguageServerPythonInfoUncached();
-    if (!cachedPythonInfo) {
-        return undefined; // Unable to get it.
+
+    if (globalGetLanguageServerPythonInfoUncachedPromise !== undefined) {
+        return await globalGetLanguageServerPythonInfoUncachedPromise;
     }
-    // Ok, we got it (cache that info).
-    globalCachedPythonInfo = cachedPythonInfo;
+
+    try {
+        globalGetLanguageServerPythonInfoUncachedPromise = getLanguageServerPythonInfoUncached();
+
+        let cachedPythonInfo: InterpreterInfo | undefined;
+        cachedPythonInfo = await globalGetLanguageServerPythonInfoUncachedPromise;
+        if (!cachedPythonInfo) {
+            return undefined; // Unable to get it.
+        }
+        // Ok, we got it (cache that info).
+        globalCachedPythonInfo = cachedPythonInfo;
+    } finally {
+        globalGetLanguageServerPythonInfoUncachedPromise = undefined;
+    }
+
     return globalCachedPythonInfo;
 }

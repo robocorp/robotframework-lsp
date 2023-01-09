@@ -10,7 +10,7 @@ import { logError, OUTPUT_CHANNEL } from "./channel";
 import { Timing, sleep } from "./time";
 import { execFilePromise, ExecFileReturn, mergeEnviron } from "./subprocess";
 import * as roboConfig from "./robocorpSettings";
-import { runAsAdmin } from "./extensionCreateEnv";
+import { runAsAdminWin32 } from "./extensionCreateEnv";
 import { getProceedwithlongpathsdisabled } from "./robocorpSettings";
 import { GLOBAL_STATE } from "./extension";
 
@@ -420,12 +420,11 @@ export async function runConfigDiagnostics(
                 "\nStdout:\n" +
                 configureLongpathsOutput.stdout +
                 "\nStderr:\n" +
-                configureLongpathsOutput.stderr +
-                "\nTook " +
-                timing.getTotalElapsedAsStr() +
-                " to obtain diagnostics."
+                configureLongpathsOutput.stderr
         );
         return undefined;
+    } finally {
+        OUTPUT_CHANNEL.appendLine("\nTook " + timing.getTotalElapsedAsStr() + " to obtain diagnostics.");
     }
 }
 
@@ -630,7 +629,7 @@ async function enableHolotreeShared(rccLocation: string, env) {
                         IGNORE
                     );
                     if (response === RETRY_AS_ADMIN) {
-                        await runAsAdmin(rccLocation, ["holotree", "shared", "--enable", "--once"], env);
+                        await runAsAdminWin32(rccLocation, ["holotree", "shared", "--enable", "--once"], env);
                     } else if (response === IGNORE) {
                         await GLOBAL_STATE.update(IGNORE_HOLOTREE_SHARED_ENABLE_FAILURE, true);
                     }
@@ -666,12 +665,11 @@ async function initHolotree(rccLocation: string, env): Promise<boolean> {
  */
 export async function collectBaseEnv(
     condaFilePath: string,
+    robotCondaHash: string,
     robocorpHome: string | undefined,
     rccDiagnostics: RCCDiagnostics
 ): Promise<IEnvInfo | undefined> {
-    const text: string = (await fs.promises.readFile(condaFilePath, "utf-8")).replace(/(?:\r\n|\r)/g, "\n");
-    const hash = crypto.createHash("sha256").update(text, "utf8").digest("hex");
-    let spaceName = "vscode-base-v01-" + hash.substring(0, 6);
+    let spaceName = "vscode-base-v01-" + robotCondaHash.substring(0, 6);
 
     let robocorpCodePath = path.join(robocorpHome, ".robocorp_code");
     let spaceInfoPath = path.join(robocorpCodePath, spaceName);
@@ -743,19 +741,6 @@ export async function collectBaseEnv(
         }
     }
 
-    // If the robot is located in a directory that has '/devdata/env.json', we must automatically
-    // add the -e /path/to/devdata/env.json.
-
-    let robotDirName = pathModule.dirname(condaFilePath);
-    let envFilename = pathModule.join(robotDirName, "devdata", "env.json");
-    let args = ["holotree", "variables", "--space", spaceName, "--json", condaFilePath];
-    if (await fileExists(envFilename)) {
-        args.push("-e");
-        args.push(envFilename);
-    }
-    args.push("--controller");
-    args.push("RobocorpCode");
-
     let envArray = undefined;
     try {
         if (fs.existsSync(rccEnvInfoCachePath)) {
@@ -784,6 +769,19 @@ export async function collectBaseEnv(
 
     // If the env array is undefined, compute it now and cache the info to be reused later.
     if (!envArray) {
+        // If the robot is located in a directory that has '/devdata/env.json', we must automatically
+        // add the -e /path/to/devdata/env.json.
+
+        let robotDirName = pathModule.dirname(condaFilePath);
+        let envFilename = pathModule.join(robotDirName, "devdata", "env.json");
+        let args = ["holotree", "variables", "--space", spaceName, "--json", condaFilePath];
+        if (await fileExists(envFilename)) {
+            args.push("-e");
+            args.push(envFilename);
+        }
+        args.push("--controller");
+        args.push("RobocorpCode");
+
         let execFileReturn: ExecFileReturn = await execFilePromise(
             rccLocation,
             args,
