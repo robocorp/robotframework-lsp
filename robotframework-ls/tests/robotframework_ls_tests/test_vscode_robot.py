@@ -1841,6 +1841,11 @@ def test_get_rfls_home_dir(language_server_io: ILanguageServerClient):
 
 
 def test_cancelling_requests(language_server_tcp: ILanguageServerClient, ws_root_path):
+    from robotframework_ls.impl.robot_version import get_robot_major_version
+
+    if get_robot_major_version() <= 3:
+        raise pytest.skip(reason="This test is brittle in RF 3.")
+
     from robocorp_ls_core.workspace import Document
 
     language_server = language_server_tcp
