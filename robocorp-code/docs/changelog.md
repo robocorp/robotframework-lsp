@@ -1,3 +1,9 @@
+NEXT
+-----------------------------
+
+- After a successful startup, use cached information so that subsequent startups are faster.
+  
+
 New in 0.43.0 (2023-01-05)
 -----------------------------
 
