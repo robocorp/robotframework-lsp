@@ -7,6 +7,7 @@ import { jsonEscapeUTF } from "./escape";
 
 import * as nodePath from "path";
 import { sleep } from "./time";
+import { getWorkspaceFolderForUriAndShowInfoIfNotFound } from "./common";
 
 const posixPath = nodePath.posix || nodePath;
 
@@ -197,7 +198,7 @@ function addTreeStructure(workspaceFolder: vscode.WorkspaceFolder, uri: vscode.U
 export async function handleTestsCollected(testInfo: ITestInfoFromUri) {
     const uri = vscode.Uri.parse(testInfo.uri);
 
-    const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+    const workspaceFolder = getWorkspaceFolderForUriAndShowInfoIfNotFound(uri);
     if (workspaceFolder === undefined) {
         return;
     }
@@ -261,7 +262,7 @@ async function runHandler(shouldDebug: boolean, request: vscode.TestRunRequest, 
     while (queue.length > 0 && !token.isCancellationRequested) {
         const test = queue.pop()!;
         let uri = test.uri;
-        let workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
+        let workspaceFolder = getWorkspaceFolderForUriAndShowInfoIfNotFound(uri);
         if (workspaceFolder) {
             workspaceFolders.add(workspaceFolder);
         } else {

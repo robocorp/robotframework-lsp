@@ -22,6 +22,7 @@ import {
     RUN_PROFILE,
 } from "./testview";
 import { CancellationTokenSource } from "vscode-languageclient";
+import { getWorkspaceFolderForUriAndShowInfoIfNotFound } from "./common";
 
 interface ITestInfo {
     uri: string;
@@ -147,6 +148,11 @@ async function obtainTestItem(uri: Uri, name: string): Promise<TestItem | undefi
 }
 
 async function _debug(params: ITestInfo | undefined, noDebug: boolean) {
+    if (workspace.workspaceFolders === undefined) {
+        window.showErrorMessage("Unable to launch. Please open the folder containing the file in VSCode.");
+        return;
+    }
+
     let executeUri: Uri;
     let executeName: string;
 
@@ -186,6 +192,12 @@ async function _debug(params: ITestInfo | undefined, noDebug: boolean) {
     } else {
         executeUri = Uri.file(params.path);
         executeName = params.name;
+    }
+    const workspaceFolder = getWorkspaceFolderForUriAndShowInfoIfNotFound(executeUri);
+
+    if (workspaceFolder === undefined) {
+        window.showErrorMessage("Unable to launch because the target file is not inside an opened folder in VSCode.");
+        return;
     }
 
     let include: TestItem[] = [];
