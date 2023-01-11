@@ -121,7 +121,7 @@ async function enableWindowsLongPathSupport(rccLocation: string) {
 async function isLongPathSupportEnabledOnWindows(rccLocation: string, robocorpHome: string): Promise<boolean> {
     try {
         await makeDirs(robocorpHome);
-        const initialTarget = join(robocorpHome, "longpath_" + Date.now());
+        const initialTarget = join(robocorpHome, "longpath_" + Date.now() + "" + process.pid);
         let target = initialTarget;
 
         for (let i = 0; target.length < 270; i++) {
@@ -145,9 +145,8 @@ async function isLongPathSupportEnabledOnWindows(rccLocation: string, robocorpHo
         }
 
         try {
-            // Don't wait for async.
             // Note: remove even if not found as it may've created it partially.
-            fs.rm(initialTarget, { recursive: true, force: true, maxRetries: 1 }, () => {});
+            await fs.promises.rm(initialTarget, { recursive: true, force: true, maxRetries: 1 });
         } catch (error) {
             // Ignore error
         }
