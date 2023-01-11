@@ -1,14 +1,15 @@
 import * as path from "path";
-import { ProgressLocation, window } from "vscode";
+import { env, ProgressLocation, Uri, window } from "vscode";
 import { getLanguageServerPythonInfo } from "./extension";
 import { verifyFileExists } from "./files";
 import { listAndAskRobotSelection } from "./activities";
 import { getSelectedLocator, getSelectedRobot, LocatorEntry, RobotEntry } from "./viewsCommon";
 import { execFilePromise, ExecFileReturn, mergeEnviron } from "./subprocess";
-import { OUTPUT_CHANNEL } from "./channel";
+import { logError, OUTPUT_CHANNEL } from "./channel";
 import { ChildProcess } from "child_process";
 import { feedback } from "./rcc";
 import { LocalRobotMetadataInfo } from "./protocols";
+import { Mutex } from "./mutex";
 
 export enum InspectorType {
     Browser = "browser",
@@ -28,6 +29,84 @@ export const DEFAULT_INSPECTOR_VALUE = {
 
 let _openingInspector: { [K in InspectorTypes]: boolean } = DEFAULT_INSPECTOR_VALUE;
 let _startingRootWindowNotified: { [K in InspectorTypes]: boolean } = DEFAULT_INSPECTOR_VALUE;
+
+let globalVerifiedRequirementsForInspectorCli: boolean = false;
+const globalVerifiedRequirementsForInspectorCliMutex = new Mutex();
+
+export async function verifyWebview2Installed(
+    pythonExecutable: string,
+    cwd?: string,
+    environ?: { [key: string]: string }
+): Promise<boolean> {
+    if (process.platform !== "win32") {
+        return true; // If non-win32 that's Ok.
+    }
+    if (globalVerifiedRequirementsForInspectorCli) {
+        return globalVerifiedRequirementsForInspectorCli;
+    }
+    return await globalVerifiedRequirementsForInspectorCliMutex.dispatch(async () => {
+        while (!globalVerifiedRequirementsForInspectorCli) {
+            try {
+                const args = [
+                    "-c",
+                    "from webview.platforms.winforms import _is_chromium;print(_is_chromium());import sys;sys.stdout.flush()",
+                ];
+                const result = await execFilePromise(pythonExecutable, args, {
+                    env: environ,
+                    cwd,
+                });
+
+                const stdoutTrimmed = result.stdout.trim();
+                if (stdoutTrimmed === "True") {
+                    // Great, it's already there.
+                    globalVerifiedRequirementsForInspectorCli = true;
+                    return globalVerifiedRequirementsForInspectorCli;
+                } else if (stdoutTrimmed === "False") {
+                    // The user needs to install it.
+                    const INSTALL_WEBVIEW2_OPTION = "Open Download Page";
+                    let choice = await window.showWarningMessage(
+                        `WebView2 Runtime not detected. To use locators the WebView2 Runtime is required.`,
+                        {
+                            "modal": true,
+                            "detail": `Please download the installer from "https://developer.microsoft.com/en-us/microsoft-edge/webview2/".
+
+Note: the "Evergreen Bootstrapper" is recommended, but the "Evergreen Standalone Installer" is also Ok.`,
+                        },
+                        INSTALL_WEBVIEW2_OPTION
+                    );
+                    if (choice == INSTALL_WEBVIEW2_OPTION) {
+                        env.openExternal(
+                            Uri.parse("https://developer.microsoft.com/en-us/microsoft-edge/webview2/#download-section")
+                        );
+                        await window.showInformationMessage("Press Ok after installing WebView2 to proceed.", {
+                            "modal": true,
+                        });
+
+                        // Keep on in the while loop to recheck.
+                    } else {
+                        // Cancelled.
+                        return globalVerifiedRequirementsForInspectorCli;
+                    }
+                } else {
+                    // This is unexpected.
+                    throw new Error(
+                        "Expected either 'True' or 'False' checking whether 'Webview2' is installed. Found: stdout:\n" +
+                            result.stdout +
+                            "\nstderr:\n" +
+                            result.stderr
+                    );
+                }
+            } catch (err) {
+                logError("Error verifying if webview2 is available.", err, "ERROR_CHECK_WEBVIEW2");
+                await window.showErrorMessage(
+                    "There was an error verifying if webview2 is installed. Please submit an issue report to Robocorp."
+                );
+                return globalVerifiedRequirementsForInspectorCli;
+            }
+        }
+        return globalVerifiedRequirementsForInspectorCli;
+    });
+}
 
 export async function openRobocorpInspector(locatorType?: InspectorTypes, locator?: LocatorEntry): Promise<void> {
     const localLocatorType = locatorType !== undefined ? locatorType : InspectorType.Browser;
@@ -176,6 +255,10 @@ async function startInspectorCLI(
     environ?: { [key: string]: string },
     configChildProcess?: (childProcess: ChildProcess) => void
 ): Promise<ExecFileReturn> {
+    const installed = await verifyWebview2Installed(pythonExecutable, cwd, environ);
+    if (!installed) {
+        return;
+    }
     const inspectorCmd = ["-m", "inspector.cli"];
     const completeArgs = inspectorCmd.concat(args);
     OUTPUT_CHANNEL.appendLine(`Using cwd root for inspector: "${cwd}"`);
