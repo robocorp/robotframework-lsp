@@ -24,7 +24,7 @@ async function _execFileAsPromise(
     return new Promise((resolve, reject) => {
         let childProcess: ChildProcess = execFile(command, args, options, (error, stdout, stderr) => {
             if (error) {
-                reject({ error: "error", "stdout": stdout, "stderr": stderr });
+                reject({ "error": error, "stdout": stdout, "stderr": stderr });
                 return;
             }
             resolve({ "stdout": stdout, "stderr": stderr });
@@ -97,10 +97,17 @@ export async function execFilePromise(
         let error: ExecException = errorInfo.error;
 
         OUTPUT_CHANNEL.appendLine("Error executing: " + command + " " + args.join(" "));
-        OUTPUT_CHANNEL.appendLine("Error code: " + error.code);
-        OUTPUT_CHANNEL.appendLine("Error: " + error);
-        if (error.name) {
-            OUTPUT_CHANNEL.appendLine("Error name: " + error.name);
+        if (error !== undefined) {
+            OUTPUT_CHANNEL.appendLine("Error: " + error);
+            if (error?.message) {
+                OUTPUT_CHANNEL.appendLine("Error message: " + error.message);
+            }
+            if (error?.code) {
+                OUTPUT_CHANNEL.appendLine("Error code: " + error.code);
+            }
+            if (error?.name) {
+                OUTPUT_CHANNEL.appendLine("Error name: " + error.name);
+            }
         }
         if (!showOutputInteractively) {
             // Only print stderr/stdout if output was not being shown interactively.
