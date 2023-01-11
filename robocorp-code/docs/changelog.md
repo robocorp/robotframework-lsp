@@ -3,6 +3,10 @@ NEXT
 
 - After a successful startup, use cached information so that subsequent startups are faster.
 - `Webview2 Runtime` requirement checked before starting inspector.
+- `Web Recorder` is now available.
+    - Record multiple interactions with Browser.
+    - Press `Copy Code` to copy the code for the actions along with the locators.
+    - Allows post-processing to save the locators in locators.json and use aliases or use the locator directly.
 - RCC was upgraded to `v12.2.0`.
 - When specifying the timeout for the vault, the token is guaranteed to have that as the minimum value (in previous versions it could reuse it for `75%` of the time, so, a `2h` timeout request could return a `0:30h` minutes token).
     - Timeout limits are now in place so that the minimum timeout is 5 minutes and maximum is 1 hour (but the token requested may be a bit higher so that the extension can cache it and reuse it for more time).
