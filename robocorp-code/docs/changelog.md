@@ -2,6 +2,8 @@ NEXT
 -----------------------------
 
 - After a successful startup, use cached information so that subsequent startups are faster.
+- Webview2 Runtime verified before starting inspector.
+- RCC was upgraded to `v12.2.0`.
   
 
 New in 0.43.0 (2023-01-05)
