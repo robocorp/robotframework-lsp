@@ -1,7 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
-import * as crypto from "crypto";
 import * as pathModule from "path";
 import { XHRResponse, configure as configureXHR, xhr } from "./requestLight";
 import { fileExists, getExtensionRelativeFile } from "./files";

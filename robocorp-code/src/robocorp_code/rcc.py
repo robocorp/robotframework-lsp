@@ -568,7 +568,7 @@ class Rcc(object):
 
         config_provider = self._config_provider()
         config: Optional[IConfig] = None
-        timeout = 120
+        timeout = 30
         if config_provider is not None:
             config = config_provider.config
             if config:
@@ -577,10 +577,25 @@ class Rcc(object):
                 )
 
                 timeout = config.get_setting(
-                    ROBOCORP_VAULT_TOKEN_TIMEOUT_IN_MINUTES, int, 120
+                    ROBOCORP_VAULT_TOKEN_TIMEOUT_IN_MINUTES, int, 30
                 )
 
-        args.append(f"{timeout}")
+        if timeout >= 60:
+            log.info(
+                "Timeout changed from %s to %s (in minutes). Please use Robocorp Control Room or Robocorp Assistant for longer runs.",
+                timeout,
+                60,
+            )
+            timeout = 60
+        elif timeout < 5:
+            log.info("Timeout changed from %s to %s (in minutes).", timeout, 5)
+            timeout = 5
+
+        args.append(f"{round(timeout)}")
+
+        # Always reuse it for 1:30 right now.
+        args.append("--graceperiod")
+        args.append("90")
 
         error_action_result = self._add_account_to_args(args)
         if error_action_result is not None:

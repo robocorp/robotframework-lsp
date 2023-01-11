@@ -100,8 +100,8 @@ SETTINGS = [
     ),
     Setting(
         "robocorp.vaultTokenTimeoutInMinutes",
-        120,
-        "Specifies the timeout for the token generated to access the vault when a launch is made.",
+        30,
+        "Specifies the timeout in minutes for the token generated to access the vault when a launch is made. Note: max 60, min 5, additional timeout may be added internally to reuse the token in future runs (please use Robocorp Control Room or Robocorp Assistant for longer runs).",
         setting_type="number",
     ),
 ]
