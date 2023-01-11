@@ -61,10 +61,10 @@ export class LocatorsTreeDataProvider
             // Command: robocorp.newRobocorpInspectorBrowser
             // Command: robocorp.newRobocorpInspectorImage
             // Command: robocorp.newRobocorpInspectorWindows
+            // Command: robocorp.newRobocorpInspectorWebRecorder
             let commandName =
                 "robocorp.newRobocorpInspector" +
-                node.locatorType.charAt(0).toUpperCase() +
-                node.locatorType.substring(1);
+                (node.locatorType.charAt(0).toUpperCase() + node.locatorType.substring(1)).replace("-r", "R");
             treeItem.command = {
                 "title": node.caption,
                 "command": commandName,
@@ -134,7 +134,17 @@ class LocatorEntryNode {
 
     addCreateNewElement() {
         if (this.hasCreateNew) {
-            this.children.push(new LocatorCreationNode(this.locatorType, "New " + this.caption + " Locator ..."));
+            this.children.push(
+                new LocatorCreationNode(this.locatorType, "New " + this.caption + " Locator ...")
+            );
+            if (this.locatorType === InspectorType.Browser) {
+                this.children.push(
+                    new LocatorCreationNode(
+                        InspectorType.WebRecorder,
+                        "New Web Record ..."
+                    )
+                );
+            }
         }
     }
 }
