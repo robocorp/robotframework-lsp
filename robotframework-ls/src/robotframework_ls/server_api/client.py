@@ -316,6 +316,18 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         """
         return self.request_async(self._build_msg("foldingRange", doc_uri=doc_uri))
 
+    def request_on_type_formatting(
+        self, doc_uri: str, ch: str, line: int, col: int
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+        return self.request_async(
+            self._build_msg(
+                "onTypeFormatting", doc_uri=doc_uri, ch=ch, line=line, col=col
+            )
+        )
+
     def request_selection_range(
         self, doc_uri, positions: List[PositionTypedDict]
     ) -> Optional[IIdMessageMatcher]:

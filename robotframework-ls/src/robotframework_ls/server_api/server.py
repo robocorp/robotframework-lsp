@@ -28,6 +28,7 @@ from robocorp_ls_core.lsp import (
     TextDocumentCodeActionTypedDict,
     ICustomDiagnosticDataTypedDict,
     CommandTypedDict,
+    TextEditTypedDict,
 )
 from robotframework_ls.impl.protocols import (
     IKeywordFound,
@@ -817,6 +818,24 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             return None
 
         return signature_help(completion_context)
+
+    def m_on_type_formatting(self, doc_uri: str, ch: str, line: int, col: int):
+        func = partial(self._threaded_on_type_formatting, doc_uri, ch, line, col)
+        func = require_monitor(func)
+        return func
+
+    def _threaded_on_type_formatting(
+        self, doc_uri: str, ch: str, line: int, col: int, monitor: IMonitor
+    ) -> List[TextEditTypedDict]:
+        from robotframework_ls.impl.on_type_formatting import on_type_formatting
+
+        completion_context = self._create_completion_context(
+            doc_uri, line, col, monitor
+        )
+        if completion_context is None:
+            return []
+
+        return on_type_formatting(completion_context, ch)
 
     def m_folding_range(self, doc_uri: str):
         func = partial(self._threaded_folding_range, doc_uri)

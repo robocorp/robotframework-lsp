@@ -15,11 +15,11 @@ def check_parent_ranges(r: SelectionRangeTypedDict):
         check_parent_ranges(parent)
 
 
-def test_selection_range_basic(workspace, libspec_manager, data_regression):
+def test_selection_range_basic(workspace, data_regression):
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.selection_range import selection_range
 
-    workspace.set_root("case4", libspec_manager=libspec_manager)
+    workspace.set_root("case4")
     doc = workspace.put_doc(
         "my.robot",
         """*** Settings ***

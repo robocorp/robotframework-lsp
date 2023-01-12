@@ -19,8 +19,10 @@ export async function feedback(name: string, value: string) {
     }
 }
 
-export function logError(msg: string, err: Error, errorCode: string) {
-    errorFeedback(errorCode);
+export function logError(msg: string, err: Error, errorCode: string | undefined) {
+    if (errorCode !== undefined) {
+        errorFeedback(errorCode);
+    }
     OUTPUT_CHANNEL.appendLine(msg);
     let indent = "    ";
     if (err.message) {

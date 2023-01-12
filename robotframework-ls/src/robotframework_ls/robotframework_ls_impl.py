@@ -498,6 +498,13 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             "documentFormattingProvider": True,
             "documentHighlightProvider": True,
             "documentRangeFormattingProvider": False,
+            # Note: infrastructure for onTypeFormatting is in place but we don't
+            # really do anything with it, so, just leave it as False.
+            "documentOnTypeFormattingProvider": False,
+            # "documentOnTypeFormattingProvider": {
+            #     "firstTriggerCharacter": "\n",
+            #     "moreTriggerCharacter": ["\r"],
+            # },
             "documentSymbolProvider": True,
             "definitionProvider": True,
             "selectionRangeProvider": True,
@@ -1279,6 +1286,17 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         return self.async_api_forward(
             "request_signature_help", "api", doc_uri, line=line, col=col
+        )
+
+    def m_text_document__on_type_formatting(self, **kwargs):
+        doc_uri = kwargs["textDocument"]["uri"]
+
+        # Note: 0-based
+        line, col = kwargs["position"]["line"], kwargs["position"]["character"]
+
+        ch = kwargs["ch"]
+        return self.async_api_forward(
+            "request_on_type_formatting", "others", doc_uri, ch=ch, line=line, col=col
         )
 
     def m_text_document__folding_range(self, **kwargs):

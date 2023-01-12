@@ -166,7 +166,7 @@ SETTINGS = {
     "robot.editor.4spacesTab": {
         "type": "boolean",
         "default": True,
-        "description": "Replaces the key stroke of tab with 4 spaces. Set to 'false' to active VSCode default.",
+        "description": "Replaces the key stroke of tab with 4 spaces. Set to 'false' to use VSCode default.",
     },
     "robot.quickFix.keywordTemplate": {
         "type": "string",

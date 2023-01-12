@@ -13,6 +13,7 @@ from robocorp_ls_core.lsp import (
     CompletionItemTypedDict,
     CompletionResolveResponseTypedDict,
     PositionTypedDict,
+    TextEditTypedDict,
 )
 
 
@@ -306,6 +307,22 @@ class LanguageServerClient(LanguageServerClientBase):
                 "id": self.next_id(),
                 "method": "textDocument/foldingRange",
                 "params": {"textDocument": {"uri": uri}},
+            }
+        )
+
+    @implements(ILanguageServerClient.request_on_type_formatting)
+    def request_on_type_formatting(
+        self, uri: str, ch: str, line: int, col: int
+    ) -> Optional[List[TextEditTypedDict]]:
+        return self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": "textDocument/onTypeFormatting",
+                "params": {
+                    "textDocument": {"uri": uri},
+                    "position": {"line": line, "character": col},
+                },
             }
         )
 

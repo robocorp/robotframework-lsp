@@ -36,6 +36,7 @@ if typing.TYPE_CHECKING:
     from robocorp_ls_core.lsp import CompletionsResponseTypedDict
     from robocorp_ls_core.lsp import CompletionResolveResponseTypedDict
     from robocorp_ls_core.lsp import TextDocumentItem
+    from robocorp_ls_core.lsp import TextEditTypedDict
 
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
 if sys.version_info[:2] < (3, 8):
@@ -371,6 +372,13 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
         :Note: async complete.
         """
 
+    def request_on_type_formatting(
+        self, doc_uri: str, ch: str, line: int, col: int
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: async complete.
+        """
+
     def request_selection_range(
         self, doc_uri: str, positions: List["PositionTypedDict"]
     ) -> Optional[IIdMessageMatcher]:
@@ -547,6 +555,11 @@ class ILanguageServerClient(ILanguageServerClientBase, Protocol):
         pass
 
     def request_folding_range(self, uri: str):
+        pass
+
+    def request_on_type_formatting(
+        self, uri: str, ch: str, line: int, col: int
+    ) -> "Optional[List[TextEditTypedDict]]":
         pass
 
     def request_selection_range(
