@@ -498,14 +498,14 @@ class RobotFrameworkInterpreter(object):
             os.path.abspath(os.getcwd()), "in_memory_interpreter.robot"
         )
         for new_import in new_suite.resource.imports:
-            new_import.source = source
+            self._set_source(new_import, source)
             # Actually do the import (library, resource, variable)
             namespace._import(new_import)
 
         if new_suite.resource.variables:
             # Handle variables defined in the current test.
             for variable in new_suite.resource.variables:
-                variable.source = source
+                self._set_source(variable, source)
 
             namespace.variables.set_from_variable_table(new_suite.resource.variables)
 
@@ -513,7 +513,10 @@ class RobotFrameworkInterpreter(object):
             # It'd be really nice to have a better API for this...
             user_keywords = namespace._kw_store.user_keywords
             for kw in new_suite.resource.keywords:
-                kw.actual_source = source
+                try:
+                    kw.actual_source = source
+                except AttributeError:
+                    kw.parent.source = source
                 handler = user_keywords._create_handler(kw)
 
                 embedded = isinstance(handler, facade.EmbeddedArgumentsHandler)
@@ -569,3 +572,9 @@ class RobotFrameworkInterpreter(object):
                         last_in_body.tokens += (Token("EOL", "\n"),)
 
         return {"success": True, "message": None, "result": None}
+
+    def _set_source(self, element, source):
+        try:
+            element.source = source
+        except AttributeError:
+            element.parent.source = source

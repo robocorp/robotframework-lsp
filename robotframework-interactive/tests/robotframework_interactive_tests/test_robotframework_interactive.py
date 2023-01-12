@@ -200,7 +200,7 @@ Some Test
 """
     )
 
-    test_suite = TestSuite.from_model(model)
+    test_suite = TestSuite.from_model(model, name="MySuite")
 
     stdout = StringIO()
     test_suite.run(output=os.path.abspath("output.xml"), stdout=stdout)
