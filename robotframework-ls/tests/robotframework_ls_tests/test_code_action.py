@@ -720,3 +720,96 @@ Foobar
 
 """,
     )
+
+
+def test_code_code_action_create_local_variable(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.code_action import code_action
+
+    workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.put_doc("my_robot.robot")
+    doc.source = """*** Keywords ***
+My keyword
+    Log     Something ${myvar}
+"""
+
+    completion_context, diagnostic_data = _analyze_and_create_completion_context(
+        doc, workspace, kind="undefined_variable", filter_kind=True
+    )
+    found_data = [diagnostic_data]
+    actions = code_action(completion_context, found_data)
+
+    check_apply_result(
+        doc,
+        actions,
+        """*** Keywords ***
+My keyword
+    ${myvar}=    Set Variable    
+    Log     Something ${myvar}
+""",
+    )
+
+
+def test_code_code_action_create_local_variable_with_indent(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.code_action import code_action
+
+    workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.put_doc("my_robot.robot")
+    doc.source = """*** Tasks ***
+Example task
+    IF    $True
+        Log    ${some_var}
+    END
+"""
+
+    completion_context, diagnostic_data = _analyze_and_create_completion_context(
+        doc, workspace, kind="undefined_variable", filter_kind=True
+    )
+    found_data = [diagnostic_data]
+    actions = code_action(completion_context, found_data)
+
+    check_apply_result(
+        doc,
+        actions,
+        """*** Tasks ***
+Example task
+    IF    $True
+        ${some_var}=    Set Variable    
+        Log    ${some_var}
+    END
+""",
+    )
+
+
+def test_code_code_action_create_local_variable_continuation(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.code_action import code_action
+
+    workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.put_doc("my_robot.robot")
+    doc.source = """*** Tasks ***
+Example task
+    Log
+        ...    ${some_var}
+"""
+
+    completion_context, diagnostic_data = _analyze_and_create_completion_context(
+        doc, workspace, kind="undefined_variable", filter_kind=True
+    )
+    found_data = [diagnostic_data]
+    actions = code_action(completion_context, found_data)
+
+    check_apply_result(
+        doc,
+        actions,
+        """*** Tasks ***
+Example task
+    ${some_var}=    Set Variable    
+    Log
+        ...    ${some_var}
+""",
+    )

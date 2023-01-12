@@ -357,6 +357,10 @@ def is_keyword_section(node) -> bool:
     return isinstance_name(node, "KeywordSection")
 
 
+def is_testcase_section(node) -> bool:
+    return isinstance_name(node, "TestCaseSection")
+
+
 def find_section(node, line: int) -> Optional[INode]:
     """
     :param line:

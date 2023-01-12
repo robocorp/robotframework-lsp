@@ -1,6 +1,7 @@
 from robocorp_ls_core.config import Config
 from robotframework_ls.impl.robot_lsp_constants import ALL_ROBOT_OPTIONS
 import os.path
+from robotframework_ls.impl.protocols import ICompletionContext
 
 
 class RobotConfig(Config):
@@ -44,7 +45,7 @@ def create_convert_keyword_format_func(config):
     return lambda x: x
 
 
-def get_arguments_separator(completion_context):
+def get_arguments_separator(completion_context: ICompletionContext):
     from robotframework_ls.impl.robot_generated_lsp_constants import (
         OPTION_ROBOT_COMPLETIONS_KEYWORDS_ARGUMENTS_SEPARATOR,
     )

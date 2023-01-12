@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, Iterator, Optional
+from typing import List, Dict, Any, Iterator, Optional, Iterable
 import typing
 
 from robocorp_ls_core.lsp import (
@@ -15,6 +15,7 @@ from robocorp_ls_core.lsp import (
     ICustomDiagnosticDataUndefinedLibraryTypedDict,
     ICustomDiagnosticDataUndefinedVarImportTypedDict,
     ICustomDiagnosticDataUnexpectedArgumentTypedDict,
+    ICustomDiagnosticDataUndefinedVariableTypedDict,
 )
 from robotframework_ls.impl.protocols import (
     ICompletionContext,
@@ -141,6 +142,74 @@ def _create_keyword_in_current_file_text_edit(
             },
             "newText": keyword_template,
         }
+
+
+def _undefined_variable_code_action(
+    completion_context: ICompletionContext,
+    undefined_variable_data: ICustomDiagnosticDataUndefinedVariableTypedDict,
+) -> Iterable[CommandTypedDict]:
+    from robotframework_ls.impl import ast_utils
+
+    current_section: Any = completion_context.get_ast_current_section()
+    if ast_utils.is_keyword_section(current_section) or ast_utils.is_testcase_section(
+        current_section
+    ):
+        # Add it before the current keyword
+        token_info = completion_context.get_current_token()
+        if token_info:
+            use_line = token_info.node.lineno - 1
+
+            if use_line > 0:
+                from robotframework_ls.robot_config import get_arguments_separator
+                from robotframework_ls.robot_config import (
+                    create_convert_keyword_format_func,
+                )
+                import re
+
+                format_name = create_convert_keyword_format_func(
+                    completion_context.config
+                )
+                set_var_name = format_name("Set Variable")
+                indent = "    "
+                line_contents = completion_context.doc.get_line(use_line)
+                found = re.match("[\s]+", line_contents)
+                if found:
+                    indent = found.group()
+
+                sep = get_arguments_separator(completion_context)
+                name = undefined_variable_data["name"]
+                change: TextEditTypedDict = {
+                    "range": {
+                        "start": {"line": use_line, "character": 0},
+                        "end": {"line": use_line, "character": 0},
+                    },
+                    "newText": "%s${%s}=%s%s%s$__LSP_CURSOR_LOCATION__$\n"
+                    % (indent, name, sep, set_var_name, sep),
+                }
+                return [
+                    _wrap_edit_in_command(
+                        completion_context,
+                        "Create ${%s} local variable" % name,
+                        change,
+                    )
+                ]
+
+    return []
+
+
+def _wrap_edit_in_command(
+    completion_context: ICompletionContext, title, text_edit: TextEditTypedDict
+) -> CommandTypedDict:
+    changes = {completion_context.doc.uri: [text_edit]}
+    edit: WorkspaceEditTypedDict = {"changes": changes}
+    edit_params: WorkspaceEditParamsTypedDict = {"edit": edit, "label": title}
+    command: CommandTypedDict = {
+        "title": title,
+        "command": "robot.applyCodeAction",
+        "arguments": [{"apply_edit": edit_params}],
+    }
+    _add_show_document_at_command(command, completion_context.doc.uri, text_edit)
+    return command
 
 
 def _create_keyword_in_current_file_code_action(
@@ -585,6 +654,16 @@ def code_action(
             ret.extend(
                 _undefined_resource_code_action(
                     completion_context, undefined_var_import_data
+                )
+            )
+
+        elif data["kind"] == "undefined_variable":
+            undefined_variable_data = typing.cast(
+                ICustomDiagnosticDataUndefinedVariableTypedDict, data
+            )
+            ret.extend(
+                _undefined_variable_code_action(
+                    completion_context, undefined_variable_data
                 )
             )
 

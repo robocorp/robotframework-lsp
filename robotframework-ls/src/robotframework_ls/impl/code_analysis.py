@@ -10,6 +10,7 @@ from robocorp_ls_core.lsp import (
     ICustomDiagnosticDataUndefinedResourceTypedDict,
     ICustomDiagnosticDataUndefinedVarImportTypedDict,
     ICustomDiagnosticDataUndefinedLibraryTypedDict,
+    ICustomDiagnosticDataUndefinedVariableTypedDict,
 )
 from robocorp_ls_core.protocols import check_implements
 from robocorp_ls_core.robotframework_log import get_logger
@@ -890,8 +891,15 @@ def _collect_undefined_variables_errors(initial_completion_context):
                 break
 
         if not found:
-            yield create_error_from_node(
+            error = create_error_from_node(
                 token_info.node,
                 f"Undefined variable: {token_info.token.value}",
                 tokens=[token_info.token],
             )
+
+            undefined_variable_data: ICustomDiagnosticDataUndefinedVariableTypedDict = {
+                "kind": "undefined_variable",
+                "name": token_info.token.value,
+            }
+            error.data = undefined_variable_data
+            yield error

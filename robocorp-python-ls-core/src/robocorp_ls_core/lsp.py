@@ -974,6 +974,11 @@ class ICustomDiagnosticDataUndefinedKeywordTypedDict(TypedDict):
     name: str
 
 
+class ICustomDiagnosticDataUndefinedVariableTypedDict(TypedDict):
+    kind: str  # undefined_variable
+    name: str
+
+
 class ICustomDiagnosticDataUndefinedResourceTypedDict(TypedDict):
     kind: str  # undefined_resource
     name: str
