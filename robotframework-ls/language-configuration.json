@@ -55,6 +55,22 @@
                 "indent": "none",
                 "appendText": "...    "
             }
+        },
+        {
+            "beforeText": "^\\s*(\\.\\.\\.)(\\s)+$",
+            "afterText": ".*$",
+            "action": {
+                "indent": "none",
+                "appendText": ""
+            }
+        },
+        {
+            "beforeText": "^\\s*(\\.\\.\\.)(\\s)+[^\\s].*",
+            "afterText": ".*$",
+            "action": {
+                "indent": "none",
+                "appendText": "...    "
+            }
         }
     ]
 }
