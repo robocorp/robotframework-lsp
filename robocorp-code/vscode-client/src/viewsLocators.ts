@@ -136,7 +136,7 @@ class LocatorEntryNode {
         if (this.hasCreateNew) {
             this.children.push(new LocatorCreationNode(this.locatorType, "New " + this.caption + " Locator ..."));
             if (this.locatorType === InspectorType.Browser) {
-                this.children.push(new LocatorCreationNode(InspectorType.WebRecorder, "New Web Record ..."));
+                this.children.push(new LocatorCreationNode(InspectorType.WebRecorder, "Record Browser Actions ..."));
             }
         }
     }
