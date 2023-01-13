@@ -1304,10 +1304,9 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
         iter_keyword_node_info = ast.iter_indexed("Keyword")
 
     for node_info in iter_keyword_node_info:
-        stack = [node_info.node]
-        for token in _iter_keyword_arguments_tokens(
-            node_info.node, tokenize_keyword_name=True
-        ):
+        node = node_info.node
+        stack = [node]
+        for token in _iter_keyword_arguments_tokens(node, tokenize_keyword_name=True):
             iter_in = _tokenize_subvars(token)
 
             try:
