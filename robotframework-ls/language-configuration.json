@@ -50,7 +50,39 @@
         },
         {
             "beforeText": "^\\s*[^\\s].*",
-            "afterText": "\\s*[^\\s].*$",
+            "afterText": "^\\s[^\\s].*$",
+            "action": {
+                "indent": "none",
+                "appendText": "...   "
+            }
+        },
+        {
+            "beforeText": "^\\s*[^\\s].*",
+            "afterText": "^\\s\\s[^\\s].*$",
+            "action": {
+                "indent": "none",
+                "appendText": "...  "
+            }
+        },
+        {
+            "beforeText": "^\\s*[^\\s].*",
+            "afterText": "^\\s\\s\\s[^\\s].*$",
+            "action": {
+                "indent": "none",
+                "appendText": "... "
+            }
+        },
+        {
+            "beforeText": "^\\s*[^\\s].*",
+            "afterText": "^\\s\\s\\s(\\s)+[^\\s].*$",
+            "action": {
+                "indent": "none",
+                "appendText": "..."
+            }
+        },
+        {
+            "beforeText": "^\\s*[^\\s].*",
+            "afterText": "^\\s*[^\\s].*$",
             "action": {
                 "indent": "none",
                 "appendText": "...    "
