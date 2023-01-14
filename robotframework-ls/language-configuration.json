@@ -40,6 +40,7 @@
         ["_", "_"]
     ],
     "onEnterRules": [
+        // Deal with comments to add # when comment is split
         {
             "beforeText": "^\\s*#.*",
             "afterText": ".+$",
@@ -48,8 +49,74 @@
                 "appendText": "# "
             }
         },
+        // Deal with tabs separators so that the user has: Keyword<tab>|arg1<tab>arg2
+        // And indent to:
+        // Keyword<tab>
+        // ...<tab>|arg1<tab>arg2
         {
-            "beforeText": "^\\s*[^\\s].*",
+            "beforeText": "^[\\s]*[^\\s]+.*\\t$",
+            "afterText": "^\\s*[^\\s].*$",
+            "action": {
+                "indent": "none",
+                "appendText": "...\t"
+            }
+        },
+
+        // Deal with tabs separators so that the user has: Keyword|<tab>arg1<tab>arg2
+        // And indent to:
+        // Keyword
+        // ...<tab>|arg1<tab>arg2
+        {
+            "beforeText": "^[\\s]*[^\\s]+.*$",
+            "afterText": "^\\t\\s*[^\\s].*$",
+            "action": {
+                "indent": "none",
+                "appendText": "..."
+            }
+        },
+
+        // Deal with 2-spaces separator: Keyword  |arg1  arg2
+        // And indent to:
+        // Keyword
+        // ...  |arg1  arg2
+        {
+            "beforeText": "^([\\s]*[^\\s])+[ ][ ]$",
+            "afterText": "^[^\\s]+.*$",
+            "action": {
+                "indent": "none",
+                "appendText": "...  "
+            }
+        },
+
+        // Deal with 2-spaces separator: Keyword | arg1  arg2
+        // And indent to:
+        // Keyword
+        // ... | arg1  arg2
+        {
+            "beforeText": "^([\\s]*[^\\s])+[ ]$",
+            "afterText": "^[ ][^\\s]+.*$",
+            "action": {
+                "indent": "none",
+                "appendText": "... "
+            }
+        },
+
+        // Deal with 2-spaces separator: Keyword|  arg1  arg2
+        // And indent to:
+        // Keyword
+        // ...|  arg1  arg2
+        {
+            "beforeText": "^([\\s]*[^\\s])+$",
+            "afterText": "^[ ][ ][^\\s]+.*$",
+            "action": {
+                "indent": "none",
+                "appendText": "..."
+            }
+        },
+
+        // If we didn't match tabs or 2 spaces use 4 spaces for any other spacing mode found.
+        {
+            "beforeText": "^[\\s]*[^\\s].*",
             "afterText": "^\\s[^\\s].*$",
             "action": {
                 "indent": "none",
@@ -88,17 +155,47 @@
                 "appendText": "...    "
             }
         },
+
+        // Maybe we'd like to remove the '...' and not add a line at all?
+        // Anyways, that isn't possible.
+        // {
+        //     "beforeText": "^\\s*(\\.\\.\\.)(\\s)+$",
+        //     "afterText": ".*$",
+        //     "action": {
+        //         "indent": "none",
+        //         "appendText": ""
+        //     }
+        // },
+
+        // Rules to keep on adding '...' if it starts with '...<spaces or tabs><nonspace>'
+        // Note: gather feedback (it's nice to not add it always, but then at the last one)
+        // the user has to erase what was added manually (so, wait for community feedback
+        // as the vote is out on this one).
+
+        // Continuation if it starts with '...<tab><nonspace>'
         {
-            "beforeText": "^\\s*(\\.\\.\\.)(\\s)+$",
-            "afterText": ".*$",
+            "beforeText": "^\\s*(\\.\\.\\.)(\\t)(\\s)*[^\\s]+.*",
+            // "afterText": ".+$",
             "action": {
                 "indent": "none",
-                "appendText": ""
+                "appendText": "...\t"
             }
         },
+
+        // Continuation if it starts with '...<space><space><nonspace>'
+        {
+            "beforeText": "^\\s*(\\.\\.\\.)[ ][ ][^\\s].*",
+            // "afterText": ".+$",
+            "action": {
+                "indent": "none",
+                "appendText": "...  "
+            }
+        },
+
+        // Continuation if it starts with '...<sep><nonspace>'
         {
             "beforeText": "^\\s*(\\.\\.\\.)(\\s)+[^\\s].*",
-            "afterText": ".*$",
+            // "afterText": ".+$",
             "action": {
                 "indent": "none",
                 "appendText": "...    "
