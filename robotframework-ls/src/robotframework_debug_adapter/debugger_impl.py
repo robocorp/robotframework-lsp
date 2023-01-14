@@ -716,7 +716,7 @@ class _RobotDebuggerImpl(object):
             if source is None:
                 return "None"
 
-            filename, _changed = file_utils.norm_file_to_client(source)
+            filename, _changed = file_utils.norm_file_to_client(str(source))
         except:
             filename = "<Unable to get %s filename>" % (msg,)
             log.exception(filename)
