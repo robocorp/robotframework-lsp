@@ -360,6 +360,12 @@ export async function convertAndSaveResults(
 
                 const filesWritten: string[] = [];
 
+                async function handleOutputFile(file: string, content: string): Promise<void> {
+                    filesWritten.push(file);
+                    await writeToFile(file, content, { encoding: "binary" });
+                }
+
+                const tasks: Promise<void>[] = [];
                 for (const result of results) {
                     const okResult: ConversionSuccess = <ConversionSuccess>result;
                     const files = okResult?.files;
@@ -368,23 +374,24 @@ export async function convertAndSaveResults(
                     outputDirsWrittenTo.add(result.outputDir);
                     if (files && files.length > 0) {
                         for (const f of files) {
-                            filesWritten.push(join(result.outputDir, f.filename));
-                            await writeToFile(join(result.outputDir, f.filename), f.content);
+                            tasks.push(handleOutputFile(join(result.outputDir, f.filename), f.content));
                         }
                     }
                     const images = okResult?.images;
                     if (images && images.length > 0) {
                         for (const f of images) {
-                            filesWritten.push(join(result.outputDir, f.filename));
-                            await writeToFile(join(result.outputDir, f.filename), f.content);
+                            tasks.push(handleOutputFile(join(result.outputDir, f.filename), f.content));
                         }
                     }
 
                     if (okResult.report) {
-                        filesWritten.push(join(result.outputDir, okResult.report.filename));
-                        await writeToFile(join(result.outputDir, okResult.report.filename), okResult.report.content);
+                        tasks.push(
+                            handleOutputFile(join(result.outputDir, okResult.report.filename), okResult.report.content)
+                        );
                     }
                 }
+
+                await Promise.all(tasks);
 
                 progress.report({ increment: incrementStep });
 

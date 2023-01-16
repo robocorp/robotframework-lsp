@@ -55,8 +55,8 @@ export async function readFromFile(targetFile: string) {
     return contents.toString();
 }
 
-export async function writeToFile(targetFile: string, content: string) {
-    return await fs.promises.writeFile(targetFile, content);
+export async function writeToFile(targetFile: string, content: string, options?: fs.BaseEncodingOptions): Promise<void> {
+    return await fs.promises.writeFile(targetFile, content, options);
 }
 
 export async function makeDirs(targetDir: string) {
