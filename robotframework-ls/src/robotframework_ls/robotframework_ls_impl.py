@@ -499,8 +499,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             "documentHighlightProvider": True,
             "documentRangeFormattingProvider": False,
             # Note: infrastructure for onTypeFormatting is in place but we don't
-            # really do anything with it, so, just leave it as False.
-            "documentOnTypeFormattingProvider": False,
+            # really do anything with it, so, don't specify it now.
             # "documentOnTypeFormattingProvider": {
             #     "firstTriggerCharacter": "\n",
             #     "moreTriggerCharacter": ["\r"],

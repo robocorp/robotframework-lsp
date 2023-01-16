@@ -115,7 +115,7 @@ public class RobotFrameworkLanguage extends Language implements ILSPLanguage {
 
         boolean develop = false;
         if (develop) {
-            python = "C:\\bin\\Miniconda\\envs\\py_38_tests\\python.exe";
+            python = "D:\\bin\\miniconda\\envs\\robocorp\\python.exe";
         }
 
         String robotLanguageServerPython = projectPreferences != null ? projectPreferences.getRobotLanguageServerPython().trim() : "";
