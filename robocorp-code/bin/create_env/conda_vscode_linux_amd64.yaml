@@ -10,4 +10,4 @@ dependencies:
     - qtpy=2.3.0 # https://github.com/spyder-ide/qtpy/blob/master/CHANGELOG.md
     - pip:
           - robocorp-inspector==0.8.5 # https://github.com/robocorp/inspector/blob/master/CHANGELOG.md
-          - robotframework==4.1 # https://github.com/robotframework/robotframework/blob/master/doc/releasenotes/rf-4.1.rst
+          - robotframework==5.0.1 # https://github.com/robotframework/robotframework/blob/master/doc/releasenotes/rf-5.0.1.rst
