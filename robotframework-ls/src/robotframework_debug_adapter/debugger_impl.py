@@ -715,6 +715,8 @@ class _RobotDebuggerImpl(object):
             source = obj.source
             if source is None:
                 return "None"
+            if not source:
+                return "<not available>"
 
             filename, _changed = file_utils.norm_file_to_client(str(source))
         except:
@@ -1034,7 +1036,7 @@ class _RobotDebuggerImpl(object):
         if not source or lineno is None:
             # RunKeywordIf doesn't have a source, so, just show the caller source.
             for entry in reversed(self._stack_ctx_entries_deque):
-                if source is None:
+                if not source:
                     source = entry.source
                 if lineno is None:
                     lineno = entry.lineno
