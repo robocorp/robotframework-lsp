@@ -55,7 +55,11 @@ export async function readFromFile(targetFile: string) {
     return contents.toString();
 }
 
-export async function writeToFile(targetFile: string, content: string, options?: fs.BaseEncodingOptions): Promise<void> {
+export async function writeToFile(
+    targetFile: string,
+    content: string,
+    options?: fs.BaseEncodingOptions
+): Promise<void> {
     return await fs.promises.writeFile(targetFile, content, options);
 }
 
