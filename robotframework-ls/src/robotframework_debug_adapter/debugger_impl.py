@@ -931,7 +931,7 @@ class _RobotDebuggerImpl(object):
 
         try:
             lineno = control_flow_stmt.lineno
-            source = control_flow_stmt.source
+            source = self._source_as_str(control_flow_stmt.source)
         except AttributeError:
             lineno = -1
             source = None
@@ -944,6 +944,11 @@ class _RobotDebuggerImpl(object):
         self._before_run_step(
             ctx, name, entry_type, lineno, source, args, status="NOT AVAILABLE"
         )
+
+    def _source_as_str(self, source):
+        if not source:
+            return source
+        return str(source)
 
     # 3.x versions where the lineno is NOT available on the V2 listener
     def after_control_flow_stmt(self, control_flow_stmt, ctx, *args, **kwargs):
@@ -959,7 +964,7 @@ class _RobotDebuggerImpl(object):
             name = step.__class__.__name__
         try:
             lineno = step.lineno
-            source = step.source
+            source = self._source_as_str(step.source)
         except AttributeError:
             lineno = -1
             source = None
@@ -986,7 +991,7 @@ class _RobotDebuggerImpl(object):
             name = "<Unable to get keyword name>"
         try:
             lineno = step.lineno
-            source = step.source
+            source = self._source_as_str(step.source)
         except AttributeError:
             lineno = -1
             source = None
@@ -1037,7 +1042,7 @@ class _RobotDebuggerImpl(object):
             # RunKeywordIf doesn't have a source, so, just show the caller source.
             for entry in reversed(self._stack_ctx_entries_deque):
                 if not source:
-                    source = entry.source
+                    source = self._source_as_str(entry.source)
                 if lineno is None:
                     lineno = entry.lineno
                 break
@@ -1159,7 +1164,7 @@ class _RobotDebuggerImpl(object):
 
     def start_suite(self, data, result):
         self._stack_ctx_entries_deque.append(
-            _SuiteEntry(data.name, data.source, "SUITE")
+            _SuiteEntry(data.name, self._source_as_str(data.source), "SUITE")
         )
 
     def end_suite(self, data, result):
@@ -1219,7 +1224,7 @@ class _RobotDebuggerImpl(object):
 
     def start_test(self, data, result):
         self._stack_ctx_entries_deque.append(
-            _TestEntry(data.name, data.source, data.lineno, "TEST")
+            _TestEntry(data.name, self._source_as_str(data.source), data.lineno, "TEST")
         )
 
     def end_test(self, data, result):
@@ -1259,7 +1264,7 @@ class _RobotDebuggerImpl(object):
                 if self._stack_ctx_entries_deque:
                     lineno = 0
                     step_entry: _StepEntry = self._stack_ctx_entries_deque[-1]
-                    path = step_entry.source
+                    path = self._source_as_str(step_entry.source)
                     source = Source(path=path)
                     try:
                         lineno = step_entry.lineno
