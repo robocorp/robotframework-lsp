@@ -1239,7 +1239,7 @@ My Keyword
 
 *** Test Case ***
 My Test
-    My Keyword\t${1:\$v1}\t${2:\$v2}"""
+    My Keyword\t${1:\\$v1}\t${2:\\$v2}"""
     )
 
 
@@ -1328,7 +1328,7 @@ My Keyword ${something}
 
 *** Test Case ***
 My Test
-    My Keyword ${1:\$something}"""
+    My Keyword ${1:\\$something}"""
     )
 
 
@@ -1376,5 +1376,5 @@ My Keyword ${something} another ${var2} finish
 
 *** Test Case ***
 My Test
-    My Keyword ${1:\$something} another ${2:\$var2} finish"""
+    My Keyword ${1:\\$something} another ${2:\\$var2} finish"""
     )

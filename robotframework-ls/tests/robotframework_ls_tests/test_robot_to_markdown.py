@@ -13,7 +13,7 @@ def check(initial, expected):
 
 
 def test_robot_to_markdown_table():
-    initial = """The default log level can be given at library import time.
+    initial = r"""The default log level can be given at library import time.
 
 See `Valid log levels` section for information about available log
 levels.
@@ -25,7 +25,7 @@ Examples:
 | Library   | LoggingLibrary | DEBUG   | # Use the given level      |
 """
 
-    expected = """The default log level can be given at library import time.
+    expected = r"""The default log level can be given at library import time.
 
 
 See `Valid log levels` section for information about available log levels.

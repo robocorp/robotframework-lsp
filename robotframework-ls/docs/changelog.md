@@ -7,7 +7,8 @@ NEXT
 - New line customization:
     - If a line starts with `#` if a new line is entered before the end of the line a `#` is added in the new line
     - If a line is split a continuation (`...`) is added.
-- A code action can be used to create a `local variable` from an `undefined variable`.
+- Quick fix: create a `local variable` from an `undefined variable`.
+- Quick fix: create a `variable in the variables section` from an `undefined variable`.
 - Extract `local variable` refactoring.
 
 

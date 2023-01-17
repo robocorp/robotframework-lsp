@@ -353,6 +353,13 @@ def find_keyword_section(node):
     return None
 
 
+def find_variable_section(node):
+    for section in iter_sections(node):
+        if isinstance_name(section, "VariableSection"):
+            return section
+    return None
+
+
 def is_keyword_section(node) -> bool:
     return isinstance_name(node, "KeywordSection")
 

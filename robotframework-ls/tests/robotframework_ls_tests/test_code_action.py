@@ -51,7 +51,10 @@ def check_code_action_data_regression(data_regression, found, basename=None):
     data_regression.check(found, basename=basename)
 
 
-def check_apply_result(doc, actions, expected):
+def check_apply_result(doc, actions, expected, title=None):
+    if title is not None:
+        actions = [x for x in actions if x["title"] == title]
+
     assert len(actions) == 1
     arguments = actions[0]["command"]["arguments"]
     assert len(arguments) == 1
@@ -761,6 +764,7 @@ My keyword
     ${myvar}=    Set Variable    
     Log     Something ${myvar}
 """,
+        title="Create local variable",
     )
 
 
@@ -794,6 +798,7 @@ Example task
         Log    ${some_var}
     END
 """,
+        title="Create local variable",
     )
 
 
@@ -825,6 +830,107 @@ Example task
     Log
         ...    ${some_var}
 """,
+        title="Create local variable",
+    )
+
+
+def test_code_code_action_create_variable_in_section(workspace, libspec_manager):
+    from robotframework_ls.impl.code_action import code_action
+
+    workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.put_doc("my_robot.robot")
+    doc.source = """*** Tasks ***
+Example task
+    Log    ${some_var}
+"""
+
+    completion_context, diagnostic_data = _analyze_and_create_completion_context(
+        doc, workspace, kind="undefined_variable", filter_kind=True
+    )
+    found_data = [diagnostic_data]
+    actions = code_action(completion_context, found_data)
+
+    check_apply_result(
+        doc,
+        actions,
+        """*** Variables ***
+${some_var}    
+
+*** Tasks ***
+Example task
+    Log    ${some_var}
+""",
+        title="Create variable in variables section",
+    )
+
+
+def test_code_code_action_create_variable_in_existing_section(
+    workspace, libspec_manager
+):
+    from robotframework_ls.impl.code_action import code_action
+
+    workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.put_doc("my_robot.robot")
+    doc.source = """*** Variables ***
+${vv}    22
+
+*** Tasks ***
+Example task
+    Log    ${some_var}
+"""
+
+    completion_context, diagnostic_data = _analyze_and_create_completion_context(
+        doc, workspace, kind="undefined_variable", filter_kind=True
+    )
+    found_data = [diagnostic_data]
+    actions = code_action(completion_context, found_data)
+
+    check_apply_result(
+        doc,
+        actions,
+        """*** Variables ***
+${vv}    22
+${some_var}    
+
+*** Tasks ***
+Example task
+    Log    ${some_var}
+""",
+        title="Create variable in variables section",
+    )
+
+
+def test_code_code_action_create_variable_in_existing_section_2(
+    workspace, libspec_manager
+):
+    from robotframework_ls.impl.code_action import code_action
+
+    workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.put_doc("my_robot.robot")
+    doc.source = """*** Variables ***
+
+*** Tasks ***
+Example task
+    Log    ${some_var}
+"""
+
+    completion_context, diagnostic_data = _analyze_and_create_completion_context(
+        doc, workspace, kind="undefined_variable", filter_kind=True
+    )
+    found_data = [diagnostic_data]
+    actions = code_action(completion_context, found_data)
+
+    check_apply_result(
+        doc,
+        actions,
+        """*** Variables ***
+${some_var}    
+
+*** Tasks ***
+Example task
+    Log    ${some_var}
+""",
+        title="Create variable in variables section",
     )
 
 
