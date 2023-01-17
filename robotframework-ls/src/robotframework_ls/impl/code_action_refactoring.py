@@ -88,7 +88,7 @@ def _create_local_variable_refactoring(
             ]
             yield _wrap_edits_in_snippet(
                 completion_context,
-                "Extract to local variable",
+                "Extract local variable",
                 changes,
                 "refactor.extract",
             )

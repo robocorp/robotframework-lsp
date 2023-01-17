@@ -934,6 +934,92 @@ Example task
     )
 
 
+def test_code_code_action_create_argument_with_empty_args(workspace, libspec_manager):
+    from robotframework_ls.impl.code_action import code_action
+
+    workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.put_doc("my_robot.robot")
+    doc.source = """*** Keyword ***
+Example keyword
+    [Arguments]
+    Log    ${some_var}
+"""
+
+    completion_context, diagnostic_data = _analyze_and_create_completion_context(
+        doc, workspace, kind="undefined_variable", filter_kind=True
+    )
+    found_data = [diagnostic_data]
+    actions = code_action(completion_context, found_data)
+
+    check_apply_result(
+        doc,
+        actions,
+        """*** Keyword ***
+Example keyword
+    [Arguments]    ${some_var}
+    Log    ${some_var}
+""",
+        title="Add to arguments",
+    )
+
+
+def test_code_code_action_create_argument_with_args(workspace, libspec_manager):
+    from robotframework_ls.impl.code_action import code_action
+
+    workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.put_doc("my_robot.robot")
+    doc.source = """*** Keyword ***
+Example keyword
+    [Arguments]    ${arg}    
+    Log    ${some_var}
+"""
+
+    completion_context, diagnostic_data = _analyze_and_create_completion_context(
+        doc, workspace, kind="undefined_variable", filter_kind=True
+    )
+    found_data = [diagnostic_data]
+    actions = code_action(completion_context, found_data)
+
+    check_apply_result(
+        doc,
+        actions,
+        """*** Keyword ***
+Example keyword
+    [Arguments]    ${arg}    ${some_var}    
+    Log    ${some_var}
+""",
+        title="Add to arguments",
+    )
+
+
+def test_code_code_action_create_argument_with_no_args(workspace, libspec_manager):
+    from robotframework_ls.impl.code_action import code_action
+
+    workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
+    doc = workspace.put_doc("my_robot.robot")
+    doc.source = """*** Keyword ***
+Example keyword
+    Log    ${some_var}
+"""
+
+    completion_context, diagnostic_data = _analyze_and_create_completion_context(
+        doc, workspace, kind="undefined_variable", filter_kind=True
+    )
+    found_data = [diagnostic_data]
+    actions = code_action(completion_context, found_data)
+
+    check_apply_result(
+        doc,
+        actions,
+        """*** Keyword ***
+Example keyword
+    [Arguments]    ${some_var}
+    Log    ${some_var}
+""",
+        title="Add to arguments",
+    )
+
+
 def _code_action_refactoring(
     workspace, libspec_manager, only: Set[str], initial_source, expected
 ):

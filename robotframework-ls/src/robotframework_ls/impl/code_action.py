@@ -23,6 +23,7 @@ from robotframework_ls.impl.protocols import (
     IKeywordFound,
     IResourceImportNode,
     IRobotDocument,
+    TokenInfo,
 )
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.basic import isinstance_name
@@ -200,7 +201,73 @@ def _undefined_variable_code_action(
 
                 if ast_utils.is_keyword_section(current_section):
                     # We can also create an argument.
-                    pass
+                    yield from _undefined_variable_code_action_create_argument(
+                        completion_context, undefined_variable_data, token_info, sep
+                    )
+
+
+def _undefined_variable_code_action_create_argument(
+    completion_context: ICompletionContext,
+    undefined_variable_data: ICustomDiagnosticDataUndefinedVariableTypedDict,
+    token_info: TokenInfo,
+    sep: str,
+) -> Iterable[CodeActionTypedDict]:
+    from robotframework_ls.impl import ast_utils
+
+    text_edit: TextEditTypedDict
+
+    for node in reversed(token_info.stack):
+        if isinstance_name(node, "Keyword"):
+            break
+    else:
+        return
+
+    for arguments_node_info in ast_utils.iter_nodes(node, "Arguments"):
+        break
+    else:
+        arguments_node_info = None
+
+    if arguments_node_info is not None:
+        for token in reversed(arguments_node_info.node.tokens):
+            if token.type in (token.ARGUMENT, token.ARGUMENTS):
+                # We need to add the spacing
+                use_line = token.lineno - 1
+                col = token.end_col_offset
+                text_edit = {
+                    "range": {
+                        "start": {"line": use_line, "character": col},
+                        "end": {"line": use_line, "character": col},
+                    },
+                    "newText": "%s${%s}$__LSP_CURSOR_LOCATION__$"
+                    % (sep, undefined_variable_data["name"]),
+                }
+
+                yield _wrap_edit_in_command(
+                    completion_context,
+                    "Add to arguments",
+                    text_edit,
+                )
+                return
+
+        return
+
+    # There's no [Arguments] section. Create it.
+    use_line = node.lineno
+    col = 0
+    text_edit = {
+        "range": {
+            "start": {"line": use_line, "character": col},
+            "end": {"line": use_line, "character": col},
+        },
+        "newText": "%s[Arguments]%s${%s}$__LSP_CURSOR_LOCATION__$\n"
+        % (sep, sep, undefined_variable_data["name"]),
+    }
+
+    yield _wrap_edit_in_command(
+        completion_context,
+        "Add to arguments",
+        text_edit,
+    )
 
 
 def _undefined_variable_code_action_create_in_variables_section(
