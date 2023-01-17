@@ -8,6 +8,7 @@ NEXT
     - If a line starts with `#` if a new line is entered before the end of the line a `#` is added in the new line
     - If a line is split a continuation (`...`) is added.
 - A code action can be used to create a `local variable` from an `undefined variable`.
+- Extract `local variable` refactoring.
 
 
 New in 1.7.3 (2022-12-16)

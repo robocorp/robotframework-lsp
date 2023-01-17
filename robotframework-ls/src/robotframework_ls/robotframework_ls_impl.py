@@ -491,7 +491,10 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         from robotframework_ls import commands
 
         server_capabilities = {
-            "codeActionProvider": {"resolveProvider": False},
+            "codeActionProvider": {
+                "resolveProvider": False,
+                "codeActionKinds": ["quickfix", "refactor", "refactor.extract"],
+            },
             "codeLensProvider": {"resolveProvider": True},
             # Docs are lazily computed
             "completionProvider": {"resolveProvider": True},
@@ -1465,12 +1468,29 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             if self is None:
                 return
 
-            apply_edit: WorkspaceEditParamsTypedDict = code_action_info["apply_edit"]
-            fut: IFuture = self._lsp_messages.apply_edit_args(apply_edit)
-            try:
-                fut.result(4)
-            except:
-                log.exception(f"Exception calling: {self._lsp_messages.M_APPLY_EDIT}")
+            apply_edit: Optional[WorkspaceEditParamsTypedDict] = code_action_info.get(
+                "apply_edit"
+            )
+            if apply_edit:
+                fut: IFuture = self._lsp_messages.apply_edit_args(apply_edit)
+                try:
+                    fut.result(4)
+                except:
+                    log.exception(
+                        f"Exception calling: {self._lsp_messages.M_APPLY_EDIT}"
+                    )
+
+            apply_snippet: Optional[
+                WorkspaceEditParamsTypedDict
+            ] = code_action_info.get("apply_snippet")
+            if apply_snippet:
+                fut: IFuture = self._lsp_messages.apply_snippet(apply_snippet)
+                try:
+                    fut.result(4)
+                except:
+                    log.exception(
+                        f"Exception calling: {self._lsp_messages.M_APPLY_SNIPPET}"
+                    )
 
             # Deal with linting (because if only a dependent file is changed we
             # still want to ask for the main file to be linted).

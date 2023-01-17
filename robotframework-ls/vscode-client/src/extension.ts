@@ -44,6 +44,7 @@ import { debounce } from "./common";
 import { RobotDocumentationViewProvider } from "./docs";
 import { RobotOutputViewProvider } from "./output/outView";
 import { setupDebugSessionOutViewIntegration } from "./output/outViewRunIntegration";
+import { applySnippetWorkspaceEdit } from "./snippet";
 
 interface ExecuteWorkspaceCommandArgs {
     command: string;
@@ -369,6 +370,15 @@ async function registerLanguageServerListeners(langServer: LanguageClient) {
             extensionContext.subscriptions.push(
                 langServer.onNotification("$/testsCollected", (args: ITestInfoFromUri) => {
                     handleTestsCollected(args);
+                })
+            );
+            extensionContext.subscriptions.push(
+                langServer.onRequest("$/applySnippetWorkspaceEdit", async (params) => {
+                    const edit: vscode.WorkspaceEdit = await langServer.protocol2CodeConverter.asWorkspaceEdit(
+                        params["edit"]
+                    );
+                    await applySnippetWorkspaceEdit(edit);
+                    return true;
                 })
             );
             extensionContext.subscriptions.push(

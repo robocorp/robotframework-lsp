@@ -1,7 +1,7 @@
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.robotframework_log import get_logger, get_log_level
-from typing import Optional, List, Dict, Deque, Tuple, Sequence
+from typing import Optional, List, Dict, Deque, Tuple, Sequence, Any, Set
 from robocorp_ls_core.protocols import (
     IConfig,
     IMonitor,
@@ -29,6 +29,9 @@ from robocorp_ls_core.lsp import (
     ICustomDiagnosticDataTypedDict,
     CommandTypedDict,
     TextEditTypedDict,
+    TextDocumentContextTypedDict,
+    Range,
+    CodeActionTypedDict,
 )
 from robotframework_ls.impl.protocols import (
     IKeywordFound,
@@ -1099,9 +1102,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
     def _threaded_code_action(
         self, doc_uri: str, params: TextDocumentCodeActionTypedDict, monitor: IMonitor
-    ) -> Optional[List[CommandTypedDict]]:
-
-        from robotframework_ls.impl.code_action import code_action
+    ) -> Optional[List[CodeActionTypedDict]]:
 
         end = params["range"]["end"]
         line = end["line"]
@@ -1112,13 +1113,44 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         if completion_context is None:
             return None
 
-        context = params["context"]
-        found_data: List[ICustomDiagnosticDataTypedDict] = []
-        for diagnostic in context["diagnostics"]:
-            data: Optional[ICustomDiagnosticDataTypedDict] = diagnostic.get("data")
-            if data is not None:
-                found_data.append(data)
-        return code_action(completion_context, found_data)
+        context: TextDocumentContextTypedDict = params["context"]
+
+        # See:
+        # codeActionProvider.codeActionKinds
+        # at:
+        # robotframework_ls.robotframework_ls_impl.RobotFrameworkLanguageServer.capabilities
+        # to see what may be included in 'only'
+        ret: List[CodeActionTypedDict] = []
+
+        s = context.get("only")
+        only: Set[str]
+        if not s:
+            only = set()
+        else:
+            if isinstance(s, str):
+                only = set([s])
+            else:
+                only = set(s)
+
+        if only and ("refactor" in only or "refactor.extract" in only):
+            from robotframework_ls.impl.code_action_refactoring import (
+                code_action_refactoring,
+            )
+
+            r: RangeTypedDict = params["range"]
+            select_range = Range.create_from_range_typed_dict(r)
+            ret.extend(code_action_refactoring(completion_context, select_range, only))
+
+        if not only or (only and "quickfix" in only):
+            from robotframework_ls.impl.code_action import code_action
+
+            found_data: List[ICustomDiagnosticDataTypedDict] = []
+            for diagnostic in context["diagnostics"]:
+                data: Optional[ICustomDiagnosticDataTypedDict] = diagnostic.get("data")
+                if data is not None:
+                    found_data.append(data)
+            ret.extend(code_action(completion_context, found_data))
+        return ret
 
     def m_references(
         self, doc_uri: str, line: int, col: int, include_declaration: bool

@@ -1,28 +1,31 @@
-- arguments:
-  - apply_edit:
-      edit:
-        changes:
-          import_from.robot:
-          - newText: '    ${b}'
-            range:
-              end:
-                character: 23
-                line: 3
-              start:
-                character: 23
-                line: 3
-      label: Add argument ${b} to Foobar
-    lint_uris:
-    - case4.robot
-    show_document:
-      selection:
-        end:
-          character: 31
-          line: 3
-        start:
-          character: 31
-          line: 3
-      takeFocus: true
-      uri: import_from.robot
-  command: robot.applyCodeAction
+- command:
+    arguments:
+    - apply_edit:
+        edit:
+          changes:
+            import_from.robot:
+            - newText: '    ${b}'
+              range:
+                end:
+                  character: 23
+                  line: 3
+                start:
+                  character: 23
+                  line: 3
+        label: Add argument ${b} to Foobar
+      lint_uris:
+      - case4.robot
+      show_document:
+        selection:
+          end:
+            character: 31
+            line: 3
+          start:
+            character: 31
+            line: 3
+        takeFocus: true
+        uri: import_from.robot
+    command: robot.applyCodeAction
+    title: Add argument ${b} to Foobar
+  kind: quickfix
   title: Add argument ${b} to Foobar

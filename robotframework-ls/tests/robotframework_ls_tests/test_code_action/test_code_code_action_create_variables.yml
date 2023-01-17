@@ -1,21 +1,24 @@
-- arguments:
-  - apply_edit:
-      edit:
-        documentChanges:
-        - kind: create
-          uri: my_vars.py
-      label: 'Create my_vars.py '
-    lint_uris:
-    - case4.robot
-    show_document:
-      selection:
-        end:
-          character: 0
-          line: 0
-        start:
-          character: 0
-          line: 0
-      takeFocus: true
-      uri: my_vars.py
-  command: robot.applyCodeAction
+- command:
+    arguments:
+    - apply_edit:
+        edit:
+          documentChanges:
+          - kind: create
+            uri: my_vars.py
+        label: 'Create my_vars.py '
+      lint_uris:
+      - case4.robot
+      show_document:
+        selection:
+          end:
+            character: 0
+            line: 0
+          start:
+            character: 0
+            line: 0
+        takeFocus: true
+        uri: my_vars.py
+    command: robot.applyCodeAction
+    title: 'Create my_vars.py '
+  kind: quickfix
   title: 'Create my_vars.py '

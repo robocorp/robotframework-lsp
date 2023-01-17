@@ -1,28 +1,32 @@
-- arguments:
-  - apply_edit:
-      edit:
-        changes:
-          my_resource.resource:
-          - newText: "*** Keywords ***\nFoobar\n    [Arguments]    ${arg}\n    \n\n"
-            range:
-              end:
-                character: 0
-                line: 0
-              start:
-                character: 0
-                line: 0
-      label: 'Create Keyword: Foobar (in my_resource.resource)'
-    lint_uris:
-    - case4.robot
-    show_document:
-      selection:
-        end:
-          character: 4
-          line: 3
-        start:
-          character: 4
-          line: 3
-      takeFocus: true
-      uri: my_resource.resource
-  command: robot.applyCodeAction
+- command:
+    arguments:
+    - apply_edit:
+        edit:
+          changes:
+            my_resource.resource:
+            - newText: "*** Keywords ***\nFoobar\n    [Arguments]    ${arg}\n    \n\
+                \n"
+              range:
+                end:
+                  character: 0
+                  line: 0
+                start:
+                  character: 0
+                  line: 0
+        label: 'Create Keyword: Foobar (in my_resource.resource)'
+      lint_uris:
+      - case4.robot
+      show_document:
+        selection:
+          end:
+            character: 4
+            line: 3
+          start:
+            character: 4
+            line: 3
+        takeFocus: true
+        uri: my_resource.resource
+    command: robot.applyCodeAction
+    title: 'Create Keyword: Foobar (in my_resource.resource)'
+  kind: quickfix
   title: 'Create Keyword: Foobar (in my_resource.resource)'

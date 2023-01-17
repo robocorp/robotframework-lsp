@@ -1,4 +1,7 @@
 import os
+from robotframework_ls.impl.protocols import IRobotDocument
+from robocorp_ls_core.lsp import Range
+from typing import Set
 
 
 def check_code_action_data_regression(data_regression, found, basename=None):
@@ -6,7 +9,12 @@ def check_code_action_data_regression(data_regression, found, basename=None):
 
     # For checking the test we need to make the uri/path the same among runs.
     found = copy.deepcopy(found)  # we don't want to change the initial data
-    for c in found:
+    for code_action in found:
+        title = code_action["title"]
+        if "(at " in title:
+            code_action["title"] = title[: title.index("(at")]
+
+        c = code_action["command"]
         arguments = c["arguments"]
         if arguments:
             title = c["title"]
@@ -44,9 +52,14 @@ def check_code_action_data_regression(data_regression, found, basename=None):
 
 
 def check_apply_result(doc, actions, expected):
-    changes = next(
-        iter(actions[0]["arguments"][0]["apply_edit"]["edit"]["changes"].values())
-    )
+    assert len(actions) == 1
+    arguments = actions[0]["command"]["arguments"]
+    assert len(arguments) == 1
+    argument_opts = arguments[0]
+    if "apply_edit" in argument_opts:
+        changes = next(iter(argument_opts["apply_edit"]["edit"]["changes"].values()))
+    else:
+        changes = next(iter(argument_opts["apply_snippet"]["edit"]["changes"].values()))
     doc.apply_text_edits(changes)
 
     expected = expected.replace("\r\n", "\n").replace("\r", "\n")
@@ -811,5 +824,72 @@ Example task
     ${some_var}=    Set Variable    
     Log
         ...    ${some_var}
+""",
+    )
+
+
+def _code_action_refactoring(
+    workspace, libspec_manager, only: Set[str], initial_source, expected
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.code_action_refactoring import code_action_refactoring
+
+    workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
+    doc: IRobotDocument = workspace.put_doc("my_robot.robot")
+    i = initial_source.find("|")
+    j = initial_source.find("|", i + 1)
+    assert i > 0
+    assert j > i
+
+    source = initial_source[0:i] + initial_source[i + 1 : j] + initial_source[j + 1 :]
+    doc.source = source
+
+    start = doc.offset_to_line_col(i)
+    end = doc.offset_to_line_col(j - 1)
+    select_range = Range(start, end)
+
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=start[0], col=start[1]
+    )
+
+    actions = list(code_action_refactoring(completion_context, select_range, only))
+
+    check_apply_result(doc, actions, expected)
+
+
+def test_code_code_action_refactoring_extract_local_basic(workspace, libspec_manager):
+    _code_action_refactoring(
+        workspace,
+        libspec_manager,
+        "refactor.extract.local",
+        """*** Tasks ***
+Example task
+    Log    some |value|
+""",
+        """*** Tasks ***
+Example task
+    ${${0:variable}}=    Set Variable    value
+    Log    some ${${0:variable}}
+""",
+    )
+
+
+def test_code_code_action_refactoring_extract_local_multiline(
+    workspace, libspec_manager
+):
+    _code_action_refactoring(
+        workspace,
+        libspec_manager,
+        "refactor.extract.local",
+        """*** Tasks ***
+Example task
+    Log
+        ...    |value|
+""",
+        """*** Tasks ***
+Example task
+    ${${0:variable}}=    Set Variable    value
+    Log
+        ...    ${${0:variable}}
 """,
     )

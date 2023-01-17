@@ -16,6 +16,7 @@ from robocorp_ls_core.lsp import (
     ICustomDiagnosticDataUndefinedVarImportTypedDict,
     ICustomDiagnosticDataUnexpectedArgumentTypedDict,
     ICustomDiagnosticDataUndefinedVariableTypedDict,
+    CodeActionTypedDict,
 )
 from robotframework_ls.impl.protocols import (
     ICompletionContext,
@@ -36,7 +37,7 @@ log = get_logger(__name__)
 
 def _add_import_code_action(
     completion_context: ICompletionContext,
-) -> Iterator[CommandTypedDict]:
+) -> Iterator[CodeActionTypedDict]:
     from robotframework_ls.impl.collect_keywords import (
         collect_keyword_name_to_keyword_found,
     )
@@ -78,7 +79,7 @@ def _add_import_code_action(
             "arguments": [{"apply_edit": edit_params}],
         }
 
-        yield command
+        yield {"title": title, "kind": "quickfix", "command": command}
 
 
 def _create_keyword_in_current_file_text_edit(
@@ -147,7 +148,7 @@ def _create_keyword_in_current_file_text_edit(
 def _undefined_variable_code_action(
     completion_context: ICompletionContext,
     undefined_variable_data: ICustomDiagnosticDataUndefinedVariableTypedDict,
-) -> Iterable[CommandTypedDict]:
+) -> Iterable[CodeActionTypedDict]:
     from robotframework_ls.impl import ast_utils
 
     current_section: Any = completion_context.get_ast_current_section()
@@ -186,20 +187,16 @@ def _undefined_variable_code_action(
                     "newText": "%s${%s}=%s%s%s$__LSP_CURSOR_LOCATION__$\n"
                     % (indent, name, sep, set_var_name, sep),
                 }
-                return [
-                    _wrap_edit_in_command(
-                        completion_context,
-                        "Create ${%s} local variable" % name,
-                        change,
-                    )
-                ]
-
-    return []
+                yield _wrap_edit_in_command(
+                    completion_context,
+                    "Create ${%s} local variable" % name,
+                    change,
+                )
 
 
 def _wrap_edit_in_command(
     completion_context: ICompletionContext, title, text_edit: TextEditTypedDict
-) -> CommandTypedDict:
+) -> CodeActionTypedDict:
     changes = {completion_context.doc.uri: [text_edit]}
     edit: WorkspaceEditTypedDict = {"changes": changes}
     edit_params: WorkspaceEditParamsTypedDict = {"edit": edit, "label": title}
@@ -209,12 +206,13 @@ def _wrap_edit_in_command(
         "arguments": [{"apply_edit": edit_params}],
     }
     _add_show_document_at_command(command, completion_context.doc.uri, text_edit)
-    return command
+
+    return {"title": title, "kind": "quickfix", "command": command}
 
 
 def _create_keyword_in_current_file_code_action(
     completion_context: ICompletionContext, keyword_template: str, keyword_name: str
-) -> Iterator[CommandTypedDict]:
+) -> Iterator[CodeActionTypedDict]:
 
     text_edit = _create_keyword_in_current_file_text_edit(
         completion_context, keyword_template
@@ -232,13 +230,13 @@ def _create_keyword_in_current_file_code_action(
     }
 
     _add_show_document_at_command(command, completion_context.doc.uri, text_edit)
-    yield command
+    yield {"title": title, "kind": "quickfix", "command": command}
 
 
 def _undefined_resource_code_action(
     completion_context: ICompletionContext,
     undefined_resource_data: ICustomDiagnosticDataUndefinedResourceTypedDict,
-) -> Iterator[CommandTypedDict]:
+) -> Iterator[CodeActionTypedDict]:
     from robocorp_ls_core.lsp import CreateFileTypedDict
     from robocorp_ls_core import uris
 
@@ -269,13 +267,13 @@ def _undefined_resource_code_action(
 
     _add_show_document_at_command(command, doc_uri)
 
-    yield command
+    yield {"title": title, "kind": "quickfix", "command": command}
 
 
 def _undefined_keyword_code_action(
     completion_context: ICompletionContext,
     undefined_keyword_data: ICustomDiagnosticDataUndefinedKeywordTypedDict,
-) -> Iterator[CommandTypedDict]:
+) -> Iterator[CodeActionTypedDict]:
     from robotframework_ls.robot_config import get_arguments_separator
 
     keyword_template = "$keyword_name$keyword_arguments\n    $cursor\n\n"
@@ -396,7 +394,7 @@ def _matches_resource_import(
 
 def _create_keyword_in_another_file_code_action(
     completion_context: ICompletionContext, keyword_template: str, keyword_name: str
-) -> Iterator[CommandTypedDict]:
+) -> Iterator[CodeActionTypedDict]:
 
     text_edit = _create_keyword_in_current_file_text_edit(
         completion_context, keyword_template
@@ -421,7 +419,7 @@ def _create_keyword_in_another_file_code_action(
 
     _add_show_document_at_command(command, completion_context.doc.uri, text_edit)
 
-    yield command
+    yield {"title": title, "kind": "quickfix", "command": command}
 
 
 def _add_show_document_at_command(
@@ -470,7 +468,7 @@ def _deal_with_resource_or_import_or_alias_name(
     resource_or_import_or_alias_name: str,
     keyword_template: str,
     keyword_name: str,
-):
+) -> Iterator[CodeActionTypedDict]:
     for resource_import in completion_context.get_resource_imports():
         if _matches_resource_import(resource_import, resource_or_import_or_alias_name):
             doc = completion_context.get_resource_import_as_doc(resource_import)
@@ -489,7 +487,7 @@ def _create_arguments_command(
     keyword_name: str,
     prefix: str = "",
     postfix: str = "",
-) -> CommandTypedDict:
+) -> CodeActionTypedDict:
     from robotframework_ls.robot_config import get_arguments_separator
 
     separator = get_arguments_separator(completion_context)
@@ -521,13 +519,13 @@ def _create_arguments_command(
     }
 
     _add_show_document_at_command(command, completion_context.doc.uri, text_edit)
-    return command
+    return {"title": title, "kind": "quickfix", "command": command}
 
 
 def _unexpected_argument_code_action(
     completion_context: ICompletionContext,
     unexpected_argument_data: ICustomDiagnosticDataUnexpectedArgumentTypedDict,
-):
+) -> Iterable[CodeActionTypedDict]:
     from robocorp_ls_core import uris
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl.string_matcher import RobotStringMatcher
@@ -600,12 +598,12 @@ def _unexpected_argument_code_action(
 def code_action(
     completion_context: ICompletionContext,
     found_data: List[ICustomDiagnosticDataTypedDict],
-) -> List[CommandTypedDict]:
+) -> List[CodeActionTypedDict]:
     """
     Note: the completion context selection should be at the range end position.
     """
 
-    ret: List[CommandTypedDict] = []
+    ret: List[CodeActionTypedDict] = []
     for data in found_data:
         if data["kind"] == "undefined_keyword":
             undefined_keyword_data = typing.cast(
@@ -667,9 +665,10 @@ def code_action(
                 )
             )
 
-    for r in ret:
-        if r["command"] == "robot.applyCodeAction":
-            arguments = r["arguments"]
+    for code_action in ret:
+        command = code_action["command"]
+        if command and command["command"] == "robot.applyCodeAction":
+            arguments = command["arguments"]
             if arguments:
                 arg = arguments[0]
                 lint_uris = arg.get("lint_uris")

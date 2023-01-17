@@ -568,6 +568,7 @@ class DiagnosticsTypedDict(TypedDict):
 class TextDocumentContextTypedDict(TypedDict, total=False):
     diagnostics: List[DiagnosticsTypedDict]
     triggerKind: int
+    only: Optional[List[str]]
 
 
 class TextDocumentCodeActionTypedDict(TypedDict):
@@ -784,6 +785,34 @@ class CommandTypedDict(TypedDict, total=False):
     arguments: Optional[list]
 
 
+class CodeActionTypedDict(TypedDict, total=False):
+    # Title of the command, like `save`.
+    title: str
+
+    # The kind of the code action.
+    # Used to filter code actions.
+    kind: Optional[str]
+
+    # The diagnostics that this code action resolves.
+    diagnostics: Optional[List[Any]]  # Optional[List[Diagnostic]]
+
+    # Marks this as a preferred action. Preferred actions are used by the
+    # `auto fix` command and can be targeted by keybindings.
+    #
+    # A quick fix should be marked preferred if it properly addresses the
+    # underlying error. A refactoring should be marked preferred if it is the
+    # most reasonable choice of actions to take.
+    isPreferred: Optional[bool]
+
+    disabled: Optional[bool]
+
+    # The identifier of the actual command handler.
+    edit: Optional[WorkspaceEditTypedDict]
+    command: Optional[CommandTypedDict]
+
+    data: Optional[Any]
+
+
 class DocumentSymbolTypedDict(TypedDict, total=False):
 
     # The name of this symbol. Will be displayed in the user interface and
@@ -897,6 +926,7 @@ class WorkspaceEditParamsTypedDict(TypedDict, total=False):
 class LSPMessages(object):
     M_PUBLISH_DIAGNOSTICS = "textDocument/publishDiagnostics"
     M_APPLY_EDIT = "workspace/applyEdit"
+    M_APPLY_SNIPPET = "$/applySnippetWorkspaceEdit"
     M_SHOW_MESSAGE = "window/showMessage"
     M_SHOW_MESSAGE_REQUEST = "window/showMessageRequest"
     M_SHOW_DOCUMENT = "window/showDocument"
@@ -910,6 +940,9 @@ class LSPMessages(object):
 
     def apply_edit_args(self, edit_args: WorkspaceEditParamsTypedDict) -> IFuture:
         return self._endpoint.request(self.M_APPLY_EDIT, params=edit_args)
+
+    def apply_snippet(self, snippet_args) -> IFuture:
+        return self._endpoint.request(self.M_APPLY_SNIPPET, params=snippet_args)
 
     def show_document(self, show_document_args: ShowDocumentParamsTypedDict) -> IFuture:
         return self._endpoint.request(self.M_SHOW_DOCUMENT, params=show_document_args)

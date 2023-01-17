@@ -511,7 +511,11 @@ From: https://github.com/d-biehl/robotcode
     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
+
+25) https://github.com/rust-lang/rust-analyzer/
+
+    Dual-licensed: MIT / Apache 2
    
-25) All third party javascript packages in node_modules folders are licensed under the licenses specified in those packages.
+26) All third party javascript packages in node_modules folders are licensed under the licenses specified in those packages.
    
-26) All third party python packages in robocorp-python-ls-core/src/robocorp_ls_core/libs folders are licensed under the licenses specified in those packages.
+27) All third party python packages in robocorp-python-ls-core/src/robocorp_ls_core/libs folders are licensed under the licenses specified in those packages.

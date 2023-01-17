@@ -1,30 +1,33 @@
-- arguments:
-  - apply_edit:
-      edit:
-        changes:
-          case4.robot:
-          - newText: '    [Arguments]    ${another}
+- command:
+    arguments:
+    - apply_edit:
+        edit:
+          changes:
+            case4.robot:
+            - newText: '    [Arguments]    ${another}
 
-              '
-            range:
-              end:
-                character: 0
-                line: 3
-              start:
-                character: 0
-                line: 3
-      label: Add argument ${another} to Foobar
-    lint_uris:
-    - case4.robot
-    show_document:
-      selection:
-        end:
-          character: 29
-          line: 3
-        start:
-          character: 29
-          line: 3
-      takeFocus: true
-      uri: case4.robot
-  command: robot.applyCodeAction
+                '
+              range:
+                end:
+                  character: 0
+                  line: 3
+                start:
+                  character: 0
+                  line: 3
+        label: Add argument ${another} to Foobar
+      lint_uris:
+      - case4.robot
+      show_document:
+        selection:
+          end:
+            character: 29
+            line: 3
+          start:
+            character: 29
+            line: 3
+        takeFocus: true
+        uri: case4.robot
+    command: robot.applyCodeAction
+    title: Add argument ${another} to Foobar
+  kind: quickfix
   title: Add argument ${another} to Foobar

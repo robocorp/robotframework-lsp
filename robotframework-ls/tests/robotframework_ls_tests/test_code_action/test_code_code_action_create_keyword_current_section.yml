@@ -1,28 +1,31 @@
-- arguments:
-  - apply_edit:
-      edit:
-        changes:
-          case4.robot:
-          - newText: "My Keyword\n    \n\n"
-            range:
-              end:
-                character: 0
-                line: 5
-              start:
-                character: 0
-                line: 5
-      label: 'Create Keyword: My Keyword (in current file)'
-    lint_uris:
-    - case4.robot
-    show_document:
-      selection:
-        end:
-          character: 4
-          line: 6
-        start:
-          character: 4
-          line: 6
-      takeFocus: true
-      uri: case4.robot
-  command: robot.applyCodeAction
+- command:
+    arguments:
+    - apply_edit:
+        edit:
+          changes:
+            case4.robot:
+            - newText: "My Keyword\n    \n\n"
+              range:
+                end:
+                  character: 0
+                  line: 5
+                start:
+                  character: 0
+                  line: 5
+        label: 'Create Keyword: My Keyword (in current file)'
+      lint_uris:
+      - case4.robot
+      show_document:
+        selection:
+          end:
+            character: 4
+            line: 6
+          start:
+            character: 4
+            line: 6
+        takeFocus: true
+        uri: case4.robot
+    command: robot.applyCodeAction
+    title: 'Create Keyword: My Keyword (in current file)'
+  kind: quickfix
   title: 'Create Keyword: My Keyword (in current file)'
