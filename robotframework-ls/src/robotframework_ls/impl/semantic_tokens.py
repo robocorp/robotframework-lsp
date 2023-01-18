@@ -567,6 +567,7 @@ def semantic_tokens_full(context: ICompletionContext):
             scope.keyword_usage_handler = (
                 ast_utils_keyword_usage.obtain_keyword_usage_handler(stack, node)
             )
+            diff_in_line = 0
 
             for token in tokens:
                 for token_part, token_type_index in _tokenize_token(node, token, scope):
@@ -575,21 +576,98 @@ def semantic_tokens_full(context: ICompletionContext):
                         lineno = 0
                     append(lineno - last_line)
                     if lineno != last_line:
+                        diff_in_line = 0
                         last_column = token_part.col_offset
                         if last_column < 0:
                             last_column = 0
                         append(last_column)
                     else:
-                        col_delta = token_part.col_offset - last_column
+                        col_delta = token_part.col_offset + diff_in_line - last_column
                         append(col_delta)
                         last_column += col_delta
 
-                    append(token_part.end_col_offset - token_part.col_offset)  # len
+                    len_unicode = len(token_part.value)
+                    if token_part.value.isascii():
+                        append(len_unicode)
+                    else:
+                        len_bytes = _compute_utf16_code_units_len(token_part.value)
+                        append(len_bytes)
+                        diff_in_line += len_bytes - len_unicode
                     append(token_type_index)
                     append(0)  # i.e.: no modifier
                     last_line = lineno
 
     return ret
+
+
+def iter_decoded_semantic_tokens(semantic_tokens_as_int: List[int]):
+    if not semantic_tokens_as_int:
+        return
+
+    ints_iter = iter(semantic_tokens_as_int)
+    line = 0
+    col = 0
+    while True:
+        try:
+            line_delta = next(ints_iter)
+        except StopIteration:
+            return
+        col_delta = next(ints_iter)
+        token_len = next(ints_iter)
+        token_type = next(ints_iter)
+        token_modifier = next(ints_iter)
+        line += line_delta
+        if line_delta == 0:
+            col += col_delta
+        else:
+            col = col_delta
+
+        yield {
+            "line": line,
+            "col": col,
+            "line_delta": line_delta,
+            "col_delta": col_delta,
+            "len": token_len,
+            "type": token_type,
+            "modifier": token_modifier,
+        }
+
+
+def _compute_utf16_code_units_len(s):
+    tot = 0
+    for c in s:
+        tot += 1 if ord(c) < 65536 else 2
+    return tot
+
+
+def _get_range_considering_utf16_code_units(s, start_col, end_col):
+    if s.isascii():
+        return s[start_col:end_col]
+
+    if start_col == end_col:
+        return ""
+
+    assert end_col > start_col
+
+    chars = []
+    i = 0
+    iter_in = iter(s)
+    while start_col > i:
+        c = next(iter_in)
+        i += 1
+        if ord(c) < 65536:
+            continue
+        i += 1
+
+    while end_col > i:
+        c = next(iter_in)
+        chars.append(c)
+        i += 1
+        if ord(c) < 65536:
+            continue
+        i += 1
+
+    return "".join(chars)
 
 
 def decode_semantic_tokens(
@@ -617,7 +695,10 @@ def decode_semantic_tokens(
         else:
             col = col_delta
 
-        s = doc.get_line(line)[col : col + token_len]
+        # s = doc.get_line(line)[col : col + token_len]
+        s = doc.get_line(line)
+        s = _get_range_considering_utf16_code_units(s, col, col + token_len)
+
         ret.append((s, TOKEN_TYPES[token_type]))
         if stream is not None:
             print(">>", s, "<<", file=stream)

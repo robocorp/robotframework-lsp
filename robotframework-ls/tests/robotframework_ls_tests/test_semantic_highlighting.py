@@ -12,44 +12,51 @@ def check(found, expected):
     from robotframework_ls.impl.semantic_tokens import decode_semantic_tokens
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl import ast_utils
-    import robot
 
     semantic_tokens_as_int: List[int] = found[0]
     doc: IDocument = found[1]
+
     decoded = decode_semantic_tokens(semantic_tokens_as_int, doc)
     if decoded != expected:
         from io import StringIO
+        import robot
 
         stream = StringIO()
         ast_utils.print_ast(CompletionContext(doc).get_ast(), stream=stream)
-
-        compare_stream = StringIO()
-        found_diff = False
-        compare_stream.write("Found".ljust(40))
-        compare_stream.write("Expected".ljust(40))
-        compare_stream.write("\n")
-        for a, b in itertools.zip_longest(decoded, expected, fillvalue=""):
-            if not found_diff and str(a) != str(b):
-                found_diff = True  # Just highlight the first difference
-                compare_stream.write("! ")
-            else:
-                compare_stream.write("  ")
-
-            compare_stream.write(str(a).ljust(40))
-            compare_stream.write(str(b).ljust(40))
-            compare_stream.write("\n")
+        string_diff = compute_string_diff(decoded, expected)
 
         raise AssertionError(
             "Ast:\n%s\n\nRobot: %s %s\nExpected:\n%s\n\nFound:\n%s\n\n\nCompare:\n%s"
             % (
-                stream.getvalue(),
+                stream.getvalue() if stream is not None else "",
                 robot.get_version(),
                 robot,
                 expected,
                 decoded,
-                compare_stream.getvalue(),
+                string_diff,
             )
         )
+
+
+def compute_string_diff(decoded: list, expected: list):
+    from io import StringIO
+
+    compare_stream = StringIO()
+    found_diff = False
+    compare_stream.write("Found".ljust(40))
+    compare_stream.write("Expected".ljust(40))
+    compare_stream.write("\n")
+    for a, b in itertools.zip_longest(decoded, expected, fillvalue=""):
+        if not found_diff and str(a) != str(b):
+            found_diff = True  # Just highlight the first difference
+            compare_stream.write("! ")
+        else:
+            compare_stream.write("  ")
+
+        compare_stream.write(str(a).ljust(40))
+        compare_stream.write(str(b).ljust(40))
+        compare_stream.write("\n")
+    return compare_stream.getvalue()
 
 
 def _setup_doc(workspace, source, root="case1", name="case1.robot"):
@@ -1392,3 +1399,83 @@ Test case 1
             ("foo", "argumentValue"),
         ],
     )
+
+
+def test_semantic_unicode(workspace):
+    from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
+    from robotframework_ls.impl.completion_context import CompletionContext
+
+    ascii_version = """
+*** Test Cases ***
+U
+    K    ****ab
+    K    kangaroo=**    egg=**
+"""
+
+    unicode_version = """
+*** Test Cases ***
+U
+    K    😀😀ab
+    K    kangaroo=🦘    egg=🥚
+"""
+    check_simple(
+        workspace,
+        unicode_version,
+        [
+            ("*** Test Cases ***", "header"),
+            ("U", "testCaseName"),
+            ("K", "keywordNameCall"),
+            ("😀😀ab", "argumentValue"),
+            ("K", "keywordNameCall"),
+            ("kangaroo", "parameterName"),
+            ("=", "variableOperator"),
+            ("🦘", "argumentValue"),
+            ("egg", "parameterName"),
+            ("=", "variableOperator"),
+            ("🥚", "argumentValue"),
+        ],
+    )
+
+    check_simple(
+        workspace,
+        ascii_version,
+        [
+            ("*** Test Cases ***", "header"),
+            ("U", "testCaseName"),
+            ("K", "keywordNameCall"),
+            ("****ab", "argumentValue"),
+            ("K", "keywordNameCall"),
+            ("kangaroo", "parameterName"),
+            ("=", "variableOperator"),
+            ("**", "argumentValue"),
+            ("egg", "parameterName"),
+            ("=", "variableOperator"),
+            ("**", "argumentValue"),
+        ],
+    )
+
+    doc = _setup_doc(workspace, unicode_version)
+    context = CompletionContext(doc, workspace=workspace.ws)
+    semantic_tokens_unicode = _decode(semantic_tokens_full(context))
+
+    doc = _setup_doc(workspace, ascii_version)
+    context = CompletionContext(doc, workspace=workspace.ws)
+    semantic_tokens_ascii = _decode(semantic_tokens_full(context))
+
+    if semantic_tokens_unicode != semantic_tokens_ascii:
+        diff = compute_string_diff(
+            semantic_tokens_unicode.splitlines(), semantic_tokens_ascii.splitlines()
+        )
+        raise AssertionError(f"Contents don't match. Diff:\n{diff}\n")
+
+
+def _decode(semantic_tokens):
+    from robotframework_ls.impl.semantic_tokens import iter_decoded_semantic_tokens
+
+    lst = []
+    for info in iter_decoded_semantic_tokens(semantic_tokens):
+        lst.append(f"--------------------")
+        lst.append(f"line={info['line']}")
+        lst.append(f"col={info['col']}")
+        lst.append(f"len={info['len']}")
+    return "\n".join(lst)
