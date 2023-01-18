@@ -67,3 +67,63 @@ def test_document_from_file(workspace, workspace_dir, cases):
 
     # The old one in memory doesn't change after the file is removed
     assert cached_doc3.source == "new contents"
+
+
+def test_document_unicode(workspace):
+    from robocorp_ls_core.lsp import TextDocumentItem
+    from robocorp_ls_core.lsp import TextDocumentContentChangeEvent
+
+    workspace.set_root("case2")
+    doc = workspace.put_doc(
+        "case2.robot",
+        """*** Keywords ***
+My Keyword
+    Log    
+""",
+    )
+
+    text_document_item = TextDocumentItem(doc.uri)
+    doc = workspace.ws.update_document(
+        text_document_item,
+        TextDocumentContentChangeEvent(
+            **{
+                "range": {
+                    "start": {"line": 2, "character": 11},
+                    "end": {"line": 2, "character": 11},
+                },
+                "rangeLength": 0,
+                "text": "\U0001f600",
+            }
+        ),
+    )
+
+    # Note: the char: \U0001f600 must be considered as having a len of 2.
+    assert (
+        doc.source
+        == """*** Keywords ***
+My Keyword
+    Log    \U0001f600
+"""
+    )
+
+    doc = workspace.ws.update_document(
+        text_document_item,
+        TextDocumentContentChangeEvent(
+            **{
+                "range": {
+                    "start": {"line": 2, "character": 13},
+                    "end": {"line": 2, "character": 13},
+                },
+                "rangeLength": 0,
+                "text": "a",
+            }
+        ),
+    )
+
+    assert (
+        doc.source
+        == """*** Keywords ***
+My Keyword
+    Log    \U0001f600a
+"""
+    )

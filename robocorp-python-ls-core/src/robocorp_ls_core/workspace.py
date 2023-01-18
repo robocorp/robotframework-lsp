@@ -42,6 +42,7 @@ import weakref
 from collections import namedtuple
 import time
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
+from robocorp_ls_core.code_units import convert_utf16_code_unit_to_python
 
 log = get_logger(__name__)
 
@@ -851,10 +852,15 @@ class Document(object):
                 continue
 
             if i == start_line:
+                if not line.isascii():
+                    start_col = convert_utf16_code_unit_to_python(line, start_col)
+
                 new.write(line[:start_col])
                 new.write(text)
 
             if i == end_line:
+                if not line.isascii():
+                    end_col = convert_utf16_code_unit_to_python(line, end_col)
                 new.write(line[end_col:])
 
         self._source = new.getvalue()

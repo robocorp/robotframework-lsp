@@ -1,9 +1,13 @@
-from typing import List, Tuple, Iterator, Optional, Any
 import itertools
+import os
+from typing import List, Tuple, Iterator, Optional, Any
+
+from robocorp_ls_core.code_units import (
+    compute_utf16_code_units_len,
+    get_range_considering_utf16_code_units,
+)
 from robocorp_ls_core.protocols import IDocument
 from robotframework_ls.impl.protocols import ICompletionContext, IRobotToken
-import os
-
 from robotframework_ls.impl.robot_constants import (
     COMMENT,
     HEADER_TOKENS,
@@ -590,7 +594,7 @@ def semantic_tokens_full(context: ICompletionContext):
                     if token_part.value.isascii():
                         append(len_unicode)
                     else:
-                        len_bytes = _compute_utf16_code_units_len(token_part.value)
+                        len_bytes = compute_utf16_code_units_len(token_part.value)
                         append(len_bytes)
                         diff_in_line += len_bytes - len_unicode
                     append(token_type_index)
@@ -633,43 +637,6 @@ def iter_decoded_semantic_tokens(semantic_tokens_as_int: List[int]):
         }
 
 
-def _compute_utf16_code_units_len(s):
-    tot = 0
-    for c in s:
-        tot += 1 if ord(c) < 65536 else 2
-    return tot
-
-
-def _get_range_considering_utf16_code_units(s, start_col, end_col):
-    if s.isascii():
-        return s[start_col:end_col]
-
-    if start_col == end_col:
-        return ""
-
-    assert end_col > start_col
-
-    chars = []
-    i = 0
-    iter_in = iter(s)
-    while start_col > i:
-        c = next(iter_in)
-        i += 1
-        if ord(c) < 65536:
-            continue
-        i += 1
-
-    while end_col > i:
-        c = next(iter_in)
-        chars.append(c)
-        i += 1
-        if ord(c) < 65536:
-            continue
-        i += 1
-
-    return "".join(chars)
-
-
 def decode_semantic_tokens(
     semantic_tokens_as_int: List[int], doc: IDocument, stream=None
 ):
@@ -697,7 +664,7 @@ def decode_semantic_tokens(
 
         # s = doc.get_line(line)[col : col + token_len]
         s = doc.get_line(line)
-        s = _get_range_considering_utf16_code_units(s, col, col + token_len)
+        s = get_range_considering_utf16_code_units(s, col, col + token_len)
 
         ret.append((s, TOKEN_TYPES[token_type]))
         if stream is not None:
