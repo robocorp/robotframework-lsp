@@ -1115,13 +1115,6 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
         context: TextDocumentContextTypedDict = params["context"]
 
-        # See:
-        # codeActionProvider.codeActionKinds
-        # at:
-        # robotframework_ls.robotframework_ls_impl.RobotFrameworkLanguageServer.capabilities
-        # to see what may be included in 'only'
-        ret: List[CodeActionTypedDict] = []
-
         s = context.get("only")
         only: Set[str]
         if not s:
@@ -1132,25 +1125,12 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             else:
                 only = set(s)
 
-        if only and ("refactor" in only or "refactor.extract" in only):
-            from robotframework_ls.impl.code_action_refactoring import (
-                code_action_refactoring,
-            )
+        r: RangeTypedDict = params["range"]
+        select_range = Range.create_from_range_typed_dict(r)
 
-            r: RangeTypedDict = params["range"]
-            select_range = Range.create_from_range_typed_dict(r)
-            ret.extend(code_action_refactoring(completion_context, select_range, only))
+        from robotframework_ls.impl.code_action import code_action_all
 
-        if not only or (only and "quickfix" in only):
-            from robotframework_ls.impl.code_action import code_action
-
-            found_data: List[ICustomDiagnosticDataTypedDict] = []
-            for diagnostic in context["diagnostics"]:
-                data: Optional[ICustomDiagnosticDataTypedDict] = diagnostic.get("data")
-                if data is not None:
-                    found_data.append(data)
-            ret.extend(code_action(completion_context, found_data))
-        return ret
+        return code_action_all(completion_context, select_range, only, context)
 
     def m_references(
         self, doc_uri: str, line: int, col: int, include_declaration: bool

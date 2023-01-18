@@ -1,10 +1,10 @@
 import os
 from robotframework_ls.impl.protocols import IRobotDocument
-from robocorp_ls_core.lsp import Range
+from robocorp_ls_core.lsp import Range, TextDocumentContextTypedDict
 from typing import Set
 
 
-def check_code_action_data_regression(data_regression, found, basename=None):
+def check_code_action_data_regression(data_regression, found, basename=None) -> None:
     import copy
 
     # For checking the test we need to make the uri/path the same among runs.
@@ -51,9 +51,13 @@ def check_code_action_data_regression(data_regression, found, basename=None):
     data_regression.check(found, basename=basename)
 
 
-def check_apply_result(doc, actions, expected, title=None):
+def check_apply_result(doc, actions, expected, title=None) -> None:
     if title is not None:
         actions = [x for x in actions if x["title"] == title]
+
+    if not expected:
+        assert len(actions) == 0
+        return
 
     assert len(actions) == 1
     arguments = actions[0]["command"]["arguments"]
@@ -75,7 +79,7 @@ def check_apply_result(doc, actions, expected, title=None):
         assert obtained == expected
 
 
-def _collect_errors(completion_context):
+def _collect_errors(completion_context) -> list:
     from robotframework_ls.impl.code_analysis import collect_analysis_errors
 
     errors = [
@@ -96,7 +100,7 @@ def _collect_errors(completion_context):
 
 def _analyze_and_create_completion_context(
     doc, workspace, kind="undefined_keyword", filter_kind=False
-):
+) -> tuple:
     from robotframework_ls.impl.completion_context import CompletionContext
 
     errors = _collect_errors(CompletionContext(doc, workspace=workspace.ws))
@@ -120,8 +124,8 @@ def _analyze_and_create_completion_context(
 
 def test_code_code_action_import_keyword_basic(
     workspace, libspec_manager, data_regression
-):
-    from robotframework_ls.impl.code_action import code_action
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc_import_from = workspace.put_doc("import_from_this_robot.robot")
@@ -145,7 +149,7 @@ Some Test
         doc, workspace
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
     actions = [x for x in actions if "Import My Keyword" in x["title"]]
     check_code_action_data_regression(data_regression, actions)
     check_apply_result(
@@ -161,8 +165,10 @@ Some Test
     )
 
 
-def test_code_code_action_use_template(workspace, libspec_manager, data_regression):
-    from robotframework_ls.impl.code_action import code_action
+def test_code_code_action_use_template(
+    workspace, libspec_manager, data_regression
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
     from robotframework_ls.robot_config import RobotConfig
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
@@ -186,7 +192,7 @@ Some Test
         }
     )
     completion_context = completion_context.create_copy_with_config(config)
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
     check_code_action_data_regression(data_regression, actions)
     check_apply_result(
         doc,
@@ -204,8 +210,8 @@ Some Test
 
 def test_code_code_action_create_keyword_same_file(
     workspace, libspec_manager, data_regression
-):
-    from robotframework_ls.impl.code_action import code_action
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc = workspace.put_doc("case4.robot")
@@ -218,7 +224,7 @@ Some Test
         doc, workspace
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
     check_code_action_data_regression(data_regression, actions)
     check_apply_result(
         doc,
@@ -236,8 +242,8 @@ Some Test
 
 def test_code_code_action_create_keyword_existing_section_same_file(
     workspace, libspec_manager, data_regression
-):
-    from robotframework_ls.impl.code_action import code_action
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc = workspace.put_doc("case4.robot")
@@ -258,7 +264,7 @@ Some Test
         doc, workspace
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
     check_code_action_data_regression(data_regression, actions)
     check_apply_result(
         doc,
@@ -283,8 +289,8 @@ Some Test
 
 def test_code_code_action_create_keyword_current_section(
     workspace, libspec_manager, data_regression
-):
-    from robotframework_ls.impl.code_action import code_action
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc = workspace.put_doc("case4.robot")
@@ -303,7 +309,7 @@ Sample
         doc, workspace
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
     check_code_action_data_regression(data_regression, actions)
     check_apply_result(
         doc,
@@ -326,8 +332,8 @@ Sample
 
 def test_code_code_action_create_keyword_with_args(
     workspace, libspec_manager, data_regression
-):
-    from robotframework_ls.impl.code_action import code_action
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc = workspace.put_doc("case4.robot")
@@ -343,7 +349,7 @@ Something
         doc, workspace
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
     check_code_action_data_regression(data_regression, actions)
 
     check_apply_result(
@@ -365,8 +371,8 @@ Something
 
 def test_code_code_action_add_arg_after_existing_arg(
     workspace, libspec_manager, data_regression
-):
-    from robotframework_ls.impl.code_action import code_action
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc = workspace.put_doc("case4.robot")
@@ -384,7 +390,7 @@ Something
         doc, workspace, "unexpected_argument"
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
     check_code_action_data_regression(data_regression, actions)
 
     check_apply_result(
@@ -404,8 +410,8 @@ Something
 
 def test_code_code_action_add_with_no_existing_arg(
     workspace, libspec_manager, data_regression
-):
-    from robotframework_ls.impl.code_action import code_action
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc = workspace.put_doc("case4.robot")
@@ -423,7 +429,7 @@ Something
         doc, workspace, "unexpected_argument"
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
     check_code_action_data_regression(data_regression, actions)
 
     check_apply_result(
@@ -443,8 +449,8 @@ Something
 
 def test_code_code_action_add_with_no_existing_arg_section(
     workspace, libspec_manager, data_regression
-):
-    from robotframework_ls.impl.code_action import code_action
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc = workspace.put_doc("case4.robot")
@@ -461,7 +467,7 @@ Something
         doc, workspace, "unexpected_argument"
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
     check_code_action_data_regression(data_regression, actions)
 
     check_apply_result(
@@ -481,8 +487,8 @@ Something
 
 def test_code_code_action_add_2nd_named_arg(
     workspace, libspec_manager, data_regression
-):
-    from robotframework_ls.impl.code_action import code_action
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc = workspace.put_doc("case4.robot")
@@ -500,7 +506,7 @@ Something
         doc, workspace, "unexpected_argument"
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
     check_code_action_data_regression(data_regression, actions)
 
     check_apply_result(
@@ -518,8 +524,10 @@ Something
     )
 
 
-def test_code_code_action_in_another_file(workspace, libspec_manager, data_regression):
-    from robotframework_ls.impl.code_action import code_action
+def test_code_code_action_in_another_file(
+    workspace, libspec_manager, data_regression
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc_import = workspace.put_doc("import_from.robot")
@@ -544,7 +552,7 @@ Something
         doc, workspace, "unexpected_argument"
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
     check_code_action_data_regression(data_regression, actions)
 
     check_apply_result(
@@ -559,8 +567,10 @@ Foobar
     )
 
 
-def test_code_code_action_create_resource(workspace, libspec_manager, data_regression):
-    from robotframework_ls.impl.code_action import code_action
+def test_code_code_action_create_resource(
+    workspace, libspec_manager, data_regression
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc = workspace.put_doc("case4.robot")
@@ -573,12 +583,14 @@ Resource    ./import_from_this_robot.robot
         doc, workspace, "undefined_resource"
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
     check_code_action_data_regression(data_regression, actions)
 
 
-def test_code_code_action_create_library(workspace, libspec_manager, data_regression):
-    from robotframework_ls.impl.code_action import code_action
+def test_code_code_action_create_library(
+    workspace, libspec_manager, data_regression
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc = workspace.put_doc("case4.robot")
@@ -591,12 +603,14 @@ Library    .${/}import_from_this_lib.py
         doc, workspace, "undefined_library"
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
     check_code_action_data_regression(data_regression, actions)
 
 
-def test_code_code_action_create_variables(workspace, libspec_manager, data_regression):
-    from robotframework_ls.impl.code_action import code_action
+def test_code_code_action_create_variables(
+    workspace, libspec_manager, data_regression
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc = workspace.put_doc("case4.robot")
@@ -609,14 +623,14 @@ Variables    ${CURDIR}/my_vars.py
         doc, workspace, "undefined_var_import"
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
     check_code_action_data_regression(data_regression, actions)
 
 
 def test_code_code_action_create_keyword_in_another_file(
     workspace, libspec_manager, data_regression
-):
-    from robotframework_ls.impl.code_action import code_action
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc_target = workspace.put_doc("my_resource.resource")
@@ -635,7 +649,7 @@ My Test
         doc, workspace, filter_kind=True
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
     check_code_action_data_regression(data_regression, actions)
 
     check_apply_result(
@@ -652,8 +666,8 @@ Foobar
 
 def test_code_code_action_create_keyword_in_another_file_2(
     workspace, libspec_manager, data_regression
-):
-    from robotframework_ls.impl.code_action import code_action
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc_target = workspace.put_doc("my_resource.resource")
@@ -675,7 +689,7 @@ My Test
         doc, workspace, filter_kind=True
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
     # check_code_action_data_regression(data_regression, actions)
 
     check_apply_result(
@@ -695,8 +709,8 @@ Foobar
 
 def test_code_code_action_create_keyword_in_another_file_3(
     workspace, libspec_manager, data_regression
-):
-    from robotframework_ls.impl.code_action import code_action
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc_target = workspace.put_doc("my_resource.resource")
@@ -719,7 +733,7 @@ My Test
         doc, workspace, filter_kind=True
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
     # check_code_action_data_regression(data_regression, actions)
 
     check_apply_result(
@@ -740,8 +754,8 @@ Foobar
 
 def test_code_code_action_create_local_variable(
     workspace, libspec_manager, data_regression
-):
-    from robotframework_ls.impl.code_action import code_action
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc = workspace.put_doc("my_robot.robot")
@@ -754,7 +768,7 @@ My keyword
         doc, workspace, kind="undefined_variable", filter_kind=True
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
 
     check_apply_result(
         doc,
@@ -770,8 +784,8 @@ My keyword
 
 def test_code_code_action_create_local_variable_with_indent(
     workspace, libspec_manager, data_regression
-):
-    from robotframework_ls.impl.code_action import code_action
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc = workspace.put_doc("my_robot.robot")
@@ -786,7 +800,7 @@ Example task
         doc, workspace, kind="undefined_variable", filter_kind=True
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
 
     check_apply_result(
         doc,
@@ -804,8 +818,8 @@ Example task
 
 def test_code_code_action_create_local_variable_continuation(
     workspace, libspec_manager, data_regression
-):
-    from robotframework_ls.impl.code_action import code_action
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc = workspace.put_doc("my_robot.robot")
@@ -819,7 +833,7 @@ Example task
         doc, workspace, kind="undefined_variable", filter_kind=True
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
 
     check_apply_result(
         doc,
@@ -834,8 +848,10 @@ Example task
     )
 
 
-def test_code_code_action_create_variable_in_section(workspace, libspec_manager):
-    from robotframework_ls.impl.code_action import code_action
+def test_code_code_action_create_variable_in_section(
+    workspace, libspec_manager
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc = workspace.put_doc("my_robot.robot")
@@ -848,7 +864,7 @@ Example task
         doc, workspace, kind="undefined_variable", filter_kind=True
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
 
     check_apply_result(
         doc,
@@ -866,8 +882,8 @@ Example task
 
 def test_code_code_action_create_variable_in_existing_section(
     workspace, libspec_manager
-):
-    from robotframework_ls.impl.code_action import code_action
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc = workspace.put_doc("my_robot.robot")
@@ -883,7 +899,7 @@ Example task
         doc, workspace, kind="undefined_variable", filter_kind=True
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
 
     check_apply_result(
         doc,
@@ -902,8 +918,8 @@ Example task
 
 def test_code_code_action_create_variable_in_existing_section_2(
     workspace, libspec_manager
-):
-    from robotframework_ls.impl.code_action import code_action
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc = workspace.put_doc("my_robot.robot")
@@ -918,7 +934,7 @@ Example task
         doc, workspace, kind="undefined_variable", filter_kind=True
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
 
     check_apply_result(
         doc,
@@ -934,8 +950,10 @@ Example task
     )
 
 
-def test_code_code_action_create_argument_with_empty_args(workspace, libspec_manager):
-    from robotframework_ls.impl.code_action import code_action
+def test_code_code_action_create_argument_with_empty_args(
+    workspace, libspec_manager
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc = workspace.put_doc("my_robot.robot")
@@ -949,7 +967,7 @@ Example keyword
         doc, workspace, kind="undefined_variable", filter_kind=True
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
 
     check_apply_result(
         doc,
@@ -963,8 +981,8 @@ Example keyword
     )
 
 
-def test_code_code_action_create_argument_with_args(workspace, libspec_manager):
-    from robotframework_ls.impl.code_action import code_action
+def test_code_code_action_create_argument_with_args(workspace, libspec_manager) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc = workspace.put_doc("my_robot.robot")
@@ -978,7 +996,7 @@ Example keyword
         doc, workspace, kind="undefined_variable", filter_kind=True
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
 
     check_apply_result(
         doc,
@@ -992,8 +1010,10 @@ Example keyword
     )
 
 
-def test_code_code_action_create_argument_with_no_args(workspace, libspec_manager):
-    from robotframework_ls.impl.code_action import code_action
+def test_code_code_action_create_argument_with_no_args(
+    workspace, libspec_manager
+) -> None:
+    from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc = workspace.put_doc("my_robot.robot")
@@ -1006,7 +1026,7 @@ Example keyword
         doc, workspace, kind="undefined_variable", filter_kind=True
     )
     found_data = [diagnostic_data]
-    actions = code_action(completion_context, found_data)
+    actions = code_action_quickfix(completion_context, found_data)
 
     check_apply_result(
         doc,
@@ -1020,40 +1040,57 @@ Example keyword
     )
 
 
-def _code_action_refactoring(
+def _code_action_all(
     workspace, libspec_manager, only: Set[str], initial_source, expected
-):
+) -> None:
     from robotframework_ls.impl.completion_context import CompletionContext
-    from robotframework_ls.impl.code_action_refactoring import code_action_refactoring
+    from robotframework_ls.impl.code_action import code_action_all
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc: IRobotDocument = workspace.put_doc("my_robot.robot")
     i = initial_source.find("|")
     j = initial_source.find("|", i + 1)
-    assert i > 0
-    assert j > i
+    if j == -1:
+        # Just position, not a range.
+        source = initial_source[0:i] + initial_source[i + 1 :]
+    else:
+        # Range selected
+        assert i > 0
+        assert j > i
+        source = (
+            initial_source[0:i] + initial_source[i + 1 : j] + initial_source[j + 1 :]
+        )
 
-    source = initial_source[0:i] + initial_source[i + 1 : j] + initial_source[j + 1 :]
     doc.source = source
 
     start = doc.offset_to_line_col(i)
-    end = doc.offset_to_line_col(j - 1)
+    if j > 0:
+        end = doc.offset_to_line_col(j - 1)
+    else:
+        end = start
     select_range = Range(start, end)
 
     completion_context = CompletionContext(
         doc, workspace=workspace.ws, line=start[0], col=start[1]
     )
 
-    actions = list(code_action_refactoring(completion_context, select_range, only))
+    context: TextDocumentContextTypedDict = {
+        "diagnostics": [],
+        "triggerKind": 1,
+        "only": list(only),
+    }
+    actions = list(code_action_all(completion_context, select_range, only, context))
 
     check_apply_result(doc, actions, expected)
 
 
-def test_code_code_action_refactoring_extract_local_basic(workspace, libspec_manager):
-    _code_action_refactoring(
+def test_code_code_action_refactoring_extract_local_basic(
+    workspace, libspec_manager
+) -> None:
+    _code_action_all(
         workspace,
         libspec_manager,
-        "refactor.extract.local",
+        {"refactor.extract.local"},
         """*** Tasks ***
 Example task
     Log    some |value|
@@ -1068,11 +1105,11 @@ Example task
 
 def test_code_code_action_refactoring_extract_local_multiline(
     workspace, libspec_manager
-):
-    _code_action_refactoring(
+) -> None:
+    _code_action_all(
         workspace,
         libspec_manager,
-        "refactor.extract.local",
+        set(),
         """*** Tasks ***
 Example task
     Log
@@ -1084,4 +1121,33 @@ Example task
     Log
         ...    ${${0:variable}}
 """,
+    )
+
+
+def test_code_code_action_assign_to_variable(workspace, libspec_manager) -> None:
+    _code_action_all(
+        workspace,
+        libspec_manager,
+        set(),
+        """*** Tasks ***
+Example task
+    Log    something|
+""",
+        """*** Tasks ***
+Example task
+    ${${0:variable}}=    Log    something
+""",
+    )
+
+
+def test_code_code_action_no_assign_to_variable(workspace, libspec_manager) -> None:
+    _code_action_all(
+        workspace,
+        libspec_manager,
+        set(),
+        """*** Tasks ***
+Example task
+    ${v}=    Log    something|
+""",
+        "",
     )

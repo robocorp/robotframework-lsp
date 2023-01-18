@@ -493,7 +493,12 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         server_capabilities = {
             "codeActionProvider": {
                 "resolveProvider": False,
-                "codeActionKinds": ["quickfix", "refactor", "refactor.extract"],
+                "codeActionKinds": [
+                    "quickfix",
+                    "refactor",
+                    "refactor.extract.local",
+                    "assign.toVar",
+                ],
             },
             "codeLensProvider": {"resolveProvider": True},
             # Docs are lazily computed

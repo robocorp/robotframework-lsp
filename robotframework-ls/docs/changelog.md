@@ -10,6 +10,7 @@ NEXT
 - Quick fix: create `local variable` from an `undefined variable`.
 - Quick fix: create `variable in the variables section` from an `undefined variable`.
 - Quick fix: create `argument` from an `undefined variable`.
+- Code action: assign to variable.
 - Refactoring: extract `local variable`.
 
 

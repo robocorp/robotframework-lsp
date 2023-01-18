@@ -6,30 +6,11 @@ from robotframework_ls.impl.protocols import (
     IRobotToken,
 )
 from robocorp_ls_core.lsp import (
-    CommandTypedDict,
     Range,
     TextEditTypedDict,
-    WorkspaceEditTypedDict,
-    WorkspaceEditParamsTypedDict,
     CodeActionTypedDict,
 )
-
-
-def _wrap_edits_in_snippet(
-    completion_context: ICompletionContext,
-    title,
-    text_edits: List[TextEditTypedDict],
-    kind: str,
-) -> CodeActionTypedDict:
-    changes = {completion_context.doc.uri: text_edits}
-    edit: WorkspaceEditTypedDict = {"changes": changes}
-    edit_params: WorkspaceEditParamsTypedDict = {"edit": edit, "label": title}
-    command: CommandTypedDict = {
-        "title": title,
-        "command": "robot.applyCodeAction",
-        "arguments": [{"apply_snippet": edit_params}],
-    }
-    return {"title": title, "kind": kind, "command": command}
+from robotframework_ls.impl._code_action_utils import wrap_edits_in_snippet
 
 
 def _create_local_variable_refactoring(
@@ -86,7 +67,7 @@ def _create_local_variable_refactoring(
                     "newText": "${${0:variable}}",
                 },
             ]
-            yield _wrap_edits_in_snippet(
+            yield wrap_edits_in_snippet(
                 completion_context,
                 "Extract local variable",
                 changes,
@@ -108,10 +89,13 @@ def code_action_refactoring(
     if ast_utils.is_keyword_section(current_section) or ast_utils.is_testcase_section(
         current_section
     ):
-        if only and (
-            "refactor" in only
-            or "refactor.extract" in only
-            or "refactor.extract.local" in only
+        if not only or (
+            only
+            and (
+                "refactor" in only
+                or "refactor.extract" in only
+                or "refactor.extract.local" in only
+            )
         ):
             yield from _create_local_variable_refactoring(
                 completion_context, select_range
