@@ -53,6 +53,7 @@ from robocorp_ls_core.code_units import (
     convert_diagnostics_pos_to_client_inplace,
     convert_completions_pos_to_client_inplace,
     convert_workspace_edit_pos_to_client_inplace,
+    convert_range_pos_to_client_inplace,
 )
 
 
@@ -527,7 +528,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
     def _threaded_prepare_rename(
         self, doc_uri: str, line: int, col: int, monitor: IMonitor
-    ) -> WorkspaceEditTypedDict:
+    ) -> Optional[RangeTypedDict]:
         from robotframework_ls.impl.rename import prepare_rename
 
         completion_context = self._create_completion_context(
@@ -538,7 +539,13 @@ class RobotFrameworkServerApi(PythonLanguageServer):
                 "Error: unable to prepare rename (context could not be created).", 1
             )
 
-        return prepare_rename(completion_context)
+        new_range = prepare_rename(completion_context)
+        if new_range:
+            new_range = convert_range_pos_to_client_inplace(
+                completion_context.doc, new_range
+            )
+
+        return new_range
 
     def m_flow_explorer_model(self, uri):
         func = partial(self._threaded_flow_explorer_model, uri)

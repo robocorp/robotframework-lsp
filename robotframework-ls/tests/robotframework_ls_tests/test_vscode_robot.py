@@ -84,7 +84,7 @@ def test_diagnostics_unicode(language_server_tcp, ws_root_path, data_regression)
         2,
         """*** Test Cases ***
 Unicode
-    Log    kangaroo=\ud83e\udd98\ud83e\udd98    level=INFO    er\ud83e\udd98or
+    Log    kangaroo=🦘🦘    level=INFO    er🦘or
 """,
     )
     assert message_matcher.event.wait(TIMEOUT)
@@ -461,7 +461,7 @@ def test_completions_unicode(
     language_server.open_doc(uri, 1)
     contents = """*** Test Cases ***
 Unicode
-    Log    kangaroo=\ud83e\udd98\ud83e\udd98    level=INFO    """
+    Log    kangaroo=🦘🦘    level=INFO    """
     language_server.change_doc(uri, 2, contents)
 
     def request_completion():
@@ -485,7 +485,7 @@ Unicode
         doc.source
         == """*** Test Cases ***
 Unicode
-    Log    kangaroo=\ud83e\udd98\ud83e\udd98    level=INFO    console="""
+    Log    kangaroo=🦘🦘    level=INFO    console="""
     )
 
 
@@ -1274,8 +1274,8 @@ def test_rename_integrated_unicode(
 *** Keywords ***
 Keyword
     [Arguments]     ${foooo}
-    Log     kangaroo=\ud83e\udd98\ud83e\udd98    level=INFO    ${foooo}
-    Log     kangaroo=\ud83e\udd98\ud83e\udd98    level=INFO    ${foooo}"""
+    Log     kangaroo=🦘🦘    level=INFO    ${foooo}
+    Log     kangaroo=🦘🦘    level=INFO    ${foooo}"""
     language_server.open_doc(uri, 1, txt)
 
     doc = Document("uri", txt)
@@ -1292,6 +1292,34 @@ Keyword
     doc.apply_text_edits(text_edits)
     expected = txt.replace("${foooo}", "${newName}")
     assert doc.source == expected
+
+
+def test_rename_integrated_unicode_2(
+    language_server_io: ILanguageServerClient, ws_root_path
+):
+    from robocorp_ls_core.workspace import Document
+
+    language_server = language_server_io
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    txt = """*** Test Cases ***
+Unicode
+    ${a🦘a}=    Set Variable    22
+    Log    ${a🦘a}"""
+    language_server.open_doc(uri, 1, txt)
+
+    doc = Document("uri", txt)
+    line, col = doc.get_last_line_col()
+    col -= 3
+    col = convert_python_col_to_utf16_code_unit(doc, line, col)
+
+    ret = language_server.request_prepare_rename(uri, line, col)
+    range_found = ret["result"]
+    assert range_found == {
+        "start": {"line": 3, "character": 13},
+        "end": {"line": 3, "character": 17},
+    }
 
 
 def test_shadowing_libraries(language_server_io: ILanguageServerClient, workspace_dir):

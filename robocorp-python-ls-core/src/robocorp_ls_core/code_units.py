@@ -6,6 +6,7 @@ from robocorp_ls_core.lsp import (
     DiagnosticsTypedDict,
     CompletionItemTypedDict,
     WorkspaceEditTypedDict,
+    RangeTypedDict,
 )
 
 
@@ -112,6 +113,26 @@ def _convert_start_end_range_python_code_unit_to_utf16_inplace(
     end_pos["character"] = convert_python_col_to_utf16_code_unit(
         d, end_pos["line"], end_pos["character"], memo=memo
     )
+
+
+def convert_range_pos_to_client_inplace(
+    d: IDocument,
+    r: RangeTypedDict,
+    memo: Optional[dict] = None,
+) -> RangeTypedDict:
+    """
+    Note: changes contents in-place. Returns the same text_edits given as
+    input to help on composability.
+    """
+    start_pos = r["start"]
+    end_pos = r["end"]
+    start_pos["character"] = convert_python_col_to_utf16_code_unit(
+        d, start_pos["line"], start_pos["character"], memo=memo
+    )
+    end_pos["character"] = convert_python_col_to_utf16_code_unit(
+        d, end_pos["line"], end_pos["character"], memo=memo
+    )
+    return r
 
 
 def convert_text_edits_pos_to_client_inplace(

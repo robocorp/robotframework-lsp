@@ -1,10 +1,11 @@
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from robocorp_ls_core.lsp import (
     LocationTypedDict,
     WorkspaceEditTypedDict,
     TextEditTypedDict,
     MessageType,
+    RangeTypedDict,
 )
 from robotframework_ls.impl.protocols import ICompletionContext, IKeywordDefinition
 from robocorp_ls_core.jsonrpc.exceptions import JsonRpcException
@@ -84,7 +85,7 @@ def rename(
     # }
 
 
-def prepare_rename(completion_context: ICompletionContext):
+def prepare_rename(completion_context: ICompletionContext) -> Optional[RangeTypedDict]:
     from robotframework_ls.impl.find_definition import find_definition_extended
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl.protocols import IVariableDefinition

@@ -45,13 +45,35 @@ def is_python_eval_var(normalized_variable_name):
     )
 
 
+_separator_chars = [re.escape(c) for c in """./\()"'-:,.;<>~!@#$%^&*|+=[]{}`~?"""]
+
 _match_extended = re.compile(
     r"""
     (.+?)          # base name (group 1)
-    ([^\s\w].+)    # extended part (group 2)
-""",
+    ([%s].+)    # extended part (group 2)
+"""
+    % "|".join(_separator_chars),
     re.UNICODE | re.VERBOSE,
 ).match
+
+
+# _match_extended = re.compile(
+#     r"""
+#     (.+?)          # base name (group 1)
+#     ([^\s\w].+)    # extended part (group 2)
+# """,
+#     re.UNICODE | re.VERBOSE,
+# ).match
+#
+# The above is the default on RF, but it doesn't work very well for emoji.
+# i.e.:
+#
+# print(_match_extended("aa.bb").groups())
+# Makes the correct thing and splits aa, .bb
+#
+# print(_match_extended("aa🦘bb").groups())
+# Makes the INCORRECT thing and splits aa, 🦘bb
+# -- The new version does the correct thing and doesn't split the emoji.
 
 
 def extract_var_name_from_extended_base_name(normalized_variable_name):
