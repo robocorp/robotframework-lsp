@@ -51,6 +51,7 @@ from robocorp_ls_core import uris, code_units
 from robocorp_ls_core.code_units import (
     convert_text_edits_pos_to_client_inplace,
     convert_diagnostics_pos_to_client_inplace,
+    convert_completions_pos_to_client_inplace,
 )
 
 
@@ -467,12 +468,24 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
         from robotframework_ls.impl import snippets_completions, section_completions
 
-        completions = snippets_completions.complete(completion_context)
+        completions: List[CompletionItemTypedDict] = snippets_completions.complete(
+            completion_context
+        )
         monitor.check_cancelled()
         completions.extend(self._complete_from_completion_context(completion_context))
         completions.extend(section_completions.complete(completion_context))
 
-        return completions
+        # For completions we just need to convert positions if the current
+        # line has non-ascii chars.
+        # Note: We do have 'additionalTextEdits' which happen in other lines, but
+        # in general those always add full new lines, so, that's Ok (but if
+        # we ever change that this would need to be revisited).
+        if completion_context.doc.get_line(line).isascii():
+            return completions  # Fast way out.
+
+        return convert_completions_pos_to_client_inplace(
+            completion_context.doc, completions
+        )
 
     def _complete_from_completion_context(self, completion_context):
         with self._completion_contexts_saved_lock:

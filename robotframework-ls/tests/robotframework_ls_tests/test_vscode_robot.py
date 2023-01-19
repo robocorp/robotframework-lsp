@@ -17,6 +17,7 @@ import typing
 from functools import partial
 import itertools
 import sys
+from robocorp_ls_core.code_units import convert_python_col_to_utf16_code_unit
 
 
 log = logging.getLogger(__name__)
@@ -446,6 +447,45 @@ Library    """
         return completions
 
     assert not request_completion()["result"]
+
+
+def test_completions_unicode(
+    language_server_tcp: ILanguageServerClient, ws_root_path, data_regression, cases
+):
+    from robocorp_ls_core.workspace import Document
+
+    language_server = language_server_tcp
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    language_server.open_doc(uri, 1)
+    contents = """*** Test Cases ***
+Unicode
+    Log    kangaroo=🦘🦘    level=INFO    """
+    language_server.change_doc(uri, 2, contents)
+
+    def request_completion():
+        doc = Document("", source=contents)
+        line, col = doc.get_last_line_col()
+        col = convert_python_col_to_utf16_code_unit(doc, line, col)
+        completions = language_server.get_completions(uri, line, col)
+        del completions["id"]
+        return completions
+
+    completions = request_completion()["result"]
+    for completion in completions:
+        if completion["label"] == "console=":
+            break
+    else:
+        raise AssertionError('Could not find "console=" completion.')
+    text_edit = completion["textEdit"]
+    doc = Document("", contents)
+    doc.apply_text_edits([text_edit])
+    assert (
+        doc.source
+        == """*** Test Cases ***
+Unicode
+    Log    kangaroo=🦘🦘    level=INFO    console="""
+    )
 
 
 def test_keyword_completions_prefer_local_library_import(
