@@ -300,20 +300,6 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
     def open(self, uri, version, source):
         pass
 
-    def request_section_name_complete(
-        self, doc_uri, line, col
-    ) -> Optional[IIdMessageMatcher]:
-        """
-        :Note: async complete.
-        """
-
-    def request_keyword_complete(
-        self, doc_uri, line, col
-    ) -> Optional[IIdMessageMatcher]:
-        """
-        :Note: async complete.
-        """
-
     def request_complete_all(
         self, doc_uri, line, col
     ) -> Optional[IIdMessageMatcher["CompletionsResponseTypedDict"]]:

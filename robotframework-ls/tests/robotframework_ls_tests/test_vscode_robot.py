@@ -12,12 +12,13 @@ from robotframework_ls.impl.robot_lsp_constants import (
     OPTION_ROBOT_CODE_FORMATTER_ROBOTIDY,
     OPTION_ROBOT_CODE_FORMATTER_BUILTIN_TIDY,
 )
-from robocorp_ls_core.lsp import MarkupKind
+from robocorp_ls_core.lsp import MarkupKind, WorkspaceEditTypedDict, TextEditTypedDict
 import typing
 from functools import partial
 import itertools
 import sys
 from robocorp_ls_core.code_units import convert_python_col_to_utf16_code_unit
+from typing import List
 
 
 log = logging.getLogger(__name__)
@@ -83,7 +84,7 @@ def test_diagnostics_unicode(language_server_tcp, ws_root_path, data_regression)
         2,
         """*** Test Cases ***
 Unicode
-    Log    kangaroo=🦘🦘    level=INFO    er🦘or
+    Log    kangaroo=\ud83e\udd98\ud83e\udd98    level=INFO    er\ud83e\udd98or
 """,
     )
     assert message_matcher.event.wait(TIMEOUT)
@@ -460,7 +461,7 @@ def test_completions_unicode(
     language_server.open_doc(uri, 1)
     contents = """*** Test Cases ***
 Unicode
-    Log    kangaroo=🦘🦘    level=INFO    """
+    Log    kangaroo=\ud83e\udd98\ud83e\udd98    level=INFO    """
     language_server.change_doc(uri, 2, contents)
 
     def request_completion():
@@ -484,7 +485,7 @@ Unicode
         doc.source
         == """*** Test Cases ***
 Unicode
-    Log    kangaroo=🦘🦘    level=INFO    console="""
+    Log    kangaroo=\ud83e\udd98\ud83e\udd98    level=INFO    console="""
     )
 
 
@@ -1260,6 +1261,39 @@ Keyword
     data_regression.check(ret["result"]["changes"])
 
 
+def test_rename_integrated_unicode(
+    language_server_io: ILanguageServerClient, ws_root_path
+):
+    from robocorp_ls_core.workspace import Document
+
+    language_server = language_server_io
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    txt = """
+*** Keywords ***
+Keyword
+    [Arguments]     ${foooo}
+    Log     kangaroo=\ud83e\udd98\ud83e\udd98    level=INFO    ${foooo}
+    Log     kangaroo=\ud83e\udd98\ud83e\udd98    level=INFO    ${foooo}"""
+    language_server.open_doc(uri, 1, txt)
+
+    doc = Document("uri", txt)
+    line, col = doc.get_last_line_col()
+    col -= 2
+    col = convert_python_col_to_utf16_code_unit(doc, line, col)
+
+    ret = language_server.request_rename(uri, line, col - 2, "newName")
+
+    workspace_edit: WorkspaceEditTypedDict = ret["result"]
+
+    changes = workspace_edit["changes"]
+    text_edits: List[TextEditTypedDict] = changes[uri]
+    doc.apply_text_edits(text_edits)
+    expected = txt.replace("${foooo}", "${newName}")
+    assert doc.source == expected
+
+
 def test_shadowing_libraries(language_server_io: ILanguageServerClient, workspace_dir):
     from robocorp_ls_core import uris
     from robocorp_ls_core.unittest_tools.fixtures import TIMEOUT
@@ -1850,7 +1884,11 @@ def test_rf_interactive_integrated_auto_import_completions(
     documentation = typing.cast(
         MonacoMarkdownStringTypedDict, new_completion_item["documentation"]
     )
-    assert "Adds values to the end of" in documentation["value"]
+
+    # Check for the version where docutils is installed or not.
+    if "Adds `values` to the end of `list`" not in documentation["value"]:
+        assert "Adds values to the end of" in documentation["value"]
+
     new_completion_item["documentation"] = "<replaced_for_test>"
     del new_completion_item["data"]
     check_code_lens_data_regression(data_regression, [new_completion_item])

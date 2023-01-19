@@ -1,10 +1,11 @@
-from robocorp_ls_core.protocols import IDocument
+from robocorp_ls_core.protocols import IDocument, IWorkspace
 from typing import List, Optional
 from robocorp_ls_core.lsp import (
     TextEditTypedDict,
     PositionTypedDict,
     DiagnosticsTypedDict,
     CompletionItemTypedDict,
+    WorkspaceEditTypedDict,
 )
 
 
@@ -165,3 +166,20 @@ def convert_completions_pos_to_client_inplace(
                 d, additional_text_edits, memo=memo
             )
     return completion_items
+
+
+def convert_workspace_edit_pos_to_client_inplace(
+    workspace: IWorkspace, workspace_edit: WorkspaceEditTypedDict
+) -> WorkspaceEditTypedDict:
+    """
+    Note: changes contents in-place. Returns the same workspace edit given as
+    input to help on composability.
+    """
+    changes = workspace_edit.get("changes")
+    if changes:
+        for doc_uri, text_edits in changes.items():
+            doc = workspace.get_document(doc_uri, accept_from_file=True)
+            if doc:
+                convert_text_edits_pos_to_client_inplace(doc, text_edits)
+
+    return workspace_edit

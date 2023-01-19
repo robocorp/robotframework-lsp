@@ -52,6 +52,7 @@ from robocorp_ls_core.code_units import (
     convert_text_edits_pos_to_client_inplace,
     convert_diagnostics_pos_to_client_inplace,
     convert_completions_pos_to_client_inplace,
+    convert_workspace_edit_pos_to_client_inplace,
 )
 
 
@@ -497,23 +498,6 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
         return complete_all(completion_context)
 
-    def m_section_name_complete(self, doc_uri, line, col):
-        from robotframework_ls.impl import section_name_completions
-
-        completion_context = self._create_completion_context(doc_uri, line, col, None)
-        if completion_context is None:
-            return []
-
-        return section_name_completions.complete(completion_context)
-
-    def m_keyword_complete(self, doc_uri, line, col):
-        from robotframework_ls.impl import keyword_completions
-
-        completion_context = self._create_completion_context(doc_uri, line, col, None)
-        if completion_context is None:
-            return []
-        return keyword_completions.complete(completion_context)
-
     def m_rename(self, doc_uri: str, line: int, col: int, new_name: str):
         func = partial(self._threaded_rename, doc_uri, line, col, new_name)
         func = require_monitor(func)
@@ -532,7 +516,9 @@ class RobotFrameworkServerApi(PythonLanguageServer):
                 "Error: unable to rename (context could not be created).", 1
             )
 
-        return rename(completion_context, new_name)
+        return convert_workspace_edit_pos_to_client_inplace(
+            completion_context.workspace, rename(completion_context, new_name)
+        )
 
     def m_prepare_rename(self, doc_uri: str, line: int, col: int):
         func = partial(self._threaded_prepare_rename, doc_uri, line, col)

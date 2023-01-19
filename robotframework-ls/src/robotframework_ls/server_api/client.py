@@ -213,26 +213,6 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         msg_id = self.next_id()
         return {"jsonrpc": "2.0", "id": msg_id, "method": method_name, "params": params}
 
-    def request_section_name_complete(
-        self, doc_uri, line, col
-    ) -> Optional[IIdMessageMatcher]:
-        """
-        :Note: async complete.
-        """
-        return self.request_async(
-            self._build_msg("sectionNameComplete", doc_uri=doc_uri, line=line, col=col)
-        )
-
-    def request_keyword_complete(
-        self, doc_uri, line, col
-    ) -> Optional[IIdMessageMatcher]:
-        """
-        :Note: async complete.
-        """
-        return self.request_async(
-            self._build_msg("keywordComplete", doc_uri=doc_uri, line=line, col=col)
-        )
-
     def request_complete_all(
         self, doc_uri, line, col
     ) -> Optional[IIdMessageMatcher[CompletionsResponseTypedDict]]:
