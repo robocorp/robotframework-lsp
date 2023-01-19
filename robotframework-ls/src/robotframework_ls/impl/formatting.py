@@ -1,3 +1,8 @@
+from robocorp_ls_core.lsp import TextEdit
+from typing import List
+from robocorp_ls_core.protocols import IDocument
+
+
 def robot_source_format(source, space_count=4):
     if not source.strip():
         return None
@@ -20,15 +25,14 @@ def robot_source_format(source, space_count=4):
     return formatted
 
 
-def _create_range(d, offset1, offset2):
+def _create_range(d: IDocument, offset1: int, offset2: int):
     from robocorp_ls_core.lsp import Range
 
     return Range(d.offset_to_line_col(offset1), d.offset_to_line_col(offset2))
 
 
-def create_text_edit_from_diff(contents, new_contents):
+def create_text_edit_from_diff(contents: str, new_contents: str) -> List[TextEdit]:
     from difflib import SequenceMatcher
-    from robocorp_ls_core.lsp import TextEdit
     from robocorp_ls_core.workspace import Document
 
     d = Document("", contents)

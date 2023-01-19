@@ -1,7 +1,7 @@
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.robotframework_log import get_logger, get_log_level
-from typing import Optional, List, Dict, Deque, Tuple, Sequence, Any, Set
+from typing import Optional, List, Dict, Deque, Tuple, Sequence, Set
 from robocorp_ls_core.protocols import (
     IConfig,
     IMonitor,
@@ -26,8 +26,6 @@ from robocorp_ls_core.lsp import (
     WorkspaceEditTypedDict,
     SelectionRangeTypedDict,
     TextDocumentCodeActionTypedDict,
-    ICustomDiagnosticDataTypedDict,
-    CommandTypedDict,
     TextEditTypedDict,
     TextDocumentContextTypedDict,
     Range,
@@ -39,6 +37,7 @@ from robotframework_ls.impl.protocols import (
     ICompletionContext,
     EvaluatableExpressionTypedDict,
     IVariablesFromArgumentsFileLoader,
+    IRobotDocument,
 )
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
 import itertools
@@ -48,6 +47,7 @@ import threading
 from robocorp_ls_core.jsonrpc.exceptions import JsonRpcException
 import os
 from robocorp_ls_core import uris
+from robocorp_ls_core.code_units import convert_text_edits_pos_to_client_inplace
 
 
 log = get_logger(__name__)
@@ -674,7 +674,9 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         func = require_monitor(func)
         return func
 
-    def _threaded_code_format(self, text_document, options, monitor: IMonitor):
+    def _threaded_code_format(
+        self, text_document, options, monitor: IMonitor
+    ) -> List[TextEditTypedDict]:
         from robotframework_ls.impl.formatting import create_text_edit_from_diff
         from robocorp_ls_core.lsp import TextDocumentItem
         import os.path
@@ -690,6 +692,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
         text_document_item = TextDocumentItem(**text_document)
         text = text_document_item.text
+        initial_doc: IRobotDocument
         if not text:
             completion_context = self._create_completion_context(
                 text_document_item.uri, 0, 0, monitor
@@ -697,6 +700,11 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             if completion_context is None:
                 return []
             text = completion_context.doc.source
+            initial_doc = completion_context.doc
+        else:
+            from robotframework_ls.impl.robot_workspace import RobotDocument
+
+            initial_doc = RobotDocument(text_document_item.uri, text)
 
         if not text:
             return []
@@ -771,7 +779,10 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
         if new_contents is None or new_contents == text:
             return []
-        return [x.to_dict() for x in create_text_edit_from_diff(text, new_contents)]
+        return convert_text_edits_pos_to_client_inplace(
+            initial_doc,
+            [x.to_dict() for x in create_text_edit_from_diff(text, new_contents)],
+        )
 
     def _create_completion_context(
         self, doc_uri, line, col, monitor: Optional[IMonitor]

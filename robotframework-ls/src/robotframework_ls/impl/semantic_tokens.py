@@ -591,12 +591,9 @@ def semantic_tokens_full(context: ICompletionContext):
                         last_column += col_delta
 
                     len_unicode = len(token_part.value)
-                    if token_part.value.isascii():
-                        append(len_unicode)
-                    else:
-                        len_bytes = compute_utf16_code_units_len(token_part.value)
-                        append(len_bytes)
-                        diff_in_line += len_bytes - len_unicode
+                    len_bytes = compute_utf16_code_units_len(token_part.value)
+                    append(len_bytes)
+                    diff_in_line += len_bytes - len_unicode
                     append(token_type_index)
                     append(0)  # i.e.: no modifier
                     last_line = lineno
