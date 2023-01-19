@@ -22,7 +22,7 @@ jobs:
       matrix:
         name: [
           "windows-py37-pip-v3",
-          "ubuntu-py38-master",
+#           "ubuntu-py38-master", TODO: Reenable when RF fixes https://github.com/robotframework/robotframework/issues/4607
           "ubuntu-py38-pip-v4",
         ]
         
@@ -30,9 +30,9 @@ jobs:
           - name: "windows-py37-pip-v3"
             python: "3.7"
             os: windows-latest
-          - name: "ubuntu-py38-master"
-            python: "3.8"
-            os: ubuntu-latest
+#           - name: "ubuntu-py38-master" TODO: Reenable when RF fixes https://github.com/robotframework/robotframework/issues/4607
+#             python: "3.8"
+#             os: ubuntu-latest
           - name: "ubuntu-py38-pip-v4"
             python: "3.8"
             os: ubuntu-latest

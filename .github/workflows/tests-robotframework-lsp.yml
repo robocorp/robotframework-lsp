@@ -24,7 +24,7 @@ jobs:
           "windows-py37-pip-v3",
           "ubuntu-py38-pip-v4",
           "ubuntu-py310-pip-v5",  # RF5 Must be with 3.10 due to a test using the `|` union operator.
-          "ubuntu-py39-master",
+#           "ubuntu-py39-master",  TODO: Reenable when RF fixes https://github.com/robotframework/robotframework/issues/4607
 #           "ubuntu-pypy3-master",
 #           "macos-py37",
         ]
@@ -39,9 +39,9 @@ jobs:
           - name: "ubuntu-py310-pip-v5"
             python: "3.10"
             os: ubuntu-latest
-          - name: "ubuntu-py39-master"
-            python: "3.9"
-            os: ubuntu-latest
+#           - name: "ubuntu-py39-master" TODO: Reenable when RF fixes https://github.com/robotframework/robotframework/issues/4607
+#             python: "3.9"
+#             os: ubuntu-latest
 #           - name: "ubuntu-pypy3-master"
 #             python: "pypy3"
 #             os: ubuntu-latest
