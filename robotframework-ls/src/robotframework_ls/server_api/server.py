@@ -56,6 +56,7 @@ from robocorp_ls_core.code_units import (
     convert_range_pos_to_client_inplace,
     convert_location_or_location_link_pos_to_client_inplace,
     convert_selection_range_pos_to_client_inplace,
+    convert_code_lens_pos_to_client_inplace,
 )
 
 
@@ -933,7 +934,9 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         if completion_context is None:
             return []
 
-        return code_lens(completion_context)
+        return convert_code_lens_pos_to_client_inplace(
+            completion_context.doc, code_lens(completion_context)
+        )
 
     def m_resolve_code_lens(self, **code_lens: CodeLensTypedDict):
         func = partial(self._threaded_resolve_code_lens, code_lens)

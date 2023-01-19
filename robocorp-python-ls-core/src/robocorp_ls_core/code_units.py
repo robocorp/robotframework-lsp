@@ -10,6 +10,7 @@ from robocorp_ls_core.lsp import (
     LocationTypedDict,
     LocationLinkTypedDict,
     SelectionRangeTypedDict,
+    CodeLensTypedDict,
 )
 import typing
 
@@ -203,6 +204,20 @@ def convert_text_edits_pos_to_client_inplace(
             d, text_range["start"], text_range["end"], memo=memo
         )
     return text_edits
+
+
+def convert_code_lens_pos_to_client_inplace(
+    d: IDocument, code_lens: List[CodeLensTypedDict], memo: Optional[dict] = None
+) -> List[CodeLensTypedDict]:
+    """
+    Note: changes contents in-place. Returns the same input to help on composability.
+    """
+    for code_len in code_lens:
+        text_range = code_len["range"]
+        _convert_start_end_range_python_code_unit_to_utf16_inplace(
+            d, text_range["start"], text_range["end"], memo=memo
+        )
+    return code_lens
 
 
 def convert_diagnostics_pos_to_client_inplace(
