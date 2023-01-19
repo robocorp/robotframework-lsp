@@ -54,6 +54,7 @@ from robocorp_ls_core.code_units import (
     convert_completions_pos_to_client_inplace,
     convert_workspace_edit_pos_to_client_inplace,
     convert_range_pos_to_client_inplace,
+    convert_location_or_location_link_pos_to_client_inplace,
 )
 
 
@@ -631,11 +632,20 @@ class RobotFrameworkServerApi(PythonLanguageServer):
                 log.info("Found definition with empty source (%s).", definition)
                 continue
 
-            if not os.path.exists(definition.source):
-                log.info(
-                    "Found definition: %s (but source does not exist).", definition
+            if definition.source == completion_context.doc.path:
+                uri = completion_context.doc.uri
+                doc = completion_context.doc
+            else:
+                uri = uris.from_fs_path(definition.source)
+                doc = completion_context.workspace.get_document(
+                    uri, accept_from_file=True
                 )
-                continue
+                if doc is None:
+                    log.info(
+                        "Found definition: %s (but doc reference is not available).",
+                        definition,
+                    )
+                    continue
 
             lineno = definition.lineno
             if lineno is None or lineno < 0:
@@ -650,10 +660,13 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
             if origin_selection_range is None:
                 ret.append(
-                    Location(
-                        uris.from_fs_path(definition.source),
-                        Range((lineno, col_offset), (end_lineno, end_col_offset)),
-                    ).to_dict()
+                    convert_location_or_location_link_pos_to_client_inplace(
+                        doc,
+                        Location(
+                            uri,
+                            Range((lineno, col_offset), (end_lineno, end_col_offset)),
+                        ).to_dict(),
+                    )
                 )
             else:
                 target_range = Range((lineno, col_offset), (end_lineno, end_col_offset))
@@ -671,12 +684,15 @@ class RobotFrameworkServerApi(PythonLanguageServer):
                         )
 
                 ret.append(
-                    LocationLink(
-                        origin_selection_range,
-                        uris.from_fs_path(definition.source),
-                        target_range=target_range,
-                        target_selection_range=target_selection_range,
-                    ).to_dict()
+                    convert_location_or_location_link_pos_to_client_inplace(
+                        doc,
+                        LocationLink(
+                            origin_selection_range,
+                            uri,
+                            target_range=target_range,
+                            target_selection_range=target_selection_range,
+                        ).to_dict(),
+                    )
                 )
         return ret
 

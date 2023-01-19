@@ -430,6 +430,13 @@ class LocationTypedDict(TypedDict):
     range: RangeTypedDict
 
 
+class LocationLinkTypedDict(TypedDict):
+    originSelectionRange: RangeTypedDict
+    targetUri: str
+    targetRange: RangeTypedDict
+    targetSelectionRange: RangeTypedDict
+
+
 class TextEditTypedDict(TypedDict):
     range: RangeTypedDict
     newText: str

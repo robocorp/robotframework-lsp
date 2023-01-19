@@ -1,5 +1,5 @@
 from robocorp_ls_core.protocols import IDocument, IWorkspace
-from typing import List, Optional
+from typing import List, Optional, Union
 from robocorp_ls_core.lsp import (
     TextEditTypedDict,
     PositionTypedDict,
@@ -7,7 +7,10 @@ from robocorp_ls_core.lsp import (
     CompletionItemTypedDict,
     WorkspaceEditTypedDict,
     RangeTypedDict,
+    LocationTypedDict,
+    LocationLinkTypedDict,
 )
+import typing
 
 
 def compute_utf16_code_units_len(s: str) -> int:
@@ -121,8 +124,7 @@ def convert_range_pos_to_client_inplace(
     memo: Optional[dict] = None,
 ) -> RangeTypedDict:
     """
-    Note: changes contents in-place. Returns the same text_edits given as
-    input to help on composability.
+    Note: changes contents in-place. Returns the same input to help on composability.
     """
     start_pos = r["start"]
     end_pos = r["end"]
@@ -135,12 +137,33 @@ def convert_range_pos_to_client_inplace(
     return r
 
 
+def convert_location_or_location_link_pos_to_client_inplace(
+    d: IDocument,
+    location: Union[LocationTypedDict, LocationLinkTypedDict],
+) -> Union[LocationTypedDict, LocationLinkTypedDict]:
+    """
+    Note: changes contents in-place. Returns the same input to help on composability.
+    """
+    memo: dict = {}
+
+    for attr in (
+        "range",
+        "originSelectionRange",
+        "targetRange",
+        "targetSelectionRange",
+    ):
+        r = typing.cast(Optional[RangeTypedDict], location.get(attr))
+        if r is not None:
+            convert_range_pos_to_client_inplace(d, r, memo)
+
+    return location
+
+
 def convert_text_edits_pos_to_client_inplace(
     d: IDocument, text_edits: List[TextEditTypedDict], memo: Optional[dict] = None
 ) -> List[TextEditTypedDict]:
     """
-    Note: changes contents in-place. Returns the same text_edits given as
-    input to help on composability.
+    Note: changes contents in-place. Returns the same input to help on composability.
     """
     for text_edit in text_edits:
         text_range = text_edit["range"]
@@ -154,8 +177,7 @@ def convert_diagnostics_pos_to_client_inplace(
     d: IDocument, diagnostics: List[DiagnosticsTypedDict]
 ) -> List[DiagnosticsTypedDict]:
     """
-    Note: changes contents in-place. Returns the same diagnostics given as
-    input to help on composability.
+    Note: changes contents in-place. Returns the same input to help on composability.
     """
     memo: dict = {}
     for diagnostic in diagnostics:
@@ -170,8 +192,7 @@ def convert_completions_pos_to_client_inplace(
     d: IDocument, completion_items: List[CompletionItemTypedDict]
 ) -> List[CompletionItemTypedDict]:
     """
-    Note: changes contents in-place. Returns the same completions given as
-    input to help on composability.
+    Note: changes contents in-place. Returns the same input to help on composability.
     """
     memo: dict = {}
     for completion_item in completion_items:
@@ -193,8 +214,7 @@ def convert_workspace_edit_pos_to_client_inplace(
     workspace: IWorkspace, workspace_edit: WorkspaceEditTypedDict
 ) -> WorkspaceEditTypedDict:
     """
-    Note: changes contents in-place. Returns the same workspace edit given as
-    input to help on composability.
+    Note: changes contents in-place. Returns the same input to help on composability.
     """
     changes = workspace_edit.get("changes")
     if changes:

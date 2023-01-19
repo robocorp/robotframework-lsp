@@ -924,6 +924,47 @@ def test_find_definition_keywords(
     )
 
 
+def test_find_definition_unicode(
+    language_server_tcp: ILanguageServerClient, ws_root_path
+):
+    from robocorp_ls_core.workspace import Document
+
+    language_server = language_server_tcp
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    txt = """
+*** Keywords ***
+Keyword
+    [Arguments]     ${a🦘a}    ${b🦘b}
+    Log     ${b🦘b}"""
+    language_server.open_doc(uri, 1, txt)
+
+    doc = Document("uri", txt)
+    line, col = doc.get_last_line_col()
+    col -= 2
+    col = convert_python_col_to_utf16_code_unit(doc, line, col)
+
+    ret = language_server.find_definitions(uri, line, col)
+    assert ret["result"] == [
+        {
+            "originSelectionRange": {
+                "start": {"character": 14, "line": 4},
+                "end": {"character": 18, "line": 4},
+            },
+            "targetRange": {
+                "start": {"character": 33, "line": 3},
+                "end": {"character": 37, "line": 3},
+            },
+            "targetSelectionRange": {
+                "start": {"character": 33, "line": 3},
+                "end": {"character": 37, "line": 3},
+            },
+            "targetUri": "untitled:Untitled-1",
+        }
+    ]
+
+
 def _fix_log_signature(signatures):
     for signature in signatures:
         signature["label"] = signature["label"].replace("repr=DEPRECATED", "repr=False")
