@@ -75,6 +75,11 @@ Some keyword
 
 
 def test_robotframework_formatting_unicode():
+    from robotframework_ls.impl.robot_version import get_robot_major_version
+
+    if get_robot_major_version() <= 3:
+        pytest.skip("Requires robotidy (which needs RF 4 onwards) to work.")
+
     from robotframework_ls_tests.fixtures import initialize_robotframework_server_api
     from robocorp_ls_core.jsonrpc.monitor import Monitor
     from robotframework_ls.impl.robot_lsp_constants import (
