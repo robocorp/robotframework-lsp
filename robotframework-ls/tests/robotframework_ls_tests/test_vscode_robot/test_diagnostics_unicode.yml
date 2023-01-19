@@ -1,0 +1,10 @@
+- message: 'Positional argument not allowed after named arguments: er🦘or'
+  range:
+    end:
+      character: 48
+      line: 2
+    start:
+      character: 42
+      line: 2
+  severity: 1
+  source: robotframework

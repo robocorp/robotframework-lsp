@@ -30,6 +30,7 @@ from robocorp_ls_core.lsp import (
     TextDocumentContextTypedDict,
     Range,
     CodeActionTypedDict,
+    DiagnosticsTypedDict,
 )
 from robotframework_ls.impl.protocols import (
     IKeywordFound,
@@ -46,8 +47,11 @@ import sys
 import threading
 from robocorp_ls_core.jsonrpc.exceptions import JsonRpcException
 import os
-from robocorp_ls_core import uris
-from robocorp_ls_core.code_units import convert_text_edits_pos_to_client_inplace
+from robocorp_ls_core import uris, code_units
+from robocorp_ls_core.code_units import (
+    convert_text_edits_pos_to_client_inplace,
+    convert_diagnostics_pos_to_client_inplace,
+)
 
 
 log = get_logger(__name__)
@@ -338,7 +342,6 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         from robotframework_ls.impl.robot_lsp_constants import (
             OPTION_ROBOT_LINT_ROBOCOP_ENABLED,
         )
-        from robocorp_ls_core import uris
         from robocorp_ls_core.lsp import Error
         from robotframework_ls.impl.robot_lsp_constants import (
             OPTION_ROBOT_LINT_ENABLED,
@@ -382,7 +385,9 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             else:
                 log.debug("Language server linting disabled.")
 
-            lsp_diagnostics = [error.to_lsp_diagnostic() for error in errors]
+            lsp_diagnostics: List[DiagnosticsTypedDict] = [
+                error.to_lsp_diagnostic() for error in errors
+            ]
 
             try:
                 if robocop_enabled:
@@ -412,7 +417,9 @@ class RobotFrameworkServerApi(PythonLanguageServer):
                     ).to_lsp_diagnostic()
                 )
 
-            return lsp_diagnostics
+            return convert_diagnostics_pos_to_client_inplace(
+                completion_context.doc, lsp_diagnostics
+            )
         except JsonRpcRequestCancelled:
             raise JsonRpcRequestCancelled("Lint cancelled (inside lint)")
         except Exception as e:
@@ -541,7 +548,6 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
     def _threaded_flow_explorer_model(self, uri, monitor) -> ActionResultDict:
         import json
-        from robocorp_ls_core import uris
 
         # Note: it may actually be a directory (in which case we have to
         # collect the robots inside it).
@@ -595,8 +601,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
     def _threaded_find_definition(self, doc_uri, line, col, monitor) -> Optional[list]:
         from robotframework_ls.impl.find_definition import find_definition_extended
         import os.path
-        from robocorp_ls_core.lsp import Location, Range
-        from robocorp_ls_core import uris
+        from robocorp_ls_core.lsp import Location
         from robocorp_ls_core.lsp import LocationLink
 
         completion_context = self._create_completion_context(
@@ -731,7 +736,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
         if formatter == OPTION_ROBOT_CODE_FORMATTER_BUILTIN_TIDY:
             try:
-                from robot.tidy import Tidy
+                from robot.tidy import Tidy  # @UnusedImport
             except ImportError:
                 # It's not available in newer versions of RobotFramework.
                 from robotframework_ls.impl.robot_version import get_robot_major_version
@@ -804,6 +809,11 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         if document is None:
             log.info("Unable to get document for uri: %s.", doc_uri)
             return None
+
+        if col != 0:
+            s = document.get_line(line)
+            col = code_units.convert_utf16_code_unit_to_python(s, col)
+
         return CompletionContext(
             document,
             line,
@@ -1332,7 +1342,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
             prefix_doc = RobotDocument("")
             prefix_doc.source = prefix
-            last_line, last_col = prefix_doc.get_last_line_col()
+            last_line, _last_col = prefix_doc.get_last_line_col()
 
             # Now we have the data from the full code, but we need to remove whatever
             # we have in the prefix from the result...

@@ -1,6 +1,10 @@
 from robocorp_ls_core.protocols import IDocument
-from typing import Iterable, List
-from robocorp_ls_core.lsp import TextEditTypedDict, PositionTypedDict
+from typing import List
+from robocorp_ls_core.lsp import (
+    TextEditTypedDict,
+    PositionTypedDict,
+    DiagnosticsTypedDict,
+)
 
 
 def compute_utf16_code_units_len(s: str) -> int:
@@ -89,7 +93,7 @@ def _convert_start_end_range_python_code_unit_to_utf16_inplace(
 
 def convert_text_edits_pos_to_client_inplace(
     d: IDocument, text_edits: List[TextEditTypedDict]
-):
+) -> List[TextEditTypedDict]:
     """
     Note: changes contents in-place. Returns the same text_edits given as
     input to help on composability.
@@ -100,3 +104,18 @@ def convert_text_edits_pos_to_client_inplace(
             d, text_range["start"], text_range["end"]
         )
     return text_edits
+
+
+def convert_diagnostics_pos_to_client_inplace(
+    d: IDocument, diagnostics: List[DiagnosticsTypedDict]
+) -> List[DiagnosticsTypedDict]:
+    """
+    Note: changes contents in-place. Returns the same diagnostics given as
+    input to help on composability.
+    """
+    for diagnostic in diagnostics:
+        text_range = diagnostic["range"]
+        _convert_start_end_range_python_code_unit_to_utf16_inplace(
+            d, text_range["start"], text_range["end"]
+        )
+    return diagnostics

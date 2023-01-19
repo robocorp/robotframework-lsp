@@ -1,9 +1,11 @@
 import os.path
 from pathlib import Path
 import sys
-from typing import List, Dict
+from typing import List
 
 from robocorp_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.lsp import DiagnosticsTypedDict
+import typing
 
 
 log = get_logger(__name__)
@@ -27,7 +29,7 @@ def _import_robocop():
 
 def collect_robocop_diagnostics(
     project_root: Path, ast_model, filename: str, source: str
-) -> List[Dict]:
+) -> List[DiagnosticsTypedDict]:
 
     _import_robocop()
 
@@ -53,7 +55,9 @@ def collect_robocop_diagnostics(
         robocop_runner.reload_config()
 
         issues = robocop_runner.run_check(ast_model, filename, source)
-        diag_issues = issues_to_lsp_diagnostic(issues)
+        diag_issues = typing.cast(
+            List[DiagnosticsTypedDict], issues_to_lsp_diagnostic(issues)
+        )
     finally:
         os.chdir(initial_cwd)
     return diag_issues

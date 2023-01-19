@@ -525,7 +525,7 @@ class TextDocumentPositionParamsTypedDict(TypedDict, total=False):
     position: PositionTypedDict
 
 
-class DiagnosticsTypedDict(TypedDict):
+class DiagnosticsTypedDict(TypedDict, total=False):
     # The range at which the message applies.
     range: RangeTypedDict
 
@@ -1078,9 +1078,9 @@ class Error(object):
 
     __str__ = __repr__
 
-    def to_lsp_diagnostic(self):
+    def to_lsp_diagnostic(self) -> DiagnosticsTypedDict:
         tags = getattr(self, "tags", None)
-        ret = {
+        ret: DiagnosticsTypedDict = {
             "range": {
                 "start": {"line": self.start[0], "character": self.start[1]},
                 "end": {"line": self.end[0], "character": self.end[1]},
