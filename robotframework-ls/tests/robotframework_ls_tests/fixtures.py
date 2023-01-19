@@ -277,6 +277,18 @@ class _WorkspaceFixture(object):
         path = self._cases.get_path(relative_path)
         self.set_absolute_path_root(path, **kwargs)
 
+    def set_root_writable_dir(self, tmpdir, relative_path, **kwargs):
+        """
+        When using `set_root` a directory which is the same for all runs is used.
+        By using `set_root_writable_dir` the directory is copied to a new place
+        and that's used instead (so, clients may write to that dir).
+        """
+        import uuid
+
+        dest = str(tmpdir.join(uuid.uuid4().hex))
+        self._cases.copy_to(relative_path, dest)
+        self.set_absolute_path_root(dest, **kwargs)
+
     def set_absolute_path_root(self, path, **kwargs):
         from robocorp_ls_core import uris
         from robotframework_ls.impl.robot_workspace import RobotWorkspace

@@ -438,7 +438,7 @@ def test_semantic_highlighting_var_with_modifier_3(workspace):
         """
 *** Test Cases ***
 Some test
-    Log    ${A}[${{["\["]}}]
+    Log    ${A}[${{["\\["]}}]
 """,
         [
             ("*** Test Cases ***", "header"),

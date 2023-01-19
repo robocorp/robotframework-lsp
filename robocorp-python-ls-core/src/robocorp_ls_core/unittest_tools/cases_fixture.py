@@ -36,7 +36,7 @@ class CasesFixture(object):
             assert os.path.exists(path), "%s does not exist." % (path,)
         return path
 
-    def copy_to(self, case: str, dest_dir: str):
+    def copy_to(self, case_name: str, dest_dir: str):
         """
         Helper to copy a given path to a given directory.
 
@@ -45,6 +45,6 @@ class CasesFixture(object):
         """
         import shutil
 
-        src = self.get_path(case, must_exist=True)
+        src = self.get_path(case_name, must_exist=True)
 
         shutil.copytree(src, dest_dir)

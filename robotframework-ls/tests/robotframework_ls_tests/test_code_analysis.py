@@ -2256,12 +2256,14 @@ def test_variables_curdir(workspace, libspec_manager, data_regression):
     _collect_errors(workspace, doc, data_regression, basename="no_error")
 
 
-def test_resolve_caches(workspace, libspec_manager, data_regression):
+def test_resolve_caches(workspace, libspec_manager, data_regression, tmpdir):
     import os
     import pathlib
     import threading
 
-    workspace.set_root("case_vars_file", libspec_manager=libspec_manager)
+    workspace.set_root_writable_dir(
+        tmpdir, "case_vars_file", libspec_manager=libspec_manager
+    )
     doc = workspace.put_doc("case_vars_curdir.robot")
 
     doc.source = """
@@ -2295,7 +2297,13 @@ Test
             ret.append(dct)
         return ret
 
-    _collect_errors(workspace, doc, data_regression, transform_errors=transform_errors)
+    _collect_errors(
+        workspace,
+        doc,
+        data_regression,
+        transform_errors=transform_errors,
+        basename="test_resolve_caches",
+    )
     event = threading.Event()
 
     def on_file_changed(src_path):
