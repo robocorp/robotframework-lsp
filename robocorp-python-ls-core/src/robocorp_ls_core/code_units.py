@@ -1,5 +1,5 @@
 from robocorp_ls_core.protocols import IDocument, IWorkspace
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Iterable, Set
 from robocorp_ls_core.lsp import (
     TextEditTypedDict,
     PositionTypedDict,
@@ -9,6 +9,7 @@ from robocorp_ls_core.lsp import (
     RangeTypedDict,
     LocationTypedDict,
     LocationLinkTypedDict,
+    SelectionRangeTypedDict,
 )
 import typing
 
@@ -157,6 +158,37 @@ def convert_location_or_location_link_pos_to_client_inplace(
             convert_range_pos_to_client_inplace(d, r, memo)
 
     return location
+
+
+def _iter_ranges_from_selection_range(
+    selection_range: SelectionRangeTypedDict, visited: Set[int]
+) -> Iterable[RangeTypedDict]:
+    key = id(selection_range)
+    if key not in visited:
+        visited.add(key)
+        yield selection_range["range"]
+
+    parent = selection_range.get("parent")
+    if parent:
+        yield from _iter_ranges_from_selection_range(parent, visited)
+
+
+def convert_selection_range_pos_to_client_inplace(
+    d: IDocument,
+    selection_ranges: List[SelectionRangeTypedDict],
+    memo: Optional[dict] = None,
+) -> List[SelectionRangeTypedDict]:
+    """
+    Note: changes contents in-place. Returns the same input to help on composability.
+    """
+    visited: Set[int] = set()
+
+    for selection_range in selection_ranges:
+        for text_range in _iter_ranges_from_selection_range(selection_range, visited):
+            _convert_start_end_range_python_code_unit_to_utf16_inplace(
+                d, text_range["start"], text_range["end"], memo=memo
+            )
+    return selection_ranges
 
 
 def convert_text_edits_pos_to_client_inplace(

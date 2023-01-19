@@ -55,6 +55,7 @@ from robocorp_ls_core.code_units import (
     convert_workspace_edit_pos_to_client_inplace,
     convert_range_pos_to_client_inplace,
     convert_location_or_location_link_pos_to_client_inplace,
+    convert_selection_range_pos_to_client_inplace,
 )
 
 
@@ -881,6 +882,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         if completion_context is None:
             return []
 
+        # Note: convert on unicode if we start to use it.
         return on_type_formatting(completion_context, ch)
 
     def m_folding_range(self, doc_uri: str):
@@ -913,7 +915,9 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         if completion_context is None:
             return []
 
-        return selection_range(completion_context, positions)
+        return convert_selection_range_pos_to_client_inplace(
+            completion_context.doc, selection_range(completion_context, positions)
+        )
 
     def m_code_lens(self, doc_uri: str):
         func = partial(self._threaded_code_lens, doc_uri)

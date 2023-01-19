@@ -965,6 +965,63 @@ Keyword
     ]
 
 
+def test_selection_range_unicode(
+    language_server_tcp: ILanguageServerClient, ws_root_path
+):
+    from robocorp_ls_core.workspace import Document
+
+    language_server = language_server_tcp
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    txt = """
+*** Keywords ***
+Keyword
+    Log     ${b🦘b}"""
+    language_server.open_doc(uri, 1, txt)
+
+    doc = Document("uri", txt)
+    line, col = doc.get_last_line_col()
+    col -= 2
+    col = convert_python_col_to_utf16_code_unit(doc, line, col)
+
+    ret = language_server.request_selection_range(
+        uri, [{"line": line, "character": col}]
+    )
+    assert ret["result"] == [
+        {
+            "range": {
+                "start": {"line": 3, "character": 14},
+                "end": {"line": 3, "character": 18},
+            },
+            "parent": {
+                "range": {
+                    "start": {"line": 3, "character": 12},
+                    "end": {"line": 3, "character": 19},
+                },
+                "parent": {
+                    "range": {
+                        "start": {"line": 3, "character": 4},
+                        "end": {"line": 3, "character": 19},
+                    },
+                    "parent": {
+                        "range": {
+                            "start": {"line": 2, "character": 0},
+                            "end": {"line": 3, "character": 19},
+                        },
+                        "parent": {
+                            "range": {
+                                "start": {"line": 1, "character": 0},
+                                "end": {"line": 3, "character": 19},
+                            }
+                        },
+                    },
+                },
+            },
+        }
+    ]
+
+
 def _fix_log_signature(signatures):
     for signature in signatures:
         signature["label"] = signature["label"].replace("repr=DEPRECATED", "repr=False")
