@@ -49,6 +49,15 @@
                 "appendText": "# "
             }
         },
+        // Whitelist some cases where '...' should not be added
+        {
+            "beforeText": ".*",
+            "afterText": "^\\s*(RETURN|ELSE|IF|TRY|EXCEPT|END|FINALLY|WHILE|BREAK|CONTINUE).*",
+            "action": {
+                "indent": "none",
+                "appendText": ""
+            }
+        },
         // Deal with tabs separators so that the user has: Keyword<tab>|arg1<tab>arg2
         // And indent to:
         // Keyword<tab>
