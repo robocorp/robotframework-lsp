@@ -421,15 +421,18 @@ def convert_code_action_pos_to_client_inplace(
                             workspace, workspace_edit
                         )
 
-                show_document: Optional[ShowDocumentParamsTypedDict] = argument.get(
-                    "show_document"
-                )
-                if show_document:
-                    uri = show_document.get("uri")
-                    selection = show_document.get("selection")
-                    if selection and uri:
-                        doc = workspace.get_document(uri, accept_from_file=True)
-                        if doc:
-                            convert_range_pos_to_client_inplace(doc, selection)
+                # The show document depends on the contents written to the disk as
+                # it'll usually reference the language server edit, so, it has to
+                # be built with the proper calculated offsets.
+                # show_document: Optional[ShowDocumentParamsTypedDict] = argument.get(
+                #     "show_document"
+                # )
+                # if show_document:
+                #     uri = show_document.get("uri")
+                #     selection = show_document.get("selection")
+                #     if selection and uri:
+                #         doc = workspace.get_document(uri, accept_from_file=True)
+                #         if doc:
+                #             convert_range_pos_to_client_inplace(doc, selection)
 
     return code_action_list
