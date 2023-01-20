@@ -33,10 +33,12 @@ def code_action_all(
 
     if not only or (only and "quickfix" in only):
         found_data: List[ICustomDiagnosticDataTypedDict] = []
-        for diagnostic in context["diagnostics"]:
-            data: Optional[ICustomDiagnosticDataTypedDict] = diagnostic.get("data")
-            if data is not None:
-                found_data.append(data)
+        diagnostics = context.get("diagnostics")
+        if diagnostics:
+            for diagnostic in diagnostics:
+                data: Optional[ICustomDiagnosticDataTypedDict] = diagnostic.get("data")
+                if data is not None:
+                    found_data.append(data)
         ret.extend(code_action_quickfix(completion_context, found_data))
 
     ret.extend(code_action_others(completion_context, select_range, only))

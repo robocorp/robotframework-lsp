@@ -517,6 +517,14 @@ class ILanguageServerClient(ILanguageServerClientBase, Protocol):
             The uri for the request.
         """
 
+    def request_code_action(
+        self, uri: str, line: int, col: int, endline: int, endcol: int
+    ):
+        """
+        :param uri:
+            The uri for the request.
+        """
+
     def find_definitions(self, uri, line: int, col: int):
         """
         :param uri:

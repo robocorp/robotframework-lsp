@@ -283,9 +283,9 @@ class SignatureHelp(_Base):
 
 
 class Position(_Base):
-    def __init__(self, line=0, character=0):
-        self.line = line
-        self.character = character
+    def __init__(self, line: int = 0, character: int = 0):
+        self.line: int = line
+        self.character: int = character
 
     def __eq__(self, other):
         return (
@@ -344,8 +344,10 @@ class Position(_Base):
 
 class Range(_Base):
     def __init__(self, start, end):
-        self.start = Position(*start) if start.__class__ in (list, tuple) else start
-        self.end = Position(*end) if end.__class__ in (list, tuple) else end
+        self.start: Position = (
+            Position(*start) if start.__class__ in (list, tuple) else start
+        )
+        self.end: Position = Position(*end) if end.__class__ in (list, tuple) else end
 
     def __eq__(self, other):
         return (

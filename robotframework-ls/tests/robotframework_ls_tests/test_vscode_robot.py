@@ -1494,6 +1494,65 @@ Unicode
     }
 
 
+def test_code_action_unicode_integrated(
+    language_server_io: ILanguageServerClient, ws_root_path
+):
+    language_server = language_server_io
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    txt = """*** Test Cases ***
+Unicode
+    Log    a🦘🦘a"""
+    language_server.open_doc(uri, 1, txt)
+
+    line = 2
+    # select a🦘|🦘a|
+    col = 14
+    endcol = 17
+
+    ret = language_server.request_code_action(uri, line, col, line, endcol)
+    found = ret["result"]
+    found = [x for x in found if x["command"]["title"] == "Extract local variable"]
+    assert found == [
+        {
+            "title": "Extract local variable",
+            "kind": "refactor.extract",
+            "command": {
+                "title": "Extract local variable",
+                "command": "robot.applyCodeAction",
+                "arguments": [
+                    {
+                        "apply_snippet": {
+                            "edit": {
+                                "changes": {
+                                    "untitled:Untitled-1": [
+                                        {
+                                            "range": {
+                                                "start": {"line": 2, "character": 0},
+                                                "end": {"line": 2, "character": 0},
+                                            },
+                                            "newText": "    ${${0:variable}}=    Set Variable    🦘a\n",
+                                        },
+                                        {
+                                            "range": {
+                                                "start": {"line": 2, "character": 14},
+                                                "end": {"line": 2, "character": 17},
+                                            },
+                                            "newText": "${${0:variable}}",
+                                        },
+                                    ]
+                                }
+                            },
+                            "label": "Extract local variable",
+                        }
+                    }
+                ],
+            },
+        }
+    ]
+
+
 def test_shadowing_libraries(language_server_io: ILanguageServerClient, workspace_dir):
     from robocorp_ls_core import uris
     from robocorp_ls_core.unittest_tools.fixtures import TIMEOUT

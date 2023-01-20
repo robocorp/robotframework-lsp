@@ -240,6 +240,26 @@ class LanguageServerClient(LanguageServerClientBase):
             }
         )
 
+    @implements(ILanguageServerClient.request_code_action)
+    def request_code_action(
+        self, uri: str, line: int, col: int, endline: int, endcol: int
+    ):
+        return self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": "textDocument/codeAction",
+                "params": {
+                    "textDocument": {"uri": uri},
+                    "range": {
+                        "start": {"line": line, "character": col},
+                        "end": {"line": endline, "character": endcol},
+                    },
+                    "context": {},
+                },
+            }
+        )
+
     @implements(ILanguageServerClient.request_signature_help)
     def request_signature_help(self, uri, line, col):
         return self.request(

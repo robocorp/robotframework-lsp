@@ -32,6 +32,7 @@ from robocorp_ls_core.lsp import (
     Range,
     CodeActionTypedDict,
     DiagnosticsTypedDict,
+    Position,
 )
 from robotframework_ls.impl.protocols import (
     IKeywordFound,
@@ -61,6 +62,7 @@ from robocorp_ls_core.code_units import (
     convert_evaluatable_expression_pos_to_client_inplace,
     convert_hover_pos_to_client_inplace,
     convert_document_highlight_pos_to_client_inplace,
+    convert_code_action_pos_to_client_inplace,
 )
 
 
@@ -1168,6 +1170,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         end = params["range"]["end"]
         line = end["line"]
         col = end["character"]
+
         completion_context = self._create_completion_context(
             doc_uri, line, col, monitor
         )
@@ -1176,7 +1179,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
         context: TextDocumentContextTypedDict = params["context"]
 
-        s = context.get("only")
+        s: Optional[List[str]] = context.get("only")
         only: Set[str]
         if not s:
             only = set()
@@ -1189,9 +1192,23 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         r: RangeTypedDict = params["range"]
         select_range = Range.create_from_range_typed_dict(r)
 
+        line_contents = completion_context.doc.get_line(line)
+
+        start_pos: Position = select_range.start
+        end_pos: Position = select_range.end
+        start_pos.character = code_units.convert_utf16_code_unit_to_python(
+            line_contents, start_pos.character
+        )
+        end_pos.character = code_units.convert_utf16_code_unit_to_python(
+            line_contents, end_pos.character
+        )
+
         from robotframework_ls.impl.code_action import code_action_all
 
-        return code_action_all(completion_context, select_range, only, context)
+        return convert_code_action_pos_to_client_inplace(
+            completion_context.workspace,
+            code_action_all(completion_context, select_range, only, context),
+        )
 
     def m_references(
         self, doc_uri: str, line: int, col: int, include_declaration: bool

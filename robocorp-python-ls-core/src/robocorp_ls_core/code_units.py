@@ -18,6 +18,7 @@ from robocorp_ls_core.lsp import (
     CodeLensTypedDict,
     HoverTypedDict,
     DocumentHighlightTypedDict,
+    CodeActionTypedDict,
 )
 import typing
 
@@ -346,3 +347,32 @@ def convert_workspace_edit_pos_to_client_inplace(
                 convert_text_edits_pos_to_client_inplace(doc, text_edits)
 
     return workspace_edit
+
+
+def convert_code_action_pos_to_client_inplace(
+    workspace: IWorkspace, code_action_list: List[CodeActionTypedDict]
+) -> List[CodeActionTypedDict]:
+    """
+    Note: changes contents in-place. Returns the same input to help on composability.
+    """
+    for code_action in code_action_list:
+        command = code_action.get("command")
+        if not command:
+            continue
+        arguments = command.get("arguments")
+        if not arguments:
+            continue
+
+        if not isinstance(arguments, list):
+            continue
+
+        for argument in arguments:
+            if isinstance(argument, dict):
+                apply_snippet = argument.get("apply_snippet")
+                if apply_snippet:
+                    workspace_edit = apply_snippet.get("edit")
+                    convert_workspace_edit_pos_to_client_inplace(
+                        workspace, workspace_edit
+                    )
+
+    return code_action_list
