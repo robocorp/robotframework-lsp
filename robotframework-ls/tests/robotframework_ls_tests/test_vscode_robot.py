@@ -1209,6 +1209,37 @@ Log It2
     check_code_lens_data_regression(data_regression, found)
 
 
+def test_provide_evaluatable_expression_var_integrated(
+    language_server_io: ILanguageServerClient, ws_root_path, data_regression
+):
+
+    from robocorp_ls_core import uris
+    from robocorp_ls_core.workspace import Document
+
+    language_server = language_server_io
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    os.makedirs(ws_root_path, exist_ok=True)
+    uri = uris.from_fs_path(os.path.join(ws_root_path, "my.robot"))
+    txt = """*** Test Cases ***
+List Variable
+    Log    ${NA🦘ME}"""
+    language_server.open_doc(uri, 1, txt)
+
+    doc = Document(uri, txt)
+    line, col = doc.get_last_line_col()
+
+    ret = language_server.request_provide_evaluatable_expression(uri, line, col - 2)
+    found = ret["result"]
+    assert found == {
+        "range": {
+            "start": {"line": 2, "character": 13},
+            "end": {"line": 2, "character": 19},
+        },
+        "expression": "${NA🦘ME}",
+    }
+
+
 def test_list_tests_integrated(
     language_server_io: ILanguageServerClient, ws_root_path, data_regression
 ):

@@ -425,6 +425,17 @@ class IRobotFrameworkApiClient(ILanguageServerClientBase, Protocol):
         """
 
 
+class EvaluatableExpressionTypedDict(TypedDict):
+    """
+    Note: this is actually a custom message return:
+
+    "robot/provideEvaluatableExpression"
+    """
+
+    range: "RangeTypedDict"
+    expression: Optional[str]
+
+
 class ITestInfoTypedDict(TypedDict):
     uri: str
     path: str
@@ -567,6 +578,11 @@ class ILanguageServerClient(ILanguageServerClientBase, Protocol):
 
     def request_prepare_rename(self, uri: str, line: int, col: int):
         pass
+
+    def request_provide_evaluatable_expression(
+        self, uri: str, line: int, col: int
+    ):  # -> "Response(dict) with EvaluatableExpressionTypedDict (result)"
+        pass  # Note: not part of the language server spec (custom request).
 
     def request_workspace_symbols(self, query: Optional[str] = None):
         pass

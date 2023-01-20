@@ -8,6 +8,7 @@ from robocorp_ls_core.protocols import (
     ITestInfoTypedDict,
     IWorkspace,
     ActionResultDict,
+    EvaluatableExpressionTypedDict,
 )
 from functools import partial
 from robocorp_ls_core.jsonrpc.endpoint import require_monitor
@@ -36,7 +37,6 @@ from robotframework_ls.impl.protocols import (
     IKeywordFound,
     IDefinition,
     ICompletionContext,
-    EvaluatableExpressionTypedDict,
     IVariablesFromArgumentsFileLoader,
     IRobotDocument,
 )
@@ -58,6 +58,7 @@ from robocorp_ls_core.code_units import (
     convert_selection_range_pos_to_client_inplace,
     convert_code_lens_pos_to_client_inplace,
     convert_tests_pos_to_client_inplace,
+    convert_evaluatable_expression_pos_to_client_inplace,
 )
 
 
@@ -610,7 +611,6 @@ class RobotFrameworkServerApi(PythonLanguageServer):
 
     def _threaded_find_definition(self, doc_uri, line, col, monitor) -> Optional[list]:
         from robotframework_ls.impl.find_definition import find_definition_extended
-        import os.path
         from robocorp_ls_core.lsp import Location
         from robocorp_ls_core.lsp import LocationLink
 
@@ -1090,7 +1090,9 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         if completion_context is None:
             return None
 
-        return provide_evaluatable_expression(completion_context)
+        return convert_evaluatable_expression_pos_to_client_inplace(
+            completion_context.doc, provide_evaluatable_expression(completion_context)
+        )
 
     def m_wait_for_full_test_collection(self):
         func = partial(self._threaded_wait_for_full_test_collection)

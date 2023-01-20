@@ -1,9 +1,10 @@
+from typing import Optional
+
+from robocorp_ls_core.protocols import EvaluatableExpressionTypedDict
 from robotframework_ls.impl.protocols import (
     ICompletionContext,
-    EvaluatableExpressionTypedDict,
     IRobotToken,
 )
-from typing import Optional
 
 
 def _create_evaluatable_expression_from_token(

@@ -1,4 +1,9 @@
-from robocorp_ls_core.protocols import IDocument, IWorkspace, ITestInfoTypedDict
+from robocorp_ls_core.protocols import (
+    IDocument,
+    IWorkspace,
+    ITestInfoTypedDict,
+    EvaluatableExpressionTypedDict,
+)
 from typing import List, Optional, Union, Iterable, Set
 from robocorp_ls_core.lsp import (
     TextEditTypedDict,
@@ -232,6 +237,22 @@ def convert_tests_pos_to_client_inplace(
             d, text_range["start"], text_range["end"], memo=memo
         )
     return tests
+
+
+def convert_evaluatable_expression_pos_to_client_inplace(
+    d: IDocument,
+    evaluatable_expr: Optional[EvaluatableExpressionTypedDict],
+    memo: Optional[dict] = None,
+) -> Optional[EvaluatableExpressionTypedDict]:
+    """
+    Note: changes contents in-place. Returns the same input to help on composability.
+    """
+    if evaluatable_expr:
+        text_range = evaluatable_expr["range"]
+        _convert_start_end_range_python_code_unit_to_utf16_inplace(
+            d, text_range["start"], text_range["end"], memo=memo
+        )
+    return evaluatable_expr
 
 
 def convert_diagnostics_pos_to_client_inplace(

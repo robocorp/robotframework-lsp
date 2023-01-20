@@ -403,6 +403,27 @@ class LanguageServerClient(LanguageServerClientBase):
             }
         )
 
+    @implements(ILanguageServerClient.request_provide_evaluatable_expression)
+    def request_provide_evaluatable_expression(
+        self, uri: str, line: int, col: int
+    ) -> Optional[IIdMessageMatcher]:
+        """
+        :Note: This is a custom message (not part of the language server spec).
+
+        :Note: async complete.
+        """
+        return self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": "robot/provideEvaluatableExpression",
+                "params": {
+                    "uri": uri,
+                    "position": {"line": line, "character": col},
+                },
+            }
+        )
+
     @implements(ILanguageServerClient.request_workspace_symbols)
     def request_workspace_symbols(self, query: Optional[str] = None):
         return self.request(
