@@ -1,5 +1,7 @@
 from robotframework_ls.impl.robot_version import get_robot_major_version
 import pytest
+from robocorp_ls_core.protocols import IDocument
+from pathlib import Path
 
 
 def _collect_errors(
@@ -296,13 +298,13 @@ Variables    DoesNotExistVar
     )
 
 
-def test_casing_on_filename(workspace, libspec_manager, data_regression):
+def test_casing_on_filename(workspace, libspec_manager, data_regression, tmpdir):
     from robocorp_ls_core.protocols import IDocument
     from pathlib import Path
 
     # i.e.: Importing a python library with capital letters fails #143
 
-    workspace.set_root("case4", libspec_manager=libspec_manager)
+    workspace.set_root_writable_dir(tmpdir, "case4", libspec_manager=libspec_manager)
     doc: IDocument = workspace.put_doc("case4.robot", text="")
     p = Path(doc.path)
     (p.parent / "myPythonKeywords.py").write_text(
@@ -2626,6 +2628,76 @@ ${RESOURCES}    %{ENV_VAR_IN_RESOURCE_IMPORT}/bar
     _collect_errors(
         workspace, doc, data_regression, basename="no_error" if found else None
     )
+
+
+def test_code_analysis_arguments_correct(workspace, libspec_manager, data_regression):
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("keywords.robot")
+    doc.source = """
+*** Test Cases ***
+DemoCase
+    Run Keyword And Continue On Failure    Check Something    name=test
+
+*** Keywords ***
+Check Something
+    [Arguments]    ${name}
+    Fail    ${name}"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_code_analysis_arguments_correct_2(workspace, libspec_manager, data_regression):
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("keywords.robot")
+    doc.source = """
+*** Test Cases ***
+Mandatory arguments
+    ${result} =    Kw Only Arg    kwo=value
+
+*** Keywords ***
+Kw Only Arg
+    [Arguments]    @{}    ${kwo}
+    [Return]    ${kwo}"""
+
+    _collect_errors(workspace, doc, data_regression, basename="no_error")
+
+
+def test_code_analysis_arguments_handling_of_starargs(
+    workspace, libspec_manager, data_regression, tmpdir
+):
+
+    workspace.set_root_writable_dir(tmpdir, "case2", libspec_manager=libspec_manager)
+    doc: IDocument = workspace.put_doc("case.robot", text="")
+    p = Path(doc.path)
+
+    (p.parent / "mypylib.py").write_text(
+        """
+def check_python_keyword(a, b="default", *varargs):
+    print(a, b, varargs)
+"""
+    )
+
+    doc.source = """
+*** Settings ***
+Library    ./mypylib.py
+
+*** Test Cases ***
+Call1
+    # This is wrong because a=ooops is not valid for Python as it'll set the a=ooops as a keyword argument.
+    Check Python Keyword    A    B   a=ooops
+    
+    # The same thing is valid for Robot Framework because a=ooops will be consumed as a single string.
+    Check RF Keyword    A    B   a=ooops
+
+*** Keywords ***
+Check RF Keyword
+    [Arguments]    ${A}    ${B}=1    @{C}
+    No operation
+    """
+
+    _collect_errors(workspace, doc, data_regression)
 
 
 def test_code_analysis_environment_variable_default_value(

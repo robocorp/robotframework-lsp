@@ -8,6 +8,8 @@ import itertools
 from robocorp_ls_core.lsp import Error, ICustomDiagnosticDataUnexpectedArgumentTypedDict
 from robocorp_ls_core.constants import Null, NULL
 import typing
+from robotframework_ls.impl.keywords_in_args import KEYWORD_NAME_TO_KEYWORD_INDEX
+from robotframework_ls.impl.text_utilities import normalize_robot_name
 
 
 class _Match:
@@ -318,6 +320,31 @@ class KeywordArgumentAnalysis:
                 found_definition_arg = definition_keyword_name_to_arg.get(name, None)
                 if found_definition_arg is not None:
                     if definition_arg_matched.get(found_definition_arg):
+                        matched_keyword_arg = definition_keyword_args_deque[0]
+
+                        keyword_found = self.keyword_found
+                        if keyword_found:
+                            is_keyword_from_library = bool(keyword_found.library_name)
+
+                            if not is_keyword_from_library or (
+                                normalize_robot_name(keyword_found.keyword_name)
+                                in KEYWORD_NAME_TO_KEYWORD_INDEX
+                            ):
+                                # If this is not a library (i.e.: RF code and not Python code), RF will
+                                # consume the 'name=value' argument as a full string instead of trying to
+                                # match based on the `name` argument name when matching star args.
+                                #
+                                # The Run Keyword XXX are an exception to the rule though as they
+                                # have special handling.
+                                if matched_keyword_arg.is_star_arg:
+                                    usage_token_id_to_definition_arg_match[
+                                        id(token_arg)
+                                    ] = _Match(
+                                        matched_keyword_arg,
+                                        token_definition_id_to_index,
+                                    )
+                                    continue
+
                         error = create_error_from_node(
                             usage_info.node,
                             f"Multiple values for argument: {name}",

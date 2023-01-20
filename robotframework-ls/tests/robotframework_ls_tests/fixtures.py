@@ -282,6 +282,9 @@ class _WorkspaceFixture(object):
         When using `set_root` a directory which is the same for all runs is used.
         By using `set_root_writable_dir` the directory is copied to a new place
         and that's used instead (so, clients may write to that dir).
+
+        :param tmpdir:
+            The pytest tmpdir fixture.
         """
         import uuid
 
