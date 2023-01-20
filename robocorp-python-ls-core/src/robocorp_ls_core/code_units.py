@@ -16,6 +16,8 @@ from robocorp_ls_core.lsp import (
     LocationLinkTypedDict,
     SelectionRangeTypedDict,
     CodeLensTypedDict,
+    HoverTypedDict,
+    DocumentHighlightTypedDict,
 )
 import typing
 
@@ -253,6 +255,44 @@ def convert_evaluatable_expression_pos_to_client_inplace(
             d, text_range["start"], text_range["end"], memo=memo
         )
     return evaluatable_expr
+
+
+def convert_hover_pos_to_client_inplace(
+    d: IDocument,
+    hover: Optional[HoverTypedDict],
+    memo: Optional[dict] = None,
+) -> Optional[HoverTypedDict]:
+    """
+    Note: changes contents in-place. Returns the same input to help on composability.
+    """
+    if hover:
+        text_range = hover.get("range")
+        if text_range:
+            _convert_start_end_range_python_code_unit_to_utf16_inplace(
+                d, text_range["start"], text_range["end"], memo=memo
+            )
+    return hover
+
+
+def convert_document_highlight_pos_to_client_inplace(
+    d: IDocument,
+    doc_highlight_list: Optional[List[DocumentHighlightTypedDict]],
+    memo: Optional[dict] = None,
+) -> Optional[List[DocumentHighlightTypedDict]]:
+    """
+    Note: changes contents in-place. Returns the same input to help on composability.
+    """
+    if memo is None:
+        memo = {}
+
+    if doc_highlight_list:
+        for doc_highlight in doc_highlight_list:
+            text_range = doc_highlight.get("range")
+            if text_range:
+                _convert_start_end_range_python_code_unit_to_utf16_inplace(
+                    d, text_range["start"], text_range["end"], memo=memo
+                )
+    return doc_highlight_list
 
 
 def convert_diagnostics_pos_to_client_inplace(

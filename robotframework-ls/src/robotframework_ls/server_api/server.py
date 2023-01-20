@@ -59,6 +59,8 @@ from robocorp_ls_core.code_units import (
     convert_code_lens_pos_to_client_inplace,
     convert_tests_pos_to_client_inplace,
     convert_evaluatable_expression_pos_to_client_inplace,
+    convert_hover_pos_to_client_inplace,
+    convert_document_highlight_pos_to_client_inplace,
 )
 
 
@@ -1129,7 +1131,9 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         if completion_context is None:
             return None
 
-        return hover(completion_context)
+        return convert_hover_pos_to_client_inplace(
+            completion_context.doc, hover(completion_context)
+        )
 
     def m_document_highlight(self, doc_uri: str, line: int, col: int):
         func = partial(self._threaded_document_highlight, doc_uri, line, col)
@@ -1148,7 +1152,9 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         if completion_context is None:
             return None
 
-        return doc_highlight(completion_context)
+        return convert_document_highlight_pos_to_client_inplace(
+            completion_context.doc, doc_highlight(completion_context)
+        )
 
     def m_code_action(self, doc_uri: str, params: TextDocumentCodeActionTypedDict):
         func = partial(self._threaded_code_action, doc_uri, params)

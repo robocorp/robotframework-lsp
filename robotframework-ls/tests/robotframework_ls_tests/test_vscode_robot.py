@@ -1116,6 +1116,49 @@ Log It
     data_regression.check(result)
 
 
+def test_document_highlight_unicode_integrated(
+    language_server_io: ILanguageServerClient, ws_root_path, data_regression
+):
+    from robocorp_ls_core.workspace import Document
+    from robocorp_ls_core.lsp import DocumentHighlightResponseTypedDict
+    from robocorp_ls_core.lsp import DocumentHighlightTypedDict
+
+    language_server = language_server_io
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    txt = """
+*** Test Cases ***
+Log It
+    ${a🦘a}    Set Variable    22
+    log    ${a🦘a}"""
+    doc = Document("", txt)
+    language_server.open_doc(uri, 1, txt)
+    line, col = doc.get_last_line_col()
+
+    ret: DocumentHighlightResponseTypedDict = (
+        language_server.request_text_document_highlight(uri, line, col)
+    )
+    result: DocumentHighlightTypedDict = ret["result"]
+    assert len(result) == 2
+    assert result == [
+        {
+            "range": {
+                "start": {"line": 4, "character": 13},
+                "end": {"line": 4, "character": 17},
+            },
+            "kind": 1,
+        },
+        {
+            "range": {
+                "start": {"line": 3, "character": 6},
+                "end": {"line": 3, "character": 10},
+            },
+            "kind": 1,
+        },
+    ]
+
+
 def test_workspace_symbols_integrated(
     language_server_io: ILanguageServerClient, ws_root_path, data_regression
 ):
