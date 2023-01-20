@@ -13,6 +13,9 @@ NEXT
 - Code action: assign to variable.
 - Refactoring: extract `local variable`.
 
+### Bugfixes
+
+- Text ranges when dealing with emoji unicode characters are now correct. [#862](https://github.com/robocorp/robotframework-lsp/issues/862)  
 
 New in 1.7.3 (2022-12-16)
 -----------------------------
