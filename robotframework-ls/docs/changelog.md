@@ -12,11 +12,13 @@ NEXT
 - Quick fix: create `argument` from an `undefined variable`.
 - Code action: assign to variable.
 - Refactoring: extract `local variable`.
+- Refactoring: extract `variable` to `variables section`.
 
 ### Bugfixes
 
 - Text ranges when dealing with emoji unicode characters are now correct. [#862](https://github.com/robocorp/robotframework-lsp/issues/862)  
 - Code analysis fix:  An arguments with a name with '=' must match a star arg with the full name if the name was already found (in RF keyword and not python method). [#860](https://github.com/robocorp/robotframework-lsp/issues/860)
+
 
 New in 1.7.3 (2022-12-16)
 -----------------------------

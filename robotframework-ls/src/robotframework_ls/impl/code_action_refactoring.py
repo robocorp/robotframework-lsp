@@ -75,6 +75,59 @@ def _create_local_variable_refactoring(
             )
 
 
+def _create_variable_section_refactoring(
+    completion_context: ICompletionContext,
+    select_range: Range,
+) -> Iterable[CodeActionTypedDict]:
+
+    line = select_range.start.line
+    col = select_range.start.character
+    endline = select_range.end.line
+    endcol = select_range.end.character
+
+    if line == endline and col != endcol:
+
+        token_info = completion_context.get_current_token()
+        if token_info:
+            from robotframework_ls.robot_config import get_arguments_separator
+            from robotframework_ls.impl.code_action_common import (
+                create_var_in_variables_section_text_edit,
+            )
+
+            doc = completion_context.doc
+            contents = doc.get_range(line, col, endline, endcol)
+
+            sep = get_arguments_separator(completion_context)
+            var_template = "${${0:variable}}%s%s\n" % (
+                sep,
+                contents,
+            )
+
+            tok: IRobotToken = token_info.token
+            text_edit = create_var_in_variables_section_text_edit(
+                completion_context, var_template
+            )
+            changes: List[TextEditTypedDict] = [
+                text_edit,
+                {
+                    "range": {
+                        "start": {"line": tok.lineno - 1, "character": col},
+                        "end": {
+                            "line": tok.lineno - 1,
+                            "character": endcol,
+                        },
+                    },
+                    "newText": "${${0:variable}}",
+                },
+            ]
+            yield wrap_edits_in_snippet(
+                completion_context,
+                "Extract variable to variable section",
+                changes,
+                "refactor.extract",
+            )
+
+
 def code_action_refactoring(
     completion_context: ICompletionContext,
     select_range: Range,
@@ -98,5 +151,17 @@ def code_action_refactoring(
             )
         ):
             yield from _create_local_variable_refactoring(
+                completion_context, select_range
+            )
+
+        if not only or (
+            only
+            and (
+                "refactor" in only
+                or "refactor.extract" in only
+                or "refactor.extract.variableSection" in only
+            )
+        ):
+            yield from _create_variable_section_refactoring(
                 completion_context, select_range
             )

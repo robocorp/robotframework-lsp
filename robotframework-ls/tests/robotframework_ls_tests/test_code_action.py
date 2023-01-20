@@ -1109,7 +1109,7 @@ def test_code_code_action_refactoring_extract_local_multiline(
     _code_action_all(
         workspace,
         libspec_manager,
-        set(),
+        {"refactor.extract.local"},
         """*** Tasks ***
 Example task
     Log
@@ -1120,6 +1120,27 @@ Example task
     ${${0:variable}}=    Set Variable    value
     Log
         ...    ${${0:variable}}
+""",
+    )
+
+
+def test_code_code_action_refactoring_extract_variable_section(
+    workspace, libspec_manager
+) -> None:
+    _code_action_all(
+        workspace,
+        libspec_manager,
+        {"refactor.extract.variableSection"},
+        """*** Tasks ***
+Example task
+    Log    |value|
+""",
+        """*** Variables ***
+${${0:variable}}    value
+
+*** Tasks ***
+Example task
+    Log    ${${0:variable}}
 """,
     )
 
