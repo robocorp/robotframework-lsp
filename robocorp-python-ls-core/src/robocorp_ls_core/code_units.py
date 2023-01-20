@@ -32,6 +32,7 @@ from robocorp_ls_core.lsp import (
     HoverTypedDict,
     DocumentHighlightTypedDict,
     CodeActionTypedDict,
+    ShowDocumentParamsTypedDict,
 )
 import typing
 
@@ -408,8 +409,27 @@ def convert_code_action_pos_to_client_inplace(
                 apply_snippet = argument.get("apply_snippet")
                 if apply_snippet:
                     workspace_edit = apply_snippet.get("edit")
-                    convert_workspace_edit_pos_to_client_inplace(
-                        workspace, workspace_edit
-                    )
+                    if workspace_edit:
+                        convert_workspace_edit_pos_to_client_inplace(
+                            workspace, workspace_edit
+                        )
+                apply_edit = argument.get("apply_edit")
+                if apply_edit:
+                    workspace_edit = apply_edit.get("edit")
+                    if workspace_edit:
+                        convert_workspace_edit_pos_to_client_inplace(
+                            workspace, workspace_edit
+                        )
+
+                show_document: Optional[ShowDocumentParamsTypedDict] = argument.get(
+                    "show_document"
+                )
+                if show_document:
+                    uri = show_document.get("uri")
+                    selection = show_document.get("selection")
+                    if selection and uri:
+                        doc = workspace.get_document(uri, accept_from_file=True)
+                        if doc:
+                            convert_range_pos_to_client_inplace(doc, selection)
 
     return code_action_list
