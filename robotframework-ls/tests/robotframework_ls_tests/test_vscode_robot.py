@@ -1222,7 +1222,7 @@ Log It
     Log    
 
 *** Task ***
-Log It2
+Log 🦘2
     Log    
 
 """

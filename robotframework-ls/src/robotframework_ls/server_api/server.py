@@ -57,6 +57,7 @@ from robocorp_ls_core.code_units import (
     convert_location_or_location_link_pos_to_client_inplace,
     convert_selection_range_pos_to_client_inplace,
     convert_code_lens_pos_to_client_inplace,
+    convert_tests_pos_to_client_inplace,
 )
 
 
@@ -986,6 +987,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         from robotframework_ls.impl.code_lens import list_tests
         from pathlib import Path
 
+        tests: List[ITestInfoTypedDict]
         path = Path(uris.to_fs_path(doc_uri))
         if path.is_dir():
             tests = []
@@ -999,13 +1001,14 @@ class RobotFrameworkServerApi(PythonLanguageServer):
                     continue
 
                 tests.extend(list_tests(completion_context))
-            return tests
         else:
             completion_context = self._create_completion_context(doc_uri, 0, 0, monitor)
             if completion_context is None:
                 return []
 
-            return list_tests(completion_context)
+            tests = list_tests(completion_context)
+
+        return convert_tests_pos_to_client_inplace(completion_context.doc, tests)
 
     def m_collect_robot_documentation(
         self,

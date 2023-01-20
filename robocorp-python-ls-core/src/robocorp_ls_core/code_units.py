@@ -1,4 +1,4 @@
-from robocorp_ls_core.protocols import IDocument, IWorkspace
+from robocorp_ls_core.protocols import IDocument, IWorkspace, ITestInfoTypedDict
 from typing import List, Optional, Union, Iterable, Set
 from robocorp_ls_core.lsp import (
     TextEditTypedDict,
@@ -218,6 +218,20 @@ def convert_code_lens_pos_to_client_inplace(
             d, text_range["start"], text_range["end"], memo=memo
         )
     return code_lens
+
+
+def convert_tests_pos_to_client_inplace(
+    d: IDocument, tests: List[ITestInfoTypedDict], memo: Optional[dict] = None
+) -> List[ITestInfoTypedDict]:
+    """
+    Note: changes contents in-place. Returns the same input to help on composability.
+    """
+    for test in tests:
+        text_range = test["range"]
+        _convert_start_end_range_python_code_unit_to_utf16_inplace(
+            d, text_range["start"], text_range["end"], memo=memo
+        )
+    return tests
 
 
 def convert_diagnostics_pos_to_client_inplace(
