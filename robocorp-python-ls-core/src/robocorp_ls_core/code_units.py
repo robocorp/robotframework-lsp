@@ -1,3 +1,16 @@
+"""
+This module exists to make conversions of positions from/to the client.
+
+By default the language server spec expects characters above the utf-16 range
+to occupy 2 chars, so, something as:
+
+a😃
+
+logically (in python unicode) has 2 chars, but for the spec it needs to have
+3 chars, so, we need to convert back and forth all positions to account for
+this discrepancy.
+"""
+
 from robocorp_ls_core.protocols import (
     IDocument,
     IWorkspace,
@@ -156,15 +169,21 @@ def convert_location_or_location_link_pos_to_client_inplace(
     """
     memo: dict = {}
 
-    for attr in (
-        "range",
-        "originSelectionRange",
-        "targetRange",
-        "targetSelectionRange",
-    ):
-        r = typing.cast(Optional[RangeTypedDict], location.get(attr))
-        if r is not None:
-            convert_range_pos_to_client_inplace(d, r, memo)
+    if "range" in location:
+        loc = typing.cast(LocationTypedDict, location)
+        r = loc["range"]
+        convert_range_pos_to_client_inplace(d, r, memo)
+    else:
+        loc_link = typing.cast(LocationLinkTypedDict, location)
+
+        r = loc_link["originSelectionRange"]
+        convert_range_pos_to_client_inplace(d, r, memo)
+
+        r = loc_link["targetRange"]
+        convert_range_pos_to_client_inplace(d, r, memo)
+
+        r = loc_link["targetSelectionRange"]
+        convert_range_pos_to_client_inplace(d, r, memo)
 
     return location
 
@@ -347,6 +366,24 @@ def convert_workspace_edit_pos_to_client_inplace(
                 convert_text_edits_pos_to_client_inplace(doc, text_edits)
 
     return workspace_edit
+
+
+def convert_references_pos_to_client_inplace(
+    workspace: IWorkspace, curr_doc: IDocument, references: List[LocationTypedDict]
+) -> List[LocationTypedDict]:
+    """
+    Note: changes contents in-place. Returns the same input to help on composability.
+    """
+    for reference in references:
+        uri = reference["uri"]
+        if uri == curr_doc.uri:
+            convert_location_or_location_link_pos_to_client_inplace(curr_doc, reference)
+        else:
+            doc = workspace.get_document(uri, accept_from_file=True)
+            if doc is not None:
+                convert_location_or_location_link_pos_to_client_inplace(doc, reference)
+
+    return references
 
 
 def convert_code_action_pos_to_client_inplace(

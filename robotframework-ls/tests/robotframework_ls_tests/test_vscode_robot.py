@@ -965,6 +965,45 @@ Keyword
     ]
 
 
+def test_references_unicode(language_server_tcp: ILanguageServerClient, ws_root_path):
+    from robocorp_ls_core.workspace import Document
+
+    language_server = language_server_tcp
+
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    txt = """
+*** Keywords ***
+Keyword
+    [Arguments]     ${a🦘a}    ${b🦘b}
+    Log     ${b🦘b}"""
+    language_server.open_doc(uri, 1, txt)
+
+    doc = Document("uri", txt)
+    line, col = doc.get_last_line_col()
+    col -= 2
+    col = convert_python_col_to_utf16_code_unit(doc, line, col)
+
+    ret = language_server.request_references(uri, line, col, True)
+    result = ret["result"]
+    assert result == [
+        {
+            "uri": "untitled:Untitled-1",
+            "range": {
+                "start": {"line": 4, "character": 14},
+                "end": {"line": 4, "character": 18},
+            },
+        },
+        {
+            "uri": "untitled:Untitled-1",
+            "range": {
+                "start": {"line": 3, "character": 33},
+                "end": {"line": 3, "character": 37},
+            },
+        },
+    ]
+
+
 def test_selection_range_unicode(
     language_server_tcp: ILanguageServerClient, ws_root_path
 ):

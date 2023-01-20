@@ -63,6 +63,7 @@ from robocorp_ls_core.code_units import (
     convert_hover_pos_to_client_inplace,
     convert_document_highlight_pos_to_client_inplace,
     convert_code_action_pos_to_client_inplace,
+    convert_references_pos_to_client_inplace,
 )
 
 
@@ -1230,7 +1231,11 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         if completion_context is None:
             return None
 
-        return references(completion_context, include_declaration=include_declaration)
+        return convert_references_pos_to_client_inplace(
+            completion_context.workspace,
+            completion_context.doc,
+            references(completion_context, include_declaration=include_declaration),
+        )
 
     def m_workspace_symbols(self, query: Optional[str] = None):
         func = partial(self._threaded_workspace_symbols, query)
