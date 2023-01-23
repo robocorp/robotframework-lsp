@@ -1311,6 +1311,21 @@ Sample Keyword
     _collect_errors(workspace, doc, data_regression)
 
 
+@pytest.mark.skipif(
+    get_robot_major_version() <= 4, reason="RETURN only available from RF 5 onwards"
+)
+def test_var_undefinded_in_return(workspace, libspec_manager, data_regression):
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Keywords ***
+Sample Keyword
+    RETURN    ${value}
+"""
+
+    _collect_errors(workspace, doc, data_regression)
+
+
 @pytest.mark.skipif(get_robot_major_version() < 5, reason="Requires RF 5 onwards.")
 def test_var_from_except_as(workspace, libspec_manager, data_regression):
     workspace.set_root("case2", libspec_manager=libspec_manager)

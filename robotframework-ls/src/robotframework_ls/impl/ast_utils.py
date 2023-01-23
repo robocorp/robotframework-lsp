@@ -1228,6 +1228,7 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
         "Variable",
         "ForHeader",  # RF 4+
         "ForLoopHeader",  # RF 3
+        "ReturnStatement",  # RF 5
     ) + _FIXTURE_CLASS_NAMES:
         for node_info in ast.iter_indexed(clsname):
             stack = node_info.stack

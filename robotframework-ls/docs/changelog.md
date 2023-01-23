@@ -1,3 +1,14 @@
+NEXT
+-----------------------------
+
+### New features
+
+
+### Bugfixes
+
+- Properly report about undefined variable in RETURN. [#865](https://github.com/robocorp/robotframework-lsp/issues/865)
+
+
 New in 1.8.0 (2023-01-23)
 -----------------------------
 
