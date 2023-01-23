@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '1.7.3'
+version '1.8.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -50,27 +50,23 @@ intellij {
 patchPluginXml {
     changeNotes = """
     <p>
-    <strong>Release 1.7.3</strong>
+    <strong>Release 1.8.0</strong>
     </p>
     
     <ul>
     
-    
     <li><strong>Bugfixes</strong></li>
     <ul>
-        <li>Debugger: Fixed issue where the stack of the debugger could end up being unsynchronized.</li>
-        <li>Don&#39;t prefix module name for keywords in the current module. <a href="https://github.com/robocorp/robotframework-lsp/issues/843">#843</a></li>
+        <li>Text ranges when dealing with emoji unicode characters are now correct. <a href="https://github.com/robocorp/robotframework-lsp/issues/862">#862</a>  </li>
+        <li>Code analysis fix:  An arguments with a name with &#39;=&#39; must match a star arg with the full name if the name was already found (in RF keyword and not python method). <a href="https://github.com/robocorp/robotframework-lsp/issues/860">#860</a></li>
     </ul>
     <br/>
-    
-    
     
     <strong>
     See changelog for all versions at:<br>
     <br>
     <a href="https://github.com/robocorp/robotframework-lsp/blob/master/robotframework-intellij/docs/changelog.md">Changelog at GitHub</a>.
     </strong>
-
 
     <br>
     <strong>Current feature set:</strong><br>
