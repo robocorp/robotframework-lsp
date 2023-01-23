@@ -6,8 +6,8 @@ from typing import Sequence
 log = get_logger(__name__)
 
 
-class TextUtilities(object):
-    def __init__(self, text):
+class TextUtilities:
+    def __init__(self, text: str):
         self.text = text
 
     def strip_leading_chars(self, c):
@@ -28,6 +28,13 @@ class TextUtilities(object):
 
     def strip(self):
         self.text = self.text.strip()
+
+    def get_indent(self):
+        m = re.match("(\s+)(.*)", self.text)
+        if not m:
+            return ""
+
+        return m.group(1)
 
 
 # Note: this not only makes it faster, but also makes us use less memory as a

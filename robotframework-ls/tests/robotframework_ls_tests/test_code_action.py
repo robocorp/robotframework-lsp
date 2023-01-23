@@ -2,6 +2,8 @@ import os
 from robotframework_ls.impl.protocols import IRobotDocument
 from robocorp_ls_core.lsp import Range, TextDocumentContextTypedDict
 from typing import Set
+import pytest
+from robotframework_ls.impl.robot_version import get_robot_major_version
 
 
 def check_code_action_data_regression(data_regression, found, basename=None) -> None:
@@ -1171,4 +1173,92 @@ Example task
     ${v}=    Log    something|
 """,
         "",
+    )
+
+
+def test_code_code_action_surround_with_try_except(workspace, libspec_manager) -> None:
+    _code_action_all(
+        workspace,
+        libspec_manager,
+        {"surroundWith.tryExcept"},
+        """*** Tasks ***
+Example task
+    |Log    something|
+""",
+        """*** Tasks ***
+Example task
+    TRY
+        Log    something
+    EXCEPT    ${0:message}
+        No operation
+    END
+"""
+        if get_robot_major_version() >= 5
+        else "",
+    )
+
+
+@pytest.mark.skipif(get_robot_major_version() < 5, reason="TRY..EXCEPT added on RF 5.")
+def test_code_code_action_surround_with_try_except_finally(
+    workspace, libspec_manager
+) -> None:
+    _code_action_all(
+        workspace,
+        libspec_manager,
+        {"surroundWith.tryExceptFinally"},
+        """*** Tasks ***
+Example task
+    |Log    something|
+""",
+        """*** Tasks ***
+Example task
+    TRY
+        Log    something
+    EXCEPT    ${0:message}
+        No operation
+    FINALLY
+        No operation
+    END
+""",
+    )
+
+
+@pytest.mark.skipif(get_robot_major_version() < 5, reason="TRY..EXCEPT added on RF 5.")
+def test_code_code_action_surround_with_try_except_not(
+    workspace, libspec_manager
+) -> None:
+    _code_action_all(
+        workspace,
+        libspec_manager,
+        {"surroundWith.tryExcept"},
+        """*** Tasks ***
+|Example task|
+    Log    something
+""",
+        "",
+    )
+
+
+@pytest.mark.skipif(get_robot_major_version() < 5, reason="TRY..EXCEPT added on RF 5.")
+def test_code_code_action_surround_with_try_except_comments(
+    workspace, libspec_manager
+) -> None:
+    _code_action_all(
+        workspace,
+        libspec_manager,
+        {"surroundWith.tryExcept"},
+        """*** Tasks ***
+Example task
+|# comment
+    Log    something|
+""",
+        """*** Tasks ***
+Example task
+    TRY
+    # comment
+        Log    something
+    EXCEPT    ${0:message}
+        No operation
+    END
+""",
     )

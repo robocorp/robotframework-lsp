@@ -37,3 +37,4 @@ SEARCH_MYPY_LOCATION: SEARCH
 USE_MYPY: true
 MYPY_ADD_PROJECT_FOLDERS_TO_MYPYPATH: true
 MYPY_FILE_LOCATION: ''
+MYPY_ARGS: --follow-imports=silent --show-column-numbers

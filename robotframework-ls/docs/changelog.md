@@ -3,6 +3,8 @@ NEXT
 
 ### New features
 
+- Code action: Surround with try..except
+- Code action: Surround with try..except..finally
 
 ### Bugfixes
 

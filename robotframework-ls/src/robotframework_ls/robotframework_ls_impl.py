@@ -498,6 +498,8 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
                     "refactor",
                     "refactor.extract.local",
                     "assign.toVar",
+                    "surroundWith.tryExcept",
+                    "surroundWith.tryExceptFinally",
                 ],
             },
             "codeLensProvider": {"resolveProvider": True},

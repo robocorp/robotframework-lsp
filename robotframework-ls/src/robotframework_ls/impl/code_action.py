@@ -20,7 +20,10 @@ def code_action_all(
         code_action_refactoring,
     )
     from robotframework_ls.impl.code_action_quickfix import code_action_quickfix
-    from robotframework_ls.impl.code_action_others import code_action_others
+    from robotframework_ls.impl.code_action_others import (
+        code_action_others,
+        code_action_surround_with,
+    )
 
     # See:
     # codeActionProvider.codeActionKinds
@@ -42,4 +45,5 @@ def code_action_all(
         ret.extend(code_action_quickfix(completion_context, found_data))
 
     ret.extend(code_action_others(completion_context, select_range, only))
+    ret.extend(code_action_surround_with(completion_context, select_range, only))
     return ret

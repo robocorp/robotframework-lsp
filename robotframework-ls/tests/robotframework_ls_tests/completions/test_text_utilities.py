@@ -78,3 +78,10 @@ def test_iter_dotted_names():
     ]
     assert list(iter_dotted_names("a.b.")) == [("a", "b."), ("a.b", "")]
     assert list(iter_dotted_names("a.b.c")) == [("a", "b.c"), ("a.b", "c")]
+
+
+def test_get_indent():
+    from robotframework_ls.impl.text_utilities import TextUtilities
+
+    assert TextUtilities("    abc").get_indent() == "    "
+    assert TextUtilities("\t  abc").get_indent() == "\t  "
