@@ -28,18 +28,23 @@ Hi @channel,
 
 I'm happy to announce the release of `Robot Framework Language Server 1.8.0`.
 
-*## New features*
+### New features
 
-- It's possible to make a launch with a target in the arguments by specifying `<target-in-args>` as the target (useful if the target is in an arguments file).
+- New snippet completions for WHILE without limit, CONTINUE, BREAK, RETURN, ELSE. [#856](https://github.com/robocorp/robotframework-lsp/issues/856)
+- New line customization:
+    - If a line starts with `#` if a new line is entered before the end of the line a `#` is added in the new line
+    - If a line is split a continuation (`...`) is added.
+- Quick fix: create `local variable` from an `undefined variable`.
+- Quick fix: create `variable in the variables section` from an `undefined variable`.
+- Quick fix: create `argument` from an `undefined variable`.
+- Code action: assign to variable.
+- Refactoring: extract `local variable`.
+- Refactoring: extract `variable` to `variables section`.
 
-*## Bugfixes*
+### Bugfixes
 
-- Properly collect references for keywords with variables in the name. [#827](https://github.com/robocorp/robotframework-lsp/issues/827)
-- Add placeholders when completing keywords with variables in the name. [#824](https://github.com/robocorp/robotframework-lsp/issues/824)
-- Find references for variables embedded in keywords. [#825](https://github.com/robocorp/robotframework-lsp/issues/825)
-- Don't prefix module name for keywords in the current module. [#843](https://github.com/robocorp/robotframework-lsp/issues/843)
-- Debugger: Fixed issue where the stack of the debugger could end up being unsynchronized.
-- Debugger: If there's some error in a debugger callback, don't break execution. [#841](https://github.com/robocorp/robotframework-lsp/issues/841)
+- Text ranges when dealing with emoji unicode characters are now correct. [#862](https://github.com/robocorp/robotframework-lsp/issues/862)  
+- Code analysis fix:  An arguments with a name with '=' must match a star arg with the full name if the name was already found (in RF keyword and not python method). [#860](https://github.com/robocorp/robotframework-lsp/issues/860)
 
 
 Official clients supported: `VSCode` and `Intellij`.
