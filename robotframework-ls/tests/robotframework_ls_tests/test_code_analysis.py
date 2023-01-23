@@ -2325,7 +2325,8 @@ COMMON_2: 20
 """,
         encoding="utf-8",
     )
-    assert event.wait(5)
+    workspace.ws.wait_for_check_done(8)
+    assert event.wait(2)
     _collect_errors(workspace, doc, data_regression, basename="no_error")
 
 
