@@ -3,8 +3,10 @@ NEXT
 
 ### New features
 
-- Code action: Surround with try..except
-- Code action: Surround with try..except..finally
+- Code action: Surround with try..except.
+- Code action: Surround with try..except..finally.
+- Interactive Console: When a single keyword call is executed and it has a non-None return, its return value is printed.
+
 
 ### Bugfixes
 

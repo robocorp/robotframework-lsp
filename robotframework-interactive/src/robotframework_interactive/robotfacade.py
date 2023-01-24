@@ -71,13 +71,39 @@ class RobotFrameworkFacade(object):
 
         IS_ROBOT_4_ONWARDS = not version.get_version().startswith("3.")
         if IS_ROBOT_4_ONWARDS:
+            if len(test.body) == 1:
+                # Unfortunately bodyrunner.BodyRunner.run doesn't return the
+                # value, so, we have to do it ourselves.
+                from robot.errors import ExecutionPassed
+                from robot.errors import ExecutionFailed
+                from robot.errors import ExecutionFailures
+
+                errors = []
+                passed = None
+                step = next(iter(test.body))
+                ret = None
+                try:
+                    ret = step.run(context, True, False)
+                except ExecutionPassed as exception:
+                    exception.set_earlier_failures(errors)
+                    passed = exception
+                except ExecutionFailed as exception:
+                    errors.extend(exception.get_errors())
+                if passed:
+                    raise passed
+                if errors:
+                    raise ExecutionFailures(errors)
+                return ret
+
             from robot.running.bodyrunner import BodyRunner  # noqa
 
             BodyRunner(context, templated=False).run(test.body)
+            return None
         else:
             from robot.running.steprunner import StepRunner  # noqa
 
             StepRunner(context, False).run_steps(test.keywords.normal)
+            return None
 
     @property
     def EmbeddedArgumentsHandler(self):

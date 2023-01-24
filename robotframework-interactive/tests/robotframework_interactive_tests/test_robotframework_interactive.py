@@ -7,6 +7,7 @@ import threading
 import pytest
 
 from robotframework_interactive.interpreter import RobotFrameworkInterpreter
+from robotframework_interactive.robot_version import get_robot_major_version
 
 
 USE_TIMEOUTS = True
@@ -121,6 +122,22 @@ My Keyword
     interpreter.interpreter.evaluate("*** Test Case ***")
     interpreter.interpreter.evaluate("My Keyword")
     assert "MyKeywordCalled" in interpreter.stream_stdout.getvalue()
+
+
+@pytest.mark.skipif(
+    get_robot_major_version() < 5, reason="RETURN only available in RF 5 onwards."
+)
+def test_print_result(interpreter: _InterpreterInfo, tmpdir):
+    interpreter.interpreter.evaluate(
+        """
+*** Keywords ***
+My Keyword
+    ${var}=    Evaluate    123
+    RETURN    ${var}
+"""
+    )
+    interpreter.interpreter.evaluate("My Keyword")
+    assert "123" in interpreter.stream_stdout.getvalue()
 
 
 def test_variables_import(interpreter: _InterpreterInfo, tmpdir):

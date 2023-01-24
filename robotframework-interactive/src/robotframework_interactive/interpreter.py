@@ -526,9 +526,13 @@ class RobotFrameworkInterpreter(object):
                 user_keywords.handlers.add(handler, embedded)
 
         # --------------------------------------- Actually run any test content.
+        last_result = None
         for test in new_suite.tests:
             context = EXECUTION_CONTEXTS.current
-            facade.run_test_body(context, test)
+            last_result = facade.run_test_body(context, test)
+
+        if len(new_suite.tests) == 1 and last_result is not None:
+            self._stdout.write(f"{last_result}\n")
 
         # Now, update our representation of the document to include what the
         # user just entered.
