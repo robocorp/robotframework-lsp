@@ -49,6 +49,11 @@ SETTINGS = {
         "default": [],
         "description": "List of libraries which should have the libspec pre-generated.",
     },
+    "robot.libraries.libdoc.blacklist": {
+        "type": "array",
+        "default": [],
+        "description": "List of libraries which should be blacklisted and not shown for code-completion.",
+    },
     "robot.codeFormatter": {
         "type": "string",
         "default": "builtinTidy",

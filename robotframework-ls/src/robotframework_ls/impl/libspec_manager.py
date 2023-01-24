@@ -782,6 +782,25 @@ class LibspecManager(object):
         yield from self._additional_pythonpath_folder_to_folder_info.keys()
 
     def iter_lib_info(self, builtin=False):
+        blacklist = ()
+        if self.config is not None:
+            from robotframework_ls.impl.robot_generated_lsp_constants import (
+                OPTION_ROBOT_LIBRARIES_LIBDOC_BLACKLIST,
+            )
+
+            blacklist = self.config.get_setting(
+                OPTION_ROBOT_LIBRARIES_LIBDOC_BLACKLIST, list, ()
+            )
+            if not blacklist:
+                blacklist = ()
+            else:
+                blacklist = set(blacklist)
+
+        for libinfo in self._iter_lib_info(builtin):
+            if libinfo.library_doc.name not in blacklist:
+                yield libinfo
+
+    def _iter_lib_info(self, builtin=False):
         """
         :rtype: generator(_LibInfo)
         """

@@ -28,6 +28,7 @@ class RobotState {
     public String robotPythonpath = "";
     public String robotLibrariesLibdocNeedsArgs = "";
     public String robotLibrariesLibdocPreGenerate = "";
+    public String robotLibrariesLibdocBlacklist = "";
     public String robotCodeFormatter = "";
     public String robotFlowExplorerTheme = "";
     public String robotLintRobocopEnabled = "";
@@ -75,6 +76,7 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
     public static final String ROBOT_PYTHONPATH = "robot.pythonpath";
     public static final String ROBOT_LIBRARIES_LIBDOC_NEEDS_ARGS = "robot.libraries.libdoc.needsArgs";
     public static final String ROBOT_LIBRARIES_LIBDOC_PRE_GENERATE = "robot.libraries.libdoc.preGenerate";
+    public static final String ROBOT_LIBRARIES_LIBDOC_BLACKLIST = "robot.libraries.libdoc.blacklist";
     public static final String ROBOT_CODE_FORMATTER = "robot.codeFormatter";
     public static final String ROBOT_FLOW_EXPLORER_THEME = "robot.flowExplorerTheme";
     public static final String ROBOT_LINT_ROBOCOP_ENABLED = "robot.lint.robocop.enabled";
@@ -124,6 +126,7 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         robotState.robotPythonpath = getRobotPythonpath();
         robotState.robotLibrariesLibdocNeedsArgs = getRobotLibrariesLibdocNeedsArgs();
         robotState.robotLibrariesLibdocPreGenerate = getRobotLibrariesLibdocPreGenerate();
+        robotState.robotLibrariesLibdocBlacklist = getRobotLibrariesLibdocBlacklist();
         robotState.robotCodeFormatter = getRobotCodeFormatter();
         robotState.robotFlowExplorerTheme = getRobotFlowExplorerTheme();
         robotState.robotLintRobocopEnabled = getRobotLintRobocopEnabled();
@@ -171,6 +174,7 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         setRobotPythonpath(robotState.robotPythonpath);
         setRobotLibrariesLibdocNeedsArgs(robotState.robotLibrariesLibdocNeedsArgs);
         setRobotLibrariesLibdocPreGenerate(robotState.robotLibrariesLibdocPreGenerate);
+        setRobotLibrariesLibdocBlacklist(robotState.robotLibrariesLibdocBlacklist);
         setRobotCodeFormatter(robotState.robotCodeFormatter);
         setRobotFlowExplorerTheme(robotState.robotFlowExplorerTheme);
         setRobotLintRobocopEnabled(robotState.robotLintRobocopEnabled);
@@ -292,6 +296,15 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
             Gson g = new Gson();
             try {
                 jsonObject.add(ROBOT_LIBRARIES_LIBDOC_PRE_GENERATE, g.fromJson(robotLibrariesLibdocPreGenerate, JsonArray.class));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotLibrariesLibdocBlacklist.isEmpty()){
+            Gson g = new Gson();
+            try {
+                jsonObject.add(ROBOT_LIBRARIES_LIBDOC_BLACKLIST, g.fromJson(robotLibrariesLibdocBlacklist, JsonArray.class));
             } catch(Exception e) {
                 LOG.error(e);
             }
@@ -1035,6 +1048,53 @@ public class RobotPreferences implements PersistentStateComponent<RobotState> {
         for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             try {
                 listener.onChanged(ROBOT_LIBRARIES_LIBDOC_PRE_GENERATE, old, s);
+            } catch (CancelledException e) {
+                // just ignore at this point
+            }
+        }
+    }
+    
+    private String robotLibrariesLibdocBlacklist = "";
+
+    public @NotNull String getRobotLibrariesLibdocBlacklist() {
+        return robotLibrariesLibdocBlacklist;
+    }
+
+    public @Nullable JsonArray getRobotLibrariesLibdocBlacklistAsJson() {
+        if(robotLibrariesLibdocBlacklist.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return g.fromJson(robotLibrariesLibdocBlacklist, JsonArray.class);
+    }
+
+    public @NotNull String validateRobotLibrariesLibdocBlacklist(String robotLibrariesLibdocBlacklist) {
+        if(robotLibrariesLibdocBlacklist.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            g.fromJson(robotLibrariesLibdocBlacklist, JsonArray.class);
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotLibrariesLibdocBlacklist(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotLibrariesLibdocBlacklist)) {
+            return;
+        }
+        String old = robotLibrariesLibdocBlacklist;
+        robotLibrariesLibdocBlacklist = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            try {
+                listener.onChanged(ROBOT_LIBRARIES_LIBDOC_BLACKLIST, old, s);
             } catch (CancelledException e) {
                 // just ignore at this point
             }

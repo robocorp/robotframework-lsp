@@ -1,7 +1,7 @@
 {
     "name": "robotframework-lsp",
     "displayName": "Robot Framework Language Server",
-    "description": "VSCode extension support for RobotFramework",
+    "description": "VSCode extension support for Robot Framework",
     "author": "Fabio Zadrozny",
     "homepage": "https://github.com/robocorp/robotframework-lsp/blob/robotframework-lsp-1.8.0/robotframework-ls/README.md",
     "repository": {
@@ -458,6 +458,11 @@
                     "type": "array",
                     "default": [],
                     "description": "List of libraries which should have the libspec pre-generated."
+                },
+                "robot.libraries.libdoc.blacklist": {
+                    "type": "array",
+                    "default": [],
+                    "description": "List of libraries which should be blacklisted and not shown for code-completion."
                 },
                 "robot.codeFormatter": {
                     "type": "string",

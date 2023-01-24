@@ -6,6 +6,7 @@ NEXT
 - Code action: Surround with try..except.
 - Code action: Surround with try..except..finally.
 - Interactive Console: When a single keyword call is executed and it has a non-None return, its return value is printed.
+- `robot.libraries.libdoc.blacklist` can be used to blacklist libraries which should not appear in code-completion.
 
 
 ### Bugfixes

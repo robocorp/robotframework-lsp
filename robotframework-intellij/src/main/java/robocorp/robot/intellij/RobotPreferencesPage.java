@@ -30,6 +30,7 @@ class RobotPreferencesComponent {
     private final JBTextField robotPythonpath = new JBTextField();
     private final JBTextField robotLibrariesLibdocNeedsArgs = new JBTextField();
     private final JBTextField robotLibrariesLibdocPreGenerate = new JBTextField();
+    private final JBTextField robotLibrariesLibdocBlacklist = new JBTextField();
     private final JBTextField robotCodeFormatter = new JBTextField();
     private final JBTextField robotFlowExplorerTheme = new JBTextField();
     private final JBTextField robotLintRobocopEnabled = new JBTextField();
@@ -83,6 +84,8 @@ class RobotPreferencesComponent {
                 .addComponent(createJTextArea("Libraries which will generate a different set of keywords based on the arguments provided.\n(i.e.: [\"remote\", \"fakerlib\"])\nNote: expected format: JSON Array\n"))
                 .addLabeledComponent(new JBLabel("Libraries Libdoc Pre Generate"), robotLibrariesLibdocPreGenerate, 1, false)
                 .addComponent(createJTextArea("List of libraries which should have the libspec pre-generated.\nNote: expected format: JSON Array\n"))
+                .addLabeledComponent(new JBLabel("Libraries Libdoc Blacklist"), robotLibrariesLibdocBlacklist, 1, false)
+                .addComponent(createJTextArea("List of libraries which should be blacklisted and not shown for code-completion.\nNote: expected format: JSON Array\n"))
                 .addLabeledComponent(new JBLabel("Code Formatter"), robotCodeFormatter, 1, false)
                 .addComponent(createJTextArea("Allows the configuration of the code-formatter engine to be used. One of: robotidy, builtinTidy.\n"))
                 .addLabeledComponent(new JBLabel("Flow Explorer Theme"), robotFlowExplorerTheme, 1, false)
@@ -255,6 +258,15 @@ class RobotPreferencesComponent {
 
     public void setRobotLibrariesLibdocPreGenerate (@NotNull String newText) {
         robotLibrariesLibdocPreGenerate.setText(newText);
+    }
+    
+    @NotNull
+    public String getRobotLibrariesLibdocBlacklist() {
+        return robotLibrariesLibdocBlacklist.getText();
+    }
+
+    public void setRobotLibrariesLibdocBlacklist (@NotNull String newText) {
+        robotLibrariesLibdocBlacklist.setText(newText);
     }
     
     @NotNull
@@ -600,6 +612,10 @@ public class RobotPreferencesPage implements Configurable {
             return true;
         }
         
+        if(!settings.getRobotLibrariesLibdocBlacklist().equals(component.getRobotLibrariesLibdocBlacklist())){
+            return true;
+        }
+        
         if(!settings.getRobotCodeFormatter().equals(component.getRobotCodeFormatter())){
             return true;
         }
@@ -742,6 +758,7 @@ public class RobotPreferencesPage implements Configurable {
         component.setRobotPythonpath(settings.getRobotPythonpath());
         component.setRobotLibrariesLibdocNeedsArgs(settings.getRobotLibrariesLibdocNeedsArgs());
         component.setRobotLibrariesLibdocPreGenerate(settings.getRobotLibrariesLibdocPreGenerate());
+        component.setRobotLibrariesLibdocBlacklist(settings.getRobotLibrariesLibdocBlacklist());
         component.setRobotCodeFormatter(settings.getRobotCodeFormatter());
         component.setRobotFlowExplorerTheme(settings.getRobotFlowExplorerTheme());
         component.setRobotLintRobocopEnabled(settings.getRobotLintRobocopEnabled());
@@ -823,6 +840,10 @@ public class RobotPreferencesPage implements Configurable {
         s = settings.validateRobotLibrariesLibdocPreGenerate(component.getRobotLibrariesLibdocPreGenerate());
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Libraries Libdoc Pre Generate:\n" + s);
+        }
+        s = settings.validateRobotLibrariesLibdocBlacklist(component.getRobotLibrariesLibdocBlacklist());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Libraries Libdoc Blacklist:\n" + s);
         }
         s = settings.validateRobotCodeFormatter(component.getRobotCodeFormatter());
         if(!s.isEmpty()) {
@@ -955,6 +976,7 @@ public class RobotPreferencesPage implements Configurable {
         settings.setRobotPythonpath(component.getRobotPythonpath());
         settings.setRobotLibrariesLibdocNeedsArgs(component.getRobotLibrariesLibdocNeedsArgs());
         settings.setRobotLibrariesLibdocPreGenerate(component.getRobotLibrariesLibdocPreGenerate());
+        settings.setRobotLibrariesLibdocBlacklist(component.getRobotLibrariesLibdocBlacklist());
         settings.setRobotCodeFormatter(component.getRobotCodeFormatter());
         settings.setRobotFlowExplorerTheme(component.getRobotFlowExplorerTheme());
         settings.setRobotLintRobocopEnabled(component.getRobotLintRobocopEnabled());
