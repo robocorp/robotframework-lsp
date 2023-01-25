@@ -130,27 +130,10 @@ tasks:
           type: keyword
         - args: []
           assign: []
-          body:
-          - args:
-            - This is the first User Keyword
-            assign: []
-            body: []
-            doc: ''
-            internal_name: log(builtin)
-            kind: simple
-            name: Log (builtin)
-            type: keyword
-          - args: []
-            assign: []
-            body: []
-            doc: ''
-            internal_name: secondk(library)
-            kind: recursion-leaf
-            name: Second K (library)
-            type: keyword
+          body: []
           doc: ''
           internal_name: firstk(library)
-          kind: simple
+          kind: recursion-leaf
           name: First K (library)
           type: keyword
         doc: ''

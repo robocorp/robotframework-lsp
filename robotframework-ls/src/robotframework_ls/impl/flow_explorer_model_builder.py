@@ -169,6 +169,41 @@ def _build_hierarchy(
     user_keywords_collector: _UserKeywordCollector,
     parent_node: Optional[Dict] = None,
 ):
+    key = (completion_context.doc.uri, curr_ast.lineno, curr_ast.col_offset)
+    found = memo.get(key)
+    if found is not None:
+        parent_body.extend(found)
+        return
+    temp_parent_body: List[Any] = []
+    memo[key] = temp_parent_body
+
+    ret = __build_hierarchy(
+        completion_context,
+        curr_stack,
+        curr_ast,
+        suite_name,
+        temp_parent_body,
+        memo,
+        recursion_stack,
+        user_keywords_collector,
+        parent_node,
+    )
+
+    parent_body.extend(temp_parent_body)
+    return
+
+
+def __build_hierarchy(
+    completion_context: ICompletionContext,
+    curr_stack: Tuple[INode, ...],
+    curr_ast: Any,
+    suite_name: str,
+    parent_body: List[Any],
+    memo: dict,
+    recursion_stack: _KeywordRecursionStack,
+    user_keywords_collector: _UserKeywordCollector,
+    parent_node: Optional[Dict] = None,
+):
     from robotframework_ls.impl import ast_utils
     from robotframework_ls.impl import ast_utils_keyword_usage
     from robotframework_ls.impl.find_definition import find_keyword_definition
