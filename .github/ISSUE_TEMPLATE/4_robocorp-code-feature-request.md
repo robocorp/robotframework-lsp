@@ -1,5 +1,5 @@
 ---
-name: Robocorp Code Feature request
+name: Feature request: Robocorp Code
 about: Suggest an idea for Robocorp Code
 title: ''
 labels: enhancement, robocorp-code

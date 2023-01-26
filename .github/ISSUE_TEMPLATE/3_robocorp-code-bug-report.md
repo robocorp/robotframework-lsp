@@ -1,8 +1,8 @@
 ---
-name: RobotFramework LS Bug report
-about: Create a report to help us improve
+name: Bug Report: Robocorp Code
+about: Create a report to help us improve Robocorp Code
 title: ''
-labels: bug, robotframework-ls
+labels: bug, robocorp-code
 assignees: ''
 
 ---
@@ -26,7 +26,3 @@ If applicable, add screenshots to help explain your problem.
  - Robot Framework Version: [e.g. 3.2]
  - Robot Framework Language Server Version: [e.g. 0.2.3]
  - Client Version: [e.g.: VSCode 1.46 or PyCharm 2020.1.2]
-
-**Logs**
-Add the logs obtained when reproducing the issue.
-See: https://github.com/robocorp/robotframework-lsp/blob/master/robotframework-ls/docs/reporting_issues.md for details on how to collect the logs.

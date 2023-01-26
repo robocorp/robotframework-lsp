@@ -1,6 +1,6 @@
 ---
-name: RobotFramework LS Feature request
-about: Suggest an idea for this RobotFramework LS
+name: Feature request: Robot Framework Language Server
+about: Suggest an idea for Robot Framework Language Server
 title: ''
 labels: enhancement, robotframework-ls
 assignees: ''
