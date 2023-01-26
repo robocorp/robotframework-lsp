@@ -1,5 +1,5 @@
 ---
-name: Bug Report: Robot Framework Language server
+name: Bug Report - Robot Framework Language server
 about: Create a report to help us improve Robot Framework Language Server
 title: ''
 labels: bug, robotframework-ls

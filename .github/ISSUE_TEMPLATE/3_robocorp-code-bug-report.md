@@ -1,5 +1,5 @@
 ---
-name: Bug Report: Robocorp Code
+name: Bug Report - Robocorp Code
 about: Create a report to help us improve Robocorp Code
 title: ''
 labels: bug, robocorp-code
