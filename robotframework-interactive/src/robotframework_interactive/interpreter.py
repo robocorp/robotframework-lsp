@@ -529,7 +529,7 @@ class RobotFrameworkInterpreter(object):
         last_result = None
         for test in new_suite.tests:
             context = EXECUTION_CONTEXTS.current
-            last_result = facade.run_test_body(context, test)
+            last_result = facade.run_test_body(context, test, model)
 
         if len(new_suite.tests) == 1 and last_result is not None:
             self._stdout.write(f"{last_result}\n")

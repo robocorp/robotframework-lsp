@@ -5,9 +5,9 @@ NEXT
 
 - Code action: Surround with try..except.
 - Code action: Surround with try..except..finally.
-- Interactive Console: When a single keyword call is executed and it has a non-None return, its return value is printed.
 - `robot.libraries.libdoc.blacklist` can be used to blacklist libraries which should not appear in code-completion.
-
+- Interactive Console: (Robot Framework 4 onwards): When a single keyword call is executed and it has a non-None return, its return value is printed.
+- Interactive Console: Typing a variable in the `Interactive Console` shows that variable. [#871](https://github.com/robocorp/robotframework-lsp/issues/871) 
 
 ### Bugfixes
 

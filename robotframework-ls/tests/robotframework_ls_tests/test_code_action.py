@@ -78,6 +78,9 @@ def check_apply_result(doc, actions, expected, title=None) -> None:
         print("Obtained:--")
         print(obtained)
         print("--")
+        print("Changes:")
+        print(changes)
+        print("--")
         assert obtained == expected
 
 

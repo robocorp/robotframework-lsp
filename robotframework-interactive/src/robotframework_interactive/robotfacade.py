@@ -66,7 +66,34 @@ class RobotFrameworkFacade(object):
         EXECUTION_CONTEXTS = self.EXECUTION_CONTEXTS
         return set(EXECUTION_CONTEXTS.current.namespace._kw_store.libraries)
 
-    def run_test_body(self, context, test):
+    def run_test_body(self, context, test, model):
+
+        assign_token = None
+        if len(model.sections) == 1:
+            section = next(iter(model.sections))
+            body = getattr(section, "body", None)
+            if body is not None and len(body) == 1:
+                t = next(iter(body))
+                if t.__class__.__name__ == "TestCase":
+                    body = getattr(t, "body", None)
+                    if len(body) == 1:
+                        line = next(iter(body))
+                        if line.__class__.__name__ == "KeywordCall":
+                            if not line.keyword:
+                                for token in line.tokens:
+                                    if token.type == token.ASSIGN:
+                                        assign_token = token
+                                        break
+
+                        elif line.__class__.__name__ == "EmptyLine":
+                            for token in line.tokens:
+                                if token.type == token.ASSIGN:
+                                    assign_token = token
+                                    break
+
+        if assign_token:
+            return context.namespace.variables.replace_string(str(token))
+
         from robot import version
 
         IS_ROBOT_4_ONWARDS = not version.get_version().startswith("3.")

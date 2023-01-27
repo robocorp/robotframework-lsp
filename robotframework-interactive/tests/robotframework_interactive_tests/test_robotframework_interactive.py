@@ -140,6 +140,30 @@ My Keyword
     assert "123" in interpreter.stream_stdout.getvalue()
 
 
+def test_print_variable(interpreter: _InterpreterInfo):
+    interpreter.interpreter.evaluate("${var}=    Evaluate    123")
+    v = interpreter.stream_stdout.getvalue()
+
+    if get_robot_major_version() <= 3:
+        expected_count = 0
+    else:
+        expected_count = 1
+
+    assert v.count("123") == expected_count, f"Found: {v}"
+
+    interpreter.interpreter.evaluate("${var}")
+    v = interpreter.stream_stdout.getvalue()
+    assert v.count("123") == expected_count + 1, f"Found: {v}"
+
+    interpreter.interpreter.evaluate("${notthere}")
+    v = interpreter.stream_stdout.getvalue()
+    assert v.count("123") == expected_count + 1, f"Found: {v}"
+    assert "notthere" not in v
+
+    v = interpreter.stream_stderr.getvalue()
+    assert "Variable '${notthere}' not found." in v
+
+
 def test_variables_import(interpreter: _InterpreterInfo, tmpdir):
     tmpdir.join("my_vars.py").write_text(
         """
