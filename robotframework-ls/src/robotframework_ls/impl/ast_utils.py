@@ -629,10 +629,7 @@ def find_variable(section, line, col) -> Optional[VarTokenInfo]:
         token = token_info.token
 
         try:
-            if (
-                token.type == token.ARGUMENT
-                and node.__class__.__name__ in CLASSES_WTH_EXPRESSION_ARGUMENTS
-            ):
+            if token.type == token.ARGUMENT and is_node_with_expression_argument(node):
                 for part, var_info in iter_expression_variables(token):
                     if part.type == token.VARIABLE:
                         if part.col_offset <= col <= part.end_col_offset:

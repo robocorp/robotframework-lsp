@@ -7,11 +7,13 @@ NEXT
 - Code action: Surround with try..except..finally.
 - `robot.libraries.libdoc.blacklist` can be used to blacklist libraries which should not appear in code-completion.
 - Interactive Console: (Robot Framework 4 onwards): When a single keyword call is executed and it has a non-None return, its return value is printed.
-- Interactive Console: Typing a variable in the `Interactive Console` shows that variable. [#871](https://github.com/robocorp/robotframework-lsp/issues/871) 
+- Interactive Console: Typing a variable in the `Interactive Console` shows that variable. [#871](https://github.com/robocorp/robotframework-lsp/issues/871)
+- Improve `IF`/`WHILE`/`Run Keyword If` snippet completions to make it a bit clearer that python expressions are expected.
 
 ### Bugfixes
 
 - Properly report about undefined variable in RETURN. [#865](https://github.com/robocorp/robotframework-lsp/issues/865)
+- References to variables used in `Evaluate` arguments are now properly collected. 
 
 
 New in 1.8.0 (2023-01-23)
