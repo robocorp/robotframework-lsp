@@ -1,0 +1,24 @@
+- message: my_lib is deprecated.
+  range:
+    end:
+      character: 22
+      line: 2
+    start:
+      character: 11
+      line: 2
+  severity: 4
+  source: robotframework
+  tags:
+  - 2
+- message: 'Keyword: lib keyword is deprecated'
+  range:
+    end:
+      character: 15
+      line: 6
+    start:
+      character: 4
+      line: 6
+  severity: 4
+  source: robotframework
+  tags:
+  - 2

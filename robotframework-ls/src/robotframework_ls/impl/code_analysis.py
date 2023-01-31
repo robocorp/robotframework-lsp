@@ -239,6 +239,8 @@ def collect_analysis_errors(initial_completion_context):
         library_node: Optional[INode],
         library_doc: ILibraryDoc,
     ):
+        from robotframework_ls.impl.text_utilities import has_deprecated_text
+
         if library_node is None:
             return
 
@@ -272,6 +274,17 @@ def collect_analysis_errors(initial_completion_context):
             for error in keyword_argument_analysis.collect_keyword_usage_errors(
                 UsageInfoForKeywordArgumentAnalysis(library_node, name_token)
             ):
+                errors.append(error)
+
+            if library_doc.doc and has_deprecated_text(library_doc.doc):
+                error = create_error_from_node(
+                    library_node,
+                    f"{library_doc.name} is deprecated.",
+                    tokens=[name_token],
+                )
+                error.severity = DiagnosticSeverity.Hint
+                error.tags = [DiagnosticTag.Deprecated]
+
                 errors.append(error)
 
     def on_unresolved_library(

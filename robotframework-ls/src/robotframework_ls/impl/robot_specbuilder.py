@@ -508,7 +508,9 @@ class KeywordDoc(object):
 
     @property
     def deprecated(self) -> bool:
-        return self.doc.startswith("*DEPRECATED") and "*" in self.doc[1:]
+        from robotframework_ls.impl.text_utilities import has_deprecated_text
+
+        return has_deprecated_text(self.doc)
 
     @property  # type: ignore
     @instance_cache

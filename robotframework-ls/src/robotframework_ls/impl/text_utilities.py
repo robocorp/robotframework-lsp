@@ -211,15 +211,8 @@ def iter_dotted_names(text: str):
             yield head, remainder
 
 
-_DEPRECATED_PATTERN = re.compile(r"^\*DEPRECATED(.*)\*(.*)")
-
-
 def has_deprecated_text(docs: str) -> bool:
-    if docs and "DEPRECATED" in docs:
-        matched = _DEPRECATED_PATTERN.match(docs)
-        return bool(matched)
-
-    return False
+    return bool(docs and docs.strip().startswith("*DEPRECATED"))
 
 
 def build_keyword_docs_with_signature(

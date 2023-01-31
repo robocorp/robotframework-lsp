@@ -13,6 +13,7 @@ from robocorp_ls_core.lsp import (
     TextEditTypedDict,
     CompletionItemTypedDict,
     InsertTextFormat,
+    CompletionItemTag,
 )
 from robotframework_ls.impl.text_utilities import normalize_robot_name
 
@@ -197,13 +198,16 @@ class _Collector(AbstractKeywordCollector):
             "newText": text,
         }
 
-        return {
+        ret: CompletionItemTypedDict = {
             "label": label,
             "kind": keyword_found.completion_item_kind,
             "textEdit": text_edit,
             "insertText": text_edit["newText"],
             "insertTextFormat": InsertTextFormat.Snippet,
         }
+        if keyword_found.is_deprecated():
+            ret["tags"] = [CompletionItemTag.Deprecated]
+        return ret
 
     def on_keyword(self, keyword_found: IKeywordFound):
         col_delta = 0

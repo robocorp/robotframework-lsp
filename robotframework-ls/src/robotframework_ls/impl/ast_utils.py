@@ -318,7 +318,7 @@ def collect_errors(node) -> List[Error]:
     return errors
 
 
-def create_error_from_node(node, msg, tokens=None) -> Error:
+def create_error_from_node(node, msg, tokens=None, **kwargs) -> Error:
     if tokens is None:
         tokens = node.tokens
 
@@ -331,7 +331,7 @@ def create_error_from_node(node, msg, tokens=None) -> Error:
         start = (tokens[0].lineno - 1, tokens[0].col_offset)
         end = (tokens[-1].lineno - 1, tokens[-1].end_col_offset)
 
-    error = Error(msg, start, end)
+    error = Error(msg, start, end, **kwargs)
     return error
 
 

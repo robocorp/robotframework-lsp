@@ -1050,6 +1050,9 @@ class Error(object):
 
     __slots__ = "msg start end severity tags data".split(" ")
 
+    if typing.TYPE_CHECKING:
+        tags: List[int]
+
     def __init__(
         self,
         msg: str,

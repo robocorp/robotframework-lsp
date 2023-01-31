@@ -180,10 +180,14 @@ class _Collector(object):
 
 
 def _collect_auto_import_completions(
-    completion_context: ICompletionContext, collector: _Collector
+    completion_context: ICompletionContext,
+    collector: _Collector,
+    collect_deprecated: bool = False,
 ):
     from robotframework_ls.impl.workspace_symbols import iter_symbols_caches
     from robotframework_ls.robot_config import create_convert_keyword_format_func
+    from robotframework_ls import robot_config
+    from robotframework_ls.impl.text_utilities import has_deprecated_text
 
     symbols_cache: ISymbolsCache
     selection = completion_context.sel
@@ -203,6 +207,12 @@ def _collect_auto_import_completions(
     )
     noop = lambda x: x
 
+    deprecated_name_to_replacement = (
+        robot_config.get_robot_libraries_deprecated_name_to_replacement(
+            completion_context.config
+        )
+    )
+
     for symbols_cache in iter_symbols_caches(
         None, completion_context, show_builtins=False
     ):
@@ -213,6 +223,12 @@ def _collect_auto_import_completions(
         resource_path = None
 
         if library_info is not None:
+            if not collect_deprecated and (
+                library_info.name in deprecated_name_to_replacement
+                or has_deprecated_text(library_info.doc)
+            ):
+                continue
+
             if library_info.source:
                 if (
                     library_info.source
@@ -395,7 +411,9 @@ def complete(
                 add_import=add_import,
                 prefix_module=prefix_module,
             )
-            _collect_auto_import_completions(completion_context, collector)
+            _collect_auto_import_completions(
+                completion_context, collector, collect_deprecated=False
+            )
 
             return collector.completion_items
     return []
