@@ -204,7 +204,6 @@ else:  # Linux
             if base_dir is None:
                 base_dir = tempfile.gettempdir()
             os.makedirs(base_dir, exist_ok=True)
-
             check_valid_mutex_name(mutex_name)
             self.mutex_name = mutex_name
             self.mutex_creation_info = ""

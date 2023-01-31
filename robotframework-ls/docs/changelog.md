@@ -9,6 +9,7 @@ NEXT
 - Interactive Console: (Robot Framework 4 onwards): When a single keyword call is executed and it has a non-None return, its return value is printed.
 - Interactive Console: Typing a variable in the `Interactive Console` shows that variable. [#871](https://github.com/robocorp/robotframework-lsp/issues/871)
 - Improve `IF`/`WHILE`/`Run Keyword If` snippet completions to make it a bit clearer that python expressions are expected.
+- Building the model of the flow explorer no longer times out and a progress dialog is shown while building it.
 - Deprecated libraries:
     - `robot.libraries.deprecated` can be used to mark libraries as deprecated.
     - Keywords from deprecated libraries will not appear in the auto-import code-completion (so, they'll only be available if the `Library` is added to the `Settings`).
@@ -17,7 +18,7 @@ NEXT
 
 ### Bugfixes
 
-- Properly report about undefined variable in RETURN. [#865](https://github.com/robocorp/robotframework-lsp/issues/865)
+- Properly report about undefined variable in `RETURN`. [#865](https://github.com/robocorp/robotframework-lsp/issues/865)
 - References to variables used in `Evaluate` arguments are now properly collected. 
 
 
