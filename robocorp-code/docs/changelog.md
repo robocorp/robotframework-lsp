@@ -1,7 +1,6 @@
 NEXT
 -----------------------------
 
-- Upgrade RCC to `v13.4.2`.
 - If the `TEMP` folder being used in the environment is removed the extension properly deals with it.
 - Inspector upgrades:
     Browser Actions Recorder: Improvements in performance and other bug fixes.
