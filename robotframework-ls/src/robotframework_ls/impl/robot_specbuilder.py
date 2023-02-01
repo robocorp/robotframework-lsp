@@ -192,6 +192,8 @@ class LibraryDoc(object):
         self.scope = scope
         self.named_args = named_args
         self.doc_format = doc_format or "ROBOT"
+        if source and source.startswith("<"):  # Deal with <string>
+            source = None
         self._source = source
         self.lineno = lineno
         self.inits = []
@@ -483,6 +485,8 @@ class KeywordDoc(object):
         self.doc = doc
         self.tags = tags
         self._shortdoc = ""
+        if source and source.startswith("<"):
+            source = None
         self._source = source
         self.lineno = lineno
 
