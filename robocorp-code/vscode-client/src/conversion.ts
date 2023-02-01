@@ -360,9 +360,13 @@ export async function convertAndSaveResults(
 
                 const filesWritten: string[] = [];
 
-                async function handleOutputFile(file: string, content: string): Promise<void> {
+                async function handleOutputFile(
+                    file: string,
+                    content: string,
+                    encoding: BufferEncoding = "utf-8"
+                ): Promise<void> {
                     filesWritten.push(file);
-                    await writeToFile(file, content, { encoding: "binary" });
+                    await writeToFile(file, content, { encoding });
                 }
 
                 const tasks: Promise<void>[] = [];
@@ -374,13 +378,19 @@ export async function convertAndSaveResults(
                     outputDirsWrittenTo.add(result.outputDir);
                     if (files && files.length > 0) {
                         for (const f of files) {
-                            tasks.push(handleOutputFile(join(result.outputDir, f.filename), f.content));
+                            tasks.push(
+                                handleOutputFile(
+                                    join(result.outputDir, f.filename),
+                                    f.content,
+                                    f.encoding as BufferEncoding
+                                )
+                            );
                         }
                     }
                     const images = okResult?.images;
                     if (images && images.length > 0) {
                         for (const f of images) {
-                            tasks.push(handleOutputFile(join(result.outputDir, f.filename), f.content));
+                            tasks.push(handleOutputFile(join(result.outputDir, f.filename), f.content, "binary"));
                         }
                     }
 

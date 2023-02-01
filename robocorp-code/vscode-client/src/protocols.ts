@@ -106,6 +106,7 @@ export enum ConversionResultType {
 export interface File {
     content: string;
     filename: string;
+    encoding?: string;
 }
 
 export interface ConversionSuccess {
