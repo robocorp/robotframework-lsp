@@ -29,13 +29,18 @@ log = get_logger(__name__)
 
 class _Collector(AbstractVariablesCollector):
     def __init__(
-        self, selection: IDocumentSelection, var_token_info: VarTokenInfo, matcher
+        self,
+        selection: IDocumentSelection,
+        var_token_info: VarTokenInfo,
+        matcher,
+        in_assign: bool,
     ):
         self.matcher = matcher
         self.completion_items: List[CompletionItemTypedDict] = []
         self.selection = selection
         self.token = var_token_info.token
         self.var_token_info = var_token_info
+        self._in_assign = in_assign
 
     def _create_completion_item_from_variable(
         self,
@@ -83,6 +88,9 @@ class _Collector(AbstractVariablesCollector):
         return self.matcher.accepts(variable_name)
 
     def on_variable(self, variable_found: IVariableFound):
+        if self._in_assign and str(self.token) == variable_found.variable_name:
+            return
+
         self.completion_items.append(
             self._create_completion_item_from_variable(
                 variable_found, self.selection, self.token
@@ -488,11 +496,13 @@ def complete(completion_context: ICompletionContext) -> List[CompletionItemTyped
     var_token_info = completion_context.get_current_variable()
     if var_token_info is not None:
         value = var_token_info.token.value
+        in_assign = var_token_info.token.type == var_token_info.token.ASSIGN
+
         collector = _Collector(
-            completion_context.sel, var_token_info, RobotStringMatcher(value)
+            completion_context.sel, var_token_info, RobotStringMatcher(value), in_assign
         )
         only_current_doc = False
-        if var_token_info.token.type == var_token_info.token.ASSIGN:
+        if in_assign:
             # When assigning to variables we don't want to assign what's not
             # currently in this document (such as builtins).
             only_current_doc = True

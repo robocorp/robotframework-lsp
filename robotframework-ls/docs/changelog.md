@@ -19,7 +19,8 @@ NEXT
 ### Bugfixes
 
 - Properly report about undefined variable in `RETURN`. [#865](https://github.com/robocorp/robotframework-lsp/issues/865)
-- References to variables used in `Evaluate` arguments are now properly collected. 
+- References to variables used in `Evaluate` arguments are now properly collected.
+- Don't show completion for the variable being currently defined in variable assign. 
 
 
 New in 1.8.0 (2023-01-23)

@@ -2,6 +2,8 @@ from functools import lru_cache
 from robocorp_ls_core.robotframework_log import get_logger
 import re
 from typing import Sequence
+from robocorp_ls_core.protocols import IDocument
+from robocorp_ls_core.lsp import Range
 
 log = get_logger(__name__)
 
@@ -252,3 +254,32 @@ def get_digest_from_string(s: str) -> str:
     import hashlib
 
     return hashlib.sha256(s.encode("utf-8", "replace")).hexdigest()[:8]
+
+
+def set_doc_source_and_get_range_selected(
+    initial_source: str, doc: IDocument, range_char="|"
+) -> Range:
+
+    i = initial_source.find(range_char)
+    j = initial_source.find(range_char, i + 1)
+    if j == -1:
+        # Just position, not a range.
+        source = initial_source[0:i] + initial_source[i + 1 :]
+    else:
+        # Range selected
+        assert i > 0
+        assert j > i
+        source = (
+            initial_source[0:i] + initial_source[i + 1 : j] + initial_source[j + 1 :]
+        )
+
+    doc.source = source
+
+    start = doc.offset_to_line_col(i)
+    if j > 0:
+        end = doc.offset_to_line_col(j - 1)
+    else:
+        end = start
+    select_range = Range(start, end)
+
+    return select_range

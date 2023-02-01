@@ -676,3 +676,32 @@ Test
     else:
         basename = "test_variable_completions_cls_38"
     data_regression.check(completions, basename=basename)
+
+
+def test_dont_show_current_var_in_completion(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.server_api.server import complete_all
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc, selected_range = workspace.put_doc_get_line_col(
+        "case2.robot",
+        """
+*** Settings ***
+Library    RPA.Browser
+Library    RPA.JSON
+
+
+*** Test Cases ***
+My Test
+    ${variable1}=    Set Variable    c:/temp/my.json
+    ${load|}=    Load JSON from file    ${variable1}
+""",
+    )
+
+    line, col = selected_range.get_end_line_col()
+    completions = complete_all(
+        CompletionContext(doc, workspace=workspace.ws, line=line, col=col)
+    )
+    assert not completions
