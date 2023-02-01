@@ -2371,7 +2371,12 @@ COMMON_2: 20
     )
     workspace.ws.wait_for_check_done(8)
     assert event.wait(2)
-    _collect_errors(workspace, doc, data_regression, basename="no_error")
+    try:
+        _collect_errors(workspace, doc, data_regression, basename="no_error")
+    except Exception as e:
+        if not event.is_set():
+            raise AssertionError("Note: event not set in expected timeout.") from e
+        raise
 
 
 def test_duplicated_keywords_still_analyze_args(

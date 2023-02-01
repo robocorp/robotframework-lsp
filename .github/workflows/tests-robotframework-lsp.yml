@@ -26,7 +26,7 @@ jobs:
           "ubuntu-py310-pip-v5",  # RF5 Must be with 3.10 due to a test using the `|` union operator.
 #           "ubuntu-py39-master",  TODO: Reenable when RF fixes https://github.com/robotframework/robotframework/issues/4607
 #           "ubuntu-pypy3-master",
-#           "macos-py37",
+          "macos-py37",
         ]
         
         include:
@@ -50,9 +50,9 @@ jobs:
 # See:
 # https://github.community/t5/GitHub-Actions/Jobs-on-Mac-OS-failing-on-Complete-Job/m-p/52401
 # https://github.community/t5/GitHub-Actions/Jobs-on-macOS-latest-sometimes-gets-cancelled-An-error-occurred/td-p/44124
-#           - name: "macos-py37"
-#             python: "3.7"
-#             os: macos-latest
+          - name: "macos-py37"
+            python: "3.7"
+            os: macos-latest
 
     steps:
     - name: Checkout repository and submodules
@@ -106,7 +106,7 @@ jobs:
       working-directory: ./robotframework-ls/tests
       env:
         PYTHONPATH: .
-        RUN_TESTS_TIMEOUT: 500
+        RUN_TESTS_TIMEOUT: 600
       run: python -u ../../robocorp-python-ls-core/tests/run_tests.py -rfE -otests_output -vv .
     - uses: actions/upload-artifact@v1
       with:
