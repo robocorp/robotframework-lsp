@@ -384,3 +384,15 @@ If you'd like to disable this support it's possible to put:
 ```
 
 In your `settings.json`.
+
+
+How to install a pre-release
+------------------------------------
+
+To install a pre-release, select the extension you want 
+in the extensions view and click `Switch to Pre-Release version`.
+
+See image below:
+
+![Install pre-release](./images/install_pre_release.png)
+
