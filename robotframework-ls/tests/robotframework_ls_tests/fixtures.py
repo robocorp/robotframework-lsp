@@ -369,6 +369,13 @@ def sort_diagnostics(diagnostics):
     return sorted(diagnostics, key=key)
 
 
+def sort_completions(completions):
+    def key(completion):
+        return completion["label"]
+
+    return sorted(completions, key=key)
+
+
 def check_code_lens_data_regression(data_regression, found, basename=None):
     import copy
 

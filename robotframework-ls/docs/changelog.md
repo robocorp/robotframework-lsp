@@ -15,6 +15,9 @@ NEXT
     - Keywords from deprecated libraries will not appear in the auto-import code-completion (so, they'll only be available if the `Library` is added to the `Settings`).
     - Libraries which start with `*DEPRECATED*` in its doc are also considered deprecated.
     - Keywords from libraries marked as deprecated will be shown as deprecated.
+- Requesting completions right after `Libraries   ` without any additional name will show completions for all known (pre-loaded) libraries.
+- Completions for variables are shown without having to enter `$` nor `${`.
+
 
 ### Bugfixes
 

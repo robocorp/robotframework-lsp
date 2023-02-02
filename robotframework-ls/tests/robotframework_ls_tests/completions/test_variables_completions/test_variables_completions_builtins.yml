@@ -1,6 +1,5 @@
 - deprecated: false
   documentation: ''
-  insertText: PREV_TEST_STATUS
   insertTextFormat: 2
   kind: 6
   label: PREV_TEST_STATUS

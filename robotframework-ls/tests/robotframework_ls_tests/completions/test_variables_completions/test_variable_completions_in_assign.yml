@@ -1,6 +1,5 @@
 - deprecated: false
   documentation: '1'
-  insertText: some var1
   insertTextFormat: 2
   kind: 6
   label: some var1
@@ -16,7 +15,6 @@
         line: 7
 - deprecated: false
   documentation: '2'
-  insertText: some var2
   insertTextFormat: 2
   kind: 6
   label: some var2

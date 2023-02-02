@@ -1,6 +1,5 @@
 - deprecated: false
   documentation: ${1}
-  insertText: var_a1
   insertTextFormat: 2
   kind: 6
   label: var_a1

@@ -1,6 +1,5 @@
 - deprecated: false
   documentation: ''
-  insertText: arg
   insertTextFormat: 2
   kind: 6
   label: arg
@@ -16,7 +15,6 @@
         line: 4
 - deprecated: false
   documentation: ''
-  insertText: arg2
   insertTextFormat: 2
   kind: 6
   label: arg2

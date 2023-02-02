@@ -959,7 +959,30 @@ Some defined keyword
 ret
     ${ret}=    Wait Until Keyword Succeeds    5m    10s    Some defined keyword    """
     completions = complete_all(CompletionContext(doc, workspace=workspace.ws))
-    data_regression.check(completions)
+    data_regression.check([x for x in completions if x["label"] != "$OPTIONS"])
+
+
+def test_keyword_completions_on_wait_until_keyword_succeeds_with_params_after_assign(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.server_api.server import complete_all
+    from robotframework_ls_tests.fixtures import sort_completions
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Keywords ***
+Some defined keyword
+    [Arguments]    ${foo}    ${bar}
+
+    Log To Console    ${foo} ${bar}
+    
+ret
+    ${ret}=    Wait Until Keyword Succeeds    5m    10s    Some defined keyword    foo=exec"""
+    completions = complete_all(CompletionContext(doc, workspace=workspace.ws))
+    data_regression.check(sort_completions(completions))
 
 
 def test_keyword_completions_on_keyword_arguments_run_keyword_if_space_at_end(

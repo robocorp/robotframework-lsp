@@ -12,7 +12,6 @@ from robotframework_ls.impl.protocols import (
     TokenInfo,
     AbstractVariablesCollector,
     VariableKind,
-    VarTokenInfo,
     INode,
     AdditionalVarInfo,
 )
@@ -31,16 +30,18 @@ class _Collector(AbstractVariablesCollector):
     def __init__(
         self,
         selection: IDocumentSelection,
-        var_token_info: VarTokenInfo,
-        matcher,
+        in_expression: bool,
+        tokens_and_matchers,
         in_assign: bool,
+        add_dollar: bool,
     ):
-        self.matcher = matcher
+
         self.completion_items: List[CompletionItemTypedDict] = []
         self.selection = selection
-        self.token = var_token_info.token
-        self.var_token_info = var_token_info
+        self.in_expression = in_expression
         self._in_assign = in_assign
+        self._add_dollar = add_dollar
+        self._tokens_and_matchers = tokens_and_matchers
 
     def _create_completion_item_from_variable(
         self,
@@ -59,12 +60,19 @@ class _Collector(AbstractVariablesCollector):
 
         label = variable_found.variable_name
 
-        if self.var_token_info.var_info.context == AdditionalVarInfo.CONTEXT_EXPRESSION:
+        if self.in_expression:
             # On expressions without '${...}' (just $var_name), we can't use spaces.
             label = label.replace(" ", "_")
 
         text = label
         text = text.replace("$", "\\$")
+
+        if self._add_dollar:
+            label = "$" + label
+            if self.in_expression:
+                text = r"\$" + text
+            else:
+                text = r"\${%s}" % (text,)
 
         text_edit = TextEdit(
             Range(
@@ -79,23 +87,32 @@ class _Collector(AbstractVariablesCollector):
             label,
             kind=CompletionItemKind.Variable,
             text_edit=text_edit,
-            insertText=label,
             documentation=variable_found.variable_value,
             insertTextFormat=InsertTextFormat.Snippet,
         ).to_dict()
 
     def accepts(self, variable_name: str) -> bool:
-        return self.matcher.accepts(variable_name)
+        return True
 
     def on_variable(self, variable_found: IVariableFound):
-        if self._in_assign and str(self.token) == variable_found.variable_name:
-            return
+        from robotframework_ls.impl.string_matcher import RobotStringMatcher
 
-        self.completion_items.append(
-            self._create_completion_item_from_variable(
-                variable_found, self.selection, self.token
+        matcher: RobotStringMatcher
+        token: IRobotToken
+
+        for token, matcher in self._tokens_and_matchers:
+            if not matcher.accepts(variable_found.variable_name):
+                continue
+
+            if self._in_assign and token.value == variable_found.variable_name:
+                continue
+
+            self.completion_items.append(
+                self._create_completion_item_from_variable(
+                    variable_found, self.selection, token
+                )
             )
-        )
+            break
 
     def __typecheckself__(self) -> None:
         _: IVariablesCollector = check_implements(self)
@@ -492,14 +509,23 @@ def collect_local_variables(
 
 def complete(completion_context: ICompletionContext) -> List[CompletionItemTypedDict]:
     from robotframework_ls.impl.string_matcher import RobotStringMatcher
+    from robotframework_ls.impl import ast_utils
+    from robocorp_ls_core.document_selection import word_to_column
 
     var_token_info = completion_context.get_current_variable()
     if var_token_info is not None:
         value = var_token_info.token.value
         in_assign = var_token_info.token.type == var_token_info.token.ASSIGN
 
+        in_expression = (
+            var_token_info.var_info.context == AdditionalVarInfo.CONTEXT_EXPRESSION
+        )
         collector = _Collector(
-            completion_context.sel, var_token_info, RobotStringMatcher(value), in_assign
+            completion_context.sel,
+            in_expression,
+            [(var_token_info.token, RobotStringMatcher(value))],
+            in_assign,
+            add_dollar=False,
         )
         only_current_doc = False
         if in_assign:
@@ -511,4 +537,58 @@ def complete(completion_context: ICompletionContext) -> List[CompletionItemTyped
             completion_context, collector, only_current_doc=only_current_doc
         )
         return collector.completion_items
+
+    # Ok, we don't have a variable started, so, let's see if we're in a scope
+    # where we should add the full variable...
+    token_info = completion_context.get_current_token()
+    if token_info and token_info.token:
+        token = token_info.token
+
+        if token.type not in (token.ARGUMENT, token.NAME, token.EOL):
+            return []
+
+        if token.type == token.EOL:
+            token = ast_utils.create_empty_token_name_at_eol(token)
+
+        # It something as:
+        # Log to console    v|
+        # to become:
+        # Log to console    ${variable chosen}
+        #
+        # or
+        #
+        # Log to console    some v| other
+        # to become:
+        # Log to console    some ${variable chosen} other
+        #
+        # or
+        #
+        # Log to console    arg=v|
+        # to become:
+        # Log to console    arg=${variable chosen}
+
+        in_expression = ast_utils.is_node_with_expression_argument(token_info.node)
+        cp = ast_utils.copy_token_with_subpart_up_to_col(
+            token, completion_context.sel.col
+        )
+
+        tokens_and_matchers = [(token, RobotStringMatcher(token.value))]
+
+        word = word_to_column(cp.value)
+        if word != cp.value:
+            cp = ast_utils.copy_token_with_subpart(
+                cp, len(cp.value) - len(word), len(cp.value)
+            )
+            tokens_and_matchers.append((cp, RobotStringMatcher(cp.value)))
+
+        collector = _Collector(
+            completion_context.sel,
+            in_expression,
+            tokens_and_matchers,
+            in_assign=False,
+            add_dollar=True,
+        )
+        collect_variables(completion_context, collector, only_current_doc=False)
+        return collector.completion_items
+
     return []

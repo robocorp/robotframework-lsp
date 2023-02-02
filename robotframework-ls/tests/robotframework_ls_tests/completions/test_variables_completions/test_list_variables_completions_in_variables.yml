@@ -1,6 +1,5 @@
 - deprecated: false
   documentation: ('Matti', 'Teppo')
-  insertText: NAMES
   insertTextFormat: 2
   kind: 6
   label: NAMES
@@ -16,7 +15,6 @@
         line: 3
 - deprecated: false
   documentation: '@{'
-  insertText: NAMES2
   insertTextFormat: 2
   kind: 6
   label: NAMES2
@@ -32,7 +30,6 @@
         line: 3
 - deprecated: false
   documentation: abspath(tempfile.gettempdir())
-  insertText: TEMPDIR
   insertTextFormat: 2
   kind: 6
   label: TEMPDIR
@@ -48,7 +45,6 @@
         line: 3
 - deprecated: false
   documentation: abspath('.')
-  insertText: EXECDIR
   insertTextFormat: 2
   kind: 6
   label: EXECDIR
@@ -64,7 +60,6 @@
         line: 3
 - deprecated: false
   documentation: abspath('.')
-  insertText: CURDIR
   insertTextFormat: 2
   kind: 6
   label: CURDIR
@@ -80,7 +75,6 @@
         line: 3
 - deprecated: false
   documentation: os.sep
-  insertText: /
   insertTextFormat: 2
   kind: 6
   label: /
@@ -96,7 +90,6 @@
         line: 3
 - deprecated: false
   documentation: os.pathsep
-  insertText: ':'
   insertTextFormat: 2
   kind: 6
   label: ':'
@@ -112,7 +105,6 @@
         line: 3
 - deprecated: false
   documentation: os.linesep
-  insertText: \n
   insertTextFormat: 2
   kind: 6
   label: \n
@@ -128,7 +120,6 @@
         line: 3
 - deprecated: false
   documentation: ' '
-  insertText: SPACE
   insertTextFormat: 2
   kind: 6
   label: SPACE
@@ -144,7 +135,6 @@
         line: 3
 - deprecated: false
   documentation: 'True'
-  insertText: 'True'
   insertTextFormat: 2
   kind: 6
   label: 'True'
@@ -160,7 +150,6 @@
         line: 3
 - deprecated: false
   documentation: 'False'
-  insertText: 'False'
   insertTextFormat: 2
   kind: 6
   label: 'False'
@@ -176,7 +165,6 @@
         line: 3
 - deprecated: false
   documentation: None
-  insertText: None
   insertTextFormat: 2
   kind: 6
   label: None
@@ -192,7 +180,6 @@
         line: 3
 - deprecated: false
   documentation: None
-  insertText: 'null'
   insertTextFormat: 2
   kind: 6
   label: 'null'
@@ -208,7 +195,6 @@
         line: 3
 - deprecated: false
   documentation: ''
-  insertText: EMPTY
   insertTextFormat: 2
   kind: 6
   label: EMPTY
@@ -224,7 +210,6 @@
         line: 3
 - deprecated: false
   documentation: settings.output_directory
-  insertText: OUTPUT_DIR
   insertTextFormat: 2
   kind: 6
   label: OUTPUT_DIR
@@ -240,7 +225,6 @@
         line: 3
 - deprecated: false
   documentation: settings.output or 'NONE'
-  insertText: OUTPUT_FILE
   insertTextFormat: 2
   kind: 6
   label: OUTPUT_FILE
@@ -256,7 +240,6 @@
         line: 3
 - deprecated: false
   documentation: settings.report or 'NONE'
-  insertText: REPORT_FILE
   insertTextFormat: 2
   kind: 6
   label: REPORT_FILE
@@ -272,7 +255,6 @@
         line: 3
 - deprecated: false
   documentation: settings.log or 'NONE'
-  insertText: LOG_FILE
   insertTextFormat: 2
   kind: 6
   label: LOG_FILE
@@ -288,7 +270,6 @@
         line: 3
 - deprecated: false
   documentation: settings.debug_file or 'NONE'
-  insertText: DEBUG_FILE
   insertTextFormat: 2
   kind: 6
   label: DEBUG_FILE
@@ -304,7 +285,6 @@
         line: 3
 - deprecated: false
   documentation: settings.log_level
-  insertText: LOG_LEVEL
   insertTextFormat: 2
   kind: 6
   label: LOG_LEVEL
@@ -320,7 +300,6 @@
         line: 3
 - deprecated: false
   documentation: ''
-  insertText: KEYWORD_STATUS
   insertTextFormat: 2
   kind: 6
   label: KEYWORD_STATUS
@@ -336,7 +315,6 @@
         line: 3
 - deprecated: false
   documentation: ''
-  insertText: KEYWORD_MESSAGE
   insertTextFormat: 2
   kind: 6
   label: KEYWORD_MESSAGE
@@ -352,7 +330,6 @@
         line: 3
 - deprecated: false
   documentation: ''
-  insertText: TEST_STATUS
   insertTextFormat: 2
   kind: 6
   label: TEST_STATUS
@@ -368,7 +345,6 @@
         line: 3
 - deprecated: false
   documentation: ''
-  insertText: TEST_MESSAGE
   insertTextFormat: 2
   kind: 6
   label: TEST_MESSAGE
@@ -384,7 +360,6 @@
         line: 3
 - deprecated: false
   documentation: ''
-  insertText: PREV_TEST_NAME
   insertTextFormat: 2
   kind: 6
   label: PREV_TEST_NAME
@@ -400,7 +375,6 @@
         line: 3
 - deprecated: false
   documentation: ''
-  insertText: PREV_TEST_STATUS
   insertTextFormat: 2
   kind: 6
   label: PREV_TEST_STATUS
@@ -416,7 +390,6 @@
         line: 3
 - deprecated: false
   documentation: ''
-  insertText: PREV_TEST_MESSAGE
   insertTextFormat: 2
   kind: 6
   label: PREV_TEST_MESSAGE
@@ -432,7 +405,6 @@
         line: 3
 - deprecated: false
   documentation: ''
-  insertText: SUITE_DOCUMENTATION
   insertTextFormat: 2
   kind: 6
   label: SUITE_DOCUMENTATION
@@ -448,7 +420,6 @@
         line: 3
 - deprecated: false
   documentation: ''
-  insertText: SUITE_NAME
   insertTextFormat: 2
   kind: 6
   label: SUITE_NAME
@@ -464,7 +435,6 @@
         line: 3
 - deprecated: false
   documentation: ''
-  insertText: SUITE_SOURCE
   insertTextFormat: 2
   kind: 6
   label: SUITE_SOURCE
@@ -480,7 +450,6 @@
         line: 3
 - deprecated: false
   documentation: ''
-  insertText: SUITE_STATUS
   insertTextFormat: 2
   kind: 6
   label: SUITE_STATUS
@@ -496,7 +465,6 @@
         line: 3
 - deprecated: false
   documentation: ''
-  insertText: SUITE_MESSAGE
   insertTextFormat: 2
   kind: 6
   label: SUITE_MESSAGE
@@ -512,7 +480,6 @@
         line: 3
 - deprecated: false
   documentation: ''
-  insertText: TEST_DOCUMENTATION
   insertTextFormat: 2
   kind: 6
   label: TEST_DOCUMENTATION
@@ -528,7 +495,6 @@
         line: 3
 - deprecated: false
   documentation: ''
-  insertText: TEST_NAME
   insertTextFormat: 2
   kind: 6
   label: TEST_NAME
@@ -544,7 +510,6 @@
         line: 3
 - deprecated: false
   documentation: ''
-  insertText: SUITE_METADATA
   insertTextFormat: 2
   kind: 6
   label: SUITE_METADATA
@@ -560,7 +525,6 @@
         line: 3
 - deprecated: false
   documentation: ''
-  insertText: TEST_TAGS
   insertTextFormat: 2
   kind: 6
   label: TEST_TAGS
@@ -576,7 +540,6 @@
         line: 3
 - deprecated: false
   documentation: ''
-  insertText: OPTIONS
   insertTextFormat: 2
   kind: 6
   label: OPTIONS

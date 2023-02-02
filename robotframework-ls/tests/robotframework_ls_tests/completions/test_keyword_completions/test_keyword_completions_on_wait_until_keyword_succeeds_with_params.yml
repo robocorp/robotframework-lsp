@@ -1,4 +1,79 @@
 - deprecated: false
+  documentation: 'False'
+  insertTextFormat: 2
+  kind: 6
+  label: $False
+  preselect: false
+  textEdit:
+    newText: \${False}
+    range:
+      end:
+        character: 84
+        line: 8
+      start:
+        character: 83
+        line: 8
+- deprecated: false
+  documentation: settings.output or 'NONE'
+  insertTextFormat: 2
+  kind: 6
+  label: $OUTPUT_FILE
+  preselect: false
+  textEdit:
+    newText: \${OUTPUT_FILE}
+    range:
+      end:
+        character: 84
+        line: 8
+      start:
+        character: 83
+        line: 8
+- deprecated: false
+  documentation: settings.report or 'NONE'
+  insertTextFormat: 2
+  kind: 6
+  label: $REPORT_FILE
+  preselect: false
+  textEdit:
+    newText: \${REPORT_FILE}
+    range:
+      end:
+        character: 84
+        line: 8
+      start:
+        character: 83
+        line: 8
+- deprecated: false
+  documentation: settings.log or 'NONE'
+  insertTextFormat: 2
+  kind: 6
+  label: $LOG_FILE
+  preselect: false
+  textEdit:
+    newText: \${LOG_FILE}
+    range:
+      end:
+        character: 84
+        line: 8
+      start:
+        character: 83
+        line: 8
+- deprecated: false
+  documentation: settings.debug_file or 'NONE'
+  insertTextFormat: 2
+  kind: 6
+  label: $DEBUG_FILE
+  preselect: false
+  textEdit:
+    newText: \${DEBUG_FILE}
+    range:
+      end:
+        character: 84
+        line: 8
+      start:
+        character: 83
+        line: 8
+- deprecated: false
   documentation: ${foo}
   insertText: foo=
   insertTextFormat: 1

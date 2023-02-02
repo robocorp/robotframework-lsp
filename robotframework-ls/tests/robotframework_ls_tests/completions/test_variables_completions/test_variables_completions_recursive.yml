@@ -1,6 +1,5 @@
 - deprecated: false
   documentation: variable2
-  insertText: VAR2
   insertTextFormat: 2
   kind: 6
   label: VAR2
@@ -16,7 +15,6 @@
         line: 8
 - deprecated: false
   documentation: variable1
-  insertText: VAR1
   insertTextFormat: 2
   kind: 6
   label: VAR1

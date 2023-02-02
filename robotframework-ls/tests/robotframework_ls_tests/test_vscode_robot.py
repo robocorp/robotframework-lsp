@@ -426,6 +426,56 @@ def test_completions_after_library(
     language_server_tcp: ILanguageServerClient, ws_root_path, data_regression, cases
 ):
     from robocorp_ls_core.workspace import Document
+    from robotframework_ls_tests.fixtures import sort_completions
+    from robotframework_ls.impl import text_utilities
+
+    case1_path = cases.get_path("case1")
+
+    language_server = language_server_tcp
+    language_server.initialize(ws_root_path, process_id=os.getpid())
+    uri = "untitled:Untitled-1"
+    language_server.open_doc(uri, 1)
+
+    initial_source = """
+*** Settings ***
+Library    |
+
+*** keywords ***
+Something
+    No Operation
+"""
+    doc = Document("")
+    selected_range = text_utilities.set_doc_source_and_get_range_selected(
+        initial_source, doc
+    )
+
+    language_server.change_doc(uri, 2, doc.source)
+
+    language_server_tcp.settings({"settings": {"robot": {"pythonpath": [case1_path]}}})
+
+    def request_completion():
+        line, col = selected_range.get_end_line_col()
+        completions = language_server.get_completions(uri, line, col)
+        del completions["id"]
+        return completions
+
+    completions = request_completion()["result"]
+    data_regression.check(
+        sort_completions(
+            [
+                x
+                for x in completions
+                if x["label"] not in ("case1_library", "$OPTIONS", "lib1", "lib2")
+            ]
+        )
+    )
+
+
+def test_completions_variable_after_library(
+    language_server_tcp: ILanguageServerClient, ws_root_path, data_regression, cases
+):
+    from robocorp_ls_core.workspace import Document
+    from robotframework_ls_tests.fixtures import sort_completions
 
     case1_path = cases.get_path("case1")
 
@@ -435,7 +485,7 @@ def test_completions_after_library(
     language_server.open_doc(uri, 1)
     contents = """
 *** Settings ***
-Library    """
+Library    curd"""
     language_server.change_doc(uri, 2, contents)
 
     language_server_tcp.settings({"settings": {"robot": {"pythonpath": [case1_path]}}})
@@ -447,7 +497,7 @@ Library    """
         del completions["id"]
         return completions
 
-    assert not request_completion()["result"]
+    data_regression.check(sort_completions(request_completion()["result"]))
 
 
 def test_completions_unicode(

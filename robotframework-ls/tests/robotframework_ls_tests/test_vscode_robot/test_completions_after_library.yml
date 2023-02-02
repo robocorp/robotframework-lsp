@@ -1,0 +1,670 @@
+- deprecated: false
+  documentation: os.sep
+  insertTextFormat: 2
+  kind: 6
+  label: $/
+  preselect: false
+  textEdit:
+    newText: \${/}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: os.pathsep
+  insertTextFormat: 2
+  kind: 6
+  label: '$:'
+  preselect: false
+  textEdit:
+    newText: \${:}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: abspath('.')
+  insertTextFormat: 2
+  kind: 6
+  label: $CURDIR
+  preselect: false
+  textEdit:
+    newText: \${CURDIR}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: settings.debug_file or 'NONE'
+  insertTextFormat: 2
+  kind: 6
+  label: $DEBUG_FILE
+  preselect: false
+  textEdit:
+    newText: \${DEBUG_FILE}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertTextFormat: 2
+  kind: 6
+  label: $EMPTY
+  preselect: false
+  textEdit:
+    newText: \${EMPTY}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: abspath('.')
+  insertTextFormat: 2
+  kind: 6
+  label: $EXECDIR
+  preselect: false
+  textEdit:
+    newText: \${EXECDIR}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: 'False'
+  insertTextFormat: 2
+  kind: 6
+  label: $False
+  preselect: false
+  textEdit:
+    newText: \${False}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertTextFormat: 2
+  kind: 6
+  label: $KEYWORD_MESSAGE
+  preselect: false
+  textEdit:
+    newText: \${KEYWORD_MESSAGE}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertTextFormat: 2
+  kind: 6
+  label: $KEYWORD_STATUS
+  preselect: false
+  textEdit:
+    newText: \${KEYWORD_STATUS}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: settings.log or 'NONE'
+  insertTextFormat: 2
+  kind: 6
+  label: $LOG_FILE
+  preselect: false
+  textEdit:
+    newText: \${LOG_FILE}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: settings.log_level
+  insertTextFormat: 2
+  kind: 6
+  label: $LOG_LEVEL
+  preselect: false
+  textEdit:
+    newText: \${LOG_LEVEL}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: None
+  insertTextFormat: 2
+  kind: 6
+  label: $None
+  preselect: false
+  textEdit:
+    newText: \${None}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: settings.output_directory
+  insertTextFormat: 2
+  kind: 6
+  label: $OUTPUT_DIR
+  preselect: false
+  textEdit:
+    newText: \${OUTPUT_DIR}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: settings.output or 'NONE'
+  insertTextFormat: 2
+  kind: 6
+  label: $OUTPUT_FILE
+  preselect: false
+  textEdit:
+    newText: \${OUTPUT_FILE}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertTextFormat: 2
+  kind: 6
+  label: $PREV_TEST_MESSAGE
+  preselect: false
+  textEdit:
+    newText: \${PREV_TEST_MESSAGE}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertTextFormat: 2
+  kind: 6
+  label: $PREV_TEST_NAME
+  preselect: false
+  textEdit:
+    newText: \${PREV_TEST_NAME}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertTextFormat: 2
+  kind: 6
+  label: $PREV_TEST_STATUS
+  preselect: false
+  textEdit:
+    newText: \${PREV_TEST_STATUS}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: settings.report or 'NONE'
+  insertTextFormat: 2
+  kind: 6
+  label: $REPORT_FILE
+  preselect: false
+  textEdit:
+    newText: \${REPORT_FILE}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ' '
+  insertTextFormat: 2
+  kind: 6
+  label: $SPACE
+  preselect: false
+  textEdit:
+    newText: \${SPACE}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertTextFormat: 2
+  kind: 6
+  label: $SUITE_DOCUMENTATION
+  preselect: false
+  textEdit:
+    newText: \${SUITE_DOCUMENTATION}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertTextFormat: 2
+  kind: 6
+  label: $SUITE_MESSAGE
+  preselect: false
+  textEdit:
+    newText: \${SUITE_MESSAGE}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertTextFormat: 2
+  kind: 6
+  label: $SUITE_METADATA
+  preselect: false
+  textEdit:
+    newText: \${SUITE_METADATA}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertTextFormat: 2
+  kind: 6
+  label: $SUITE_NAME
+  preselect: false
+  textEdit:
+    newText: \${SUITE_NAME}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertTextFormat: 2
+  kind: 6
+  label: $SUITE_SOURCE
+  preselect: false
+  textEdit:
+    newText: \${SUITE_SOURCE}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertTextFormat: 2
+  kind: 6
+  label: $SUITE_STATUS
+  preselect: false
+  textEdit:
+    newText: \${SUITE_STATUS}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: abspath(tempfile.gettempdir())
+  insertTextFormat: 2
+  kind: 6
+  label: $TEMPDIR
+  preselect: false
+  textEdit:
+    newText: \${TEMPDIR}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertTextFormat: 2
+  kind: 6
+  label: $TEST_DOCUMENTATION
+  preselect: false
+  textEdit:
+    newText: \${TEST_DOCUMENTATION}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertTextFormat: 2
+  kind: 6
+  label: $TEST_MESSAGE
+  preselect: false
+  textEdit:
+    newText: \${TEST_MESSAGE}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertTextFormat: 2
+  kind: 6
+  label: $TEST_NAME
+  preselect: false
+  textEdit:
+    newText: \${TEST_NAME}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertTextFormat: 2
+  kind: 6
+  label: $TEST_STATUS
+  preselect: false
+  textEdit:
+    newText: \${TEST_STATUS}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertTextFormat: 2
+  kind: 6
+  label: $TEST_TAGS
+  preselect: false
+  textEdit:
+    newText: \${TEST_TAGS}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: 'True'
+  insertTextFormat: 2
+  kind: 6
+  label: $True
+  preselect: false
+  textEdit:
+    newText: \${True}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: os.linesep
+  insertTextFormat: 2
+  kind: 6
+  label: $\n
+  preselect: false
+  textEdit:
+    newText: \${\n}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: None
+  insertTextFormat: 2
+  kind: 6
+  label: $null
+  preselect: false
+  textEdit:
+    newText: \${null}
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertText: Collections
+  insertTextFormat: 2
+  kind: 9
+  label: Collections
+  preselect: false
+  textEdit:
+    newText: Collections
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertText: DateTime
+  insertTextFormat: 2
+  kind: 9
+  label: DateTime
+  preselect: false
+  textEdit:
+    newText: DateTime
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertText: Dialogs
+  insertTextFormat: 2
+  kind: 9
+  label: Dialogs
+  preselect: false
+  textEdit:
+    newText: Dialogs
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertText: Easter
+  insertTextFormat: 2
+  kind: 9
+  label: Easter
+  preselect: false
+  textEdit:
+    newText: Easter
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertText: OperatingSystem
+  insertTextFormat: 2
+  kind: 9
+  label: OperatingSystem
+  preselect: false
+  textEdit:
+    newText: OperatingSystem
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertText: Process
+  insertTextFormat: 2
+  kind: 9
+  label: Process
+  preselect: false
+  textEdit:
+    newText: Process
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertText: Screenshot
+  insertTextFormat: 2
+  kind: 9
+  label: Screenshot
+  preselect: false
+  textEdit:
+    newText: Screenshot
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertText: String
+  insertTextFormat: 2
+  kind: 9
+  label: String
+  preselect: false
+  textEdit:
+    newText: String
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertText: Telnet
+  insertTextFormat: 2
+  kind: 9
+  label: Telnet
+  preselect: false
+  textEdit:
+    newText: Telnet
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
+- deprecated: false
+  documentation: ''
+  insertText: XML
+  insertTextFormat: 2
+  kind: 9
+  label: XML
+  preselect: false
+  textEdit:
+    newText: XML
+    range:
+      end:
+        character: 11
+        line: 2
+      start:
+        character: 11
+        line: 2
