@@ -173,6 +173,7 @@ export enum CommandType {
     Analyse = "Analyse",
     Convert = "Convert",
     Generate = "Generate",
+    Schema = "Schema",
 }
 
 export interface A360ConvertCommand {
@@ -230,9 +231,21 @@ export interface AAV11AnalyseCommand {
     outputRelativePath: string; // Used internally in Robocorp Code
 }
 
+export interface AAV11SchemaCommand {
+    command: CommandType.Schema;
+    vendor: Format.AAV11;
+    /* path to aapkg files */
+    projects: Array<string>;
+    /** properties that should be considered as ENUM  */
+    types?: Array<string>;
+    tempFolder: string;
+    onProgress: Progress;
+    outputRelativePath: string; // Used internally in Robocorp Code
+}
+
 export type BlueprismCommand = BlueprismConvertCommand;
 export type UiPathCommand = UiPathConvertCommand;
 export type A360Command = A360ConvertCommand;
-export type AAV11Command = AAV11ConvertCommand | AAV11GenerateCommand | AAV11AnalyseCommand;
+export type AAV11Command = AAV11ConvertCommand | AAV11GenerateCommand | AAV11AnalyseCommand | AAV11SchemaCommand;
 
 export type RPAConversionCommand = BlueprismCommand | UiPathCommand | A360Command | AAV11Command;

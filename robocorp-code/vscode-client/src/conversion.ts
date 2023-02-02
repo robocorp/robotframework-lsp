@@ -294,6 +294,15 @@ export async function convertAndSaveResults(
                     outputRelativePath: join(nextBasename, "api"),
                 });
 
+                rpaConversionCommands.push({
+                    command: CommandType.Schema,
+                    vendor: Format.AAV11,
+                    projects: projects,
+                    onProgress: undefined,
+                    tempFolder: tempDir,
+                    outputRelativePath: join(nextBasename, "schema"),
+                });
+
                 for (const it of opts.input) {
                     rpaConversionCommands.push({
                         vendor: Format.AAV11,
@@ -319,6 +328,7 @@ export async function convertAndSaveResults(
                     "Generate": "Generate API",
                     "Convert": "Convert",
                     "Analyse": "Analyse",
+                    "Schema": "Generate Schema",
                 };
                 // If we got here, things worked, let's write it to the filesystem.
                 const outputDirsWrittenTo = new Set<string>();
