@@ -88,7 +88,15 @@ def complete_all(
 
     ret = section_name_completions.complete(completion_context)
     if not ret:
-        ret.extend(filesystem_section_completions.complete(completion_context))
+        requisites = filesystem_section_completions.get_requisites(completion_context)
+        if requisites:
+            ret.extend(
+                filesystem_section_completions.complete_with_requisites(
+                    completion_context, requisites
+                )
+            )
+            # Variables can also be used on Library/Resource/Variable import names.
+            ret.extend(variable_completions.complete(completion_context))
 
     if not ret:
         token_info = completion_context.get_current_token()
@@ -111,12 +119,10 @@ def complete_all(
 
     if not ret:
         ret.extend(variable_completions.complete(completion_context))
+        ret.extend(keyword_parameter_completions.complete(completion_context))
 
     if not ret:
         ret.extend(dictionary_completions.complete(completion_context))
-
-    if not ret:
-        ret.extend(keyword_parameter_completions.complete(completion_context))
 
     return ret
 

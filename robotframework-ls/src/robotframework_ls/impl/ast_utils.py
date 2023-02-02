@@ -318,7 +318,7 @@ def collect_errors(node) -> List[Error]:
     return errors
 
 
-def create_error_from_node(node, msg, tokens=None) -> Error:
+def create_error_from_node(node, msg, tokens=None, **kwargs) -> Error:
     if tokens is None:
         tokens = node.tokens
 
@@ -331,7 +331,7 @@ def create_error_from_node(node, msg, tokens=None) -> Error:
         start = (tokens[0].lineno - 1, tokens[0].col_offset)
         end = (tokens[-1].lineno - 1, tokens[-1].end_col_offset)
 
-    error = Error(msg, start, end)
+    error = Error(msg, start, end, **kwargs)
     return error
 
 
@@ -629,10 +629,7 @@ def find_variable(section, line, col) -> Optional[VarTokenInfo]:
         token = token_info.token
 
         try:
-            if (
-                token.type == token.ARGUMENT
-                and node.__class__.__name__ in CLASSES_WTH_EXPRESSION_ARGUMENTS
-            ):
+            if token.type == token.ARGUMENT and is_node_with_expression_argument(node):
                 for part, var_info in iter_expression_variables(token):
                     if part.type == token.VARIABLE:
                         if part.col_offset <= col <= part.end_col_offset:
@@ -1443,22 +1440,41 @@ def get_keyword_name_token(
     return None
 
 
-def get_library_import_name_token(node, token: IRobotToken) -> Optional[IRobotToken]:
+def get_library_import_name_token(
+    node, token: IRobotToken, generate_empty_on_eol=False
+) -> Optional[IRobotToken]:
     """
     If the given ast node is a library import and the token is its name, return
     the name token, otherwise, return None.
     """
-
     if (
         token.type == token.NAME
         and isinstance_name(node, "LibraryImport")
         and node.name == token.value  # I.e.: match the name, not the alias.
     ):
         return token
+
+    if generate_empty_on_eol:
+        if token.type == token.EOL and isinstance_name(node, "LibraryImport"):
+            if len(node.tokens) == 2:
+                # i.e.: just `Library   EOL`
+                return create_empty_token_name_at_eol(token)
     return None
 
 
-def get_resource_import_name_token(node, token: IRobotToken) -> Optional[IRobotToken]:
+def create_empty_token_name_at_eol(token):
+    # i.e.: just `Library   EOL`
+    l = len(token.value)
+    if token.value.endswith("\r\n"):
+        l -= 2
+    elif token.value.endswith("\r") or token.value.endswith("\n"):
+        l -= 1
+    return copy_token_with_subpart(token, l, l, token.NAME)
+
+
+def get_resource_import_name_token(
+    node, token: IRobotToken, generate_empty_on_eol=False
+) -> Optional[IRobotToken]:
     """
     If the given ast node is a library import and the token is its name, return
     the name token, otherwise, return None.
@@ -1470,10 +1486,16 @@ def get_resource_import_name_token(node, token: IRobotToken) -> Optional[IRobotT
         and node.name == token.value  # I.e.: match the name, not the alias.
     ):
         return token
+
+    if generate_empty_on_eol:
+        if token.type == token.EOL and isinstance_name(node, "ResourceImport"):
+            if len(node.tokens) == 2:
+                # i.e.: just `Library   EOL`
+                return create_empty_token_name_at_eol(token)
     return None
 
 
-def get_variables_import_name_token(ast, token):
+def get_variables_import_name_token(node, token, generate_empty_on_eol=False):
     """
     If the given ast node is a variables import and the token is its name, return
     the name token, otherwise, return None.
@@ -1481,10 +1503,16 @@ def get_variables_import_name_token(ast, token):
 
     if (
         token.type == token.NAME
-        and isinstance_name(ast, "VariablesImport")
-        and ast.name == token.value  # I.e.: match the name, not the alias.
+        and isinstance_name(node, "VariablesImport")
+        and node.name == token.value  # I.e.: match the name, not the alias.
     ):
         return token
+
+    if generate_empty_on_eol:
+        if token.type == token.EOL and isinstance_name(node, "VariablesImport"):
+            if len(node.tokens) == 2:
+                # i.e.: just `Library   EOL`
+                return create_empty_token_name_at_eol(token)
     return None
 
 
@@ -1586,16 +1614,23 @@ def copy_token_replacing(token, **kwargs):
     return Token(**new_kwargs)
 
 
-def copy_token_with_subpart(token, start, end):
+def copy_token_with_subpart(token, start, end, token_type=None):
     from robot.api import Token
 
+    if token_type is None:
+        token_type = token.type
+
     return Token(
-        type=token.type,
+        type=token_type,
         value=token.value[start:end],
         lineno=token.lineno,
         col_offset=token.col_offset + start,
         error=token.error,
     )
+
+
+def copy_token_with_subpart_up_to_col(token, column):
+    return copy_token_with_subpart(token, 0, column)
 
 
 def create_range_from_token(token: IRobotToken) -> RangeTypedDict:

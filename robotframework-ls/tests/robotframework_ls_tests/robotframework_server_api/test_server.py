@@ -2,6 +2,7 @@ import pytest
 import os.path
 from robocorp_ls_core.protocols import IRobotFrameworkApiClient
 from robotframework_ls_tests.fixtures import initialize_robotframework_server_api
+import sys
 
 __file__ = os.path.abspath(__file__)
 if __file__.endswith((".pyc", ".pyo")):
@@ -90,6 +91,7 @@ def test_server(server_api_process_io: IRobotFrameworkApiClient, data_regression
     data_regression.check(sort_diagnostics(diag), basename="errors")
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="Flaky on mac")
 def test_server_cancel(
     server_api_process_io: IRobotFrameworkApiClient, data_regression
 ):

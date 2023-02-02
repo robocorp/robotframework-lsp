@@ -1,0 +1,15 @@
+- deprecated: false
+  documentation: abspath('.')
+  insertTextFormat: 2
+  kind: 6
+  label: $CURDIR
+  preselect: false
+  textEdit:
+    newText: \${CURDIR}
+    range:
+      end:
+        character: 15
+        line: 2
+      start:
+        character: 11
+        line: 2

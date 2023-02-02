@@ -49,10 +49,20 @@ SETTINGS = {
         "default": [],
         "description": "List of libraries which should have the libspec pre-generated.",
     },
-    "robot.libraries.libdoc.blacklist": {
+    "robot.libraries.blacklist": {
         "type": "array",
         "default": [],
         "description": "List of libraries which should be blacklisted and not shown for code-completion.",
+    },
+    "robot.libraries.deprecated": {
+        "type": "array",
+        "default": [
+            {"name": "RPA.Desktop.Windows", "replacement": "RPA.Windows"},
+            {"name": "RPA.Browser", "replacement": "RPA.Browser.Selenium"},
+            {"name": "RPA.Robocloud.Vault", "replacement": "RPA.Robocorp.Vault"},
+            {"name": "RPA.Robocloud.Items", "replacement": "RPA.Robocorp.WorkItems"},
+        ],
+        "description": "List of libraries which should be deprecated and not shown for auto-import code-completion.",
     },
     "robot.codeFormatter": {
         "type": "string",

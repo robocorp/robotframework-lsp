@@ -1,5 +1,7 @@
 import pytest
 from typing import Dict, List
+from pathlib import Path
+import time
 
 
 def apply_completion(doc, completion, expect_additional_text_edits=True):
@@ -443,6 +445,79 @@ User can call library
     # As the Collections library is already there, don't show that completion here
     # (it's already managed in other completions).
     assert len(completions) == 0
+
+
+def test_completion_with_auto_import_lib_deprecated_not_shown(
+    workspace, libspec_manager, tmpdir
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import auto_import_completions
+    from robocorp_ls_core.basic import wait_for_expected_func_return
+    from robocorp_ls_core import uris
+    import os
+
+    workspace.set_root_writable_dir(
+        tmpdir, "case2", libspec_manager=libspec_manager, index_workspace=True
+    )
+    myliburi = workspace.get_doc_uri("mylib.py")
+    libspec_manager.add_workspace_folder(os.path.dirname(myliburi))
+
+    path = Path(uris.to_fs_path(myliburi))
+    path.write_text(
+        """
+class mylib(object):
+    'some doc'
+    def methodfromlib(self):
+        'ok'
+""",
+        "utf-8",
+    )
+
+    doc = workspace.put_doc(
+        "case2.robot",
+        """
+*** Test Cases ***
+User can call library
+    Methodfromli""",
+    )
+
+    libdoc = libspec_manager.get_library_doc_or_error(
+        "mylib", True, CompletionContext(doc, workspace=workspace.ws)
+    )
+    assert "*DEPRECATED*" not in libdoc.library_doc.doc
+
+    wait_for_expected_func_return(
+        lambda: len(
+            auto_import_completions.complete(
+                CompletionContext(doc, workspace=workspace.ws), {}
+            )
+        ),
+        1,
+    )
+    time.sleep(1)
+    path.write_text(
+        """
+class mylib(object):
+    '*DEPRECATED*'
+    def methodfromlib(self):
+        'ok'
+""",
+        "utf-8",
+    )
+
+    libdoc = libspec_manager.get_library_doc_or_error(
+        "mylib", True, CompletionContext(doc, workspace=workspace.ws)
+    )
+    assert "*DEPRECATED*" in libdoc.library_doc.doc
+
+    wait_for_expected_func_return(
+        lambda: len(
+            auto_import_completions.complete(
+                CompletionContext(doc, workspace=workspace.ws), {}
+            )
+        ),
+        0,
+    )
 
 
 def test_completion_with_auto_import_resource_import(workspace, setup_case2_in_dir_doc):

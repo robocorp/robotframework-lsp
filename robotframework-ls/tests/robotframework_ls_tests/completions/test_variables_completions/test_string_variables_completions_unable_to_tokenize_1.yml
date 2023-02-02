@@ -1,6 +1,5 @@
 - deprecated: false
   documentation: Robot Framework
-  insertText: NAME
   insertTextFormat: 2
   kind: 6
   label: NAME
@@ -16,7 +15,6 @@
         line: 9
 - deprecated: false
   documentation: ''
-  insertText: PREV_TEST_NAME
   insertTextFormat: 2
   kind: 6
   label: PREV_TEST_NAME
@@ -32,7 +30,6 @@
         line: 9
 - deprecated: false
   documentation: ''
-  insertText: SUITE_NAME
   insertTextFormat: 2
   kind: 6
   label: SUITE_NAME
@@ -48,7 +45,6 @@
         line: 9
 - deprecated: false
   documentation: ''
-  insertText: TEST_NAME
   insertTextFormat: 2
   kind: 6
   label: TEST_NAME

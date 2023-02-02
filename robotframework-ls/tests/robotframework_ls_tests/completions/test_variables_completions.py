@@ -31,6 +31,58 @@ List Variable
     data_regression.check(completions)
 
 
+def test_variables_completions_in_arguments(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.server_api.server import complete_all
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Variables ***
+${NAME}         Robot Framework
+${VERSION}      2.0
+${ROBOT} =      ${NAME} ${VERSION}
+
+*** Test Cases ***
+List Variable
+    Log    ${NAME}
+    Should Contain    nam"""
+
+    line, col = doc.get_last_line_col()
+    completions = complete_all(
+        CompletionContext(doc, workspace=workspace.ws, line=line, col=col)
+    )
+    data_regression.check(completions)
+
+
+def test_variables_completions_in_arguments_2(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.server_api.server import complete_all
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Variables ***
+${NAME}         Robot Framework
+${VERSION}      2.0
+${ROBOT} =      ${NAME} ${VERSION}
+
+*** Test Cases ***
+List Variable
+    Log    ${NAME}
+    Should Contain    something nam"""
+
+    line, col = doc.get_last_line_col()
+    completions = complete_all(
+        CompletionContext(doc, workspace=workspace.ws, line=line, col=col)
+    )
+    data_regression.check(completions)
+
+
 @pytest.mark.skipif(
     get_robot_major_version() < 5,
     reason="Requires RF 5 onwards (OPTIONS completion only there).",
@@ -564,6 +616,33 @@ Test
     assert found_var_a1
 
 
+def test_variable_completions_in_evaluate_expression(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.server_api.server import complete_all
+
+    workspace.set_root("case_vars_file", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case_root.robot")
+    doc.source = """
+*** Variables ***
+${var a1}    ${1}
+
+*** Test Cases ***
+Test
+    Evaluate    $"""
+
+    line, col = doc.get_last_line_col()
+    completions = complete_all(CompletionContext(doc, workspace=workspace.ws))
+    assert len(completions) > 10
+    found_var_a1 = False
+    for completion in completions:
+        assert completion["textEdit"]["range"]["end"]["character"] == col
+        assert completion["textEdit"]["range"]["end"]["line"] == line
+        if not found_var_a1:
+            found_var_a1 = completion["label"] == "var_a1"
+
+    assert found_var_a1
+
+
 @pytest.mark.skipif(
     get_robot_major_version() < 5,
     reason="Completions differ on RF 3/4",
@@ -649,3 +728,32 @@ Test
     else:
         basename = "test_variable_completions_cls_38"
     data_regression.check(completions, basename=basename)
+
+
+def test_dont_show_current_var_in_completion(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.server_api.server import complete_all
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc, selected_range = workspace.put_doc_get_line_col(
+        "case2.robot",
+        """
+*** Settings ***
+Library    RPA.Browser
+Library    RPA.JSON
+
+
+*** Test Cases ***
+My Test
+    ${variable1}=    Set Variable    c:/temp/my.json
+    ${load|}=    Load JSON from file    ${variable1}
+""",
+    )
+
+    line, col = selected_range.get_end_line_col()
+    completions = complete_all(
+        CompletionContext(doc, workspace=workspace.ws, line=line, col=col)
+    )
+    assert not completions

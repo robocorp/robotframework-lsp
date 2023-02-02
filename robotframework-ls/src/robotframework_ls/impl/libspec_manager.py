@@ -9,7 +9,6 @@ from robotframework_ls.impl.protocols import (
     ILibraryDoc,
     ILibraryDocOrError,
     ICompletionContext,
-    ILibraryDocConversions,
 )
 import itertools
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
@@ -498,6 +497,8 @@ class LibspecManager(object):
         log.info("Builtins libspec dir: %s", self._builtins_libspec_dir)
         log.info("Cache libspec dir: %s", self._cache_libspec_dir)
 
+        self._deprecated_library_name_to_replacement: Dict[str, str] = {}
+
         try:
             os.makedirs(self._user_libspec_dir)
         except:
@@ -628,6 +629,7 @@ class LibspecManager(object):
             OPTION_ROBOT_LIBRARIES_LIBDOC_PRE_GENERATE,
         )
         from robocorp_ls_core.basic import make_unique
+        from robotframework_ls import robot_config
 
         self._check_in_main_thread()
         from robotframework_ls.impl.robot_lsp_constants import OPTION_ROBOT_PYTHONPATH
@@ -635,6 +637,9 @@ class LibspecManager(object):
         self._config = config
         existing_entries = set(self._additional_pythonpath_folder_to_folder_info.keys())
         if config is not None:
+            pythonpath_entries = set(
+                config.get_setting(OPTION_ROBOT_PYTHONPATH, list, [])
+            )
             pythonpath_entries = set(
                 config.get_setting(OPTION_ROBOT_PYTHONPATH, list, [])
             )
@@ -655,6 +660,10 @@ class LibspecManager(object):
             if self.pre_generate_libspecs:
                 log.debug("Generating user/pythonpath libraries libspec.")
                 self._libspec_warmup.gen_user_libraries(self, make_unique(pre_generate))
+
+        self._deprecated_library_name_to_replacement = (
+            robot_config.get_robot_libraries_deprecated_name_to_replacement(config)
+        )
 
     @property
     def user_libspec_dir(self) -> str:
@@ -685,8 +694,16 @@ class LibspecManager(object):
             self._libspec_failures_cache = new
 
         # Notify _FolderInfo._on_change_spec
-        if spec_file.lower().endswith(".libspec"):
+        lowername = spec_file.lower()
+        if lowername.endswith(".libspec"):
             folder_info_on_change_spec(spec_file)
+        elif lowername.endswith(".py"):
+            # Note: right now we don't act on .py info.
+            # This means that the caches for libraries will actually be invalid
+            # until someone calls 'libspec_manager.get_library_doc_or_error'
+            # for that library again (at which point it verifies the timestamp
+            # of the library).
+            pass
 
     def add_workspace_folder(self, folder_uri: str):
         self._check_in_main_thread()
@@ -782,22 +799,44 @@ class LibspecManager(object):
         yield from self._additional_pythonpath_folder_to_folder_info.keys()
 
     def iter_lib_info(self, builtin=False):
+        from robotframework_ls.impl.text_utilities import has_deprecated_text
+
         blacklist = ()
         if self.config is not None:
             from robotframework_ls.impl.robot_generated_lsp_constants import (
-                OPTION_ROBOT_LIBRARIES_LIBDOC_BLACKLIST,
+                OPTION_ROBOT_LIBRARIES_BLACKLIST,
             )
 
             blacklist = self.config.get_setting(
-                OPTION_ROBOT_LIBRARIES_LIBDOC_BLACKLIST, list, ()
+                OPTION_ROBOT_LIBRARIES_BLACKLIST, list, ()
             )
             if not blacklist:
                 blacklist = ()
             else:
                 blacklist = set(blacklist)
 
+        deprecated_library_name_to_replacement = (
+            self._deprecated_library_name_to_replacement
+        )
         for libinfo in self._iter_lib_info(builtin):
             if libinfo.library_doc.name not in blacklist:
+
+                deprecated = deprecated_library_name_to_replacement.get(
+                    libinfo.library_doc.name
+                )
+                if deprecated is not None:
+                    if not libinfo.library_doc.doc:
+                        libinfo.library_doc = deprecated
+                    elif not has_deprecated_text(libinfo.library_doc.doc):
+                        libinfo.library_doc.__original_doc__ = libinfo.library_doc.doc
+                        libinfo.library_doc.doc = deprecated + libinfo.library_doc.doc
+                else:
+                    if libinfo.library_doc.doc and hasattr(
+                        libinfo.library_doc, "__original_doc__"
+                    ):
+                        libinfo.library_doc.doc = libinfo.library_doc.__original_doc__
+                        delattr(libinfo.library_doc, "__original_doc__")
+
                 yield libinfo
 
     def _iter_lib_info(self, builtin=False):

@@ -294,6 +294,15 @@ export async function convertAndSaveResults(
                     outputRelativePath: join(nextBasename, "api"),
                 });
 
+                rpaConversionCommands.push({
+                    command: CommandType.Schema,
+                    vendor: Format.AAV11,
+                    projects: projects,
+                    onProgress: undefined,
+                    tempFolder: tempDir,
+                    outputRelativePath: join(nextBasename, "schema"),
+                });
+
                 for (const it of opts.input) {
                     rpaConversionCommands.push({
                         vendor: Format.AAV11,
@@ -319,6 +328,7 @@ export async function convertAndSaveResults(
                     "Generate": "Generate API",
                     "Convert": "Convert",
                     "Analyse": "Analyse",
+                    "Schema": "Generate Schema",
                 };
                 // If we got here, things worked, let's write it to the filesystem.
                 const outputDirsWrittenTo = new Set<string>();
@@ -360,9 +370,13 @@ export async function convertAndSaveResults(
 
                 const filesWritten: string[] = [];
 
-                async function handleOutputFile(file: string, content: string): Promise<void> {
+                async function handleOutputFile(
+                    file: string,
+                    content: string,
+                    encoding: BufferEncoding = "utf-8"
+                ): Promise<void> {
                     filesWritten.push(file);
-                    await writeToFile(file, content, { encoding: "binary" });
+                    await writeToFile(file, content, { encoding });
                 }
 
                 const tasks: Promise<void>[] = [];
@@ -374,13 +388,19 @@ export async function convertAndSaveResults(
                     outputDirsWrittenTo.add(result.outputDir);
                     if (files && files.length > 0) {
                         for (const f of files) {
-                            tasks.push(handleOutputFile(join(result.outputDir, f.filename), f.content));
+                            tasks.push(
+                                handleOutputFile(
+                                    join(result.outputDir, f.filename),
+                                    f.content,
+                                    f.encoding as BufferEncoding
+                                )
+                            );
                         }
                     }
                     const images = okResult?.images;
                     if (images && images.length > 0) {
                         for (const f of images) {
-                            tasks.push(handleOutputFile(join(result.outputDir, f.filename), f.content));
+                            tasks.push(handleOutputFile(join(result.outputDir, f.filename), f.content, "binary"));
                         }
                     }
 

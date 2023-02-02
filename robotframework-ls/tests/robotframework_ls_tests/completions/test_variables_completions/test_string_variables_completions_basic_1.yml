@@ -1,6 +1,5 @@
 - deprecated: false
   documentation: Robot Framework
-  insertText: NAME
   insertTextFormat: 2
   kind: 6
   label: NAME
@@ -16,7 +15,6 @@
         line: 9
 - deprecated: false
   documentation: '2.0'
-  insertText: VERSION
   insertTextFormat: 2
   kind: 6
   label: VERSION
@@ -32,7 +30,6 @@
         line: 9
 - deprecated: false
   documentation: os.linesep
-  insertText: \n
   insertTextFormat: 2
   kind: 6
   label: \n
@@ -48,7 +45,6 @@
         line: 9
 - deprecated: false
   documentation: None
-  insertText: None
   insertTextFormat: 2
   kind: 6
   label: None
@@ -64,7 +60,6 @@
         line: 9
 - deprecated: false
   documentation: None
-  insertText: 'null'
   insertTextFormat: 2
   kind: 6
   label: 'null'
@@ -80,7 +75,6 @@
         line: 9
 - deprecated: false
   documentation: ''
-  insertText: PREV_TEST_NAME
   insertTextFormat: 2
   kind: 6
   label: PREV_TEST_NAME
@@ -96,7 +90,6 @@
         line: 9
 - deprecated: false
   documentation: ''
-  insertText: SUITE_DOCUMENTATION
   insertTextFormat: 2
   kind: 6
   label: SUITE_DOCUMENTATION
@@ -112,7 +105,6 @@
         line: 9
 - deprecated: false
   documentation: ''
-  insertText: SUITE_NAME
   insertTextFormat: 2
   kind: 6
   label: SUITE_NAME
@@ -128,7 +120,6 @@
         line: 9
 - deprecated: false
   documentation: ''
-  insertText: TEST_DOCUMENTATION
   insertTextFormat: 2
   kind: 6
   label: TEST_DOCUMENTATION
@@ -144,7 +135,6 @@
         line: 9
 - deprecated: false
   documentation: ''
-  insertText: TEST_NAME
   insertTextFormat: 2
   kind: 6
   label: TEST_NAME
@@ -160,7 +150,6 @@
         line: 9
 - deprecated: false
   documentation: ''
-  insertText: OPTIONS
   insertTextFormat: 2
   kind: 6
   label: OPTIONS

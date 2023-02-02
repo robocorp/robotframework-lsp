@@ -24,12 +24,20 @@ jobs:
       matrix:
         name: [
           "ubuntu-py38",
+          "windows-py38",
+#           "mac-py38", mac disabled because it takes too long for runners to pick the mac job up.
         ]
         
         include:
           - name: "ubuntu-py38"
             python: "3.8"
             os: ubuntu-latest
+          - name: "windows-py38"
+            python: "3.8"
+            os: windows-latest
+#           - name: "mac-py38"
+#             python: "3.8"
+#             os: mac-latest
 
     steps:
     - name: Checkout repository
@@ -61,13 +69,15 @@ jobs:
       run: |
         wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
         sudo apt install ./google-chrome-stable_current_amd64.deb
+      if: contains(matrix.name, 'ubuntu')
     - name: Test
       working-directory: ./robocorp-code/tests
       env:
         PYTHONPATH: .
         CI_CREDENTIALS: ${{ secrets.CI_CREDENTIALS }}
         CI_ENDPOINT: ${{ secrets.CI_ENDPOINT }}
-        RUN_TESTS_TIMEOUT: 300
+        # Big timeout to create environment in windows.
+        RUN_TESTS_TIMEOUT: 3000
       run: python -u ../../robocorp-python-ls-core/tests/run_tests.py -rfE -otests_output -vv .
     - uses: actions/upload-artifact@v1
       with:

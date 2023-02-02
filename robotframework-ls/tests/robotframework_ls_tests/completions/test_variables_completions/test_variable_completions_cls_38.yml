@@ -1,6 +1,5 @@
 - deprecated: false
   documentation: "class MyVars:\n    const1 = 345\n    const2 = \"test\""
-  insertText: MyVars
   insertTextFormat: 2
   kind: 6
   label: MyVars
@@ -16,7 +15,6 @@
         line: 8
 - deprecated: false
   documentation: '345'
-  insertText: MyVars.const1
   insertTextFormat: 2
   kind: 6
   label: MyVars.const1
@@ -32,7 +30,6 @@
         line: 8
 - deprecated: false
   documentation: '"test"'
-  insertText: MyVars.const2
   insertTextFormat: 2
   kind: 6
   label: MyVars.const2

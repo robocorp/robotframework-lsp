@@ -1059,6 +1059,35 @@ Some task
     _collect_errors(workspace, doc, data_regression)
 
 
+def test_code_analysis_deprecated_library(
+    workspace, libspec_manager, data_regression, tmpdir
+):
+    from robocorp_ls_core import uris
+
+    workspace.set_root_writable_dir(tmpdir, "case2", libspec_manager=libspec_manager)
+
+    my_lib_uri = workspace.get_doc_uri("my_lib.py")
+    p = Path(uris.to_fs_path(my_lib_uri))
+    p.write_text(
+        """
+class my_lib:
+    "*DEPRECATED*"
+    def lib_keyword(self):
+        pass
+"""
+    )
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Settings ***
+Library    ./my_lib.py
+
+*** Test Case ***
+Test    
+    lib keyword"""
+
+    _collect_errors(workspace, doc, data_regression)
+
+
 def test_code_analysis_none(workspace, libspec_manager, data_regression):
     workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.put_doc("case2.robot")
@@ -2342,7 +2371,12 @@ COMMON_2: 20
     )
     workspace.ws.wait_for_check_done(8)
     assert event.wait(2)
-    _collect_errors(workspace, doc, data_regression, basename="no_error")
+    try:
+        _collect_errors(workspace, doc, data_regression, basename="no_error")
+    except Exception as e:
+        if not event.is_set():
+            raise AssertionError("Note: event not set in expected timeout.") from e
+        raise
 
 
 def test_duplicated_keywords_still_analyze_args(

@@ -1,0 +1,15 @@
+- deprecated: false
+  documentation: abspath('.')
+  insertTextFormat: 2
+  kind: 6
+  label: $EXECDIR
+  preselect: false
+  textEdit:
+    newText: \${EXECDIR}
+    range:
+      end:
+        character: 91
+        line: 8
+      start:
+        character: 87
+        line: 8

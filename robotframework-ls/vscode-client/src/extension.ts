@@ -725,10 +725,24 @@ async function openFlowExplorer(flowBundleHTMLFolderPath: string, uri?: string) 
         }
 
         const openResult: { result: string; success: boolean; message: string | null } | null =
-            await commands.executeCommand("robot.openFlowExplorer.internal", {
-                "currentFileUri": uri,
-                "htmlBundleFolderPath": flowBundleHTMLFolderPath,
-            });
+            await window.withProgress(
+                {
+                    location: vscode.ProgressLocation.Notification,
+                    title: "Generating flow explorer model.",
+                    // Note: doing the easy thing to use the command structure we already
+                    // have (so, not cancellable)...
+                    // To make it cancellable we should convert to a language server request message.
+                    cancellable: false,
+                },
+                async (
+                    progress: vscode.Progress<{ message?: string; increment?: number }>,
+                    token: vscode.CancellationToken
+                ): Promise<{ result: string; success: boolean; message: string | null } | null> =>
+                    await commands.executeCommand("robot.openFlowExplorer.internal", {
+                        "currentFileUri": uri,
+                        "htmlBundleFolderPath": flowBundleHTMLFolderPath,
+                    })
+            );
         if (!openResult || !openResult.success) {
             if (!openResult.message) {
                 openResult.message = "<unspecified>";

@@ -45,13 +45,17 @@ _SNIPPETS_RF4 = {
     },
     "IF STATEMENT": {
         "prefix": "IF STATEMENT",
-        "body": ["IF<sp>${${1:var1}} == ${${1:var2}}", "    $0", "END"],
+        "body": [
+            "IF<sp>${1:\\$var_in_py_expr1 == \\$var_in_py_expr2}",
+            "    $0",
+            "END",
+        ],
         "description": "Snippet of an IF..END statement.",
     },
     "IF ELSE STATEMENT": {
         "prefix": "IF ELSE STATEMENT",
         "body": [
-            "IF<sp>${${1:var1}} == ${${1:var2}}",
+            "IF<sp>${1:\\$var_in_py_expr1 == \\$var_in_py_expr2}",
             "    ${3:Call Keyword}",
             "ELSE",
             "    $0",
@@ -62,9 +66,9 @@ _SNIPPETS_RF4 = {
     "Run Keyword If": {
         "prefix": "Run Keyword If",
         "body": [
-            "Run Keyword If<sp>${1:condition}",
+            "Run Keyword If<sp>${1:\\$var_in_py_expr1 == \\$var_in_py_expr2}",
             "...    ${3:Keyword}<sp>${4:@args}",
-            "...  ELSE IF<sp>${2:condition}",
+            "...  ELSE IF<sp>${2:condition_in_py_expr}",
             "...    ${5:Keyword}<sp>${6:@args}",
             "...  ELSE",
             "...    ${7:Keyword}<sp>${8:@args}",
@@ -109,12 +113,20 @@ _SNIPPETS_RF5 = {
     },
     "WHILE STATEMENT": {
         "prefix": "WHILE",
-        "body": [r"WHILE<sp>${1:expression}", "    $0", "END"],
+        "body": [
+            "WHILE<sp>${1:\\$var_in_py_expr1 == \\$var_in_py_expr2}",
+            "    $0",
+            "END",
+        ],
         "description": "Snippet of a WHILE statement",
     },
     "WHILE STATEMENT UNLIMITED": {
         "prefix": "WHILE",
-        "body": [r"WHILE<sp>${1:expression}<sp>limit=NONE", "    $0", "END"],
+        "body": [
+            "WHILE<sp>${1:\\$var_in_py_expr1 == \\$var_in_py_expr2}<sp>limit=NONE",
+            "    $0",
+            "END",
+        ],
         "description": "Snippet of a WHILE statement with limit=NONE",
     },
     "CONTINUE": {

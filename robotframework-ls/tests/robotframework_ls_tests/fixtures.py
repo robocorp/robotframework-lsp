@@ -6,6 +6,9 @@ from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
 from robotframework_ls.constants import NULL
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
 import sys
+from typing import Tuple
+from robocorp_ls_core.protocols import IDocument
+from robocorp_ls_core.lsp import Range
 
 __file__ = os.path.abspath(__file__)  # @ReservedAssignment
 
@@ -317,6 +320,29 @@ class _WorkspaceFixture(object):
             TextDocumentItem(uri=self.get_doc_uri(root_relative_path), text=text)
         )
 
+    def put_doc_get_line_col(
+        self, root_relative_path: str, text: str
+    ) -> Tuple[IDocument, Range]:
+        """
+        :param root_relative_path:
+            The relative path for the doc to be added.
+
+        :param text:
+            The text which should have a '|' which will be removed and the line,
+            col returned will point to that place.
+
+        :return:
+            doc, selected_range
+        """
+        from robotframework_ls.impl import text_utilities
+        from robocorp_ls_core.lsp import TextDocumentItem
+
+        doc = self.ws.put_document(
+            TextDocumentItem(uri=self.get_doc_uri(root_relative_path), text="")
+        )
+        selected_range = text_utilities.set_doc_source_and_get_range_selected(text, doc)
+        return doc, selected_range
+
 
 @pytest.fixture
 def workspace(cases, remote_fs_observer):
@@ -341,6 +367,13 @@ def sort_diagnostics(diagnostics):
         )
 
     return sorted(diagnostics, key=key)
+
+
+def sort_completions(completions):
+    def key(completion):
+        return completion["label"]
+
+    return sorted(completions, key=key)
 
 
 def check_code_lens_data_regression(data_regression, found, basename=None):

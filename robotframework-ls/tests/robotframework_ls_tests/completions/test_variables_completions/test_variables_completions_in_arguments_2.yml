@@ -1,0 +1,60 @@
+- deprecated: false
+  documentation: Robot Framework
+  insertTextFormat: 2
+  kind: 6
+  label: $NAME
+  preselect: false
+  textEdit:
+    newText: \${NAME}
+    range:
+      end:
+        character: 35
+        line: 9
+      start:
+        character: 32
+        line: 9
+- deprecated: false
+  documentation: ''
+  insertTextFormat: 2
+  kind: 6
+  label: $PREV_TEST_NAME
+  preselect: false
+  textEdit:
+    newText: \${PREV_TEST_NAME}
+    range:
+      end:
+        character: 35
+        line: 9
+      start:
+        character: 32
+        line: 9
+- deprecated: false
+  documentation: ''
+  insertTextFormat: 2
+  kind: 6
+  label: $SUITE_NAME
+  preselect: false
+  textEdit:
+    newText: \${SUITE_NAME}
+    range:
+      end:
+        character: 35
+        line: 9
+      start:
+        character: 32
+        line: 9
+- deprecated: false
+  documentation: ''
+  insertTextFormat: 2
+  kind: 6
+  label: $TEST_NAME
+  preselect: false
+  textEdit:
+    newText: \${TEST_NAME}
+    range:
+      end:
+        character: 35
+        line: 9
+      start:
+        character: 32
+        line: 9

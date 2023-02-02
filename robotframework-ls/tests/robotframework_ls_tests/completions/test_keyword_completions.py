@@ -1,6 +1,11 @@
 import pytest
 from robotframework_ls.impl.protocols import ICompletionContext
 import sys
+from robocorp_ls_core.lsp import CompletionItemTag
+from pathlib import Path
+from robotframework_ls.impl.robot_generated_lsp_constants import (
+    OPTION_ROBOT_LIBRARIES_DEPRECATED,
+)
 
 
 def test_keyword_completions_builtin(workspace, libspec_manager):
@@ -404,6 +409,143 @@ Test Template    my eq"""
     ]
 
     assert len(found) == 1, f'Found: {[x["label"] for x in completions]}'
+
+
+def test_keyword_completions_deprecated_library_keyword(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import keyword_completions
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Keywords ***
+My Equal Redefined
+    [Documentation]         *DEPRECATED*
+
+*** Test Case ***
+Test    
+    my eq"""
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+
+    found = [
+        completion
+        for completion in completions
+        if completion["label"].lower() == "my equal redefined (case2)"
+    ]
+
+    assert len(found) == 1, f'Found: {[x["label"] for x in completions]}'
+    completion = next(iter(found))
+    assert completion["tags"] == [CompletionItemTag.Deprecated]
+
+
+def test_keyword_completions_keyword_from_deprecated_library(
+    workspace, libspec_manager, tmpdir
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import keyword_completions
+    from robocorp_ls_core import uris
+
+    workspace.set_root_writable_dir(tmpdir, "case2", libspec_manager=libspec_manager)
+
+    my_lib_uri = workspace.get_doc_uri("my_lib.py")
+    p = Path(uris.to_fs_path(my_lib_uri))
+    p.write_text(
+        """
+class my_lib:
+    "*DEPRECATED*"
+    def lib_keyword(self):
+        pass
+"""
+    )
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Settings ***
+Library    ./my_lib.py
+
+*** Test Case ***
+Test    
+    lib key"""
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws)
+    )
+
+    found = [
+        completion
+        for completion in completions
+        if completion["label"].lower() == "lib keyword (my_lib)"
+    ]
+
+    assert len(found) == 1, f'Found: {[x["label"] for x in completions]}'
+    completion = next(iter(found))
+    assert completion["tags"] == [CompletionItemTag.Deprecated]
+
+
+def test_keyword_completions_keyword_from_deprecated_library_in_settings(
+    workspace, libspec_manager, tmpdir
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl import keyword_completions
+    from robocorp_ls_core import uris
+    from robotframework_ls.robot_config import RobotConfig
+
+    workspace.set_root_writable_dir(tmpdir, "case2", libspec_manager=libspec_manager)
+
+    my_lib_uri = workspace.get_doc_uri("my_lib.py")
+    p = Path(uris.to_fs_path(my_lib_uri))
+    p.write_text(
+        """
+class my_lib:
+    def lib_keyword(self):
+        pass
+"""
+    )
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Settings ***
+Library    ./my_lib.py
+
+*** Test Case ***
+Test    
+    lib key"""
+
+    config = RobotConfig()
+    config.update({OPTION_ROBOT_LIBRARIES_DEPRECATED: ["my_lib"]})
+    libspec_manager.config = config
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws, config=config)
+    )
+
+    found = [
+        completion
+        for completion in completions
+        if completion["label"].lower() == "lib keyword (my_lib)"
+    ]
+
+    assert len(found) == 1, f'Found: {[x["label"] for x in completions]}'
+    completion = next(iter(found))
+    assert completion["tags"] == [CompletionItemTag.Deprecated]
+
+    config.update({})
+    libspec_manager.config = config
+
+    completions = keyword_completions.complete(
+        CompletionContext(doc, workspace=workspace.ws, config=config)
+    )
+
+    found = [
+        completion
+        for completion in completions
+        if completion["label"].lower() == "lib keyword (my_lib)"
+    ]
+
+    assert len(found) == 1, f'Found: {[x["label"] for x in completions]}'
+    completion = next(iter(found))
+    assert not completion.get("tags")
 
 
 def test_keyword_completions_resource_does_not_exist(
@@ -817,7 +959,30 @@ Some defined keyword
 ret
     ${ret}=    Wait Until Keyword Succeeds    5m    10s    Some defined keyword    """
     completions = complete_all(CompletionContext(doc, workspace=workspace.ws))
-    data_regression.check(completions)
+    data_regression.check([x for x in completions if x["label"] != "$OPTIONS"])
+
+
+def test_keyword_completions_on_wait_until_keyword_succeeds_with_params_after_assign(
+    workspace, libspec_manager, data_regression
+):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.server_api.server import complete_all
+    from robotframework_ls_tests.fixtures import sort_completions
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+
+    doc = workspace.put_doc("case2.robot")
+    doc.source = """
+*** Keywords ***
+Some defined keyword
+    [Arguments]    ${foo}    ${bar}
+
+    Log To Console    ${foo} ${bar}
+    
+ret
+    ${ret}=    Wait Until Keyword Succeeds    5m    10s    Some defined keyword    foo=exec"""
+    completions = complete_all(CompletionContext(doc, workspace=workspace.ws))
+    data_regression.check(sort_completions(completions))
 
 
 def test_keyword_completions_on_keyword_arguments_run_keyword_if_space_at_end(

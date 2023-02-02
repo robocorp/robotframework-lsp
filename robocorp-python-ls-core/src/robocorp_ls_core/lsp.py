@@ -287,6 +287,14 @@ class Position(_Base):
         self.line: int = line
         self.character: int = character
 
+    def __getitem__(self, name):
+        # provide tuple-access, not just dict access.
+        if name == 0:
+            return self.line
+        if name == 1:
+            return self.character
+        return getattr(self, name)
+
     def __eq__(self, other):
         return (
             isinstance(other, Position)
@@ -367,6 +375,9 @@ class Range(_Base):
 
     def is_inside(self, another_range: "Range") -> bool:
         return self.start >= another_range.start and self.end <= another_range.end
+
+    def get_end_line_col(self):
+        return self.end[0], self.end[1]
 
 
 class TextDocumentContentChangeEvent(_Base):
@@ -1049,6 +1060,9 @@ class ICustomDiagnosticDataUnexpectedArgumentTypedDict(TypedDict):
 class Error(object):
 
     __slots__ = "msg start end severity tags data".split(" ")
+
+    if typing.TYPE_CHECKING:
+        tags: List[int]
 
     def __init__(
         self,

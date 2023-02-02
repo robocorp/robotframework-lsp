@@ -350,6 +350,7 @@ class ILibraryDoc(Protocol):
     inits: list
     doc_format: str
     keywords: List["IKeywordDoc"]
+    doc: str
 
 
 class ILibraryDocConversions(ILibraryDoc):

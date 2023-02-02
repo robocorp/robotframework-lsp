@@ -1046,34 +1046,19 @@ Example keyword
 
 
 def _code_action_all(
-    workspace, libspec_manager, only: Set[str], initial_source, expected
+    workspace, libspec_manager, only: Set[str], initial_source: str, expected
 ) -> None:
     from robotframework_ls.impl.completion_context import CompletionContext
     from robotframework_ls.impl.code_action import code_action_all
+    from robotframework_ls.impl.text_utilities import (
+        set_doc_source_and_get_range_selected,
+    )
 
     workspace.set_root("case4", libspec_manager=libspec_manager, index_workspace=True)
     doc: IRobotDocument = workspace.put_doc("my_robot.robot")
-    i = initial_source.find("|")
-    j = initial_source.find("|", i + 1)
-    if j == -1:
-        # Just position, not a range.
-        source = initial_source[0:i] + initial_source[i + 1 :]
-    else:
-        # Range selected
-        assert i > 0
-        assert j > i
-        source = (
-            initial_source[0:i] + initial_source[i + 1 : j] + initial_source[j + 1 :]
-        )
 
-    doc.source = source
-
-    start = doc.offset_to_line_col(i)
-    if j > 0:
-        end = doc.offset_to_line_col(j - 1)
-    else:
-        end = start
-    select_range = Range(start, end)
+    select_range = set_doc_source_and_get_range_selected(initial_source, doc)
+    start = select_range.start
 
     completion_context = CompletionContext(
         doc, workspace=workspace.ws, line=start[0], col=start[1]

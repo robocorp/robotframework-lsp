@@ -917,6 +917,7 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             uri=current_doc_uri,
             __add_doc_uri_in_args__=False,
             __convert_result__=finish_and_convert_result,
+            __timeout__=999999,  # No timeout for the flow explorer...
         )
 
     @command_dispatcher("robot.listTests")

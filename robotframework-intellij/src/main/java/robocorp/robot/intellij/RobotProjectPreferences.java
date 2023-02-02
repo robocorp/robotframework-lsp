@@ -28,7 +28,8 @@ class RobotProjectState {
     public String robotPythonpath = "";
     public String robotLibrariesLibdocNeedsArgs = "";
     public String robotLibrariesLibdocPreGenerate = "";
-    public String robotLibrariesLibdocBlacklist = "";
+    public String robotLibrariesBlacklist = "";
+    public String robotLibrariesDeprecated = "";
     public String robotCodeFormatter = "";
     public String robotFlowExplorerTheme = "";
     public String robotLintRobocopEnabled = "";
@@ -76,7 +77,8 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
     public static final String ROBOT_PYTHONPATH = "robot.pythonpath";
     public static final String ROBOT_LIBRARIES_LIBDOC_NEEDS_ARGS = "robot.libraries.libdoc.needsArgs";
     public static final String ROBOT_LIBRARIES_LIBDOC_PRE_GENERATE = "robot.libraries.libdoc.preGenerate";
-    public static final String ROBOT_LIBRARIES_LIBDOC_BLACKLIST = "robot.libraries.libdoc.blacklist";
+    public static final String ROBOT_LIBRARIES_BLACKLIST = "robot.libraries.blacklist";
+    public static final String ROBOT_LIBRARIES_DEPRECATED = "robot.libraries.deprecated";
     public static final String ROBOT_CODE_FORMATTER = "robot.codeFormatter";
     public static final String ROBOT_FLOW_EXPLORER_THEME = "robot.flowExplorerTheme";
     public static final String ROBOT_LINT_ROBOCOP_ENABLED = "robot.lint.robocop.enabled";
@@ -126,7 +128,8 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         robotState.robotPythonpath = getRobotPythonpath();
         robotState.robotLibrariesLibdocNeedsArgs = getRobotLibrariesLibdocNeedsArgs();
         robotState.robotLibrariesLibdocPreGenerate = getRobotLibrariesLibdocPreGenerate();
-        robotState.robotLibrariesLibdocBlacklist = getRobotLibrariesLibdocBlacklist();
+        robotState.robotLibrariesBlacklist = getRobotLibrariesBlacklist();
+        robotState.robotLibrariesDeprecated = getRobotLibrariesDeprecated();
         robotState.robotCodeFormatter = getRobotCodeFormatter();
         robotState.robotFlowExplorerTheme = getRobotFlowExplorerTheme();
         robotState.robotLintRobocopEnabled = getRobotLintRobocopEnabled();
@@ -174,7 +177,8 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         setRobotPythonpath(robotState.robotPythonpath);
         setRobotLibrariesLibdocNeedsArgs(robotState.robotLibrariesLibdocNeedsArgs);
         setRobotLibrariesLibdocPreGenerate(robotState.robotLibrariesLibdocPreGenerate);
-        setRobotLibrariesLibdocBlacklist(robotState.robotLibrariesLibdocBlacklist);
+        setRobotLibrariesBlacklist(robotState.robotLibrariesBlacklist);
+        setRobotLibrariesDeprecated(robotState.robotLibrariesDeprecated);
         setRobotCodeFormatter(robotState.robotCodeFormatter);
         setRobotFlowExplorerTheme(robotState.robotFlowExplorerTheme);
         setRobotLintRobocopEnabled(robotState.robotLintRobocopEnabled);
@@ -301,10 +305,19 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
             }
         }
         
-        if(!robotLibrariesLibdocBlacklist.isEmpty()){
+        if(!robotLibrariesBlacklist.isEmpty()){
             Gson g = new Gson();
             try {
-                jsonObject.add(ROBOT_LIBRARIES_LIBDOC_BLACKLIST, g.fromJson(robotLibrariesLibdocBlacklist, JsonArray.class));
+                jsonObject.add(ROBOT_LIBRARIES_BLACKLIST, g.fromJson(robotLibrariesBlacklist, JsonArray.class));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotLibrariesDeprecated.isEmpty()){
+            Gson g = new Gson();
+            try {
+                jsonObject.add(ROBOT_LIBRARIES_DEPRECATED, g.fromJson(robotLibrariesDeprecated, JsonArray.class));
             } catch(Exception e) {
                 LOG.error(e);
             }
@@ -1054,27 +1067,27 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         }
     }
     
-    private String robotLibrariesLibdocBlacklist = "";
+    private String robotLibrariesBlacklist = "";
 
-    public @NotNull String getRobotLibrariesLibdocBlacklist() {
-        return robotLibrariesLibdocBlacklist;
+    public @NotNull String getRobotLibrariesBlacklist() {
+        return robotLibrariesBlacklist;
     }
 
-    public @Nullable JsonArray getRobotLibrariesLibdocBlacklistAsJson() {
-        if(robotLibrariesLibdocBlacklist.isEmpty()){
+    public @Nullable JsonArray getRobotLibrariesBlacklistAsJson() {
+        if(robotLibrariesBlacklist.isEmpty()){
             return null;
         }
         Gson g = new Gson();
-        return g.fromJson(robotLibrariesLibdocBlacklist, JsonArray.class);
+        return g.fromJson(robotLibrariesBlacklist, JsonArray.class);
     }
 
-    public @NotNull String validateRobotLibrariesLibdocBlacklist(String robotLibrariesLibdocBlacklist) {
-        if(robotLibrariesLibdocBlacklist.isEmpty()) {
+    public @NotNull String validateRobotLibrariesBlacklist(String robotLibrariesBlacklist) {
+        if(robotLibrariesBlacklist.isEmpty()) {
             return "";
         }
         try {
             Gson g = new Gson();
-            g.fromJson(robotLibrariesLibdocBlacklist, JsonArray.class);
+            g.fromJson(robotLibrariesBlacklist, JsonArray.class);
             
             return "";
             
@@ -1083,18 +1096,65 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         }
     }
 
-    public void setRobotLibrariesLibdocBlacklist(String s) {
+    public void setRobotLibrariesBlacklist(String s) {
         if (s == null) {
             s = "";
         }
-        if (s.equals(robotLibrariesLibdocBlacklist)) {
+        if (s.equals(robotLibrariesBlacklist)) {
             return;
         }
-        String old = robotLibrariesLibdocBlacklist;
-        robotLibrariesLibdocBlacklist = s;
+        String old = robotLibrariesBlacklist;
+        robotLibrariesBlacklist = s;
         for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             try {
-                listener.onChanged(ROBOT_LIBRARIES_LIBDOC_BLACKLIST, old, s);
+                listener.onChanged(ROBOT_LIBRARIES_BLACKLIST, old, s);
+            } catch (CancelledException e) {
+                // just ignore at this point
+            }
+        }
+    }
+    
+    private String robotLibrariesDeprecated = "";
+
+    public @NotNull String getRobotLibrariesDeprecated() {
+        return robotLibrariesDeprecated;
+    }
+
+    public @Nullable JsonArray getRobotLibrariesDeprecatedAsJson() {
+        if(robotLibrariesDeprecated.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return g.fromJson(robotLibrariesDeprecated, JsonArray.class);
+    }
+
+    public @NotNull String validateRobotLibrariesDeprecated(String robotLibrariesDeprecated) {
+        if(robotLibrariesDeprecated.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            g.fromJson(robotLibrariesDeprecated, JsonArray.class);
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotLibrariesDeprecated(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotLibrariesDeprecated)) {
+            return;
+        }
+        String old = robotLibrariesDeprecated;
+        robotLibrariesDeprecated = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            try {
+                listener.onChanged(ROBOT_LIBRARIES_DEPRECATED, old, s);
             } catch (CancelledException e) {
                 // just ignore at this point
             }

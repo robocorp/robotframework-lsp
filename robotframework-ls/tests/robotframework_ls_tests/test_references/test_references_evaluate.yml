@@ -1,0 +1,15 @@
+- - case2.robot
+  - - range:
+        end:
+          character: 25
+          line: 4
+        start:
+          character: 17
+          line: 4
+    - range:
+        end:
+          character: 14
+          line: 3
+        start:
+          character: 6
+          line: 3
