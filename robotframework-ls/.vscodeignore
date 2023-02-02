@@ -18,6 +18,7 @@ src/dist/**
 src/robotframework_lsp.egg-info/**
 src/robotframework_debug_adapter/vendored/vendored_pydevd/stubs
 src/robotframework_debug_adapter/vendored/vendored_pydevd/test_pydevd_reload
+src/robotframework_debug_adapter/vendored/vendored_pydevd/_pydevd_frame_eval/vendored/bytecode/tests
 src/robotframework_debug_adapter/vendored/vendored_pydevd/tests
 src/robotframework_debug_adapter/vendored/vendored_pydevd/tests_mainloop
 src/robotframework_debug_adapter/vendored/vendored_pydevd/tests_python
