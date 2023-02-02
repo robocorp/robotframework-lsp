@@ -16,3 +16,17 @@ vscode-client/src
 src/build/**
 src/dist/**
 src/robotframework_lsp.egg-info/**
+src/robotframework_debug_adapter/vendored/vendored_pydevd/stubs
+src/robotframework_debug_adapter/vendored/vendored_pydevd/tests_pydevd_reload
+src/robotframework_debug_adapter/vendored/vendored_pydevd/tests
+src/robotframework_debug_adapter/vendored/vendored_pydevd/tests_mainloop
+src/robotframework_debug_adapter/vendored/vendored_pydevd/tests_python
+src/robotframework_debug_adapter/vendored/vendored_pydevd/tests_runfiles
+src/robotframework_debug_adapter/vendored/vendored_pydevd/third_party
+src/robotframework_debug_adapter/vendored/vendored_pydevd/jython_test_deps
+src/robotframework_debug_adapter/vendored/vendored_pydevd/gradle
+src/robotframework_debug_adapter/vendored/vendored_pydevd/.settings
+src/robotframework_debug_adapter/vendored/vendored_pydevd/.github
+src/robotframework_debug_adapter/vendored/vendored_pydevd/gradlew
+src/robotframework_debug_adapter/vendored/vendored_pydevd/gradlew.bat
+src/robotframework_debug_adapter/vendored/vendored_pydevd/MANIFEST.in
