@@ -8,9 +8,5 @@ dependencies:
     - pip=22.1.2 # https://pip.pypa.io/en/stable/news/
     - pywin32=303 # https://github.com/mhammond/pywin32/blob/main/CHANGES.txt
     - pip:
-<<<<<<< HEAD
           - robocorp-inspector==0.8.7 # https://github.com/robocorp/inspector/blob/master/CHANGELOG.md
-=======
-          - robocorp-inspector==0.8.6 # https://github.com/robocorp/inspector/blob/master/CHANGELOG.md
->>>>>>> origin/master
           - robotframework==5.0.1 # https://github.com/robotframework/robotframework/blob/master/doc/releasenotes/rf-5.0.1.rst
