@@ -34,7 +34,7 @@ See: [Contributing](docs/contributing.md) for how to help in the development of 
 
 See: [Reporting Issue](docs/reporting_issues.md) for details on how to report some issue in the `Robot Framework Language Server`.
 
-## Features (1.8.0)
+## Features (1.9.0)
 
 -   Robot Output View:
     -   View current task/test being executed.
@@ -65,6 +65,7 @@ See: [Reporting Issue](docs/reporting_issues.md) for details on how to report so
     -   Create argument for unresolved variable.
     -   Creat variable in variables section for unresolved variable.
     -   Assign keyword to variable.
+    -   Surround with Try..Except.
 -   Symbols browser for keywords in workspace (VSCode: `Ctrl + T`).
 -   Document symbols (VSCode: `Ctrl + Shift + O`).
 -   Highlight of keywords and variables.

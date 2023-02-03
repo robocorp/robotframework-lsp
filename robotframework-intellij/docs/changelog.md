@@ -1,3 +1,26 @@
+New in 1.9.0 (2023-02-03)
+-----------------------------
+
+### New features
+
+- Improve `IF`/`WHILE`/`Run Keyword If` snippet completions to make it a bit clearer that python expressions are expected.
+- `robot.libraries.blacklist` can be used to blacklist libraries which should never appear in code-completion.
+- Deprecated libraries:
+    - `robot.libraries.deprecated` can be used to mark libraries as deprecated.
+    - Keywords from deprecated libraries will not appear in the auto-import code-completion (so, they'll only be available if the `Library` is added to the `Settings`).
+    - Libraries which start with `*DEPRECATED*` in its doc are also considered deprecated.
+    - Keywords from libraries marked as deprecated will be shown as deprecated.
+- Requesting completions right after `Libraries   ` without any additional name will show completions for all known (pre-loaded) libraries.
+- Completions for variables are shown without having to enter `$` nor `${`.
+
+
+### Bugfixes
+
+- Properly report about undefined variable in `RETURN`. [#865](https://github.com/robocorp/robotframework-lsp/issues/865)
+- References to variables used in `Evaluate` arguments are now properly collected.
+- Don't show completion for the variable being currently defined in variable assign. 
+
+
 New in 1.8.0 (2023-01-23)
 -----------------------------
 
