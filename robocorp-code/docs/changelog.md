@@ -1,4 +1,4 @@
-NEXT
+New in 1.1.0 (2023-02-03)
 -----------------------------
 
 - If the `TEMP` folder being used in the environment is removed the extension properly deals with it.
