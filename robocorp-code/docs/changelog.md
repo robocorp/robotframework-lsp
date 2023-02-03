@@ -3,11 +3,11 @@ New in 1.1.0 (2023-02-03)
 
 - If the `TEMP` folder being used in the environment is removed the extension properly deals with it.
 - Inspector upgrades:
-    Browser Actions Recorder: Improvements in performance and other bug fixes.
-    Browser Actions Recorder: Auto-scroll for the keyword list.
-    Browser Actions Recorder: Code Editor no longer readonly (note: still indifferent to user changes as it will always update).
-    Browser Locator: Fixed buttons not displaying if no matches available.
-    Improved approach to close the browser and app window.
+    - Browser Actions Recorder: Improvements in performance and other bug fixes.
+    - Browser Actions Recorder: Auto-scroll for the keyword list.
+    - Browser Actions Recorder: Code Editor no longer readonly (note: still indifferent to user changes as it will always update).
+    - Browser Locator: Fixed buttons not displaying if no matches available.
+    - Improved approach to close the browser and app window.
 
 
 New in 1.0.2 (2023-01-18)
