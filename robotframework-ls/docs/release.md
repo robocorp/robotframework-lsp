@@ -30,22 +30,27 @@ I'm happy to announce the release of `Robot Framework Language Server 1.9.0`.
 
 ### New features
 
-- New snippet completions for WHILE without limit, CONTINUE, BREAK, RETURN, ELSE. [#856](https://github.com/robocorp/robotframework-lsp/issues/856)
-- New line customization:
-    - If a line starts with `#` if a new line is entered before the end of the line a `#` is added in the new line
-    - If a line is split a continuation (`...`) is added.
-- Quick fix: create `local variable` from an `undefined variable`.
-- Quick fix: create `variable in the variables section` from an `undefined variable`.
-- Quick fix: create `argument` from an `undefined variable`.
-- Code action: assign to variable.
-- Refactoring: extract `local variable`.
-- Refactoring: extract `variable` to `variables section`.
+- Code action: Surround with try..except.
+- Code action: Surround with try..except..finally.
+- Interactive Console: (Robot Framework 4 onwards): When a single keyword call is executed and it has a non-None return, its return value is printed.
+- Interactive Console: Typing a variable in the `Interactive Console` shows that variable. [#871](https://github.com/robocorp/robotframework-lsp/issues/871)
+- Improve `IF`/`WHILE`/`Run Keyword If` snippet completions to make it a bit clearer that python expressions are expected.
+- Building the model of the flow explorer no longer times out and a progress dialog is shown while building it.
+- `robot.libraries.blacklist` can be used to blacklist libraries which should never appear in code-completion.
+- Deprecated libraries:
+    - `robot.libraries.deprecated` can be used to mark libraries as deprecated.
+    - Keywords from deprecated libraries will not appear in the auto-import code-completion (so, they'll only be available if the `Library` is added to the `Settings`).
+    - Libraries which start with `*DEPRECATED*` in its doc are also considered deprecated.
+    - Keywords from libraries marked as deprecated will be shown as deprecated.
+- Requesting completions right after `Libraries   ` without any additional name will show completions for all known (pre-loaded) libraries.
+- Completions for variables are shown without having to enter `$` nor `${`.
+
 
 ### Bugfixes
 
-- Text ranges when dealing with emoji unicode characters are now correct. [#862](https://github.com/robocorp/robotframework-lsp/issues/862)  
-- Code analysis fix:  An arguments with a name with '=' must match a star arg with the full name if the name was already found (in RF keyword and not python method). [#860](https://github.com/robocorp/robotframework-lsp/issues/860)
-
+- Properly report about undefined variable in `RETURN`. [#865](https://github.com/robocorp/robotframework-lsp/issues/865)
+- References to variables used in `Evaluate` arguments are now properly collected.
+- Don't show completion for the variable being currently defined in variable assign. 
 
 Official clients supported: `VSCode` and `Intellij`.
 Other editors supporting language servers can get it with: `pip install robotframework-lsp`.
