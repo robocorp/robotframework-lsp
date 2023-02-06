@@ -200,7 +200,7 @@ export interface UiPathSchemaCommand {
     types?: Array<string>;
     onProgress: Progress;
     outputRelativePath: string; // Used internally in Robocorp Code
-  }
+}
 
 export interface BlueprismConvertCommand {
     command: CommandType.Convert;

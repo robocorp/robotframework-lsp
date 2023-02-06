@@ -209,7 +209,7 @@ export async function convertAndSaveResults(
                     projects: projects,
                     onProgress: undefined,
                     outputRelativePath: join(nextBasename, basename(it)),
-                })
+                });
                 for (const it of opts.input) {
                     rpaConversionCommands.push({
                         vendor: Format.UIPATH,
