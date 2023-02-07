@@ -200,8 +200,16 @@ export async function convertAndSaveResults(
     try {
         let nextBasename: string;
         switch (opts.inputType) {
-            case RPATypes.uipath:
+            case RPATypes.uipath: {
+                const projects: Array<string> = opts.input;
                 nextBasename = await findNextBasenameIn(opts.outputFolder, "converted-uipath");
+                rpaConversionCommands.push({
+                    command: CommandType.Schema,
+                    vendor: Format.UIPATH,
+                    projects: projects,
+                    onProgress: undefined,
+                    outputRelativePath: join(nextBasename, "schema"),
+                });
                 for (const it of opts.input) {
                     rpaConversionCommands.push({
                         vendor: Format.UIPATH,
@@ -212,6 +220,7 @@ export async function convertAndSaveResults(
                     });
                 }
                 break;
+            }
             case RPATypes.blueprism:
                 nextBasename = await findNextBasenameIn(opts.outputFolder, "converted-blueprism");
                 for (const it of opts.input) {
