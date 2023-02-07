@@ -192,7 +192,7 @@ export interface A360SchemaCommand {
     types?: Array<string>;
     onProgress: Progress;
     outputRelativePath: string; // Used internally in Robocorp Code
-  }
+}
 
 export interface UiPathConvertCommand {
     command: CommandType.Convert;
