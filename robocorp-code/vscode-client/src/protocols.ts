@@ -184,6 +184,16 @@ export interface A360ConvertCommand {
     outputRelativePath: string; // Used internally in Robocorp Code
 }
 
+export interface A360SchemaCommand {
+    command: CommandType.Schema;
+    vendor: Format.A360;
+    projects: Array<string>;
+    /** properties that should be considered as ENUM  */
+    types?: Array<string>;
+    onProgress: Progress;
+    outputRelativePath: string; // Used internally in Robocorp Code
+  }
+
 export interface UiPathConvertCommand {
     command: CommandType.Convert;
     vendor: Format.UIPATH;
@@ -255,7 +265,7 @@ export interface AAV11SchemaCommand {
 
 export type BlueprismCommand = BlueprismConvertCommand;
 export type UiPathCommand = UiPathConvertCommand | UiPathSchemaCommand;
-export type A360Command = A360ConvertCommand;
+export type A360Command = A360ConvertCommand | A360SchemaCommand;
 export type AAV11Command = AAV11ConvertCommand | AAV11GenerateCommand | AAV11AnalyseCommand | AAV11SchemaCommand;
 
 export type RPAConversionCommand = BlueprismCommand | UiPathCommand | A360Command | AAV11Command;

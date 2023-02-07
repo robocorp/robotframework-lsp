@@ -259,8 +259,16 @@ export async function convertAndSaveResults(
                     });
                 }
                 break;
-            case RPATypes.a360:
+            case RPATypes.a360: {
+                const projects: Array<string> = opts.input;
                 nextBasename = await findNextBasenameIn(opts.outputFolder, "converted-a360");
+                rpaConversionCommands.push({
+                    command: CommandType.Schema,
+                    vendor: Format.A360,
+                    projects: projects,
+                    onProgress: undefined,
+                    outputRelativePath: join(nextBasename, "schema"),
+                });
                 for (const it of opts.input) {
                     rpaConversionCommands.push({
                         vendor: Format.A360,
@@ -271,6 +279,7 @@ export async function convertAndSaveResults(
                     });
                 }
                 break;
+            }
             case RPATypes.aav11:
                 nextBasename = await findNextBasenameIn(opts.outputFolder, "converted-aav11");
                 const projects: Array<string> = opts.input;
