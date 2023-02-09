@@ -221,7 +221,7 @@ export async function convertAndSaveResults(
                     onProgress: undefined,
                     outputRelativePath: join(nextBasename, "schema"),
                 });
-                
+
                 rpaConversionCommands.push({
                     command: CommandType.Analyse,
                     vendor: Format.UIPATH,
