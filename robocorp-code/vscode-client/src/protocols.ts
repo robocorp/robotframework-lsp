@@ -194,6 +194,15 @@ export interface A360SchemaCommand {
     outputRelativePath: string; // Used internally in Robocorp Code
 }
 
+export interface A360AnalyseCommand {
+    command: CommandType.Analyse;
+    vendor: Format.A360;
+    projects: Array<string>;
+    tempFolder: string;
+    onProgress: Progress;
+    outputRelativePath: string; // Used internally in Robocorp Code
+}
+
 export interface UiPathConvertCommand {
     command: CommandType.Convert;
     vendor: Format.UIPATH;
@@ -212,11 +221,29 @@ export interface UiPathSchemaCommand {
     outputRelativePath: string; // Used internally in Robocorp Code
 }
 
+export interface UiPathAnalyseCommand {
+    command: CommandType.Analyse;
+    vendor: Format.UIPATH;
+    projects: Array<string>;
+    tempFolder: string;
+    onProgress: Progress;
+    outputRelativePath: string; // Used internally in Robocorp Code
+}
+
 export interface BlueprismConvertCommand {
     command: CommandType.Convert;
     vendor: Format.BLUEPRISM;
     releaseFileContent: string;
     apiImplementationFolderPath?: string;
+    onProgress: Progress;
+    outputRelativePath: string; // Used internally in Robocorp Code
+}
+
+export interface BlueprismAnalyseCommand {
+    command: CommandType.Analyse;
+    vendor: Format.BLUEPRISM;
+    projects: Array<string>;
+    tempFolder: string;
     onProgress: Progress;
     outputRelativePath: string; // Used internally in Robocorp Code
 }
@@ -263,9 +290,9 @@ export interface AAV11SchemaCommand {
     outputRelativePath: string; // Used internally in Robocorp Code
 }
 
-export type BlueprismCommand = BlueprismConvertCommand;
-export type UiPathCommand = UiPathConvertCommand | UiPathSchemaCommand;
-export type A360Command = A360ConvertCommand | A360SchemaCommand;
+export type BlueprismCommand = BlueprismConvertCommand | BlueprismAnalyseCommand;
+export type UiPathCommand = UiPathConvertCommand | UiPathSchemaCommand | UiPathAnalyseCommand;
+export type A360Command = A360ConvertCommand | A360SchemaCommand | A360AnalyseCommand;
 export type AAV11Command = AAV11ConvertCommand | AAV11GenerateCommand | AAV11AnalyseCommand | AAV11SchemaCommand;
 
 export type RPAConversionCommand = BlueprismCommand | UiPathCommand | A360Command | AAV11Command;

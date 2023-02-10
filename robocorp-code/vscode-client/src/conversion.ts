@@ -201,14 +201,34 @@ export async function convertAndSaveResults(
         let nextBasename: string;
         switch (opts.inputType) {
             case RPATypes.uipath: {
-                const projects: Array<string> = opts.input;
                 nextBasename = await findNextBasenameIn(opts.outputFolder, "converted-uipath");
+                const projects: Array<string> = opts.input;
+                const tempDir: string = join(opts.outputFolder, nextBasename, "temp");
+                await makeDirs(tempDir);
+
+                cleanups.push(() => {
+                    try {
+                        rmSync(tempDir, { recursive: true, force: true, maxRetries: 1 });
+                    } catch (err) {
+                        OUTPUT_CHANNEL.appendLine("Error deleting: " + tempDir + ": " + err.message);
+                    }
+                });
+
                 rpaConversionCommands.push({
                     command: CommandType.Schema,
                     vendor: Format.UIPATH,
                     projects: projects,
                     onProgress: undefined,
                     outputRelativePath: join(nextBasename, "schema"),
+                });
+
+                rpaConversionCommands.push({
+                    command: CommandType.Analyse,
+                    vendor: Format.UIPATH,
+                    projects: projects,
+                    onProgress: undefined,
+                    tempFolder: tempDir,
+                    outputRelativePath: join(nextBasename, "analysis"),
                 });
                 for (const it of opts.input) {
                     rpaConversionCommands.push({
@@ -221,8 +241,27 @@ export async function convertAndSaveResults(
                 }
                 break;
             }
-            case RPATypes.blueprism:
+            case RPATypes.blueprism: {
                 nextBasename = await findNextBasenameIn(opts.outputFolder, "converted-blueprism");
+                const projects: Array<string> = opts.input;
+                const tempDir: string = join(opts.outputFolder, nextBasename, "temp");
+                await makeDirs(tempDir);
+
+                cleanups.push(() => {
+                    try {
+                        rmSync(tempDir, { recursive: true, force: true, maxRetries: 1 });
+                    } catch (err) {
+                        OUTPUT_CHANNEL.appendLine("Error deleting: " + tempDir + ": " + err.message);
+                    }
+                });
+                rpaConversionCommands.push({
+                    command: CommandType.Analyse,
+                    vendor: Format.BLUEPRISM,
+                    projects: projects,
+                    onProgress: undefined,
+                    tempFolder: tempDir,
+                    outputRelativePath: join(nextBasename, "analysis"),
+                });
                 for (const it of opts.input) {
                     let contents = "";
                     try {
@@ -259,15 +298,35 @@ export async function convertAndSaveResults(
                     });
                 }
                 break;
+            }
             case RPATypes.a360: {
-                const projects: Array<string> = opts.input;
                 nextBasename = await findNextBasenameIn(opts.outputFolder, "converted-a360");
+                const projects: Array<string> = opts.input;
+                const tempDir: string = join(opts.outputFolder, nextBasename, "temp");
+                await makeDirs(tempDir);
+
+                cleanups.push(() => {
+                    try {
+                        rmSync(tempDir, { recursive: true, force: true, maxRetries: 1 });
+                    } catch (err) {
+                        OUTPUT_CHANNEL.appendLine("Error deleting: " + tempDir + ": " + err.message);
+                    }
+                });
+
                 rpaConversionCommands.push({
                     command: CommandType.Schema,
                     vendor: Format.A360,
                     projects: projects,
                     onProgress: undefined,
                     outputRelativePath: join(nextBasename, "schema"),
+                });
+                rpaConversionCommands.push({
+                    command: CommandType.Analyse,
+                    vendor: Format.A360,
+                    projects: projects,
+                    onProgress: undefined,
+                    tempFolder: tempDir,
+                    outputRelativePath: join(nextBasename, "analysis"),
                 });
                 for (const it of opts.input) {
                     rpaConversionCommands.push({
