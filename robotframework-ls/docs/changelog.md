@@ -1,3 +1,11 @@
+NEXT
+-----------------------------
+
+### New features
+
+- `robotfamework-output-stream` updated to `0.0.5`. It now has functionality to hide sensitive data.
+    See: https://github.com/robocorp/robotframework-output-stream/blob/master/docs/handling_sensitive_data.md
+
 New in 1.9.0 (2023-02-03)
 -----------------------------
 
