@@ -520,18 +520,9 @@ class RobocorpResolveInterpreter(object):
                 log.critical(f"Expected dict as root in: {robot_yaml}")
                 return None
 
-            conda_config = yaml_contents.get("condaConfigFile")
-            conda_config_file_info = None
-            env_json_path_file_info = None
-
-            if not conda_config:
-                log.critical("Could not find condaConfigFile in %s", robot_yaml)
-                return None
-
             parent: Path = robot_yaml.parent
-            conda_config_path = parent / conda_config
-            if not conda_config_path.exists():
-                log.critical("conda.yaml does not exist in %s", conda_config_path)
+            conda_config_path = get_conda_config_path(parent, robot_yaml, yaml_contents)
+            if not conda_config_path:
                 return None
 
             try:
@@ -541,6 +532,7 @@ class RobocorpResolveInterpreter(object):
                 return None
 
             env_json_path = parent / "devdata" / "env.json"
+            env_json_path_file_info = None
             if env_json_path.exists():
                 try:
                     env_json_path_file_info = _CacheInfo.get_file_info(env_json_path)
@@ -563,6 +555,55 @@ class RobocorpResolveInterpreter(object):
         from robocorp_ls_core.protocols import check_implements
 
         _: EPResolveInterpreter = check_implements(self)
+
+
+def get_conda_config_path(
+    parent: Path, robot_yaml: Path, yaml_contents: dict
+) -> Optional[Path]:
+
+    environments_config = yaml_contents.get("environmentConfigs")
+    if environments_config:
+        if isinstance(environments_config, (tuple, list)):
+            # The arch is tricky. For instance, in Mac, the user would like to
+            # have the target in aarch64 or amd64? It may not match the flavor
+            # of the binary we're in and not even the processor... Should
+            # this be specified in the robot? For now we simple don't filter
+            # through the arch.
+
+            if sys.platform == "win32":
+                plat = "windows"
+
+            elif sys.platform == "darwin":
+                plat = "darwin"
+
+            else:
+                plat = "linux"
+
+            for conda_env_conf in environments_config:
+                if plat not in conda_env_conf:
+                    continue
+
+                p = parent / conda_env_conf
+                try:
+                    if not p.exists():
+                        continue
+
+                    return p
+                except:
+                    log.exception("Error collecting info from: %s", p)
+
+    conda_config = yaml_contents.get("condaConfigFile")
+
+    if not conda_config:
+        log.critical("Could not find condaConfigFile in %s", robot_yaml)
+        return None
+
+    conda_config_path = parent / conda_config
+    if not conda_config_path.exists():
+        log.critical("conda.yaml does not exist in %s", conda_config_path)
+        return None
+
+    return conda_config_path
 
 
 def register_plugins(pm: PluginManager):

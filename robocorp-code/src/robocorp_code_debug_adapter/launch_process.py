@@ -111,6 +111,7 @@ class LaunchProcess(object):
         from robocorp_code.protocols import IRobotYamlEnvInfo
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import OutputEvent
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import OutputEventBody
+        from robocorp_code.plugins.resolve_interpreter import get_conda_config_path
 
         self._weak_debug_adapter_comm = weakref.ref(debug_adapter_comm)
         self._valid = True
@@ -211,13 +212,15 @@ class LaunchProcess(object):
             if not isinstance(yaml_contents, dict):
                 return mark_invalid(f"Expected dict as root in: {robot_yaml}.")
 
-            conda_config = yaml_contents.get("condaConfigFile")
-            if not conda_config:
-                return mark_invalid(f"Could not find condaConfigFile in {robot_yaml}")
             parent: Path = Path(robot_yaml).parent
-            conda_yaml_path = parent / conda_config
-            if not conda_yaml_path.exists():
-                return mark_invalid(f"conda.yaml does not exist in {conda_yaml_path}")
+
+            conda_yaml_path = get_conda_config_path(
+                parent, Path(robot_yaml), yaml_contents
+            )
+            if not conda_yaml_path:
+                return mark_invalid(
+                    f"Unable to resolve conda.yaml related to {robot_yaml}"
+                )
 
             try:
                 conda_yaml_contents = conda_yaml_path.read_text("utf-8", "replace")
