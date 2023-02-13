@@ -1,6 +1,6 @@
 from subprocess import CalledProcessError, TimeoutExpired, list2cmdline
 import sys
-from typing import Optional, List, Any, Dict, Set
+from typing import Optional, List, Any, Dict, Set, Sequence, Tuple
 import weakref
 
 from robocorp_ls_core.basic import implements, as_str, is_process_alive
@@ -21,6 +21,7 @@ from robocorp_code.protocols import (
     IRccListener,
     RobotTemplate,
     AuthorizeTokenDict,
+    RobotYamlInfo,
 )
 from pathlib import Path
 import os.path
@@ -821,8 +822,8 @@ class Rcc(object):
     def get_robot_yaml_env_info(
         self,
         robot_yaml_path: Path,
-        conda_yaml_path: Path,
-        conda_yaml_contents: str,
+        conda_yaml_path: Tuple[Path, ...],
+        conda_yaml_contents: Tuple[str, ...],
         env_json_path: Optional[Path],
         timeout=None,
         holotree_manager=None,
@@ -834,7 +835,7 @@ class Rcc(object):
         if holotree_manager is None:
             holotree_manager = HolotreeManager(self)
 
-        formatted_conda_yaml_contents = format_conda_contents_to_compare(
+        formatted_conda_yaml_contents: str = format_conda_contents_to_compare(
             conda_yaml_contents
         )
 
@@ -955,7 +956,7 @@ class Rcc(object):
                     "To recreate the environment, please change the related conda yaml\n"
                     "or restart VSCode to retry with the same conda yaml contents."
                 ),
-                conda_yaml_path,
+                "\nand\n".join([str(x) for x in conda_yaml_path]),
             )
 
             if not msg:
@@ -983,12 +984,14 @@ class Rcc(object):
             "variables",
             "--space",
             space_info.space_name,
-            str(conda_yaml_path),
         ]
+        for path in conda_yaml_path:
+            args.append(str(path))
+
         args.append("--json")
         try:
             sys.stderr.write(
-                f"Collecting environment info for {conda_yaml_path} in space: {space_info.space_name}\n"
+                f"Collecting environment info for {', '.join([str(x) for x in conda_yaml_path])} in space: {space_info.space_name}\n"
             )
             ret = self._run_rcc(
                 args,
@@ -1109,4 +1112,94 @@ def make_numbered_in_temp(
         keep=keep,
         lock_timeout=lock_timeout if lock_timeout > 0 else LOCK_TIMEOUT,
         register=register,
+    )
+
+
+def obtain_robot_yaml_info_from_robot(robot_yaml: Path) -> Optional[RobotYamlInfo]:
+    from robocorp_code.plugins.resolve_interpreter import _CacheInfo
+    from robocorp_code.protocols import ICachedFileInfo
+
+    try:
+        robot_yaml_file_info: ICachedFileInfo = _CacheInfo.get_file_info(robot_yaml)
+    except:
+        log.exception("Error collecting info from: %s", robot_yaml)
+        return None
+
+    yaml_contents = robot_yaml_file_info.yaml_contents
+    if not isinstance(yaml_contents, dict):
+        log.critical(f"Expected dict as root in: {robot_yaml}")
+        return None
+
+    conda_config = yaml_contents.get("condaConfigFile")
+    if not conda_config:
+        log.critical("Could not find condaConfigFile in %s", robot_yaml)
+        return None
+
+    parent: Path = robot_yaml.parent
+    conda_config_path = parent / conda_config
+    if not conda_config_path.exists():
+        log.critical("conda.yaml does not exist in %s", conda_config_path)
+        return None
+
+    conda_config_file_infos: List[ICachedFileInfo] = []
+    try:
+        conda_config_file_info = _CacheInfo.get_file_info(conda_config_path)
+        if conda_config_file_info is not None:
+            conda_config_file_infos.append(conda_config_file_info)
+    except:
+        log.exception("Error collecting info from: %s", conda_config_path)
+        return None
+
+    environments_config = yaml_contents.get("environmentConfigs")
+    if environments_config:
+        if isinstance(environments_config, (tuple, list)):
+            # The arch is tricky. For instance, in Mac, the user would like to
+            # have the target in aarch64 or amd64? It may not match the flavor
+            # of the binary we're in and not even the processor... Should
+            # this be specified in the robot? For now we simple don't filter
+            # through the arch (and accept all -- for the language server
+            # this should be ok, it just means it tracks more files for changes).
+
+            if sys.platform == "win32":
+                plat = "windows"
+
+            elif sys.platform == "darwin":
+                plat = "darwin"
+
+            else:
+                plat = "linux"
+
+            for conda_env_conf in environments_config:
+                if plat not in conda_env_conf:
+                    continue
+
+                p = parent / conda_env_conf
+                try:
+                    if not p.exists():
+                        continue
+
+                    conda_config_file_info = _CacheInfo.get_file_info(p)
+                    if conda_config_file_info is not None:
+                        conda_config_file_infos.append(conda_config_file_info)
+                except:
+                    log.exception("Error collecting info from: %s", p)
+
+    if not conda_config_file_infos:
+        log.critical(
+            f"Could not find any conda.yaml to build environment from {robot_yaml}"
+        )
+        return None
+
+    env_json_path_file_info = None
+
+    env_json_path = parent / "devdata" / "env.json"
+    if env_json_path.exists():
+        try:
+            env_json_path_file_info = _CacheInfo.get_file_info(env_json_path)
+        except:
+            log.exception("Error collecting info from: %s", env_json_path)
+            return None
+
+    return RobotYamlInfo(
+        robot_yaml_file_info, conda_config_file_infos, env_json_path_file_info
     )

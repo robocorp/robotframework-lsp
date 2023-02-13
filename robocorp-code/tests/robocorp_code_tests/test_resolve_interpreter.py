@@ -66,6 +66,30 @@ def test_resolve_interpreter_relocate_robot_root(
     assert Path(interpreter_info2.get_interpreter_id()) == path2
 
 
+def test_resolve_interpreter_environment_config(
+    config_provider: IConfigProvider, rcc_conda_installed, datadir
+) -> None:
+    from robocorp_code.plugins.resolve_interpreter import RobocorpResolveInterpreter
+    from robocorp_ls_core.pluginmanager import PluginManager
+    from robocorp_ls_core.ep_providers import EPConfigurationProvider
+    from robocorp_ls_core.ep_providers import EPEndPointProvider
+    from robocorp_ls_core.constants import NULL
+    from robocorp_ls_core import uris
+
+    pm = PluginManager()
+    pm.set_instance(EPConfigurationProvider, config_provider)
+    pm.set_instance(EPEndPointProvider, NULL)
+
+    resolve_interpreter = RobocorpResolveInterpreter(weak_pm=weakref.ref(pm))
+
+    path1 = datadir / "robot_envconfig" / "robot.yaml"
+
+    interpreter_info1 = resolve_interpreter.get_interpreter_info_for_doc_uri(
+        uris.from_fs_path(str(path1))
+    )
+    assert interpreter_info1
+
+
 def test_fix_entry():
     from robocorp_code.plugins.resolve_interpreter import RobocorpResolveInterpreter
     import sys

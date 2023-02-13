@@ -1,9 +1,10 @@
 import sys
-from typing import Optional, List, Any, TypeVar, Dict, ContextManager, Tuple
+from typing import Optional, List, Any, TypeVar, Dict, ContextManager, Tuple, Sequence
 from pathlib import Path
 
 # Backward-compatibility imports:
 from robocorp_ls_core.protocols import ActionResult, ActionResultDict  # noqa
+from collections import namedtuple
 
 
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
@@ -221,7 +222,7 @@ class IRCCSpaceInfo(Protocol):
     def acquire_lock(self) -> ContextManager:
         pass
 
-    def conda_contents_match(self, conda_yaml_contents: str) -> bool:
+    def conda_contents_match(self, conda_yaml_contents: Tuple[str, ...]) -> bool:
         pass
 
     def matches_conda_identity_yaml(self, conda_id: Path) -> bool:
@@ -325,8 +326,8 @@ class IRcc(Protocol):
     def get_robot_yaml_env_info(
         self,
         robot_yaml_path: Path,
-        conda_yaml_path: Path,
-        conda_yaml_contents: str,
+        conda_yaml_path: Tuple[Path, ...],
+        conda_yaml_contents: Tuple[str, ...],
         env_json_path: Optional[Path],
         timeout=None,
         holotree_manager=None,
@@ -351,3 +352,31 @@ class IRcc(Protocol):
         i.e.: Something as:
         rcc feedback metric -t vscode -n vscode.cloud.upload.existing -v +1
         """
+
+
+CachedFileMTimeInfo = namedtuple("CachedFileMTimeInfo", "st_mtime, st_size, path")
+
+
+class ICachedFileInfo(Protocol):
+    file_path: Path
+    mtime_info: Optional[CachedFileMTimeInfo]
+    contents: str
+
+    @property
+    def yaml_contents(self) -> dict:
+        pass
+
+    def is_cache_valid(self) -> bool:
+        pass
+
+
+class RobotYamlInfo:
+    def __init__(
+        self,
+        robot_yaml_file_info: ICachedFileInfo,
+        conda_config_file_infos: Sequence[ICachedFileInfo],
+        env_json_path_file_info: Optional[ICachedFileInfo],
+    ):
+        self.robot_yaml_file_info = robot_yaml_file_info
+        self.conda_config_file_infos = conda_config_file_infos
+        self.env_json_path_file_info = env_json_path_file_info

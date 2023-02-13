@@ -4,7 +4,7 @@ from pathlib import Path
 import time
 
 from robocorp_ls_core.robotframework_log import get_logger
-from typing import Optional, ContextManager
+from typing import Optional, ContextManager, Sequence, Tuple
 import os
 from robocorp_code.protocols import IRCCSpaceInfo
 from robocorp_ls_core.protocols import check_implements
@@ -35,7 +35,7 @@ class SpaceState(enum.Enum):
     ENV_READY = "environment_ready"
 
 
-def write_text(path: Path, contents, encoding="utf-8"):
+def write_text(path: Path, contents: str, encoding="utf-8"):
     try:
         path.write_text(contents, encoding, errors="replace")
     except:
@@ -75,6 +75,14 @@ class RCCSpaceInfo:
         return self.space_path / "pid"
 
     def load_last_usage(self, none_if_not_found: bool = False) -> Optional[float]:
+        # target = self.space_path / f"time_touch"
+        # if target.exists():
+        #     last_usage = target.stat().st_mtime
+        #     self.last_usage = last_usage
+        #     return last_usage
+
+        # Old code...
+
         found = []
         for entry in os.scandir(self.space_path):
             if entry.name.startswith("time_"):
@@ -106,6 +114,13 @@ class RCCSpaceInfo:
 
         self.last_usage = last_usage
         return last_usage
+
+    # def update_last_usage(self) -> float:
+    #     target = self.space_path / f"time_touch"
+    #     target.touch()
+    #     last_usage = target.stat().st_mtime
+    #     self.last_usage = last_usage
+    #     return last_usage
 
     def update_last_usage(self) -> float:
         last_usage = time.time()
@@ -180,19 +195,45 @@ class RCCSpaceInfo:
             f"{self.space_name}.lock", timeout=60, base_dir=str(self.space_path.parent)
         )
 
-    def conda_contents_match(self, conda_yaml_contents: str) -> bool:
-        contents = self.conda_contents_path.read_text("utf-8")
+    def conda_contents_match(self, conda_yaml_contents: Tuple[str, ...]) -> bool:
+        import json
 
-        formatted = format_conda_contents_to_compare(contents)
+        contents: str = self.conda_contents_path.read_text("utf-8")
+
+        try:
+            loaded_json = json.loads(contents)
+            formatted = format_conda_contents_to_compare(tuple(loaded_json))
+        except:
+            # That's ok, in the new format we store a json with the multiple
+            # matches while previously it was directly the conda.yaml contents
+            # so, just proceed to compare the string loaded initially.
+            formatted = format_conda_contents_to_compare((contents,))
+
         return formatted == format_conda_contents_to_compare(conda_yaml_contents)
 
     def matches_conda_identity_yaml(self, conda_id: Path) -> bool:
         try:
-            contents = self.conda_contents_path.read_text("utf-8")
+            import json
+
+            contents: str = self.conda_contents_path.read_text("utf-8")
+            try:
+                loaded_json = json.loads(contents)
+                if len(loaded_json) == 1:
+                    contents = loaded_json[0]
+                else:
+                    # The env is a merge of multiple conda.yamls, skip this
+                    # verification
+                    return True
+            except:
+                # That's ok, in the new format we store a json with the multiple
+                # matches while previously it was directly the conda.yaml contents
+                # so, just proceed to compare the string loaded initially.
+                pass
+
             return format_conda_contents_to_compare(
-                contents
+                (contents,)
             ) == format_conda_contents_to_compare(
-                conda_id.read_text("utf-8", "replace")
+                (conda_id.read_text("utf-8", "replace"),)
             )
         except:
             log.error("Error when loading yaml to verify conda identity match.")
@@ -230,19 +271,23 @@ class RCCSpaceInfo:
 
 
 @lru_cache(maxsize=50)
-def format_conda_contents_to_compare(contents: str) -> str:
+def format_conda_contents_to_compare(contents_tuple: Tuple[str, ...]) -> str:
+    assert isinstance(contents_tuple, tuple)
     try:
         from robocorp_ls_core import yaml_wrapper
 
         load_yaml = yaml_wrapper.load
-        loaded = load_yaml(contents)
-        return repr(loaded)
-    except:
-        log.info("Unable to parse yaml: %s", contents)
         lst = []
-        for line in contents.splitlines(keepends=False):
-            line = line.strip()
-            if not line:
-                continue
-            lst.append(line)
+        for contents in contents_tuple:
+            lst.append(repr(load_yaml(contents)))
+        return "".join(lst)
+    except:
+        log.info("Unable to parse one of the yaml contents: %s", contents)
+        lst = []
+        for contents in contents_tuple:
+            for line in contents.splitlines(keepends=False):
+                line = line.strip()
+                if not line:
+                    continue
+                lst.append(line)
         return "".join(lst)

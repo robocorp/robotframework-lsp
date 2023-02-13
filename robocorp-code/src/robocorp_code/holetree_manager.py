@@ -41,13 +41,14 @@ from robocorp_code.protocols import IRcc
 from robocorp_ls_core.robotframework_log import get_logger
 
 from pathlib import Path
-from typing import List, Optional, Iterable
+from typing import List, Optional, Iterable, Tuple
 from robocorp_code.rcc_space_info import (
     RCCSpaceInfo,
     CurrentSpaceStatus,
     write_text,
     SpaceState,
 )
+import json
 
 log = get_logger(__name__)
 
@@ -114,7 +115,10 @@ class HolotreeManager:
         )
 
     def _compute_status(
-        self, space_name: str, conda_yaml_path: Path, conda_yaml_contents: str
+        self,
+        space_name: str,
+        conda_yaml_path: Tuple[Path, ...],
+        conda_yaml_contents: Tuple[str, ...],
     ) -> RCCSpaceInfo:
         space_info: RCCSpaceInfo = self.create_rcc_space_info(space_name)
         conda_contents_path = space_info.conda_contents_path
@@ -153,7 +157,11 @@ class HolotreeManager:
                             and space_info.conda_prefix_identity_yaml_still_matches_cached_space()
                         ) or not env_written:
                             space_info.update_last_usage()
-                            write_text(conda_path, str(conda_yaml_path), "utf-8")
+                            write_text(
+                                conda_path,
+                                json.dumps([str(x) for x in conda_yaml_path]),
+                                "utf-8",
+                            )
                             space_info.curr_status = CurrentSpaceStatus.CAN_USE
                             return space_info
             except:
@@ -174,8 +182,14 @@ class HolotreeManager:
             # based on this request.
             with lock:
                 space_info.update_last_usage()
-                write_text(conda_contents_path, conda_yaml_contents, "utf-8")
-                write_text(conda_path, str(conda_yaml_path), "utf-8")
+                write_text(
+                    conda_contents_path,
+                    json.dumps(conda_yaml_contents),
+                    "utf-8",
+                )
+                write_text(
+                    conda_path, json.dumps([str(x) for x in conda_yaml_path]), "utf-8"
+                )
                 write_text(state_path, SpaceState.CREATED.value, "utf-8")
             space_info.curr_status = CurrentSpaceStatus.CAN_USE
 
@@ -210,8 +224,8 @@ class HolotreeManager:
 
     def _can_reuse_simple(
         self,
-        conda_yaml_contents: str,
-        conda_yaml_path: Path,
+        conda_yaml_contents: Tuple[str, ...],
+        conda_yaml_path: Tuple[Path, ...],
         space_info: RCCSpaceInfo,
         check_timeout: bool = True,
     ) -> bool:
@@ -227,8 +241,16 @@ class HolotreeManager:
                 # this one.
                 log.info("Reusing space after timeout: %s", space_info.space_name)
                 space_info.update_last_usage()
-                write_text(space_info.conda_contents_path, conda_yaml_contents, "utf-8")
-                write_text(space_info.conda_path, str(conda_yaml_path), "utf-8")
+                write_text(
+                    space_info.conda_contents_path,
+                    json.dumps(conda_yaml_contents),
+                    "utf-8",
+                )
+                write_text(
+                    space_info.conda_path,
+                    json.dumps([str(x) for x in conda_yaml_path]),
+                    "utf-8",
+                )
                 write_text(space_info.state_path, SpaceState.CREATED.value, "utf-8")
                 return True
 
@@ -242,8 +264,8 @@ class HolotreeManager:
 
     def compute_valid_space_info(
         self,
-        conda_yaml_path: Path,
-        conda_yaml_contents: str,
+        conda_yaml_path: Tuple[Path, ...],
+        conda_yaml_contents: Tuple[str, ...],
         require_timeout: bool = False,
     ) -> RCCSpaceInfo:
         checked: List[str] = []

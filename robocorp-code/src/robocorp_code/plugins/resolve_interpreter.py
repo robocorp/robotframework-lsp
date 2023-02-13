@@ -25,7 +25,7 @@ except:
     from robocorp_code.rcc import Rcc  # noqa
 
 
-from typing import Optional, Dict, List, Tuple
+from typing import Optional, Dict, List, Tuple, Sequence
 from collections import namedtuple
 import time
 
@@ -42,28 +42,26 @@ from robocorp_ls_core import uris
 from robocorp_ls_core.robotframework_log import get_logger
 from pathlib import Path
 import weakref
-from robocorp_code.protocols import IRobotYamlEnvInfo
+from robocorp_code.protocols import (
+    IRobotYamlEnvInfo,
+    ICachedFileInfo,
+    CachedFileMTimeInfo,
+)
 
 
 log = get_logger(__name__)
 
 
-_CachedFileMTimeInfo = namedtuple("_CachedFileMTimeInfo", "st_mtime, st_size, path")
-
-_CachedInterpreterMTime = Tuple[
-    Optional[_CachedFileMTimeInfo],
-    Optional[_CachedFileMTimeInfo],
-    Optional[_CachedFileMTimeInfo],
-]
+_CachedInterpreterMTime = Tuple[Optional[CachedFileMTimeInfo], ...]
 
 
-def _get_mtime_cache_info(file_path: Path) -> Optional[_CachedFileMTimeInfo]:
+def _get_mtime_cache_info(file_path: Path) -> Optional[CachedFileMTimeInfo]:
     """
     Cache based on the time/size of a given path.
     """
     try:
         stat = file_path.stat()
-        return _CachedFileMTimeInfo(stat.st_mtime, stat.st_size, str(file_path))
+        return CachedFileMTimeInfo(stat.st_mtime, stat.st_size, str(file_path))
     except:
         # It could be removed in the meanwhile.
         log.exception(f"Unable to get mtime info for: {file_path}")
@@ -73,7 +71,7 @@ def _get_mtime_cache_info(file_path: Path) -> Optional[_CachedFileMTimeInfo]:
 class _CachedFileInfo(object):
     def __init__(self, file_path: Path):
         self.file_path = file_path
-        self.mtime_info: Optional[_CachedFileMTimeInfo] = _get_mtime_cache_info(
+        self.mtime_info: Optional[CachedFileMTimeInfo] = _get_mtime_cache_info(
             file_path
         )
         self.contents: str = file_path.read_text(encoding="utf-8", errors="replace")
@@ -93,13 +91,18 @@ class _CachedFileInfo(object):
     def is_cache_valid(self) -> bool:
         return self.mtime_info == _get_mtime_cache_info(self.file_path)
 
+    def __typecheckself__(self) -> None:
+        from robocorp_ls_core.protocols import check_implements
+
+        _: ICachedFileInfo = check_implements(self)
+
 
 class _CachedInterpreterInfo(object):
     def __init__(
         self,
-        robot_yaml_file_info: _CachedFileInfo,
-        conda_config_file_info: _CachedFileInfo,
-        env_json_path_file_info: Optional[_CachedFileInfo],
+        robot_yaml_file_info: ICachedFileInfo,
+        conda_config_file_infos: Sequence[ICachedFileInfo],
+        env_json_path_file_info: Optional[ICachedFileInfo],
         pm: PluginManager,
     ):
         from robocorp_ls_core.ep_providers import EPConfigurationProvider
@@ -109,7 +112,7 @@ class _CachedInterpreterInfo(object):
         from robocorp_code.commands import ROBOCORP_SHOW_INTERPRETER_ENV_ERROR
 
         self._mtime: _CachedInterpreterMTime = self._obtain_mtime(
-            robot_yaml_file_info, conda_config_file_info, env_json_path_file_info
+            robot_yaml_file_info, conda_config_file_infos, env_json_path_file_info
         )
 
         configuration_provider: EPConfigurationProvider = pm[EPConfigurationProvider]
@@ -117,6 +120,12 @@ class _CachedInterpreterInfo(object):
         rcc = Rcc(configuration_provider)
         interpreter_id = str(robot_yaml_file_info.file_path)
         progress_reporter = get_current_progress_reporter()
+        if len(conda_config_file_infos) == 1:
+            conda_file_paths = str(next(iter(conda_config_file_infos)).file_path)
+        else:
+            conda_file_paths = "\nand\n".join(
+                tuple(str(x.file_path) for x in conda_config_file_infos)
+            )
 
         def on_env_creation_error(result: RCCActionResult):
             import tempfile
@@ -133,11 +142,11 @@ Robocorp Code: environment creation cancelled
 
 The process to create the the environment for:
 
-"{conda_config_file_info.file_path}"
+"{conda_file_paths}"
 
 was cancelled.
 
-In this case, open "{conda_config_file_info.file_path}"
+In this case, open "{conda_file_paths}"
 and update the dependencies accordingly (after saving
 the environment will be automatically updated).
     
@@ -165,14 +174,14 @@ Robocorp Code: Unable to create environment
 
 There was an error creating the environment for:
 
-"{conda_config_file_info.file_path}"
+"{conda_file_paths}"
 
 The full output to diagnose the issue is shown below. 
 The most common reasons and fixes for this failure are:
 
 1. Dependencies specified are not resolvable.
     
-    In this case, open "{conda_config_file_info.file_path}"
+    In this case, open "{conda_file_paths}"
     and update the dependencies accordingly (after saving
     the environment will be automatically updated).
     
@@ -209,14 +218,13 @@ Full error message
                 ROBOCORP_SHOW_INTERPRETER_ENV_ERROR,
                 {
                     "fileWithError": str(f.name),
-                    "condaYaml": str(conda_config_file_info.file_path),
                 },
             )
 
         result = rcc.get_robot_yaml_env_info(
             robot_yaml_file_info.file_path,
-            conda_config_file_info.file_path,
-            conda_config_file_info.contents,
+            tuple(x.file_path for x in conda_config_file_infos),
+            tuple(x.contents for x in conda_config_file_infos),
             env_json_path_file_info.file_path
             if env_json_path_file_info is not None
             else None,
@@ -248,24 +256,30 @@ Full error message
 
     def _obtain_mtime(
         self,
-        robot_yaml_file_info: _CachedFileInfo,
-        conda_config_file_info: Optional[_CachedFileInfo],
-        env_json_path_file_info: Optional[_CachedFileInfo],
+        robot_yaml_file_info: ICachedFileInfo,
+        conda_config_file_infos: Optional[Sequence[ICachedFileInfo]],
+        env_json_path_file_info: Optional[ICachedFileInfo],
     ) -> _CachedInterpreterMTime:
-        return (
-            robot_yaml_file_info.mtime_info,
-            conda_config_file_info.mtime_info if conda_config_file_info else None,
-            env_json_path_file_info.mtime_info if env_json_path_file_info else None,
+        ret = [robot_yaml_file_info.mtime_info]
+        if not conda_config_file_infos:
+            # Try to keep backward compatible (as it was tuple(opt(mtime), opt(mtime), opt(mtime)), but with
+            # the support for multiple conda config files it became tuple(opt(mtime), opt(mtime), ... , opt(mtime)).
+            ret.append(None)
+        else:
+            ret.extend(x.mtime_info for x in conda_config_file_infos)
+        ret.append(
+            env_json_path_file_info.mtime_info if env_json_path_file_info else None
         )
+        return tuple(ret)
 
     def is_cache_valid(
         self,
-        robot_yaml_file_info: _CachedFileInfo,
-        conda_config_file_info: Optional[_CachedFileInfo],
-        env_json_path_file_info: Optional[_CachedFileInfo],
+        robot_yaml_file_info: ICachedFileInfo,
+        conda_config_file_infos: Optional[Sequence[ICachedFileInfo]],
+        env_json_path_file_info: Optional[ICachedFileInfo],
     ) -> bool:
         return self._mtime == self._obtain_mtime(
-            robot_yaml_file_info, conda_config_file_info, env_json_path_file_info
+            robot_yaml_file_info, conda_config_file_infos, env_json_path_file_info
         )
 
 
@@ -281,7 +295,7 @@ class _CacheInfo(object):
     _cache_hit_interpreter = 0  # Just for testing
 
     @classmethod
-    def get_file_info(cls, file_path: Path) -> _CachedFileInfo:
+    def get_file_info(cls, file_path: Path) -> ICachedFileInfo:
         file_info = cls._cached_file_info.get(file_path)
         if file_info is not None and file_info.is_cache_valid():
             cls._cache_hit_files += 1
@@ -295,16 +309,16 @@ class _CacheInfo(object):
     @classmethod
     def get_interpreter_info(
         cls,
-        robot_yaml_file_info: _CachedFileInfo,
-        conda_config_file_info: _CachedFileInfo,
-        env_json_path_file_info: Optional[_CachedFileInfo],
+        robot_yaml_file_info: ICachedFileInfo,
+        conda_config_file_infos: Sequence[ICachedFileInfo],
+        env_json_path_file_info: Optional[ICachedFileInfo],
         pm: PluginManager,
     ) -> IInterpreterInfo:
         interpreter_info: Optional[
             _CachedInterpreterInfo
         ] = cls._cached_interpreter_info.get(robot_yaml_file_info.file_path)
         if interpreter_info is not None and interpreter_info.is_cache_valid(
-            robot_yaml_file_info, conda_config_file_info, env_json_path_file_info
+            robot_yaml_file_info, conda_config_file_infos, env_json_path_file_info
         ):
 
             space_info = interpreter_info.robot_yaml_env_info.space_info
@@ -321,9 +335,14 @@ class _CacheInfo(object):
                     conda_id = Path(conda_prefix) / "identity.yaml"
                     space_info = interpreter_info.robot_yaml_env_info.space_info
                     if not space_info.matches_conda_identity_yaml(conda_id):
-                        log.critical(
-                            f"The conda contents in: {conda_id} no longer match the contents from {conda_config_file_info.file_path}."
-                        )
+                        if len(conda_config_file_infos) == 1:
+                            log.critical(
+                                f"The conda contents in: {conda_id} don't match the contents from {next(iter(conda_config_file_infos)).file_path}."
+                            )
+                        else:
+                            log.critical(
+                                f"The conda contents in: {conda_id} don't match the expected contents from merge of: {[x.file_path for x in conda_config_file_infos]}."
+                            )
                         ok = False
 
                 if ok:
@@ -347,7 +366,7 @@ class _CacheInfo(object):
                 robot_yaml_file_info.file_path
             ] = _CachedInterpreterInfo(
                 robot_yaml_file_info,
-                conda_config_file_info,
+                conda_config_file_infos,
                 env_json_path_file_info,
                 pm,
             )
@@ -481,6 +500,8 @@ class RobocorpResolveInterpreter(object):
     def _compute_base_interpreter_info_for_doc_uri(
         self, doc_uri
     ) -> Optional[IInterpreterInfo]:
+        from robocorp_code.rcc import obtain_robot_yaml_info_from_robot
+
         try:
             pm = self._pm()
             if pm is None:
@@ -509,49 +530,14 @@ class RobocorpResolveInterpreter(object):
                 return None
 
             # Ok, we have the robot_yaml, so, we should be able to run RCC with it.
-            try:
-                robot_yaml_file_info = _CacheInfo.get_file_info(robot_yaml)
-            except:
-                log.exception("Error collecting info from: %s", robot_yaml)
+            robot_yaml_info = obtain_robot_yaml_info_from_robot(robot_yaml)
+            if robot_yaml_info is None:
                 return None
-
-            yaml_contents = robot_yaml_file_info.yaml_contents
-            if not isinstance(yaml_contents, dict):
-                log.critical(f"Expected dict as root in: {robot_yaml}")
-                return None
-
-            conda_config = yaml_contents.get("condaConfigFile")
-            conda_config_file_info = None
-            env_json_path_file_info = None
-
-            if not conda_config:
-                log.critical("Could not find condaConfigFile in %s", robot_yaml)
-                return None
-
-            parent: Path = robot_yaml.parent
-            conda_config_path = parent / conda_config
-            if not conda_config_path.exists():
-                log.critical("conda.yaml does not exist in %s", conda_config_path)
-                return None
-
-            try:
-                conda_config_file_info = _CacheInfo.get_file_info(conda_config_path)
-            except:
-                log.exception("Error collecting info from: %s", conda_config_path)
-                return None
-
-            env_json_path = parent / "devdata" / "env.json"
-            if env_json_path.exists():
-                try:
-                    env_json_path_file_info = _CacheInfo.get_file_info(env_json_path)
-                except:
-                    log.exception("Error collecting info from: %s", env_json_path)
-                    return None
 
             return _CacheInfo.get_interpreter_info(
-                robot_yaml_file_info,
-                conda_config_file_info,
-                env_json_path_file_info,
+                robot_yaml_info.robot_yaml_file_info,
+                robot_yaml_info.conda_config_file_infos,
+                robot_yaml_info.env_json_path_file_info,
                 pm,
             )
 

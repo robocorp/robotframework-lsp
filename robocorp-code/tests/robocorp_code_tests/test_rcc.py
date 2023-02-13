@@ -253,17 +253,18 @@ def test_get_robot_yaml_environ(rcc: IRcc, datadir, holotree_manager):
     robot3_new_comment = _RobotInfo(datadir, "robot3_new_comment")
 
     space = holotree_manager.compute_valid_space_info(
-        robot1.conda_yaml, robot1.conda_yaml_contents
+        (robot1.conda_yaml,),
+        (robot1.conda_yaml_contents,),
     )
     assert space.space_name == "vscode-01"
 
     space = holotree_manager.compute_valid_space_info(
-        robot2.conda_yaml, robot2.conda_yaml_contents
+        (robot2.conda_yaml,), (robot2.conda_yaml_contents,)
     )
     assert space.space_name == "vscode-02"
 
     space = holotree_manager.compute_valid_space_info(
-        robot1.conda_yaml, robot1.conda_yaml_contents
+        (robot1.conda_yaml,), (robot1.conda_yaml_contents,)
     )
     assert space.space_name == "vscode-01"
 
@@ -273,8 +274,13 @@ def test_get_robot_yaml_environ(rcc: IRcc, datadir, holotree_manager):
     space_path_vscode02_conda: Path = (
         holotree_manager._directory / "vscode-02" / "conda.yaml"
     )
-    assert space_path_vscode01_conda.read_text("utf-8") == robot1.conda_yaml_contents
-    assert space_path_vscode02_conda.read_text("utf-8") == robot2.conda_yaml_contents
+
+    loaded_01 = json.loads(space_path_vscode01_conda.read_text("utf-8"))
+    loaded_02 = json.loads(space_path_vscode02_conda.read_text("utf-8"))
+    assert len(loaded_01) == 1
+    assert len(loaded_02) == 1
+    assert loaded_01[0] == robot1.conda_yaml_contents
+    assert loaded_02[0] == robot2.conda_yaml_contents
 
     assert (holotree_manager._directory / "vscode-01" / "state").read_text(
         "utf-8"
@@ -291,18 +297,20 @@ def test_get_robot_yaml_environ(rcc: IRcc, datadir, holotree_manager):
 
     with pytest.raises(UnableToGetSpaceName):
         holotree_manager.compute_valid_space_info(
-            robot1.conda_yaml, robot1.conda_yaml_contents, require_timeout=True
+            (robot1.conda_yaml,), (robot1.conda_yaml_contents,), require_timeout=True
         )
 
     # assert space_path_vscode01_conda.read_text("utf-8") == robot1.conda_yaml_contents
-    assert space_path_vscode02_conda.read_text("utf-8") == robot2.conda_yaml_contents
+    assert json.loads(space_path_vscode02_conda.read_text("utf-8")) == [
+        robot2.conda_yaml_contents
+    ]
 
     assert (holotree_manager._directory / "vscode-01" / "damaged").exists()
 
     # After the given timeout we can reuse the damaged one.
     time.sleep(TIMEOUT_TO_REUSE_SPACE + 0.01)
     space = holotree_manager.compute_valid_space_info(
-        robot1.conda_yaml, robot1.conda_yaml_contents
+        (robot1.conda_yaml,), (robot1.conda_yaml_contents,)
     )
     assert space.space_name == "vscode-01"
     assert (holotree_manager._directory / "vscode-01" / "state").read_text(
@@ -312,8 +320,8 @@ def test_get_robot_yaml_environ(rcc: IRcc, datadir, holotree_manager):
     for _ in range(2):
         result: ActionResult[IRobotYamlEnvInfo] = rcc.get_robot_yaml_env_info(
             robot1.robot_yaml,
-            robot1.conda_yaml,
-            robot1.conda_yaml_contents,
+            (robot1.conda_yaml,),
+            (robot1.conda_yaml_contents,),
             None,
             holotree_manager=holotree_manager,
         )
@@ -324,13 +332,13 @@ def test_get_robot_yaml_environ(rcc: IRcc, datadir, holotree_manager):
 
         space_info: IRCCSpaceInfo = robot_yaml_env_info.space_info
         with space_info.acquire_lock():
-            assert space_info.conda_contents_match(robot1.conda_yaml_contents)
+            assert space_info.conda_contents_match((robot1.conda_yaml_contents,))
 
     # Load robot 2 (without any timeout).
     result = rcc.get_robot_yaml_env_info(
         robot2.robot_yaml,
-        robot2.conda_yaml,
-        robot2.conda_yaml_contents,
+        (robot2.conda_yaml,),
+        (robot2.conda_yaml_contents,),
         None,
         holotree_manager=holotree_manager,
     )
@@ -341,13 +349,13 @@ def test_get_robot_yaml_environ(rcc: IRcc, datadir, holotree_manager):
 
     space_info = robot_yaml_env_info.space_info
     with space_info.acquire_lock():
-        assert space_info.conda_contents_match(robot2.conda_yaml_contents)
+        assert space_info.conda_contents_match((robot2.conda_yaml_contents,))
 
     # Load robot 3 (without any timeout: will pick up the least recently used).
     result = rcc.get_robot_yaml_env_info(
         robot3.robot_yaml,
-        robot3.conda_yaml,
-        robot3.conda_yaml_contents,
+        (robot3.conda_yaml,),
+        (robot3.conda_yaml_contents,),
         None,
         holotree_manager=holotree_manager,
     )
@@ -358,14 +366,14 @@ def test_get_robot_yaml_environ(rcc: IRcc, datadir, holotree_manager):
 
     space_info = robot_yaml_env_info.space_info
     with space_info.acquire_lock():
-        assert space_info.conda_contents_match(robot3.conda_yaml_contents)
+        assert space_info.conda_contents_match((robot3.conda_yaml_contents,))
 
     # Load robot 3 new comment: should be the same as robot3 as the contents
     # are the same.
     result_robot_3_new_comment = rcc.get_robot_yaml_env_info(
         robot3_new_comment.robot_yaml,
-        robot3_new_comment.conda_yaml,
-        robot3_new_comment.conda_yaml_contents,
+        (robot3_new_comment.conda_yaml,),
+        (robot3_new_comment.conda_yaml_contents,),
         None,
         holotree_manager=holotree_manager,
     )
@@ -397,8 +405,8 @@ def test_get_robot_yaml_environ_not_ok(rcc: IRcc, datadir, holotree_manager):
     bad_robot1 = _RobotInfo(datadir, "bad_robot1")
     result: ActionResult[IRobotYamlEnvInfo] = rcc.get_robot_yaml_env_info(
         bad_robot1.robot_yaml,
-        bad_robot1.conda_yaml,
-        bad_robot1.conda_yaml_contents,
+        (bad_robot1.conda_yaml,),
+        (bad_robot1.conda_yaml_contents,),
         None,
         holotree_manager=holotree_manager,
     )
@@ -413,8 +421,8 @@ def test_get_robot_yaml_environ_not_ok(rcc: IRcc, datadir, holotree_manager):
     # call rcc (it'll only be called if the yaml is changed).
     result = rcc.get_robot_yaml_env_info(
         bad_robot1.robot_yaml,
-        bad_robot1.conda_yaml,
-        bad_robot1.conda_yaml_contents,
+        (bad_robot1.conda_yaml,),
+        (bad_robot1.conda_yaml_contents,),
         None,
         holotree_manager=holotree_manager,
     )

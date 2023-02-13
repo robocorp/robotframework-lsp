@@ -23,7 +23,6 @@ import threading
 from robocorp_ls_core.protocols import IConfig
 from typing import Optional, List, Callable
 from pathlib import Path
-import traceback
 
 log = get_logger(__name__)
 
@@ -106,11 +105,11 @@ class LaunchProcess(object):
         from robocorp_ls_core.robotframework_log import get_log_level
         from robocorp_code.rcc import Rcc
         from robocorp_ls_core.config import Config
-        from robocorp_ls_core import yaml_wrapper
         from robocorp_ls_core.protocols import ActionResult
         from robocorp_code.protocols import IRobotYamlEnvInfo
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import OutputEvent
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import OutputEventBody
+        from robocorp_code.rcc import obtain_robot_yaml_info_from_robot
 
         self._weak_debug_adapter_comm = weakref.ref(debug_adapter_comm)
         self._valid = True
@@ -128,8 +127,8 @@ class LaunchProcess(object):
             launch_response.message = message
             self._valid = False
 
-        robot_yaml = request.arguments.kwargs.get("robot")
-        workspace_id = request.arguments.kwargs.get("workspaceId")
+        robot_yaml: Optional[str] = request.arguments.kwargs.get("robot")
+        workspace_id: Optional[str] = request.arguments.kwargs.get("workspaceId")
         self._terminal = request.arguments.kwargs.get("terminal", TERMINAL_INTEGRATED)
 
         task_name = request.arguments.kwargs.get("task", "")
@@ -164,6 +163,12 @@ class LaunchProcess(object):
         except:
             log.exception("Error")
             return mark_invalid("Error checking if robot (%s) exists." % (robot_yaml,))
+
+        robot_yaml_info = obtain_robot_yaml_info_from_robot(Path(robot_yaml))
+        if robot_yaml_info is None:
+            return mark_invalid(
+                f"Error loading environment information from {robot_yaml}. See OUTPUT for more details."
+            )
 
         self._cwd = os.path.dirname(robot_yaml)
         try:
@@ -202,8 +207,7 @@ class LaunchProcess(object):
 
             # Compute the space name
             try:
-                with open(robot_yaml, "r") as stream:
-                    yaml_contents = yaml_wrapper.load(stream)
+                yaml_contents = robot_yaml_info.robot_yaml_file_info.yaml_contents
             except:
                 log.exception(f"Error loading {robot_yaml} as yaml.")
                 return mark_invalid(f"Error loading {robot_yaml} as yaml.")
@@ -211,19 +215,7 @@ class LaunchProcess(object):
             if not isinstance(yaml_contents, dict):
                 return mark_invalid(f"Expected dict as root in: {robot_yaml}.")
 
-            conda_config = yaml_contents.get("condaConfigFile")
-            if not conda_config:
-                return mark_invalid(f"Could not find condaConfigFile in {robot_yaml}")
-            parent: Path = Path(robot_yaml).parent
-            conda_yaml_path = parent / conda_config
-            if not conda_yaml_path.exists():
-                return mark_invalid(f"conda.yaml does not exist in {conda_yaml_path}")
-
-            try:
-                conda_yaml_contents = conda_yaml_path.read_text("utf-8", "replace")
-            except:
-                log.exception(f"Error loading {conda_yaml_path} contents.")
-                return mark_invalid(f"Error loading {conda_yaml_path} contents.")
+            conda_config_file_infos = robot_yaml_info.conda_config_file_infos
 
             notify_event = threading.Event()
 
@@ -264,8 +256,8 @@ class LaunchProcess(object):
                     IRobotYamlEnvInfo
                 ] = rcc.get_robot_yaml_env_info(
                     Path(robot_yaml),
-                    conda_yaml_path,
-                    conda_yaml_contents,
+                    tuple(x.file_path for x in conda_config_file_infos),
+                    tuple(x.contents for x in conda_config_file_infos),
                     env_json_path if exists_env_json else None,
                 )
             finally:
