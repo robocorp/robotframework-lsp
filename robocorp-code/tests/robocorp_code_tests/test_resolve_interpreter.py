@@ -3,6 +3,8 @@ import weakref
 from robocorp_ls_core.protocols import IConfigProvider
 import os.path
 import io
+import pytest
+import sys
 
 
 def test_resolve_interpreter_relocate_robot_root(
@@ -248,3 +250,58 @@ def test_resolve_interpreter(
 
     stat2 = recycle_file.stat()
     assert stat.st_mtime < stat2.st_mtime
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Expectations require windows.")
+def test_match_conda_config_path(datadir):
+    from robocorp_code.plugins.resolve_interpreter import get_conda_config_path
+    from pathlib import Path
+
+    robot_yaml = Path(datadir / "robot_envconfig" / "robot.yaml")
+    parent = robot_yaml.parent
+
+    assert (
+        get_conda_config_path(
+            parent, robot_yaml, {"condaConfigFile": "conda.yaml"}
+        ).name
+        == "conda.yaml"
+    )
+
+    assert (
+        get_conda_config_path(
+            parent,
+            robot_yaml,
+            {
+                "condaConfigFile": "conda.yaml",
+                "environmentConfigs": ["conda2.yaml"],
+            },
+        ).name
+        == "conda2.yaml"
+    )
+
+    assert (
+        get_conda_config_path(
+            parent,
+            robot_yaml,
+            {
+                "condaConfigFile": "conda.yaml",
+                "environmentConfigs": ["conda2_linux.yaml", "conda2.yaml"],
+            },
+        ).name
+        == "conda2.yaml"
+    )
+
+    assert (
+        get_conda_config_path(
+            parent,
+            robot_yaml,
+            {
+                "condaConfigFile": "conda.yaml",
+                "environmentConfigs": [
+                    "conda.yaml",
+                    "environment_windows_amd64_freeze.yaml",
+                ],
+            },
+        ).name
+        == "conda.yaml"
+    )

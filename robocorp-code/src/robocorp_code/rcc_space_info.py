@@ -75,6 +75,15 @@ class RCCSpaceInfo:
         return self.space_path / "pid"
 
     def load_last_usage(self, none_if_not_found: bool = False) -> Optional[float]:
+        target = self.space_path / f"time_touch"
+        if target.exists():
+            last_usage = target.stat().st_mtime
+            self.last_usage = last_usage
+            return last_usage
+
+        # Old code (the code used to write 'time_timespamp' i.e.: time_9302943342
+        # but it's now upgraded to use a `time_touch` file which is just touched
+        # to upgrade the time).
         found = []
         for entry in os.scandir(self.space_path):
             if entry.name.startswith("time_"):
@@ -108,9 +117,9 @@ class RCCSpaceInfo:
         return last_usage
 
     def update_last_usage(self) -> float:
-        last_usage = time.time()
-        target = self.space_path / f"time_{last_usage}"
-        write_text(target, "", "utf-8")
+        target = self.space_path / f"time_touch"
+        target.touch()
+        last_usage = target.stat().st_mtime
         self.last_usage = last_usage
         return last_usage
 

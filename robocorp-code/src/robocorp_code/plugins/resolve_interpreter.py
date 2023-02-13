@@ -567,7 +567,7 @@ def get_conda_config_path(
             # The arch is tricky. For instance, in Mac, the user would like to
             # have the target in aarch64 or amd64? It may not match the flavor
             # of the binary we're in and not even the processor... Should
-            # this be specified in the robot? For now we simple don't filter
+            # this be specified in the robot? For now we simply don't filter
             # through the arch.
 
             if sys.platform == "win32":
@@ -581,7 +581,14 @@ def get_conda_config_path(
 
             for conda_env_conf in environments_config:
                 if plat not in conda_env_conf:
-                    continue
+
+                    import re
+
+                    m = re.match(".*(windows|darwin|linux).*", conda_env_conf)
+                    if m:
+                        continue
+
+                    # It doesn't have any platform to match (so, it matches any platform).
 
                 p = parent / conda_env_conf
                 try:
