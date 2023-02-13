@@ -1,3 +1,9 @@
+New in 1.1.3 (2023-02-13)
+-----------------------------
+
+- `environmentConfigs` is now properly used in `Robocorp Code` (so, it's possible to use conda freeze files).
+
+
 New in 1.1.0 (2023-02-03)
 -----------------------------
 
