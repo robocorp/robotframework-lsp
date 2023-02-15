@@ -13,7 +13,7 @@ import {
     verifyFileExists,
     writeToFile,
 } from "./files";
-import { download } from "./rcc";
+import { download, feedback, Metrics } from "./rcc";
 import { basename, join } from "path";
 import { logError, OUTPUT_CHANNEL } from "./channel";
 import { TextDecoder } from "util";
@@ -196,6 +196,8 @@ export async function convertAndSaveResults(
     // /output_folder/converted-uipath-1/generated
 
     const cleanups = [];
+
+    feedback(Metrics.CONVERTER_USED, opts.inputType);
 
     try {
         let nextBasename: string;
