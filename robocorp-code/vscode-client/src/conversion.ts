@@ -431,6 +431,8 @@ export async function convertAndSaveResults(
                     if (!isSuccessful(conversionResult)) {
                         const message = (<ConversionFailure>conversionResult).error;
                         logError("Error converting file to Robocorp Robot", new Error(message), "EXT_CONVERT_PROJECT");
+                        feedback(Metrics.CONVERTER_ERROR, command.vendor);
+
                         return {
                             "success": false,
                             "message": message,
