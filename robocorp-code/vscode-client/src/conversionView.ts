@@ -6,7 +6,7 @@ import { readFileSync } from "fs";
 import { dirname } from "path";
 import * as vscode from "vscode";
 import { logError } from "./channel";
-import { ensureConvertBundle, convertAndSaveResults, RPATypes, RPA_TYPE_TO_CAPTION } from "./conversion";
+import { ensureConvertBundle, convertAndSaveResults, RPATypes, RPA_TYPE_TO_CAPTION, getConverterVersion } from "./conversion";
 import { getExtensionRelativeFile } from "./files";
 
 interface ConversionInfoLastOptions {
@@ -23,6 +23,7 @@ interface ConversionInfo {
     outputFolder: string;
     apiFolder: string;
     typeToLastOptions: Map<RPATypes, ConversionInfoLastOptions>;
+    latestVersion: string;
 }
 
 let panel: vscode.WebviewPanel | undefined = undefined;
@@ -33,13 +34,14 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
         pathToExecutable: string;
         pathToConvertYaml?: string;
     }> = ensureConvertBundle();
+    const converterVersion = await getConverterVersion();
 
     globalState = context.globalState;
 
     if (!panel) {
         panel = vscode.window.createWebviewPanel(
             "robocorpCodeConvert",
-            "Conversion Accelerator",
+            `Conversion Accelerator v${converterVersion}`,
             vscode.ViewColumn.One,
             {
                 enableScripts: true,
@@ -84,7 +86,7 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
         "generationResults": "",
         "outputFolder": outputFolder,
         "apiFolder": apiFolder,
-
+        "latestVersion": "testme",
         "typeToLastOptions": typeToLastOptions,
     };
 
