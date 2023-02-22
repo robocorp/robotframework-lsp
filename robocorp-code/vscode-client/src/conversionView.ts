@@ -65,7 +65,6 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
     let ws: vscode.WorkspaceFolder;
     let outputFolder = "";
     let apiFolder = "";
-    const latestVersion = await getConverterVersion();
     if (wsFolders !== undefined && wsFolders.length >= 1) {
         ws = wsFolders[0];
         outputFolder = ws.uri.fsPath;
@@ -93,7 +92,7 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
         "generationResults": "",
         "outputFolder": outputFolder,
         "apiFolder": apiFolder,
-        "latestVersion": latestVersion,
+        "latestVersion": converterVersion,
         "typeToLastOptions": typeToLastOptions,
     };
 
@@ -109,7 +108,7 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
 
         // backward compatibility
         if (conversionInfo.latestVersion === undefined) {
-            conversionInfo.latestVersion = latestVersion;
+            conversionInfo.latestVersion = converterVersion;
         }
 
         if (conversionInfo.typeToLastOptions[RPATypes.aav11] === undefined) {
