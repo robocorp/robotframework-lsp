@@ -236,12 +236,19 @@
             outputFolderText.value = globalConversionInfo.outputFolder;
         }
 
+        function updateUiVersion() {
+            const versionSpan = document.getElementById("version");
+            versionSpan.textContent = globalConversionInfo.latestVersion;
+
+        }
+
         function updateUIAllFromData() {
             updateUITypeFromData();
             updateUIConversionResultFromData();
             updateUIFilesFromData();
             updateUIOutputFolderFromData();
             updateUIApiFolderFromData();
+            updateUiVersion();
 
             // The UI has just been updated, so, it's Ok to update one UI setting
             // from another UI setting...
@@ -538,7 +545,7 @@
         <div id="root">
             <br />
             <div>Conversion Accelerator from Third party RPA to Robocorp Robot<br /><br /></div>
-            <div>Version: TODO<br /><br /></div>
+            <div>Version: <span id="version"></span><br /><br /></div>
             <div>
                 Note: before starting a conversion it's strongly suggested that you:
                 <ul>
@@ -667,5 +674,6 @@
             globalConversionInfo = JSON.parse(data);
         }
         updateUIAllFromData();
+
     </script>
 </html>
