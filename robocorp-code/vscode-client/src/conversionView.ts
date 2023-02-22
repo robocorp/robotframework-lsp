@@ -6,7 +6,13 @@ import { readFileSync } from "fs";
 import { dirname } from "path";
 import * as vscode from "vscode";
 import { logError } from "./channel";
-import { ensureConvertBundle, convertAndSaveResults, RPATypes, RPA_TYPE_TO_CAPTION, getConverterVersion } from "./conversion";
+import {
+    ensureConvertBundle,
+    convertAndSaveResults,
+    RPATypes,
+    RPA_TYPE_TO_CAPTION,
+    getConverterVersion,
+} from "./conversion";
 import { getExtensionRelativeFile } from "./files";
 
 interface ConversionInfoLastOptions {

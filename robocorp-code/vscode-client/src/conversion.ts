@@ -53,8 +53,8 @@ export async function conversionMain(converterBundle, command: RPAConversionComm
 export const getConverterVersion = async (): Promise<string> => {
     const currentVersionLocation = getExtensionRelativeFile("../../vscode-client/out/converterBundle.version", false);
     const currentVersion = await readFromFile(currentVersionLocation);
-    return currentVersion ? currentVersion.split(',')[0] : 'undefined';
-}
+    return currentVersion ? currentVersion.split(",")[0] : "undefined";
+};
 
 export const getConverterBundleVersion = async (): Promise<{
     currentVersion?: string;
