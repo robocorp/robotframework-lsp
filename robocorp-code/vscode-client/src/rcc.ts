@@ -15,6 +15,12 @@ import { GLOBAL_STATE } from "./extension";
 
 let lastPrintedRobocorpHome: string = "";
 
+export enum Metrics {
+    VSCODE_CODE_ERROR = "vscode.code.error",
+    CONVERTER_USED = "vscode.converter.used",
+    CONVERTER_ERROR = "vscode.converter.error",
+}
+
 export async function getRobocorpHome(): Promise<string> {
     let robocorpHome: string = roboConfig.getHome();
     if (!robocorpHome || robocorpHome.length == 0) {
@@ -566,7 +572,7 @@ export async function feedback(name: string, value: string = "+1") {
 }
 
 export async function feedbackRobocorpCodeError(errorCode: string) {
-    await feedbackAnyError("vscode.code.error", errorCode);
+    await feedbackAnyError(Metrics.VSCODE_CODE_ERROR, errorCode);
 }
 
 const reportedErrorCodes = new Set();
@@ -574,19 +580,19 @@ const reportedErrorCodes = new Set();
 /**
  * Submit feedback on some predefined error code.
  *
- * @param errorSource Something as "vscode.code.error"
+ * @param errorType Something as "vscode.code.error"
  * @param errorCode The error code to be shown.
  */
-export async function feedbackAnyError(errorSource: string, errorCode: string) {
+export async function feedbackAnyError(errorType: string, errorCode: string) {
     // Make sure that only one error is reported per error code.
-    const errorCodeKey = `${errorSource}.${errorCode}`;
+    const errorCodeKey = `${errorType}.${errorCode}`;
     if (reportedErrorCodes.has(errorCodeKey)) {
         return;
     }
     reportedErrorCodes.add(errorCodeKey);
 
     const rccLocation = await getRccLocation();
-    let args: string[] = ["feedback", "metric", "-t", "vscode", "-n", errorSource, "-v", errorCode];
+    let args: string[] = ["feedback", "metric", "-t", "vscode", "-n", errorType, "-v", errorCode];
 
     const robocorpHome = await getRobocorpHome();
     const env = createEnvWithRobocorpHome(robocorpHome);
