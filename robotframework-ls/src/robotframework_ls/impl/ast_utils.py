@@ -1881,14 +1881,12 @@ def iter_expression_variables(
 
 
 class RobotMatchTokensGenerator:
-    def __init__(self, token, default_type):
+    def __init__(self, token, default_type: str):
         self.default_type = default_type
         self.token = token
         self.last_gen_end_offset = 0
 
-    def gen_default_type(
-        self, until_offset: int
-    ) -> Iterable[Tuple[IRobotToken, AdditionalVarInfo]]:
+    def gen_type(self, op_type: str, until_offset: int):
         token = self.token
         if until_offset > self.last_gen_end_offset:
             from robot.api import Token
@@ -1897,7 +1895,7 @@ class RobotMatchTokensGenerator:
             if val.strip():  # Don't generate just for whitespaces.
                 yield (
                     Token(
-                        self.default_type,
+                        op_type,
                         val,
                         token.lineno,
                         token.col_offset + self.last_gen_end_offset,
@@ -1906,6 +1904,11 @@ class RobotMatchTokensGenerator:
                     AdditionalVarInfo(),
                 )
             self.last_gen_end_offset = until_offset
+
+    def gen_default_type(
+        self, until_offset: int
+    ) -> Iterable[Tuple[IRobotToken, AdditionalVarInfo]]:
+        yield from self.gen_type(self.default_type, until_offset)
 
     def gen_tokens_from_robot_match(
         self,
@@ -2007,20 +2010,32 @@ class RobotMatchTokensGenerator:
             yield from iter(subvar_tokens)
 
         j = i + len(base)
+        self.last_gen_end_offset = j
 
-        val = token.value[j : robot_match.end + last_relative_index]
-        yield (
-            Token(
-                op_type,
-                val,
-                token.lineno,
-                token.col_offset + j,
-                token.error,
-            ),
-            AdditionalVarInfo(),
-        )
+        for item in robot_match.items:
+            item_index = token.value.find(item, self.last_gen_end_offset)
+            if item_index >= 0:
+                if "{" in item:
 
-        self.last_gen_end_offset = j + len(val)
+                    yield from self.gen_type(op_type, item_index)
+
+                    subvar_tokens = tuple(
+                        _tokenize_subvars_tokens(
+                            Token(
+                                Token.VARIABLE,
+                                item,
+                                token.lineno,
+                                token.col_offset + item_index,
+                                token.error,
+                            ),
+                            op_type,
+                            var_type,
+                        )
+                    )
+
+                    yield from iter(subvar_tokens)
+
+        yield from self.gen_type(op_type, robot_match.end + last_relative_index)
 
 
 def _gen_tokens_in_py_expr(

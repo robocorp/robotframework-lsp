@@ -99,6 +99,7 @@ Non-existing variable
 Non-existing index variable
     [Documentation]    FAIL Variable '\${nonex key}' not found.
     Log    ${DICT}[${nonex key}]
+#!                   ^^^^^^^^^ Undefined variable: nonex key
 
 Non-dict variable
     [Documentation]    FAIL

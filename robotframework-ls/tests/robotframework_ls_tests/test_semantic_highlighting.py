@@ -1401,6 +1401,29 @@ Test case 1
     )
 
 
+def test_semantic_var_in_subscript(workspace):
+    check_simple(
+        workspace,
+        """
+*** Test Cases ***
+My test
+    Log    ${dict}[${key}]
+""",
+        [
+            ("*** Test Cases ***", "header"),
+            ("My test", "testCaseName"),
+            ("Log", "keywordNameCall"),
+            ("${", "variableOperator"),
+            ("dict", "variable"),
+            ("}[", "variableOperator"),
+            ("${", "variableOperator"),
+            ("key", "variable"),
+            ("}", "variableOperator"),
+            ("]", "variableOperator"),
+        ],
+    )
+
+
 def test_semantic_unicode(workspace):
     from robotframework_ls.impl.semantic_tokens import semantic_tokens_full
     from robotframework_ls.impl.completion_context import CompletionContext

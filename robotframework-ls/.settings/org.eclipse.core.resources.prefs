@@ -1,4 +1,5 @@
 eclipse.preferences.version=1
 encoding//.settings/org.python.pydev.yaml=UTF-8
+encoding//src/robotframework_debug_adapter/vendored/vendored_pydevd/tests_python/test_debugger.py=utf-8
 encoding//tests/robotframework_debug_adapter_tests/fixtures.py=utf-8
 encoding//tests/robotframework_ls_tests/fixtures.py=utf-8

@@ -502,3 +502,30 @@ Some Keyword
 
     result = references(completion_context, include_declaration=True)
     check_data_regression(result, data_regression)
+
+
+def test_references_dictionary(workspace, libspec_manager, data_regression):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.impl.references import references
+
+    workspace.set_root("case2", libspec_manager=libspec_manager, index_workspace=True)
+
+    doc, selected_range = workspace.put_doc_get_line_col(
+        "case2.robot",
+        """
+*** Test Cases ***
+My test
+    ${key}=    Set Variable    key
+    ${dict}=    Create Dictionary    ${ke|y}=value
+    Log    ${dict}[${key}]
+""",
+    )
+    line, col = selected_range.get_end_line_col()
+
+    completion_context = CompletionContext(
+        doc, workspace=workspace.ws, line=line, col=col
+    )
+
+    result = references(completion_context, include_declaration=True)
+    assert len(result) == 3
+    check_data_regression(result, data_regression)

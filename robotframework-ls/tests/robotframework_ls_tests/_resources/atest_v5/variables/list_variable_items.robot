@@ -152,6 +152,7 @@ Non-existing variable
 Non-existing index variable
     [Documentation]    FAIL Variable '\${nonex index}' not found.
     Log    ${LIST}[${nonex index}]
+#!                   ^^^^^^^^^^^ Undefined variable: nonex index
 
 Non-subscriptable variable
     [Documentation]    FAIL

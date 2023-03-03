@@ -65,6 +65,7 @@ Access Scalar In List With Typo In Index
     [Documentation]    FAIL    Variable '${STRENG}' not found. Did you mean:
     ...    ${INDENT}\${STRING}
     Log    @{LIST}[${STRENG}]
+#!                   ^^^^^^ Undefined variable: STRENG
 
 Long Garbage Variable
     [Documentation]    FAIL    Variable '${dEnOKkgGlYBHwotU2bifJ56w487jD2NJxCrcM62g}' not found.

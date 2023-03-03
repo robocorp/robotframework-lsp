@@ -1245,7 +1245,7 @@ Attribute access
 """
 
     config = RobotConfig()
-    config.update({"robot.lint.ignoreVariables": ["user", "dict"]})
+    config.update({"robot.lint.ignoreVariables": ["user", "dict", "key"]})
     _collect_errors(workspace, doc, data_regression, config=config, basename="no_error")
 
 
