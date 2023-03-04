@@ -33,14 +33,19 @@ class _Collector(AbstractVariablesCollector):
         in_expression: bool,
         tokens_and_matchers,
         in_assign: bool,
-        add_dollar: bool,
+        add_prefix: Optional[str],
     ):
 
         self.completion_items: List[CompletionItemTypedDict] = []
         self.selection = selection
         self.in_expression = in_expression
         self._in_assign = in_assign
-        self._add_dollar = add_dollar
+        if add_prefix:
+            self._add_prefix_label: Optional[str] = add_prefix
+            self._add_prefix_text: Optional[str] = add_prefix.replace("$", "\\$")
+        else:
+            self._add_prefix_label = self._add_prefix_text = None
+
         self._tokens_and_matchers = tokens_and_matchers
 
     def _create_completion_item_from_variable(
@@ -67,12 +72,12 @@ class _Collector(AbstractVariablesCollector):
         text = label
         text = text.replace("$", "\\$")
 
-        if self._add_dollar:
-            label = "$" + label
+        if self._add_prefix_label:
+            label = self._add_prefix_label + label
             if self.in_expression:
-                text = r"\$" + text
+                text = r"%s%s" % (self._add_prefix_text, text)
             else:
-                text = r"\${%s}" % (text,)
+                text = r"%s{%s}" % (self._add_prefix_text, text)
 
         text_edit = TextEdit(
             Range(
@@ -525,7 +530,7 @@ def complete(completion_context: ICompletionContext) -> List[CompletionItemTyped
             in_expression,
             [(var_token_info.token, RobotStringMatcher(value))],
             in_assign,
-            add_dollar=False,
+            add_prefix=None,
         )
         only_current_doc = False
         if in_assign:
@@ -575,18 +580,45 @@ def complete(completion_context: ICompletionContext) -> List[CompletionItemTyped
         tokens_and_matchers = [(token, RobotStringMatcher(token.value))]
 
         word = word_to_column(cp.value)
+        add_prefix = "$"
+
         if word != cp.value:
-            cp = ast_utils.copy_token_with_subpart(
-                cp, len(cp.value) - len(word), len(cp.value)
-            )
-            tokens_and_matchers.append((cp, RobotStringMatcher(cp.value)))
+            i = cp.value.rfind(word)
+
+            word_starts_with_variable_prefix = False
+            if i > 0:
+                c = cp.value[i - 1]
+                if c == "$":
+                    add_prefix = "$"
+                    word_starts_with_variable_prefix = True
+
+                elif c == "@":
+                    add_prefix = "@"
+                    word_starts_with_variable_prefix = True
+
+                elif c == "&":
+                    add_prefix = "&"
+                    word_starts_with_variable_prefix = True
+
+            if word_starts_with_variable_prefix:
+                # The token must have the '$' part but the string matcher not (so
+                # add the -1 to add it and skip it afterwards).
+                cp = ast_utils.copy_token_with_subpart(
+                    cp, len(cp.value) - len(word) - 1, len(cp.value)
+                )
+                tokens_and_matchers.append((cp, RobotStringMatcher(cp.value[1:])))
+            else:
+                cp = ast_utils.copy_token_with_subpart(
+                    cp, len(cp.value) - len(word), len(cp.value)
+                )
+                tokens_and_matchers.append((cp, RobotStringMatcher(cp.value)))
 
         collector = _Collector(
             completion_context.sel,
             in_expression,
             tokens_and_matchers,
             in_assign=False,
-            add_dollar=True,
+            add_prefix=add_prefix,
         )
         collect_variables(completion_context, collector, only_current_doc=False)
         return collector.completion_items

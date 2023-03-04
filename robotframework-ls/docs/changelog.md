@@ -5,6 +5,12 @@ NEXT
 
 - `robotfamework-output-stream` updated to `0.0.6`. It now has functionality to hide sensitive data.
     See: https://github.com/robocorp/robotframework-output-stream/blob/master/docs/handling_sensitive_data.md
+- Variables in variable subscript are now properly found. [#889](https://github.com/robocorp/robotframework-lsp/issues/889)
+
+
+### Bugfixes
+
+- If the user completes something as `$var`, complete to `${variable}` instead of `$${variable}`.
 
 
 New in 1.9.0 (2023-02-03)

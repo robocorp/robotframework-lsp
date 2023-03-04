@@ -1,5 +1,6 @@
 import pytest
 from robotframework_ls.impl.robot_version import get_robot_major_version
+from .common import apply_completion
 
 
 @pytest.mark.skipif(
@@ -757,3 +758,71 @@ My Test
         CompletionContext(doc, workspace=workspace.ws, line=line, col=col)
     )
     assert not completions
+
+
+def test_complete_with_variable_prefix_regular(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.server_api.server import complete_all
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc, selected_range = workspace.put_doc_get_line_col(
+        "case2.robot",
+        """
+*** Test Cases ***
+My Test
+    ${variable1}=    Set Variable    c:/temp/my.json
+    Keyword    $vari|   another
+""",
+    )
+
+    line, col = selected_range.get_end_line_col()
+    completions = complete_all(
+        CompletionContext(doc, workspace=workspace.ws, line=line, col=col)
+    )
+    assert completions
+    assert len(completions) == 1
+    assert completions[0]["label"] == "$variable1"
+    apply_completion(doc, completions[0], False)
+    assert (
+        doc.source
+        == """
+*** Test Cases ***
+My Test
+    ${variable1}=    Set Variable    c:/temp/my.json
+    Keyword    \\${variable1}   another
+"""
+    )
+
+
+def test_complete_with_variable_prefix_list(workspace, libspec_manager):
+    from robotframework_ls.impl.completion_context import CompletionContext
+    from robotframework_ls.server_api.server import complete_all
+
+    workspace.set_root("case2", libspec_manager=libspec_manager)
+    doc, selected_range = workspace.put_doc_get_line_col(
+        "case2.robot",
+        """
+*** Test Cases ***
+My Test
+    ${variable1}=    Set Variable    c:/temp/my.json
+    Keyword    @vari|   another
+""",
+    )
+
+    line, col = selected_range.get_end_line_col()
+    completions = complete_all(
+        CompletionContext(doc, workspace=workspace.ws, line=line, col=col)
+    )
+    assert completions
+    assert len(completions) == 1
+    assert completions[0]["label"] == "@variable1"
+    apply_completion(doc, completions[0], False)
+    assert (
+        doc.source
+        == """
+*** Test Cases ***
+My Test
+    ${variable1}=    Set Variable    c:/temp/my.json
+    Keyword    @{variable1}   another
+"""
+    )
