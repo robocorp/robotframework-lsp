@@ -13,7 +13,7 @@ if __file__.endswith((".pyc", ".pyo")):
 LOG_FORMAT = "ROBOT: %(asctime)s UTC pid: %(process)d - %(threadName)s - %(levelname)s - %(name)s\n%(message)s\n\n"
 
 
-def connect(port):
+def connect(port: int) -> socket_module.socket:
     from robotframework_ls.options import DEFAULT_TIMEOUT
     from robotframework_ls.impl.robot_lsp_constants import ENV_OPTION_ROBOT_DAP_TIMEOUT
     from robocorp_ls_core.robotframework_log import get_logger
@@ -605,7 +605,7 @@ def main():
         "--listener=robotframework_debug_adapter.listeners.DebugListenerV2",
     ] + robot_args
 
-    s = connect(port)
+    s: socket_module.socket = connect(port)
 
     if debug:
         if LOG_FILENAME:

@@ -213,3 +213,66 @@ def test_debug_adapter_threaded(
     if writer is not None:
         writer.join(2)
         assert not writer.is_alive(), "Expected writer to have exited already."
+
+
+def test_debug_adapter_threaded_remote_connect(
+    debugger_api_core, dap_log_file, robot_thread, dap_logs_dir
+):
+    """
+    This is an example on how to setup the debugger structure in-memory but
+    still talking through the DAP instead of using the core APIs.
+
+    debugger_api_core: helper to get file to run / compute breakpoint position.
+    dap_log_file: a place to store logs.
+    robot_thread: helper run robot in a thread.
+    dap_logs_dir: another api to store the logs needed.
+    """
+    import robotframework_ls
+    from robotframework_debug_adapter_tests.fixtures import dbg_wait_for
+    from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import (
+        STOP_WRITER_THREAD,
+    )
+
+    robotframework_ls.import_robocorp_ls_core()
+
+    # Configure the logger
+    from robocorp_ls_core.robotframework_log import configure_logger
+
+    reader, writer = None, None
+
+    with configure_logger("robot", 3, dap_log_file):
+
+        # i.e: create the server socket which will wait for the debugger connection.
+        client_thread = _ClientThread()
+        try:
+            client_thread.start()
+            address = client_thread.get_address()
+
+            target = debugger_api_core.get_dap_case_file("case_remote.robot")
+            debugger_api_core.target = target
+
+            # Actually run it (do it in a thread so that we can verify
+            # things on this thread).
+            robot_thread.run_target(
+                target,
+                [
+                    "--variable",
+                    f"host:{address[0]}",
+                    "--variable",
+                    f"port:{address[1]}",
+                ],
+            )
+            assert client_thread.started.wait(2)
+            line = debugger_api_core.get_line_index_with_content("Log    Something")
+
+            json_hit = client_thread.debugger_api.wait_for_thread_stopped(
+                file=target, line=line
+            )
+            client_thread.debugger_api.continue_event(json_hit.thread_id)
+            dbg_wait_for(
+                lambda: robot_thread.result_code is not None,
+                msg="Robot execution did not finish properly.",
+            )
+        finally:
+            # Upon finish the client should close the sockets to finish the readers.
+            client_thread.finish.set()

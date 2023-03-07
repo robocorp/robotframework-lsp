@@ -66,6 +66,11 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
         debugConfiguration: DebugConfiguration,
         token?: CancellationToken
     ): Promise<DebugConfiguration> {
+        if (debugConfiguration.request === "attach") {
+            // "attach" is simple here: just use as is, there should be nothing to resolve.
+            return debugConfiguration;
+        }
+
         // When we resolve a configuration we add the pythonpath and variables to the command line.
         let args: Array<string> = debugConfiguration.args;
         let config = workspace.getConfiguration("robot");
@@ -276,8 +281,14 @@ export function registerDebugger() {
 
         debug.registerDebugAdapterDescriptorFactory("robotframework-lsp", {
             createDebugAdapterDescriptor: (session) => {
-                let env = session.configuration.env;
-                let target = session.configuration.target;
+                if (session.configuration.request === "attach") {
+                    return new vscode.DebugAdapterServer(
+                        session.configuration.connect.port,
+                        session.configuration.connect.host ?? "127.0.0.1"
+                    );
+                }
+                const env = session.configuration.env;
+                const target = session.configuration.target;
                 return createDebugAdapterExecutable(env, target);
             },
         });

@@ -32,7 +32,7 @@ _critical_error_log_file = os.path.join(
 )
 
 
-def main():
+def main(mode="stdio", port=4352):
     """
     Starts the debug adapter (creates a thread to read from stdin and another to write to stdout as
     expected by the vscode debug protocol).
@@ -40,6 +40,25 @@ def main():
     We pass the command processor to the reader thread as the idea is that the reader thread will
     read a message, convert it to an instance of the message in the schema and then forward it to
     the command processor which will interpret and act on it, posting the results to the writer queue.
+
+    Note: there are 2 modes of operation: `stdio` and `tcp`.
+
+    The `stdio` mode is meant to be used on `launch` requests, in which
+    case the target program will still be launched.
+
+    This is something as:
+
+        1. VSCode (launches) -> launch adapter
+        2. launch adapter (launches) -> robot/python target
+
+    The `tcp` mode is meant to be used on `attach` requests. In this mode it has to
+    do wait for the incoming connection from the client (VSCode) and must also connect
+    to the debugger in a separate port (as it's
+
+    This is something as:
+
+        launch adapter (connects to) -> robot/python target
+        VSCode (connects to) ->
     """
 
     def close_logging_streams():
@@ -96,20 +115,25 @@ def main():
         to_client_queue = Queue()
         comm = DebugAdapterComm(to_client_queue)
 
-        write_to = sys.stdout
-        read_from = sys.stdin
-
-        if sys.version_info[0] <= 2:
-            if sys.platform == "win32":
-                # must read streams as binary on windows
-                import msvcrt
-
-                msvcrt.setmode(sys.stdin.fileno(), os.O_BINARY)
-                msvcrt.setmode(sys.stdout.fileno(), os.O_BINARY)
-        else:
-            # Py3
+        if mode == "stdio":
             write_to = sys.stdout.buffer
             read_from = sys.stdin.buffer
+        else:
+            assert mode == "tcp"
+            import socket
+
+            server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            server_socket.bind(("127.0.0.1", port))
+            # if port was 0 we now have the set port.
+            port = server_socket.getsockname()[1]
+
+            # Only one client connection accepted.
+            server_socket.listen(1)
+            socket, _addr = server_socket.accept()
+
+            read_from = socket.makefile("rb")
+            write_to = socket.makefile("wb")
 
         writer = threading.Thread(
             target=writer_thread,

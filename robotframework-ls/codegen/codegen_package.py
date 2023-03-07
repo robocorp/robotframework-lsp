@@ -248,7 +248,28 @@ def get_json_contents():
                                     "default": "integrated",
                                 },
                             }
-                        }
+                        },
+                        "attach": {
+                            "properties": {
+                                "connect": {
+                                    "label": "Attach by connecting to the debugger listening on the expected host/port.",
+                                    "properties": {
+                                        "host": {
+                                            "description": "Hostname or IP address to connect to.",
+                                            "type": "string",
+                                            "default": "127.0.0.1",
+                                        },
+                                        "port": {
+                                            "description": "Port to connect to.",
+                                            "type": "number",
+                                            "default": 4352,
+                                        },
+                                    },
+                                    "type": "object",
+                                    "required": ["port"],
+                                },
+                            }
+                        },
                     },
                     "configurationSnippets": [
                         {

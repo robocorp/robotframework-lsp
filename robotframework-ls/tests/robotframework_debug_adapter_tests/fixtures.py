@@ -660,6 +660,7 @@ class RunRobotThread(threading.Thread):
     def __init__(self, dap_logs_dir):
         threading.Thread.__init__(self)
         self.target = None
+        self.arguments = ()
         self.dap_logs_dir = dap_logs_dir
         self.result_code = None
         self.result_event = threading.Event()
@@ -672,14 +673,16 @@ class RunRobotThread(threading.Thread):
                 "--outputdir=%s" % (self.dap_logs_dir,),
                 "--listener=robotframework_debug_adapter.listeners.DebugListener",
                 "--listener=robotframework_debug_adapter.listeners.DebugListenerV2",
-                self.target,
-            ],
+            ]
+            + self.arguments
+            + [self.target],
             exit=False,
         )
         self.result_code = code
 
-    def run_target(self, target):
+    def run_target(self, target, arguments=()):
         self.target = target
+        self.arguments = arguments
         self.start()
 
 
