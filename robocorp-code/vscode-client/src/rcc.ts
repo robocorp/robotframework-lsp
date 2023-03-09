@@ -142,16 +142,16 @@ function getBaseAsZipBasename() {
     if (process.platform == "win32") {
         if (process.arch === "x64" || process.env.hasOwnProperty("PROCESSOR_ARCHITEW6432")) {
             // Check if node is a 64 bit process or if it's a 32 bit process running in a 64 bit processor.
-            basename = "6e538a8d6e9059d9_windows_amd64.zip";
+            basename = "b6dd462cc0c43d95_windows_amd64.zip";
         } else {
             throw new Error("Currently only Windows amd64 is supported.");
         }
     } else if (process.platform == "darwin") {
-        basename = "22254b3ac48b794f_darwin_amd64.zip";
+        basename = "ef1ea2a4fd833402_darwin_amd64.zip";
     } else {
         // Linux
         if (process.arch === "x64") {
-            basename = "91f2043fb2309c28_linux_amd64.zip";
+            basename = "837b3d29c4e2e5d7_linux_amd64.zip";
         } else {
             throw new Error("Currently only Linux amd64 is supported.");
         }
