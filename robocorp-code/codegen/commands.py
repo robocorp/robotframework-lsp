@@ -579,6 +579,41 @@ COMMANDS = [
         server_handled=False,
         hide_from_command_palette=False,
     ),
+    Command(
+        "robocorp.profileImport",
+        "Import Profile",
+        add_to_package_json=True,
+        server_handled=False,
+        hide_from_command_palette=False,
+    ),
+    Command(
+        "robocorp.profileImport.internal",
+        "Import Profile (internal)",
+        add_to_package_json=True,
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
+    Command(
+        "robocorp.profileSwitch",
+        "Switch Profile",
+        add_to_package_json=True,
+        server_handled=False,
+        hide_from_command_palette=False,
+    ),
+    Command(
+        "robocorp.profileSwitch.internal",
+        "Switch Profile",
+        add_to_package_json=True,
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
+    Command(
+        "robocorp.profileList.internal",
+        "List Profiles",
+        add_to_package_json=True,
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
 ]
 
 

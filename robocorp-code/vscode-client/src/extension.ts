@@ -133,6 +133,8 @@ import {
     ROBOCORP_OPEN_ROBOT_CONDA_TREE_SELECTION,
     ROBOCORP_CONVERT_PROJECT,
     ROBOCORP_NEW_ROBOCORP_INSPECTOR_WEB_RECORDER,
+    ROBOCORP_PROFILE_IMPORT,
+    ROBOCORP_PROFILE_SWITCH,
 } from "./robocorpCommands";
 import { installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
@@ -145,6 +147,7 @@ import { mergeEnviron } from "./subprocess";
 import { feedback } from "./rcc";
 import { showSubmitIssueUI } from "./submitIssue";
 import { showConvertUI } from "./conversionView";
+import { profileImport, profileSwitch } from "./profiles";
 
 interface InterpreterInfo {
     pythonExe: string;
@@ -446,6 +449,8 @@ function registerRobocorpCodeCommands(C: CommandRegistry, context: ExtensionCont
     C.register(ROBOCORP_NEW_WORK_ITEM_IN_WORK_ITEMS_VIEW, newWorkItemInWorkItemsTree);
     C.register(ROBOCORP_DELETE_WORK_ITEM_IN_WORK_ITEMS_VIEW, deleteWorkItemInWorkItemsTree);
     C.register(ROBOCORP_HELP_WORK_ITEMS, openWorkItemHelp);
+    C.register(ROBOCORP_PROFILE_IMPORT, async () => await profileImport());
+    C.register(ROBOCORP_PROFILE_SWITCH, async () => await profileSwitch());
 }
 
 async function clearEnvAndRestart() {

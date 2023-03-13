@@ -179,6 +179,19 @@ class UploadNewRobotParamsDict(TypedDict):
     directory: str
 
 
+class ProfileImportParamsDict(TypedDict):
+    profileUri: str
+
+
+class ProfileSwitchParamsDict(TypedDict):
+    profileName: str
+
+
+class ProfileListResultTypedDict(TypedDict):
+    current: str
+    profiles: dict  # name to description
+
+
 class IRccWorkspace(Protocol):
     @property
     def workspace_id(self) -> str:
@@ -351,3 +364,12 @@ class IRcc(Protocol):
         i.e.: Something as:
         rcc feedback metric -t vscode -n vscode.cloud.upload.existing -v +1
         """
+
+    def profile_import(self, profile_path: str) -> ActionResult:
+        pass
+
+    def profile_switch(self, profile_name: str) -> ActionResult:
+        pass
+
+    def profile_list(self) -> ActionResult[ProfileListResultTypedDict]:
+        pass

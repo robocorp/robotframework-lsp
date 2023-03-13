@@ -21,6 +21,7 @@ from robocorp_code.protocols import (
     IRccListener,
     RobotTemplate,
     AuthorizeTokenDict,
+    ProfileListResultTypedDict,
 )
 from pathlib import Path
 import os.path
@@ -445,6 +446,47 @@ class Rcc(object):
         args.append("--account")
         args.append(account_info.account)
         return None
+
+    @implements(IRcc.profile_import)
+    def profile_import(self, profile_path: str) -> ActionResult:
+        args = ["config", "import", "-f", profile_path]
+        args = self._add_config_to_args(args)
+        return self._run_rcc(args, error_msg="Error importing profile.")
+
+    @implements(IRcc.profile_switch)
+    def profile_switch(self, profile_name: str) -> ActionResult:
+        if profile_name == "<remove-current-back-to-defaults>":
+            args = ["config", "switch", "-n"]
+        else:
+            args = ["config", "switch", "-p", profile_name]
+        args = self._add_config_to_args(args)
+        return self._run_rcc(args, error_msg="Error switching profile.")
+
+    @implements(IRcc.profile_list)
+    def profile_list(self) -> ActionResult[ProfileListResultTypedDict]:
+        """
+        Result is something as:
+
+        {
+          "current": "default",
+          "profiles": {
+            "beta": "<description>"
+            "charlie": "<description>"
+          }
+        }
+        """
+        args = ["config", "switch", "-j"]
+        args = self._add_config_to_args(args)
+        ret = self._run_rcc(args, error_msg="Error listing profiles.")
+        if not ret.success:
+            return ActionResult(False, ret.message, None)
+        try:
+            assert ret.result
+            return ActionResult(True, None, json.loads(ret.result))
+        except Exception as e:
+            message = f"Error loading result as json. {e}"
+            log.exception(message)
+            return ActionResult(False, message, None)
 
     @implements(IRcc.create_robot)
     def create_robot(

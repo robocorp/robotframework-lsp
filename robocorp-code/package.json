@@ -98,6 +98,11 @@
         "onCommand:robocorp.showInterpreterEnvError",
         "onCommand:robocorp.openFlowExplorerTreeSelection",
         "onCommand:robocorp.convertProject",
+        "onCommand:robocorp.profileImport",
+        "onCommand:robocorp.profileImport.internal",
+        "onCommand:robocorp.profileSwitch",
+        "onCommand:robocorp.profileSwitch.internal",
+        "onCommand:robocorp.profileList.internal",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
@@ -590,6 +595,31 @@
                 "command": "robocorp.convertProject",
                 "title": "Conversion Accelerator from third party RPA to Robocorp Robot",
                 "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.profileImport",
+                "title": "Import Profile",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.profileImport.internal",
+                "title": "Import Profile (internal)",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.profileSwitch",
+                "title": "Switch Profile",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.profileSwitch.internal",
+                "title": "Switch Profile",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.profileList.internal",
+                "title": "List Profiles",
+                "category": "Robocorp"
             }
         ],
         "menus": {
@@ -946,6 +976,18 @@
                 },
                 {
                     "command": "robocorp.openFlowExplorerTreeSelection",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.profileImport.internal",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.profileSwitch.internal",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.profileList.internal",
                     "when": "false"
                 }
             ]

@@ -96,6 +96,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         from queue import Queue
         from robocorp_code._language_server_vault import _Vault
         from robocorp_code._language_server_login import _Login
+        from robocorp_code._language_server_profile import _Profile
         from robocorp_code._language_server_feedback import _Feedback
 
         user_home = os.getenv("ROBOCORP_CODE_USER_HOME", None)
@@ -165,6 +166,13 @@ class RobocorpLanguageServer(PythonLanguageServer):
             self._rcc,
             self._feedback,
             clear_caches_on_login_change,
+        )
+
+        self._profile = _Profile(
+            self._endpoint,
+            command_dispatcher,
+            self._rcc,
+            self._feedback,
         )
 
         self._pm = PluginManager()

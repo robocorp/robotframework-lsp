@@ -80,6 +80,11 @@ ROBOCORP_SHOW_OUTPUT = "robocorp.showOutput"  # Show Robocorp Code > Output logs
 ROBOCORP_SHOW_INTERPRETER_ENV_ERROR = "robocorp.showInterpreterEnvError"  # Show error related to interpreter env creation
 ROBOCORP_OPEN_FLOW_EXPLORER_TREE_SELECTION = "robocorp.openFlowExplorerTreeSelection"  # Open Flow Explorer
 ROBOCORP_CONVERT_PROJECT = "robocorp.convertProject"  # Conversion Accelerator from third party RPA to Robocorp Robot
+ROBOCORP_PROFILE_IMPORT = "robocorp.profileImport"  # Import Profile
+ROBOCORP_PROFILE_IMPORT_INTERNAL = "robocorp.profileImport.internal"  # Import Profile (internal)
+ROBOCORP_PROFILE_SWITCH = "robocorp.profileSwitch"  # Switch Profile
+ROBOCORP_PROFILE_SWITCH_INTERNAL = "robocorp.profileSwitch.internal"  # Switch Profile
+ROBOCORP_PROFILE_LIST_INTERNAL = "robocorp.profileList.internal"  # List Profiles
 
 ALL_SERVER_COMMANDS = [
     ROBOCORP_GET_PLUGINS_DIR,
@@ -107,6 +112,9 @@ ALL_SERVER_COMMANDS = [
     ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL,
     ROBOCORP_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL,
     ROBOCORP_SET_CONNECTED_VAULT_WORKSPACE_INTERNAL,
+    ROBOCORP_PROFILE_IMPORT_INTERNAL,
+    ROBOCORP_PROFILE_SWITCH_INTERNAL,
+    ROBOCORP_PROFILE_LIST_INTERNAL,
 ]
 
 # fmt: on
