@@ -2,6 +2,10 @@ NEXT
 -----------------------------
 
 - Upgrade RCC to `v13.9.2`.
+- Inspector improvements.
+- Fixed issue where starting the inspector a second time wouldn't work.
+- Created action: `Robocorp: Import Profile`.
+- Created action: `Robocorp: Switch Profile`.
 
 
 New in 1.1.3 (2023-02-13)
