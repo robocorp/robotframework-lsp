@@ -18,8 +18,11 @@ export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry
     }
 
     private async _fillRoots(ret: CloudEntry[]) {
-        let accountInfoResult: ActionResult<IAccountInfo> = await vscode.commands.executeCommand(
+        const accountInfoResult: ActionResult<IAccountInfo> = await vscode.commands.executeCommand(
             roboCommands.ROBOCORP_GET_LINKED_ACCOUNT_INFO_INTERNAL
+        );
+        const profileListResultPromise: Thenable<ActionResult<any>> = vscode.commands.executeCommand(
+            roboCommands.ROBOCORP_PROFILE_LIST_INTERNAL
         );
 
         if (!accountInfoResult.success) {
@@ -58,6 +61,21 @@ export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry
                     "viewItemContextValue": "vaultConnected",
                 });
             }
+        }
+
+        const profileListResult = await profileListResultPromise;
+        if (profileListResult?.success) {
+            ret.push({
+                "label": `Profile: ${profileListResult.result["current"]}`,
+                "iconPath": "person",
+                "viewItemContextValue": "profileItem",
+            });
+        } else {
+            ret.push({
+                "label": `Profile: ${profileListResult.message}`,
+                "iconPath": "person",
+                "viewItemContextValue": "profileItem",
+            });
         }
     }
 

@@ -599,7 +599,8 @@
             {
                 "command": "robocorp.profileImport",
                 "title": "Import Profile",
-                "category": "Robocorp"
+                "category": "Robocorp",
+                "icon": "$(file-symlink-file)"
             },
             {
                 "command": "robocorp.profileImport.internal",
@@ -609,7 +610,8 @@
             {
                 "command": "robocorp.profileSwitch",
                 "title": "Switch Profile",
-                "category": "Robocorp"
+                "category": "Robocorp",
+                "icon": "$(git-pull-request)"
             },
             {
                 "command": "robocorp.profileSwitch.internal",
@@ -834,6 +836,16 @@
                 {
                     "command": "robocorp.disconnectVault",
                     "when": "view == robocorp-cloud-tree && viewItem == vaultConnected",
+                    "group": "inline"
+                },
+                {
+                    "command": "robocorp.profileImport",
+                    "when": "view == robocorp-cloud-tree && viewItem == profileItem",
+                    "group": "inline"
+                },
+                {
+                    "command": "robocorp.profileSwitch",
+                    "when": "view == robocorp-cloud-tree && viewItem == profileItem",
                     "group": "inline"
                 }
             ],

@@ -59,7 +59,7 @@ export async function profileImport() {
     }
 }
 
-async function profileSwitchInternal(profileName) {
+async function profileSwitchInternal(profileName: string) {
     const actionResult: ActionResult<any> = await commands.executeCommand(ROBOCORP_PROFILE_SWITCH_INTERNAL, {
         "profileName": profileName,
     });
@@ -70,6 +70,9 @@ async function profileSwitchInternal(profileName) {
     if (!actionResult.success) {
         await window.showErrorMessage(actionResult.message);
         return;
+    }
+    if (profileName === "<remove-current-back-to-defaults>") {
+        profileName = "Default";
     }
     window.showInformationMessage(profileName + " is now the current profile.");
 }

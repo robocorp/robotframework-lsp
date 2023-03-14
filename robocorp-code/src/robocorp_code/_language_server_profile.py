@@ -8,7 +8,6 @@ from robocorp_code.protocols import (
     ProfileSwitchParamsDict,
     ProfileListResultTypedDict,
 )
-from typing import Any
 
 log = get_logger(__name__)
 profile_command_dispatcher = _SubCommandDispatcher("_profile")
@@ -96,7 +95,7 @@ class _Profile(object):
         return {"success": True, "message": None, "result": result}
 
     @profile_command_dispatcher(commands.ROBOCORP_PROFILE_LIST_INTERNAL)
-    def _profile_list(self, *params: Any) -> ActionResultDict:
+    def _profile_list(self, *params) -> ActionResultDict:
         from robocorp_ls_core.protocols import ActionResult
 
         action_result: ActionResult[

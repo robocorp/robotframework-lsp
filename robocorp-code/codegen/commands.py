@@ -585,6 +585,7 @@ COMMANDS = [
         add_to_package_json=True,
         server_handled=False,
         hide_from_command_palette=False,
+        icon="$(file-symlink-file)",
     ),
     Command(
         "robocorp.profileImport.internal",
@@ -599,6 +600,7 @@ COMMANDS = [
         add_to_package_json=True,
         server_handled=False,
         hide_from_command_palette=False,
+        icon="$(git-pull-request)",
     ),
     Command(
         "robocorp.profileSwitch.internal",

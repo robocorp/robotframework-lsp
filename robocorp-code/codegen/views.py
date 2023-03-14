@@ -289,6 +289,16 @@ TREE_VIEW_CONTAINERS = [
                             MenuGroup.INLINE,
                             when="viewItem == vaultConnected",
                         ),
+                        Menu(
+                            "robocorp.profileImport",
+                            MenuGroup.INLINE,
+                            when="viewItem == profileItem",
+                        ),
+                        Menu(
+                            "robocorp.profileSwitch",
+                            MenuGroup.INLINE,
+                            when="viewItem == profileItem",
+                        ),
                     ]
                 },
             ),
