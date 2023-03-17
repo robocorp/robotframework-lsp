@@ -262,15 +262,20 @@ async function startInspectorCLI(
     const inspectorCmd = ["-m", "inspector.cli"];
     const completeArgs = inspectorCmd.concat(args);
     OUTPUT_CHANNEL.appendLine(`Using cwd root for inspector: "${cwd}"`);
-    return execFilePromise(
-        pythonExecutable,
-        completeArgs,
-        {
-            env: mergeEnviron(environ),
-            cwd,
-        },
-        {
-            "configChildProcess": configChildProcess,
-        }
-    );
+    try {
+        await execFilePromise(
+            pythonExecutable,
+            completeArgs,
+            {
+                env: mergeEnviron(environ),
+                cwd,
+            },
+            {
+                "configChildProcess": configChildProcess,
+            }
+        );
+    } catch (err) {
+        // As the process is force-killed, we may have an error code in the return.
+        // That's ok, just ignore it.
+    }
 }
