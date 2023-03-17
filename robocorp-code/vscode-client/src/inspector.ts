@@ -254,7 +254,7 @@ async function startInspectorCLI(
     cwd?: string,
     environ?: { [key: string]: string },
     configChildProcess?: (childProcess: ChildProcess) => void
-): Promise<ExecFileReturn> {
+): Promise<void> {
     const installed = await verifyWebview2Installed(pythonExecutable, cwd, environ);
     if (!installed) {
         return;
