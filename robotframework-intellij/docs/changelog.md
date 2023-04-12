@@ -1,3 +1,15 @@
+New in 1.10.0 (2023-04-12)
+-----------------------------
+
+### New features
+
+- Variables in variable subscript are now properly found. [#889](https://github.com/robocorp/robotframework-lsp/issues/889)
+
+### Bugfixes
+
+- If the user completes something as `$var`, complete to `${variable}` instead of `$${variable}`.
+
+
 New in 1.9.0 (2023-02-03)
 -----------------------------
 

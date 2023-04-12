@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '1.9.0'
+version '1.10.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -50,30 +50,20 @@ intellij {
 patchPluginXml {
     changeNotes = """
     <p>
-    <strong>Release 1.9.0</strong>
+    <strong>Release 1.10.0</strong>
     </p>
     
     <ul>
     
     <h3 id="new-features">New features</h3>
     <ul>
-    <li>Improve <code>IF</code>/<code>WHILE</code>/<code>Run Keyword If</code> snippet completions to make it a bit clearer that python expressions are expected.</li>
-    <li><code>robot.libraries.blacklist</code> can be used to blacklist libraries which should never appear in code-completion.</li>
-    <li>Deprecated libraries:<ul>
-    <li><code>robot.libraries.deprecated</code> can be used to mark libraries as deprecated.</li>
-    <li>Keywords from deprecated libraries will not appear in the auto-import code-completion (so, they&#39;ll only be available if the <code>Library</code> is added to the <code>Settings</code>).</li>
-    <li>Libraries which start with <code>*DEPRECATED*</code> in its doc are also considered deprecated.</li>
-    <li>Keywords from libraries marked as deprecated will be shown as deprecated.</li>
-    </ul>
-    </li>
-    <li>Requesting completions right after <code>Libraries</code> without any additional name will show completions for all known (pre-loaded) libraries.</li>
-    <li>Completions for variables are shown without having to enter <code>&#36;</code> nor <code>&#36;{</code>.</li>
+    <li><code>robotfamework-output-stream</code> updated to <code>0.0.6</code>. It now has functionality to hide sensitive data.
+      See: <a href="https://github.com/robocorp/robotframework-output-stream/blob/master/docs/handling_sensitive_data.md">https://github.com/robocorp/robotframework-output-stream/blob/master/docs/handling_sensitive_data.md</a></li>
+    <li>Variables in variable subscript are now properly found. <a href="https://github.com/robocorp/robotframework-lsp/issues/889">#889</a></li>
     </ul>
     <h3 id="bugfixes">Bugfixes</h3>
     <ul>
-    <li>Properly report about undefined variable in <code>RETURN</code>. <a href="https://github.com/robocorp/robotframework-lsp/issues/865">#865</a></li>
-    <li>References to variables used in <code>Evaluate</code> arguments are now properly collected.</li>
-    <li>Don&#39;t show completion for the variable being currently defined in variable assign. </li>
+    <li>If the user completes something as <code>$var</code>, complete to <code>${variable}</code> instead of <code>$${variable}</code>.</li>
     </ul>
 
     <br/>
