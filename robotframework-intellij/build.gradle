@@ -63,7 +63,7 @@ patchPluginXml {
     </ul>
     <h3 id="bugfixes">Bugfixes</h3>
     <ul>
-    <li>If the user completes something as <code>$var</code>, complete to <code>${variable}</code> instead of <code>$${variable}</code>.</li>
+    <li>If the user completes something as <code>&#36;var</code>, complete to <code>&#36;{variable}</code> instead of <code>&#36;{variable}</code>.</li>
     </ul>
 
     <br/>
