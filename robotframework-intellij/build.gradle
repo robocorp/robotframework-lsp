@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '1.10.0'
+version '1.10.1'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -115,7 +115,7 @@ patchPluginXml {
     // See https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html?from=jetbrains.org#intellij-platform-based-products-of-recent-ide-versions
 
     sinceBuild = '203'
-    untilBuild = '230.*'
+    untilBuild = '290.*'
 }
 
 test {
