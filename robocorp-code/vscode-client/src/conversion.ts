@@ -431,7 +431,11 @@ export async function convertAndSaveResults(
                     const conversionResult: ConversionResult = await conversionMain(converterBundle, command);
                     if (!isSuccessful(conversionResult)) {
                         const message = (<ConversionFailure>conversionResult).error;
-                        logError(`Error processing ${command.command} command`, new Error(message), "EXT_CONVERT_PROJECT");
+                        logError(
+                            `Error processing ${command.command} command`,
+                            new Error(message),
+                            "EXT_CONVERT_PROJECT"
+                        );
                         feedback(Metrics.CONVERTER_ERROR, command.vendor);
 
                         // skip and process next command
