@@ -414,6 +414,7 @@ export async function convertAndSaveResults(
 
                 const results: ConversionResult[] = [];
                 const steps: number = rpaConversionCommands.length;
+                const errors: Array<[RPAConversionCommand, string]> = [];
                 let incrementStep: number = 0;
                 let currStep: number = 0;
 
@@ -429,6 +430,7 @@ export async function convertAndSaveResults(
                     await new Promise((r) => setTimeout(r, 5));
 
                     const conversionResult: ConversionResult = await conversionMain(converterBundle, command);
+
                     if (!isSuccessful(conversionResult)) {
                         const message = (<ConversionFailure>conversionResult).error;
                         logError(
@@ -437,6 +439,7 @@ export async function convertAndSaveResults(
                             "EXT_CONVERT_PROJECT"
                         );
                         feedback(Metrics.CONVERTER_ERROR, command.vendor);
+                        errors.push([command, message]);
 
                         // skip and process next command
                         continue;
@@ -510,6 +513,14 @@ ${outputDirsWrittenToStr.join("\n")}
 Created Files
 ----------------------------------
 ${filesWritten.join("\n")}
+
+Errors
+----------------------------------
+${
+    errors.length > 0
+        ? errors.map(([cmd, error]) => `Cannot process command ${cmd.command}, reason ${error}`).join("\n")
+        : "No errors"
+}
 `
                 );
 
