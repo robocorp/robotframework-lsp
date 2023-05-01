@@ -417,6 +417,7 @@ export async function convertAndSaveResults(
                 let incrementStep: number = 0;
                 let currStep: number = 0;
 
+                // execute commands in sequence, but not fail all if one fails
                 for (const command of rpaConversionCommands) {
                     currStep += 1;
                     progress.report({
@@ -430,13 +431,11 @@ export async function convertAndSaveResults(
                     const conversionResult: ConversionResult = await conversionMain(converterBundle, command);
                     if (!isSuccessful(conversionResult)) {
                         const message = (<ConversionFailure>conversionResult).error;
-                        logError("Error converting file to Robocorp Robot", new Error(message), "EXT_CONVERT_PROJECT");
+                        logError(`Error processing ${command.command} command`, new Error(message), "EXT_CONVERT_PROJECT");
                         feedback(Metrics.CONVERTER_ERROR, command.vendor);
 
-                        return {
-                            "success": false,
-                            "message": message,
-                        };
+                        // skip and process next command
+                        continue;
                     }
                     conversionResult.outputDir = join(opts.outputFolder, command.outputRelativePath);
                     results.push(conversionResult);
@@ -477,18 +476,6 @@ export async function convertAndSaveResults(
                                 )
                             );
                         }
-                    }
-                    const images = okResult?.images;
-                    if (images && images.length > 0) {
-                        for (const f of images) {
-                            tasks.push(handleOutputFile(join(result.outputDir, f.filename), f.content, "binary"));
-                        }
-                    }
-
-                    if (okResult.report) {
-                        tasks.push(
-                            handleOutputFile(join(result.outputDir, okResult.report.filename), okResult.report.content)
-                        );
                     }
                 }
 
