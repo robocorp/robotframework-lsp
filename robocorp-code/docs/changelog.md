@@ -1,3 +1,10 @@
+New in 1.2.1 (2023-05-10)
+-----------------------------
+
+- RCC upgraded to `v14.6.0`.
+- Improvements in the `Conversion Accelerator` integration.
+
+
 New in 1.2.0 (2023-03-17)
 -----------------------------
 
