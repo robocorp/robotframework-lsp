@@ -28,5 +28,5 @@ def robot_tidy_source_format(ast, dirname: str) -> Optional[str]:
     _import_robotidy()
     from robotidy.api import transform_model
 
-    transformed_model = transform_model(ast, dirname)
+    transformed_model = transform_model(ast, dirname, ignore_git_dir=True)
     return transformed_model
