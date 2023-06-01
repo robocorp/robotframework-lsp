@@ -64,8 +64,6 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
     } else {
         throw new Error("Conversion Accelerator can work only in a workspace");
     }
-    // check if exists ws/rca/a360/adapters
-    // read files from there
 
     const typeToLastOptions = new Map<RPATypes, ConversionInfoLastOptions>();
 
