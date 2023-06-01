@@ -180,6 +180,7 @@ export interface A360ConvertCommand {
     command: CommandType.Convert;
     vendor: Format.A360;
     projectFolderPath: string;
+    adapterFilePaths: Array<string>;
     onProgress: Progress;
     outputRelativePath: string; // Used internally in Robocorp Code
 }

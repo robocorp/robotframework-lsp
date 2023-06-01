@@ -26,7 +26,7 @@ import {
     isSuccessful,
     RPAConversionCommand,
 } from "./protocols";
-import { rmdirSync, rmSync } from "fs";
+import { readdirSync, rmSync, statSync, existsSync } from "fs";
 
 export const CONVERSION_STATUS = {
     alreadyCheckedVersion: false,
@@ -162,6 +162,7 @@ export async function convertAndSaveResults(
         input: string[];
         outputFolder: string;
         apiFolder: string;
+        adapterFolderPath: string;
     }
 ): Promise<{
     success: boolean;
@@ -331,10 +332,27 @@ export async function convertAndSaveResults(
                     outputRelativePath: join(nextBasename, "analysis"),
                 });
                 for (const it of opts.input) {
+                    const adapterFilePaths = [];
+
+                    if (existsSync(opts.adapterFolderPath)) {
+                        const stat = statSync(opts.adapterFolderPath);
+                        if (stat.isDirectory()) {
+                            const files = readdirSync(opts.adapterFolderPath);
+                            for (const file of files) {
+                                const filepath = path.join(opts.adapterFolderPath, file);
+                                const fileStat = statSync(filepath);
+                                if (fileStat.isFile()) {
+                                    adapterFilePaths.push(filepath);
+                                }
+                            }
+                        }
+                    }
+
                     rpaConversionCommands.push({
                         vendor: Format.A360,
                         command: CommandType.Convert,
                         projectFolderPath: it,
+                        adapterFilePaths,
                         onProgress: undefined,
                         outputRelativePath: join(nextBasename, basename(it)),
                     });

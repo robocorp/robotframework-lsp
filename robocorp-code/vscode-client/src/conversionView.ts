@@ -3,11 +3,12 @@
  * https://code.visualstudio.com/api/extension-guides/webview
  */
 import { readFileSync } from "fs";
-import { dirname } from "path";
+import { dirname, join } from "path";
 import * as vscode from "vscode";
 import { logError } from "./channel";
 import { ensureConvertBundle, convertAndSaveResults, RPATypes, RPA_TYPE_TO_CAPTION } from "./conversion";
 import { getExtensionRelativeFile } from "./files";
+import { getRobocorpHome } from "./rcc";
 
 interface ConversionInfoLastOptions {
     input: string[];
@@ -60,7 +61,11 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
     if (wsFolders !== undefined && wsFolders.length >= 1) {
         ws = wsFolders[0];
         outputFolder = ws.uri.fsPath;
+    } else {
+        throw new Error("Conversion Accelerator can work only in a workspace");
     }
+    // check if exists ws/rca/a360/adapters
+    // read files from there
 
     const typeToLastOptions = new Map<RPATypes, ConversionInfoLastOptions>();
 
@@ -84,7 +89,6 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
         "generationResults": "",
         "outputFolder": outputFolder,
         "apiFolder": apiFolder,
-
         "typeToLastOptions": typeToLastOptions,
     };
 
@@ -154,12 +158,16 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
                         const inputType = contents["inputType"];
                         const input = contents["input"];
                         const apiFolder = contents["apiFolder"];
+                        // adapter files are at the machine level and location cannot be changed by converter webview
+                        const home = await getRobocorpHome();
+                        const adapterFolderPath = join(home, "rca", inputType, "adapters");
 
                         result = await onClickConvert(convertBundlePromise, {
                             outputFolder,
                             inputType,
                             input,
                             apiFolder,
+                            adapterFolderPath,
                         });
                     } finally {
                         panel.webview.postMessage({ command: "conversionFinished", result: result });
@@ -260,6 +268,7 @@ async function onClickConvert(
         input: string[];
         outputFolder: string;
         apiFolder: string;
+        adapterFolderPath: string;
     }
 ): Promise<{
     success: boolean;
