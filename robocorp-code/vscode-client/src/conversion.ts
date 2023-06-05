@@ -161,7 +161,6 @@ export async function convertAndSaveResults(
         inputType: RPATypes;
         input: string[];
         outputFolder: string;
-        apiFolder: string;
         adapterFolderPath: string;
     }
 ): Promise<{
@@ -290,11 +289,6 @@ export async function convertAndSaveResults(
                         vendor: Format.BLUEPRISM,
                         command: CommandType.Convert,
                         releaseFileContent: contents,
-                        // This isn't added right now because it requires more work (both in explaining to the user as well
-                        // as the implementation).
-                        // We should collect all the keywords from files in a folder and then merge it with what's available
-                        // at converterLocation.pathToConvertYaml and create a new yaml to pass on to the converter.
-                        // apiImplementationFolderPath: opts.apiFolder,
                         apiImplementationFolderPath: converterLocation.pathToConvertYaml,
                         onProgress: undefined,
                         outputRelativePath: join(nextBasename, basename(it)),
