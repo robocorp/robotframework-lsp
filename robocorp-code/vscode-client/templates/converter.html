@@ -48,10 +48,6 @@
                 margin-top: 50px;
             }
 
-            #apiFolderDiv {
-                margin-top: 50px;
-            }
-
             #outputFolderDiv {
                 margin-top: 20px;
             }
@@ -100,31 +96,26 @@
             "input": ["c:/temp/file.uipath", "c:/temp/file2.uipath"],
             "generationResults": "",
             "outputFolder": "",
-            "apiFolder": "",
             "typeToLastOptions": {
                 "uipath": {
                     "input": [],
                     "generationResults": "",
                     "outputFolder": "",
-                    "apiFolder": ""
                 },
                 "blueprism": {
                     "input": [],
                     "generationResults": "",
                     "outputFolder": "",
-                    "apiFolder": ""
                 },
                 "a360": {
                     "input": [],
                     "generationResults": "",
                     "outputFolder": "",
-                    "apiFolder": ""
                 }
                 "aav11": {
                     "input": [],
                     "generationResults": "",
                     "outputFolder": "",
-                    "apiFolder": ""
                 }
             }
         }
@@ -240,22 +231,10 @@
             updateUIConversionResultFromData();
             updateUIFilesFromData();
             updateUIOutputFolderFromData();
-            updateUIApiFolderFromData();
 
             // The UI has just been updated, so, it's Ok to update one UI setting
             // from another UI setting...
             updateUILabelFilesOrFoldersFromUI();
-        }
-
-        function updateUIApiFolderFromData() {
-            const show = globalConversionInfo.inputType === "blueprism";
-            // document.getElementById("apiFolderDiv").style.display = show ? "block" : "none";
-
-            // Note: always disabled for now (may be re-enabled later).
-            document.getElementById("apiFolderDiv").style.display = "none";
-
-            const apiFolderText = document.getElementById("apiFolderText");
-            apiFolderText.value = globalConversionInfo.apiFolder;
         }
 
         function updateUILabelFilesOrFoldersFromUI() {
@@ -377,35 +356,11 @@
             persistState();
         }
 
-        function onClickApiFolder() {
-            if (vscode) {
-                // Disable button while sending.
-                const apiFolderBt = document.getElementById("apiFolderBt");
-                apiFolderBt.disabled = true;
-                vscode.postMessage({
-                    command: "onClickApiFolder",
-                    currentApiFolder: globalConversionInfo.apiFolder,
-                });
-            } else {
-                console.log("On click api folder");
-                handleApiFolderCommand({ "apiFolder": "" });
-            }
-        }
-
-        function onApiFolderTextChanged() {
-            const apiFolderText = document.getElementById("apiFolderText");
-            const text = apiFolderText.value;
-            globalConversionInfo.apiFolder = text;
-            persistState();
-        }
-
         function onClickConvert() {
             if (vscode) {
                 // Disable button while sending.
                 const outputFolderBt = document.getElementById("outputFolderBt");
                 outputFolderBt.disabled = true;
-                const apiFolderBt = document.getElementById("apiFolderBt");
-                apiFolderBt.disabled = true;
                 const conversionResultsDiv = document.getElementById("conversionResults");
                 conversionResultsDiv.textContent = "Please wait, making analysis/conversion...";
                 vscode.postMessage({
@@ -414,7 +369,6 @@
                         outputFolder: globalConversionInfo.outputFolder,
                         inputType: globalConversionInfo.inputType,
                         input: globalConversionInfo.input,
-                        apiFolder: globalConversionInfo.apiFolder,
                     },
                 });
             } else {
@@ -442,8 +396,6 @@
             } finally {
                 const outputFolderBt = document.getElementById("outputFolderBt");
                 outputFolderBt.disabled = false;
-                const apiFolderBt = document.getElementById("apiFolderBt");
-                apiFolderBt.disabled = false;
             }
         }
 
@@ -458,20 +410,6 @@
             } finally {
                 const outputFolderBt = document.getElementById("outputFolderBt");
                 outputFolderBt.disabled = false;
-            }
-        }
-
-        function handleApiFolderCommand(message) {
-            try {
-                if (message.apiFolder) {
-                    clearResultsAndUpdateUI();
-                    globalConversionInfo.apiFolder = message.apiFolder;
-                    updateUIApiFolderFromData();
-                    persistState();
-                }
-            } finally {
-                const apiFolderBt = document.getElementById("apiFolderBt");
-                apiFolderBt.disabled = false;
             }
         }
 
@@ -519,9 +457,6 @@
                     break;
                 case "setOutputFolder":
                     handleOutputFolderCommand(message);
-                    break;
-                case "setApiFolder":
-                    handleApiFolderCommand(message);
                     break;
                 case "conversionFinished":
                     handleConversionFinishedCommand(message.result);
@@ -605,32 +540,6 @@
                 <div id="analysisResults">Analysis results:</div>
             </div>
             <br /> -->
-
-            <!-- Note: actually never displayed right now as it needs more work... -->
-            <div id="apiFolderDiv" class="divEntry" style="display: none">
-                <label
-                    >API folder (by default, when doing the conversion, dummy stubs are generated for Robot Keywords
-                    used in the bot, but it's possible for the conversion to reuse Keywords already implemented by
-                    pointing to a folder that contains such APIs):</label
-                >
-                <div style="display: flex">
-                    <input
-                        value=""
-                        style="flex-grow: 1"
-                        type="text"
-                        id="apiFolderText"
-                        oninput="onApiFolderTextChanged()"
-                        placeholder="Leave empty to create initial commons API."
-                    />
-                    <input
-                        value="..."
-                        style="margin-left: 5px; padding-left: 20px; padding-right: 20px"
-                        type="submit"
-                        id="apiFolderBt"
-                        onclick="onClickApiFolder()"
-                    />
-                </div>
-            </div>
 
             <div id="conversionDiv" class="divEntry">
                 <input value="Convert to Robot" type="submit" id="convertBt" onclick="onClickConvert()" />

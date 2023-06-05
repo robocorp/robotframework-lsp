@@ -14,7 +14,6 @@ interface ConversionInfoLastOptions {
     input: string[];
     generationResults: string;
     outputFolder: string;
-    apiFolder: string;
 }
 
 interface ConversionInfo {
@@ -22,7 +21,6 @@ interface ConversionInfo {
     input: string[];
     generationResults: string;
     outputFolder: string;
-    apiFolder: string;
     typeToLastOptions: Map<RPATypes, ConversionInfoLastOptions>;
 }
 
@@ -57,7 +55,6 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
     const wsFolders: ReadonlyArray<vscode.WorkspaceFolder> = vscode.workspace.workspaceFolders;
     let ws: vscode.WorkspaceFolder;
     let outputFolder = "";
-    let apiFolder = "";
     if (wsFolders !== undefined && wsFolders.length >= 1) {
         ws = wsFolders[0];
         outputFolder = ws.uri.fsPath;
@@ -72,7 +69,6 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
             "input": [], // files for BP, folders for others.
             "generationResults": "",
             "outputFolder": outputFolder,
-            "apiFolder": apiFolder,
         };
     }
 
@@ -86,7 +82,6 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
         "input": [],
         "generationResults": "",
         "outputFolder": outputFolder,
-        "apiFolder": apiFolder,
         "typeToLastOptions": typeToLastOptions,
     };
 
@@ -96,18 +91,9 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
 
         // Validate that what we had saved is valid for new versions.
         // i.e.: Backward-compatibility.
-        if (conversionInfo.apiFolder === undefined) {
-            conversionInfo.apiFolder = "";
-        }
 
         if (conversionInfo.typeToLastOptions[RPATypes.aav11] === undefined) {
             conversionInfo.typeToLastOptions[RPATypes.aav11] = generateDefaultOptions();
-        }
-
-        for (const [key, val] of Object.entries(conversionInfo.typeToLastOptions)) {
-            if (val.apiFolder === undefined) {
-                val.apiFolder = "";
-            }
         }
     }
 
@@ -128,15 +114,6 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
                         panel.webview.postMessage({ command: "setOutputFolder", "outputFolder": outputFolder });
                     }
                     return;
-                case "onClickApiFolder":
-                    let apiFolder: string = "";
-                    try {
-                        const currentApiFolder = message.currentApiFolder;
-                        apiFolder = await onClickApiFolder(currentApiFolder);
-                    } finally {
-                        panel.webview.postMessage({ command: "setApiFolder", "apiFolder": apiFolder });
-                    }
-                    return;
                 case "onClickAdd":
                     let input: string[] = [];
                     try {
@@ -155,7 +132,6 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
                         const outputFolder = contents["outputFolder"];
                         const inputType = contents["inputType"];
                         const input = contents["input"];
-                        const apiFolder = contents["apiFolder"];
                         // adapter files are at the machine level and location cannot be changed by converter webview
                         const home = await getRobocorpHome();
                         const adapterFolderPath = join(home, "rca", inputType, "adapters");
@@ -164,7 +140,6 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
                             outputFolder,
                             inputType,
                             input,
-                            apiFolder,
                             adapterFolderPath,
                         });
                     } finally {
@@ -185,21 +160,6 @@ async function onClickOutputFolder(currentOutputFolder: any): Promise<string> {
         "canSelectFiles": false,
         "canSelectMany": false,
         "openLabel": `Select output folder`,
-        "defaultUri": defaultUri,
-    });
-    if (uris && uris.length > 0) {
-        return uris[0].fsPath;
-    }
-    return "";
-}
-
-async function onClickApiFolder(currentApiFolder: any): Promise<string> {
-    const defaultUri = vscode.Uri.file(currentApiFolder);
-    let uris: vscode.Uri[] = await vscode.window.showOpenDialog({
-        "canSelectFolders": true,
-        "canSelectFiles": false,
-        "canSelectMany": false,
-        "openLabel": `Select API folder`,
         "defaultUri": defaultUri,
     });
     if (uris && uris.length > 0) {
@@ -265,7 +225,6 @@ async function onClickConvert(
         inputType: RPATypes;
         input: string[];
         outputFolder: string;
-        apiFolder: string;
         adapterFolderPath: string;
     }
 ): Promise<{
