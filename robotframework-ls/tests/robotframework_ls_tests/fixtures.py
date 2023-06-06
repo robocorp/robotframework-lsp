@@ -9,6 +9,7 @@ import sys
 from typing import Tuple
 from robocorp_ls_core.protocols import IDocument
 from robocorp_ls_core.lsp import Range
+import weakref
 
 __file__ = os.path.abspath(__file__)  # @ReservedAssignment
 
@@ -130,6 +131,26 @@ def main_module():
     from robotframework_ls import __main__
 
     return __main__
+
+
+@pytest.fixture(autouse=True)
+def check_ws():
+    from robocorp_ls_core.workspace import _VirtualFSThread
+
+    all_created = []
+
+    def after_create(created, *args, **kwargs):
+        all_created.append(weakref.ref(created))
+
+    _VirtualFSThread.on_created.register(after_create)
+    yield
+    for created in all_created:
+        c = created()
+        if c is not None:
+            assert (
+                c._disposed.is_set()
+            ), "_VirtualFSThread not disposed properly in test."
+    all_created = []
 
 
 def pytest_report_header(config):
@@ -276,6 +297,10 @@ class _WorkspaceFixture(object):
             )
         return self._ws
 
+    def dispose(self):
+        if self._ws is not None:
+            self._ws.dispose()
+
     def set_root(self, relative_path, **kwargs):
         path = self._cases.get_path(relative_path)
         self.set_absolute_path_root(path, **kwargs)
@@ -299,7 +324,11 @@ class _WorkspaceFixture(object):
         from robocorp_ls_core import uris
         from robotframework_ls.impl.robot_workspace import RobotWorkspace
 
-        self._ws = RobotWorkspace(uris.from_fs_path(path), self._fs_observer, **kwargs)
+        uri = uris.from_fs_path(path)
+        if self._ws is not None:
+            assert self._ws.root_uri == uri
+        else:
+            self._ws = RobotWorkspace(uri, self._fs_observer, **kwargs)
 
     def get_doc_uri(self, root_relative_path):
         from robocorp_ls_core import uris
@@ -346,7 +375,9 @@ class _WorkspaceFixture(object):
 
 @pytest.fixture
 def workspace(cases, remote_fs_observer):
-    return _WorkspaceFixture(cases, remote_fs_observer)
+    ws_fixture = _WorkspaceFixture(cases, remote_fs_observer)
+    yield ws_fixture
+    ws_fixture.dispose()
 
 
 @pytest.fixture

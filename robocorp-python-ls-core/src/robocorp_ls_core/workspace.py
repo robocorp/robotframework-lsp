@@ -43,6 +43,7 @@ from collections import namedtuple
 import time
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
 from robocorp_ls_core.code_units import convert_utf16_code_unit_to_python
+from robocorp_ls_core.callbacks import Callback
 
 log = get_logger(__name__)
 
@@ -64,6 +65,8 @@ class _VirtualFSThread(threading.Thread):
 
     SLEEP_AMONG_SCANS = 0.5
     INNER_SLEEP = 0.1
+
+    on_created = Callback()
 
     def __init__(self, virtual_fs):
         from robocorp_ls_core.watchdog_wrapper import IFSWatch
@@ -88,6 +91,7 @@ class _VirtualFSThread(threading.Thread):
         self._dirs_changed = set()
         self._trigger_loop = threading.Event()
         self.on_file_changed = Callback()
+        self.on_created(self)
 
     def _check_need_sleep(self):
         last_sleep = self._last_sleep

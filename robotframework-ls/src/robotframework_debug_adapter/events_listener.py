@@ -56,6 +56,14 @@ def _get_events_state():
     return _global_events_state
 
 
+def path_as_str(source):
+    if source is None:
+        return None
+    if isinstance(source, str):
+        return source
+    return str(source)
+
+
 class EventsListenerV3:
     # Note: see https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html
     # for actual attributes.
@@ -68,7 +76,7 @@ class EventsListenerV3:
 
     # start suite/test
     def start_suite(self, data, result) -> None:
-        source = data.source
+        source = path_as_str(data.source)
         name = data.name
 
         tests = []
@@ -85,7 +93,7 @@ class EventsListenerV3:
         state = _get_events_state()
 
         name = data.name
-        source = data.source
+        source = path_as_str(data.source)
         state._current_test_filename = source
         lineno = data.lineno
         state._source_info_stack.append(_SourceInfo(source, lineno, name, None, None))
@@ -107,7 +115,7 @@ class EventsListenerV3:
                         data.name,
                         elapsedtime=result.elapsedtime,
                         status=result.status,
-                        source=data.source,
+                        source=path_as_str(data.source),
                         message=result.message.strip(),
                         failed_keywords=failed_keywords,
                     )
@@ -143,7 +151,7 @@ class EventsListenerV3:
                         data.name,
                         elapsedtime=result.elapsedtime,
                         status=result.status,
-                        source=data.source,
+                        source=path_as_str(data.source),
                         message=msg.strip(),
                         failed_keywords=failed_keywords,
                     )
@@ -246,7 +254,7 @@ class EventsListenerV2:
                 test_name = source_info.test_name  # May be None.
 
                 if source is None:
-                    source = source_info.source
+                    source = path_as_str(source_info.source)
                     if source is None:
                         continue
                     source = file_utils.get_abs_path_real_path_and_base_from_file(
@@ -302,7 +310,7 @@ class EventsListenerV2:
 
         source_info: _SourceInfo
         for source_info in state._source_info_stack:
-            source = source_info.source
+            source = path_as_str(source_info.source)
             keyword_name = source_info.keyword_name
             found = True
             if not source:
@@ -354,7 +362,7 @@ class EventsListenerV2:
                         step = f.f_locals.get("step")
                         if step is not None:
                             try:
-                                source = step.source
+                                source = path_as_str(step.source)
                                 lineno = step.lineno
                             except AttributeError:
                                 pass
@@ -385,7 +393,7 @@ class EventsListenerV2:
 
             # Status could be PASS, FAIL, SKIP or NOT RUN
             if status == "FAIL":
-                key = (source_info.source, source_info.lineno)
+                key = (path_as_str(source_info.source), source_info.lineno)
                 if key == state._last_failure_message_reported_at:
                     msg = "[FAIL] " + state._last_failure_message_full_stacktrace
                 else:
@@ -393,7 +401,7 @@ class EventsListenerV2:
                 state._failed_keywords.append(
                     {
                         "name": source_info.keyword_name,
-                        "source": source_info.source,
+                        "source": path_as_str(source_info.source),
                         "lineno": source_info.lineno,
                         "message": msg,
                     }

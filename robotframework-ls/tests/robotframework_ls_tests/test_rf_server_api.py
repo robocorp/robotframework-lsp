@@ -38,13 +38,16 @@ Some task
         fs_observer=create_observer("dummy", ()),
         libspec_manager=libspec_manager,
     )
-    completion_context = CompletionContext(doc, line, col, workspace=workspace)
+    try:
+        completion_context = CompletionContext(doc, line, col, workspace=workspace)
 
-    completions = api._complete_from_completion_context(completion_context)
-    for completion in completions:
-        if completion["label"] == "Log (BuiltIn)":
-            break
-    else:
-        raise AssertionError(
-            f'Did not find "Log" entry in completions. Found: {list(x["label"] for x in completions)}'
-        )
+        completions = api._complete_from_completion_context(completion_context)
+        for completion in completions:
+            if completion["label"] == "Log (BuiltIn)":
+                break
+        else:
+            raise AssertionError(
+                f'Did not find "Log" entry in completions. Found: {list(x["label"] for x in completions)}'
+            )
+    finally:
+        workspace.dispose()

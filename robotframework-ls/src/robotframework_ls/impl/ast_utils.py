@@ -305,6 +305,10 @@ def collect_errors(node) -> List[Error]:
     for _stack, node in _iter_nodes(node, recursive=True):
         if node.__class__.__name__ == "Error":
             errors.extend(_get_errors_from_tokens(node))
+        elif node.__class__.__name__ == "InvalidSection":
+            # On 6.1 we don't have an Error in this case, we have a regular class
+            # named "InvalidSection".
+            errors.extend(_get_errors_from_tokens(node.header))
 
         elif use_errors_attribute:
             node_errors = getattr(node, "errors", ())

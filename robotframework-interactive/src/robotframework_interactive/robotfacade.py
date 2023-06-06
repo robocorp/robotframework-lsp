@@ -52,7 +52,15 @@ class RobotFrameworkFacade(object):
 
     @property
     def TestDefaults(self):
+        # This is the 2nd argument to SettingsBuilder or SuiteBuilder.
         try:
+            try:
+                from robot.running.builder.settings import FileSettings
+
+                return FileSettings
+            except ImportError:
+                pass
+
             # RF 5.1 onwards.
             from robot.running.builder.settings import (
                 Defaults as TestDefaults,  # type:ignore

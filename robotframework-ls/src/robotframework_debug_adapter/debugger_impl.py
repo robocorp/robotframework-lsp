@@ -30,7 +30,7 @@ from robotframework_debug_adapter.protocols import (
     IBusyWait,
     IEvaluationInfo,
 )
-from typing import Optional, List, Iterable, Union, Any, Dict, FrozenSet
+from typing import Optional, List, Iterable, Union, Any, Dict, FrozenSet, Tuple
 from robocorp_ls_core.basic import implements
 from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
     StackFrame,
@@ -47,6 +47,42 @@ from robotframework_ls.impl.robot_constants import (
 )
 import time
 import sys
+
+_found_major_minor_version = None
+
+
+def _get_robot_naked_version():
+    try:
+        import robot  # noqa
+
+        v = str(robot.get_version(True))
+    except:
+        log.exception("Unable to get robot version.")
+        v = "unknown"
+    return v
+
+
+def get_robot_major_minor_version() -> Tuple[int, int]:
+    global _found_major_minor_version
+    if _found_major_minor_version is not None:
+        return _found_major_minor_version
+
+    robot_version = _get_robot_naked_version()
+
+    major_minor_version = (4, 0)
+    try:
+        if "." in robot_version:
+            split = robot_version.split(".")
+            major_version = int(split[0])
+            minor_version = int(split[1])
+            major_minor_version = _found_major_minor_version = (
+                major_version,
+                minor_version,
+            )
+    except:
+        log.exception("Unable to get robot major/minor version.")
+
+    return major_minor_version
 
 
 @lru_cache(None)
@@ -1085,9 +1121,18 @@ class _RobotDebuggerImpl(object):
                         )  # noqa
 
                         curr_vars = ctx.variables.current
+
+                        # API changed in: https://github.com/robotframework/robotframework/commit/27a533e4edf0aebd699c15d7b32a30e76fc7638c
+                        major, minor = get_robot_major_minor_version()
+                        if (major, minor) >= (6, 1):
+                            use_vars_or_store = curr_vars
+                        else:
+                            use_vars_or_store = curr_vars.store
+
                         hit = bool(
                             evaluate_expression(
-                                curr_vars.replace_string(bp.condition), curr_vars.store
+                                curr_vars.replace_string(bp.condition),
+                                use_vars_or_store,
                             )
                         )
                         if not hit:

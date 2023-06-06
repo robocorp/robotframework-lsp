@@ -168,6 +168,8 @@ RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX = {
     "variableOperator": TOKEN_TYPE_TO_INDEX["variableOperator"],
 }
 
+# INVALID HEADER was added in RF 6.1.
+RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX["INVALID HEADER"] = TOKEN_TYPE_TO_INDEX["error"]
 
 for tok_type in HEADER_TOKENS:  # *** Settings ***, ...
     RF_TOKEN_TYPE_TO_TOKEN_TYPE_INDEX[tok_type] = TOKEN_TYPE_TO_INDEX["header"]

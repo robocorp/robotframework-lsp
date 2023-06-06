@@ -91,7 +91,7 @@ def method6():
     keywords: List[KeywordDoc] = library_info.keywords
     data_regression.check([keyword_to_dict(k) for k in keywords])
     assert (
-        int(library_info.specversion) <= 4
+        int(library_info.specversion) <= 5
     ), "Libspec version changed. Check parsing. "
 
 
