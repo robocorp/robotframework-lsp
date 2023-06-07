@@ -79,6 +79,7 @@ def server_api_process_io(server_process):
 
 def test_server(server_api_process_io: IRobotFrameworkApiClient, data_regression):
     from robotframework_ls_tests.fixtures import sort_diagnostics
+    from robotframework_ls.impl.robot_version import get_robot_major_minor_version
 
     server_api_process_io.initialize(process_id=os.getpid())
     server_api_process_io.settings({"settings": {"robot.lint.robocop.enabled": True}})
@@ -88,7 +89,13 @@ def test_server(server_api_process_io: IRobotFrameworkApiClient, data_regression
     server_api_process_io.open("untitled.resource", 1, "*** foo bar ***")
 
     diag = server_api_process_io.lint("untitled.resource")["result"]
-    data_regression.check(sort_diagnostics(diag), basename="errors")
+    major, minor = get_robot_major_minor_version()
+
+    if (major, minor) >= (6, 1):
+        basename = "errors.post.61"
+    else:
+        basename = "errors"
+    data_regression.check(sort_diagnostics(diag), basename=basename)
 
 
 @pytest.mark.skipif(sys.platform == "darwin", reason="Flaky on mac")

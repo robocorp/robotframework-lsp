@@ -1,6 +1,6 @@
 - code: '0203'
   codeDescription:
-    href: https://robocop.readthedocs.io/en/2.5.0/rules.html#missing-doc-suite
+    href: https://robocop.readthedocs.io/en/3.1.1/rules.html#missing-doc-suite
   message: Missing documentation in suite
   range:
     end:

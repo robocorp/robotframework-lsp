@@ -11,11 +11,10 @@
       line: 0
   severity: 2
   source: robocop
-- code: '0401'
+- code: '0307'
   codeDescription:
-    href: https://robocop.readthedocs.io/en/3.1.1/rules.html#parsing-error
-  message: 'Robot Framework syntax error: Unrecognized section header ''*** foo bar
-    ***''. Valid sections: ''Settings'', ''Variables'', ''Keywords'' and ''Comments''.'
+    href: https://robocop.readthedocs.io/en/3.1.1/rules.html#section-name-invalid
+  message: Section name should be in format '*** Foo Bar ***' or '*** FOO BAR ***'
   range:
     end:
       character: 15
@@ -23,7 +22,20 @@
     start:
       character: 0
       line: 0
-  severity: 1
+  severity: 2
+  source: robocop
+- code: 0509
+  codeDescription:
+    href: https://robocop.readthedocs.io/en/3.1.1/rules.html#empty-section
+  message: Section '*** foo bar ***' is empty
+  range:
+    end:
+      character: 14
+      line: 0
+    start:
+      character: 0
+      line: 0
+  severity: 2
   source: robocop
 - code: '1002'
   codeDescription:

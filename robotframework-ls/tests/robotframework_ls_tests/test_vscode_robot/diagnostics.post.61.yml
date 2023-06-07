@@ -11,19 +11,18 @@
       line: 0
   severity: 2
   source: robocop
-- code: '0401'
+- code: 0509
   codeDescription:
-    href: https://robocop.readthedocs.io/en/3.1.1/rules.html#parsing-error
-  message: 'Robot Framework syntax error: Unrecognized section header ''*** foo bar
-    ***''. Valid sections: ''Settings'', ''Variables'', ''Keywords'' and ''Comments''.'
+    href: https://robocop.readthedocs.io/en/3.1.1/rules.html#empty-section
+  message: Section '*** Invalid Invalid ***' is empty
   range:
     end:
-      character: 15
+      character: 22
       line: 0
     start:
       character: 0
       line: 0
-  severity: 1
+  severity: 2
   source: robocop
 - code: '1002'
   codeDescription:
@@ -31,18 +30,18 @@
   message: Missing trailing blank line at the end of file
   range:
     end:
-      character: 15
+      character: 23
       line: 0
     start:
       character: 0
       line: 0
   severity: 2
   source: robocop
-- message: 'Unrecognized section header ''*** foo bar ***''. Valid sections: ''Settings'',
-    ''Variables'', ''Keywords'' and ''Comments''.'
+- message: 'Unrecognized section header ''*** Invalid Invalid ***''. Valid sections:
+    ''Settings'', ''Variables'', ''Keywords'' and ''Comments''.'
   range:
     end:
-      character: 15
+      character: 23
       line: 0
     start:
       character: 0

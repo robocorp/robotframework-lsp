@@ -265,7 +265,7 @@ class _ASTIndexer(_AbstractIndexer):
         return self._indexer.iter_indexed(clsname)
 
 
-@lru_cache
+@lru_cache(None)
 def _get_error_tokens():
     from robot.api import Token
 

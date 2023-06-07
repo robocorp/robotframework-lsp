@@ -19,6 +19,7 @@ import itertools
 import sys
 from robocorp_ls_core.code_units import convert_python_col_to_utf16_code_unit
 from typing import List
+from robotframework_ls.impl.robot_version import get_robot_major_minor_version
 
 
 log = logging.getLogger(__name__)
@@ -41,7 +42,12 @@ def check_diagnostics(language_server, data_regression):
     language_server.change_doc(uri, 2, "*** Invalid Invalid ***")
     assert message_matcher.event.wait(TIMEOUT)
     diag = message_matcher.msg["params"]["diagnostics"]
-    data_regression.check(sort_diagnostics(diag), basename="diagnostics")
+    major, minor = get_robot_major_minor_version()
+    if (major, minor) >= (6, 1):
+        basename = "diagnostics.post.61"
+    else:
+        basename = "diagnostics"
+    data_regression.check(sort_diagnostics(diag), basename=basename)
 
 
 def check_find_definition_data_regression(data_regression, check, basename=None):
