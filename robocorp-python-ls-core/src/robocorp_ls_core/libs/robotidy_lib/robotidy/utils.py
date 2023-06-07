@@ -1,26 +1,64 @@
 import ast
 import difflib
 import os
+import re
 from enum import Enum
-from typing import Iterable, List
+from functools import total_ordering
+from typing import Iterable, List, Optional, Pattern
+
+import click
 
 try:
     from rich.markup import escape
 except ImportError:  # Fails on vendored-in LSP plugin
     escape = None
 
-from packaging import version
 from robot.api.parsing import Comment, End, If, IfHeader, ModelVisitor, Token
 from robot.parsing.model import Statement
 from robot.utils.robotio import file_writer
 from robot.version import VERSION as RF_VERSION
 
-ROBOT_VERSION = version.parse(RF_VERSION)
+
+@total_ordering
+class Version:
+    def __init__(self, major: int, minor: int, fix: int):
+        self.major = major
+        self.minor = minor
+        self.fix = fix
+
+    @classmethod
+    def parse(cls, raw_version):
+        version = re.search(r"(?P<major>[0-9]+)\.(?P<minor>[0-9]+)\.?(?P<fix>[0-9]+)*", raw_version)
+        major = int(version.group("major"))
+        minor = int(version.group("minor")) if version.group("minor") is not None else 0
+        fix = int(version.group("fix")) if version.group("fix") is not None else 0
+        return cls(major, minor, fix)
+
+    def __eq__(self, other):
+        return self.major == other.major and self.minor == other.minor and self.fix == other.fix
+
+    def __lt__(self, other):
+        if self.major != other.major:
+            return self.major < other.major
+        if self.minor != other.minor:
+            return self.minor < other.minor
+        return self.fix < other.fix
+
+    def __str__(self):
+        return f"{self.major}.{self.minor}.{self.fix}"
+
+
+ROBOT_VERSION = Version.parse(RF_VERSION)
+
+
+def rf_supports_lang():
+    return ROBOT_VERSION.major >= 6
 
 
 class TargetVersion(Enum):
     RF4 = 4
     RF5 = 5
+    RF6 = 6
 
 
 class StatementLinesCollector(ModelVisitor):
@@ -38,6 +76,13 @@ class StatementLinesCollector(ModelVisitor):
 
     def __eq__(self, other):
         return other.text == self.text
+
+
+def validate_regex(value: Optional[str]) -> Optional[Pattern]:
+    try:
+        return re.compile(value) if value is not None else None
+    except re.error:
+        raise click.BadParameter("Not a valid regular expression")
 
 
 def decorate_diff_with_color(contents: List[str]) -> List[str]:
@@ -267,14 +312,22 @@ def wrap_in_if_and_replace_statement(node, statement, default_separator):
     if len(node.data_tokens) < 2:
         return node
     condition = node.data_tokens[1]
+    separator = Token(Token.SEPARATOR, default_separator)
     indent = Token(Token.SEPARATOR, node.tokens[0].value + default_separator)
-    indented_tokens = replace_indent_in_lines(node, default_separator)
-    body = create_statement_from_tokens(statement=statement, tokens=indented_tokens[4:], indent=indent)
+    merged_comment = merge_comments_into_one(node.tokens)
+    data_tokens = join_tokens_with_token(node.data_tokens[2:], separator)
+    if data_tokens:
+        data_tokens.insert(0, separator)
+    if merged_comment:
+        data_tokens.append(Token(Token.SEPARATOR, "  "))
+        data_tokens.append(merged_comment)
+    data_tokens.append(Token(Token.EOL))
+    body = create_statement_from_tokens(statement=statement, tokens=data_tokens, indent=indent)
     header = IfHeader(
         [
             node.tokens[0],
             Token(Token.IF),
-            Token(Token.SEPARATOR, default_separator),
+            separator,
             condition,
             Token(Token.EOL),
         ]
@@ -309,7 +362,7 @@ def merge_comments_into_one(tokens):
     if not comments:
         return None
     comment = " ".join(comments)
-    return f"# {comment}"
+    return Token(Token.COMMENT, f"# {comment}")
 
 
 def collect_comments_from_tokens(tokens, indent):
@@ -380,3 +433,24 @@ def get_new_line(indent=None):
     if indent:
         return [Token(Token.EOL), indent, Token(Token.CONTINUATION)]
     return [Token(Token.EOL), Token(Token.CONTINUATION)]
+
+
+def is_var(value: str):
+    return len(value) > 3 and value.startswith("${") and value.endswith("}")
+
+
+def get_line_length(tokens):
+    return sum(len(token.value) for token in tokens)
+
+
+def get_line_length_with_sep(tokens, sep_len: int):
+    return get_line_length(tokens) + ((len(tokens) - 1) * sep_len)
+
+
+def join_comments(comments) -> List:
+    tokens = []
+    separator = Token(Token.SEPARATOR, "  ")
+    for token in comments:
+        tokens.append(separator)
+        tokens.append(token)
+    return tokens

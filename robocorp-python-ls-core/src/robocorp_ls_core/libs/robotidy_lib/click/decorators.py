@@ -126,8 +126,10 @@ CmdType = t.TypeVar("CmdType", bound=Command)
 
 @t.overload
 def command(
-    __func: t.Callable[..., t.Any],
-) -> Command:
+    name: t.Optional[str] = None,
+    cls: t.Type[CmdType] = ...,
+    **attrs: t.Any,
+) -> t.Callable[..., CmdType]:
     ...
 
 
@@ -141,15 +143,23 @@ def command(
 
 @t.overload
 def command(
-    name: t.Optional[str] = None,
+    name: t.Callable,
     cls: t.Type[CmdType] = ...,
     **attrs: t.Any,
-) -> t.Callable[..., CmdType]:
+) -> CmdType:
+    ...
+
+
+@t.overload
+def command(
+    name: t.Callable,
+    **attrs: t.Any,
+) -> Command:
     ...
 
 
 def command(
-    name: t.Union[str, t.Callable[..., t.Any], None] = None,
+    name: t.Union[str, t.Callable, None] = None,
     cls: t.Optional[t.Type[Command]] = None,
     **attrs: t.Any,
 ) -> t.Union[Command, t.Callable[..., Command]]:
@@ -181,17 +191,14 @@ def command(
         The ``params`` argument can be used. Decorated params are
         appended to the end of the list.
     """
+    if cls is None:
+        cls = Command
 
-    func: t.Optional[t.Callable[..., t.Any]] = None
+    func: t.Optional[t.Callable] = None
 
     if callable(name):
         func = name
         name = None
-        assert cls is None, "Use 'command(cls=cls)(callable)' to specify a class."
-        assert not attrs, "Use 'command(**kwargs)(callable)' to provide arguments."
-
-    if cls is None:
-        cls = Command
 
     def decorator(f: t.Callable[..., t.Any]) -> Command:
         if isinstance(f, Command):
@@ -228,21 +235,22 @@ def command(
 
 @t.overload
 def group(
-    __func: t.Callable[..., t.Any],
-) -> Group:
-    ...
-
-
-@t.overload
-def group(
     name: t.Optional[str] = None,
     **attrs: t.Any,
 ) -> t.Callable[[F], Group]:
     ...
 
 
+@t.overload
 def group(
-    name: t.Union[str, t.Callable[..., t.Any], None] = None, **attrs: t.Any
+    name: t.Callable,
+    **attrs: t.Any,
+) -> Group:
+    ...
+
+
+def group(
+    name: t.Union[str, t.Callable, None] = None, **attrs: t.Any
 ) -> t.Union[Group, t.Callable[[F], Group]]:
     """Creates a new :class:`Group` with a function as callback.  This
     works otherwise the same as :func:`command` just that the `cls`

@@ -1,3 +1,5 @@
+from typing import List
+
 from robot.api.parsing import Token
 
 from robotidy.disablers import skip_if_disabled
@@ -7,6 +9,7 @@ from robotidy.transformers import Transformer
 from robotidy.transformers.run_keywords import get_run_keywords
 from robotidy.utils import (
     collect_comments_from_tokens,
+    get_line_length_with_sep,
     get_new_line,
     is_token_value_in_tokens,
     join_tokens_with_token,
@@ -72,13 +75,16 @@ class IndentNestedKeywords(Transformer):
         kw_norm = normalize_name(kw_name)
         return self.run_keywords.get(kw_norm, None)
 
-    def get_setting_lines(self, node):  # noqa
+    def get_setting_lines(self, node, indent):  # noqa
         if self.skip.setting("any") or node.errors or not len(node.data_tokens) > 1:
             return None
         run_keyword = self.get_run_keyword(node.data_tokens[1].value)
         if not run_keyword:
             return None
-        return self.parse_sub_kw(node.data_tokens[1:])
+        lines = self.parse_sub_kw(node.data_tokens[1:])
+        if not lines:
+            return None
+        return self.split_too_long_lines(lines, indent)
 
     def get_separator(self, column=1, continuation=False):
         if continuation:
@@ -98,7 +104,7 @@ class IndentNestedKeywords(Transformer):
 
     @skip_if_disabled
     def visit_SuiteSetup(self, node):  # noqa
-        lines = self.get_setting_lines(node)
+        lines = self.get_setting_lines(node, 0)
         if not lines:
             return node
         comments = collect_comments_from_tokens(node.tokens, indent=None)
@@ -112,7 +118,8 @@ class IndentNestedKeywords(Transformer):
 
     @skip_if_disabled
     def visit_Setup(self, node):  # noqa
-        lines = self.get_setting_lines(node)
+        indent = len(node.tokens[0].value)
+        lines = self.get_setting_lines(node, indent)
         if not lines:
             return node
         indent = node.tokens[0]
@@ -123,7 +130,7 @@ class IndentNestedKeywords(Transformer):
         if comment:
             # need to add comments on first line for [Setup] / [Teardown] settings
             comment_sep = Token(Token.SEPARATOR, "  ")
-            tokens.extend([comment_sep, Token(Token.COMMENT, comment)])
+            tokens.extend([comment_sep, comment])
         node.tokens = self.parse_keyword_lines(lines, tokens, new_line, eol=node.tokens[-1])
         return node
 
@@ -143,6 +150,7 @@ class IndentNestedKeywords(Transformer):
         lines = self.parse_sub_kw(kw_tokens)
         if not lines:
             return node
+        lines = self.split_too_long_lines(lines, len(self.formatting_config.separator))
 
         separator = self.get_separator()
         tokens = [indent]
@@ -152,6 +160,42 @@ class IndentNestedKeywords(Transformer):
         new_line = get_new_line(indent)
         node.tokens = self.parse_keyword_lines(lines, tokens, new_line, eol=node.tokens[-1])
         return (*comments, node)
+
+    def split_too_long_lines(self, lines, indent):
+        """
+        Parse indented lines to split too long lines
+        """
+        # TODO: Keep things like ELSE IF <condition>, Run Keyword If <> together no matter what
+        if "SplitTooLongLine" not in self.transformers:
+            return lines
+        allowed_length = self.transformers["SplitTooLongLine"].line_length
+        sep_len = len(self.formatting_config.separator)
+        new_lines = []
+        for column, line in lines:
+            pre_indent = self.calculate_line_indent(column, indent)
+            if (
+                column == 0
+                or len(line) == 1
+                or (pre_indent + get_line_length_with_sep(line, sep_len)) <= allowed_length
+            ):
+                new_lines.append((column, line))
+                continue
+            if (pre_indent + get_line_length_with_sep(line[:2], sep_len)) <= allowed_length:
+                first_line_end = 2
+            else:
+                first_line_end = 1
+            new_lines.append((column, line[:first_line_end]))
+            new_lines.extend([(column + 1, [arg]) for arg in line[first_line_end:]])
+        return new_lines
+
+    def calculate_line_indent(self, column, starting_indent):
+        """Calculate with of the continuation indent.
+
+        For example following line will have 4 + 3 + 2x column x 4 indent with:
+
+            ...        argument
+        """
+        return starting_indent + len(self.formatting_config.continuation_indent) * column + 3
 
     def parse_sub_kw(self, tokens, column=0):
         if not tokens:

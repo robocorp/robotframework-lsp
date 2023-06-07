@@ -37,9 +37,6 @@ class NormalizeSettingName(Transformer):
     ```
     """
 
-    def __init__(self):
-        super().__init__()  # workaround for our dynamically imported classes with args from cli/config
-
     @skip_section_if_disabled
     def visit_Section(self, node):  # noqa
         return self.generic_visit(node)

@@ -1,6 +1,7 @@
 from robot.api.parsing import Comment, CommentSection, EmptyLine
 
 from robotidy.disablers import skip_section_if_disabled
+from robotidy.skip import Skip
 from robotidy.transformers import Transformer
 
 
@@ -16,9 +17,11 @@ class DiscardEmptySections(Transformer):
     ```
     """
 
-    def __init__(self, allow_only_comments: bool = True):
-        super().__init__()
-        # If False then sections with only with comments are considered to be empty
+    HANDLES_SKIP = frozenset({"skip_sections"})
+
+    def __init__(self, allow_only_comments: bool = True, skip: Skip = None):
+        super().__init__(skip)
+        # If False then sections with only comments are considered to be empty
         self.allow_only_comments = allow_only_comments
 
     @skip_section_if_disabled

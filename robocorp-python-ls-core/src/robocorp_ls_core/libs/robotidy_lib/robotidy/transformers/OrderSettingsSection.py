@@ -92,7 +92,7 @@ class OrderSettingsSection(Transformer):
             "tags",
             tags_order,
             (Token.FORCE_TAGS, Token.DEFAULT_TAGS),
-            {"force_tags": Token.FORCE_TAGS, "default_tags": Token.DEFAULT_TAGS},
+            {"force_tags": Token.FORCE_TAGS, "test_tags": Token.FORCE_TAGS, "default_tags": Token.DEFAULT_TAGS},
         )
 
     def parse_group_order(self, order):

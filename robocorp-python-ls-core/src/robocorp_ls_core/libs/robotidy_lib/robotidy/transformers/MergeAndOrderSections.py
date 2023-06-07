@@ -7,6 +7,10 @@ try:
     from robot.api.parsing import InlineIfHeader
 except ImportError:
     InlineIfHeader = None
+try:
+    from robot.api.parsing import Config  # from RF 6.0
+except ImportError:
+    Config = None
 from robotidy.transformers import Transformer
 
 
@@ -50,6 +54,8 @@ class MergeAndOrderSections(Transformer):
     You can disable this behaviour by setting ``create_comment_section`` to False.
     """
 
+    LANGUAGE_MARKER_SECTION = "shebang"
+
     def __init__(self, order: str = "", create_comment_section: bool = True):
         super().__init__()
         self.sections_order = self.parse_order(order)
@@ -57,16 +63,18 @@ class MergeAndOrderSections(Transformer):
 
     def parse_order(self, order):
         default_order = (
+            self.LANGUAGE_MARKER_SECTION,
             Token.COMMENT_HEADER,
             Token.SETTING_HEADER,
             Token.VARIABLE_HEADER,
             Token.TESTCASE_HEADER,
+            "TASK HEADER",
             Token.KEYWORD_HEADER,
         )
         if not order:
             return default_order
         parts = order.lower().split(",")
-        map = {
+        map_names = {
             "comments": Token.COMMENT_HEADER,
             "comment": Token.COMMENT_HEADER,
             "settings": Token.SETTING_HEADER,
@@ -75,19 +83,31 @@ class MergeAndOrderSections(Transformer):
             "variable": Token.VARIABLE_HEADER,
             "testcases": Token.TESTCASE_HEADER,
             "testcase": Token.TESTCASE_HEADER,
+            "tasks": "TASK HEADER",
+            "task": "TASK HEADER",
             "keywords": Token.KEYWORD_HEADER,
             "keyword": Token.KEYWORD_HEADER,
         }
-        parsed_order = []
+        parsed_order = [self.LANGUAGE_MARKER_SECTION]
         for part in parts:
-            parsed_order.append(map.get(part, None))
-        if any(header not in parsed_order for header in default_order) and len(parsed_order) != len(default_order):
+            parsed_order.append(map_names.get(part, None))
+        # all sections need to be here, and either tasks or test cases or both of them
+        any_of_sections = [Token.TESTCASE_HEADER, "TASK HEADER"]
+        required_sections = [section for section in default_order if section not in any_of_sections]
+        if (
+            # unexpected section names
+            any(header not in default_order for header in parsed_order)
+            # missing required section
+            or any(req_section not in parsed_order for req_section in required_sections)
+            # we need either task, test or both in parsing order
+            or not any(any_section in parsed_order for any_section in any_of_sections)
+        ):
             raise InvalidParameterValueError(
                 self.__class__.__name__,
                 "order",
                 order,
                 "Custom order should be provided in comma separated list with all section names:\n"
-                "order=comments,settings,variables,testcases,variables",
+                "order=comments,settings,variables,testcases,tasks,variables",
             )
         return parsed_order
 
@@ -122,7 +142,7 @@ class MergeAndOrderSections(Transformer):
         return new_tokens
 
     def from_last_section(self, node):
-        """Last node use different logic for new line marker. It is not possible to preserve all empty lines but
+        """Last node use different logic for new line marker. It is not possible to preserve all empty lines, but
         we need at least ensure that following code::
 
              *** Test Case ***
@@ -167,15 +187,17 @@ class MergeAndOrderSections(Transformer):
         header_tokens = (
             Token.COMMENT_HEADER,
             Token.TESTCASE_HEADER,
+            "TASK HEADER",  # added from 6.0, before it was Test Case header
             Token.SETTING_HEADER,
             Token.KEYWORD_HEADER,
             Token.VARIABLE_HEADER,
         )
         if section.header:
             name_token = section.header.get_token(*header_tokens)
-            section_type = name_token.type
-        else:
-            section_type = Token.COMMENT_HEADER
-            if self.create_comment_section:
-                section.header = SectionHeader.from_params(section_type, "*** Comments ***")
+            return name_token.type
+        if Config and any(isinstance(child, Config) for child in section.body):
+            return self.LANGUAGE_MARKER_SECTION
+        section_type = Token.COMMENT_HEADER
+        if self.create_comment_section:
+            section.header = SectionHeader.from_params(section_type, "*** Comments ***")
         return section_type

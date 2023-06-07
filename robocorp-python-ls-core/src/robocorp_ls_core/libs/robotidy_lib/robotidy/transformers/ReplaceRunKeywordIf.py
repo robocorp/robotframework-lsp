@@ -2,7 +2,7 @@ from robot.api.parsing import ElseHeader, ElseIfHeader, End, If, IfHeader, Keywo
 
 from robotidy.disablers import skip_if_disabled, skip_section_if_disabled
 from robotidy.transformers import Transformer
-from robotidy.utils import after_last_dot, normalize_name
+from robotidy.utils import after_last_dot, is_var, normalize_name
 
 
 def insert_separators(indent, tokens, separator):
@@ -83,9 +83,6 @@ class ReplaceRunKeywordIf(Transformer):
     ```
     """
 
-    def __init__(self):
-        super().__init__()  # workaround for our dynamically imported classes with args from cli/config
-
     @skip_section_if_disabled
     def visit_Section(self, node):  # noqa
         return self.generic_visit(node)
@@ -147,11 +144,15 @@ class ReplaceRunKeywordIf(Transformer):
         return prev_if
 
     def create_keywords(self, arg_tokens, assign, indent):
-        if normalize_name(arg_tokens[0].value) == "runkeywords":
+        keyword_name = normalize_name(arg_tokens[0].value)
+        if keyword_name == "runkeywords":
             return [
                 self.args_to_keyword(keyword[1:], assign, indent)
                 for keyword in self.split_args_on_delimiters(arg_tokens, ("AND",))
             ]
+        elif is_var(keyword_name):
+            keyword_token = Token(Token.KEYWORD_NAME, "Run Keyword")
+            arg_tokens = [keyword_token] + arg_tokens
         return [self.args_to_keyword(arg_tokens, assign, indent)]
 
     def args_to_keyword(self, arg_tokens, assign, indent):

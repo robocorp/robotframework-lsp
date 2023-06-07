@@ -1,4 +1,5 @@
 import re
+import string
 from typing import Optional
 
 from robot.api.parsing import Token
@@ -6,6 +7,36 @@ from robot.api.parsing import Token
 from robotidy.disablers import skip_if_disabled, skip_section_if_disabled
 from robotidy.exceptions import InvalidParameterValueError
 from robotidy.transformers import Transformer
+
+
+def cap_string_until_succeed(word: str):
+    """
+    Yield characters from the word and capitalize character until we are able to make char uppercase.
+    """
+    capitalize = True
+    for char in word:
+        if capitalize:
+            char = char.upper()
+            if char.isupper():
+                capitalize = False
+        yield char
+
+
+def cap_word(word: str):
+    """
+    Capitalize the word. The word can start with ( or contain ':
+
+        word -> Word
+        (word -> (Word
+        word's -> Word's
+
+    """
+    if not word or any(c.isupper() for c in word):  # ignore JIRA or sOme
+        return word
+    new_word = word.capitalize()
+    if new_word != word:
+        return new_word
+    return "".join(cap_string_until_succeed(word))
 
 
 class RenameTestCases(Transformer):
@@ -88,8 +119,8 @@ class RenameTestCases(Transformer):
         token = node.get_token(Token.TESTCASE_NAME)
         if token.value:
             if self.capitalize_each_word:
-                token_value = " ".join(f"{word[0].upper()}{word[1:]}" for word in token.value.split(" "))
-                token.value = token_value.lstrip()
+                value = token.value.strip()
+                token.value = " ".join(cap_word(word) for word in value.split(" "))
             else:
                 token.value = token.value[0].upper() + token.value[1:]
             if self.replace_pattern is not None:

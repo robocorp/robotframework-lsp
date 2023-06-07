@@ -22,7 +22,10 @@ class DuplicateInSettingsOrderError(InvalidParameterValueError):
 class SettingInBothOrdersError(RobotidyConfigError):
     def __init__(self, transformer, first_order, second_order, duplicates):
         names = ",".join(setting.lower() for setting in duplicates)
-        msg = f"{transformer}: Invalid '{first_order}' and '{second_order}' order values. Following setting names exists in both orders: {names}"
+        msg = (
+            f"{transformer}: Invalid '{first_order}' and '{second_order}' order values. "
+            f"Following setting names exists in both orders: {names}"
+        )
         super().__init__(msg)
 
 
@@ -156,24 +159,33 @@ class OrderSettings(Transformer):
         after_seen = False
         # when after_seen is set to True then all statements go to trailing_after and last non data
         # will be appended after tokens defined in `after` set (like [Return])
-        comment = []
+        comments, header_line = [], []
         for child in node.body:
-            if isinstance(child, Comment) and child.lineno == node.lineno:
-                comment.append(child)
+            if isinstance(child, Comment):
+                if child.lineno == node.lineno:  # comment in the same line as test/kw name
+                    header_line.append(child)
+                else:
+                    comments.append(child)
             elif getattr(child, "type", "invalid") in setting_types:
                 after_seen = after_seen or child.type in after
-                settings[child.type] = child
+                settings[child.type] = (comments, child)
+                comments = []
             elif after_seen:
+                trailing_after.extend(comments)
+                comments = []
                 trailing_after.append(child)
             else:
+                not_settings.extend(comments)
+                comments = []
                 not_settings.append(child)
+        trailing_after.extend(comments)
         # comments after last data statement are considered as comment outside body
         trailing_non_data = []
         while trailing_after and isinstance(trailing_after[-1], (EmptyLine, Comment)):
             trailing_non_data.insert(0, trailing_after.pop())
         not_settings += trailing_after
         node.body = (
-            comment
+            header_line
             + self.add_in_order(before, settings)
             + not_settings
             + self.add_in_order(after, settings)
@@ -183,4 +195,11 @@ class OrderSettings(Transformer):
 
     @staticmethod
     def add_in_order(order, settings_in_node):
-        return [settings_in_node[token_type] for token_type in order if token_type in settings_in_node]
+        nodes = []
+        for token_type in order:
+            if token_type not in settings_in_node:
+                continue
+            comments, node = settings_in_node[token_type]
+            nodes.extend(comments)
+            nodes.append(node)
+        return nodes

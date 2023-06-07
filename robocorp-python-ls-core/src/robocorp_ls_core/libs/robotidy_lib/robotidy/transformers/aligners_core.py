@@ -13,7 +13,7 @@ from robotidy.disablers import skip_if_disabled
 from robotidy.exceptions import InvalidParameterValueError
 from robotidy.skip import Skip
 from robotidy.transformers import Transformer
-from robotidy.utils import is_blank_multiline, round_to_four
+from robotidy.utils import is_blank_multiline, join_comments, round_to_four
 
 WHITESPACE_TOKENS = frozenset({Token.SEPARATOR, Token.EOS})
 
@@ -472,15 +472,6 @@ def separate_comments(tokens):
         else:
             non_comments.append(token)
     return non_comments, comments
-
-
-def join_comments(comments):
-    tokens = []
-    separator = get_separator(2)
-    for token in comments:
-        tokens.append(separator)
-        tokens.append(token)
-    return tokens
 
 
 def align_fixed(tokens, sep_len, start_sep=False):

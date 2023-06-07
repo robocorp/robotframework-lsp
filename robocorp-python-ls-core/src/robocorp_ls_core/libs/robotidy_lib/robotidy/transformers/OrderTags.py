@@ -61,15 +61,15 @@ class OrderTags(Transformer):
         return self.generic_visit(node)
 
     def visit_Tags(self, node):  # noqa
-        return self.order_tags(node, Tags, indent=True)
+        return self.order_tags(node, indent=True)
 
     def visit_DefaultTags(self, node):  # noqa
-        return self.order_tags(node, DefaultTags) if self.default_tags else node
+        return self.order_tags(node) if self.default_tags else node
 
     def visit_ForceTags(self, node):  # noqa
-        return self.order_tags(node, ForceTags) if self.force_tags else node
+        return self.order_tags(node) if self.force_tags else node
 
-    def order_tags(self, node, tag_class, indent=False):
+    def order_tags(self, node, indent=False):
         if self.disablers.is_node_disabled(node):
             return node
         ordered_tags = sorted(
@@ -80,22 +80,22 @@ class OrderTags(Transformer):
         if len(ordered_tags) <= 1:
             return node
         comments = node.get_tokens(Token.COMMENT)
+        tokens = []
         if indent:
-            tag_node = tag_class.from_params(
-                ordered_tags,
-                indent=self.formatting_config.separator,
-                separator=self.formatting_config.separator,
-            )
-        else:
-            tag_node = tag_class.from_params(ordered_tags, separator=self.formatting_config.separator)
-        if comments:
-            tag_node.tokens = tag_node.tokens[:-1] + tuple(self.join_tokens(comments)) + (tag_node.tokens[-1],)
-        return tag_node
+            tokens.append(Token(Token.SEPARATOR, self.formatting_config.indent))
+        tokens.append(node.data_tokens[0])
+        tag_tokens = (Token(Token.ARGUMENT, tag) for tag in ordered_tags)
+        tokens.extend(self.join_tokens(tag_tokens))
+        tokens.extend(self.join_tokens(comments))
+        tokens.append(Token(Token.EOL))
+        node.tokens = tokens
+        return node
 
     def join_tokens(self, tokens):
         joined_tokens = []
+        separator = Token(Token.SEPARATOR, self.formatting_config.separator)
         for token in tokens:
-            joined_tokens.append(Token(Token.SEPARATOR, self.formatting_config.separator))
+            joined_tokens.append(separator)
             joined_tokens.append(token)
         return joined_tokens
 

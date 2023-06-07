@@ -1809,16 +1809,6 @@ class Group(MultiCommand):
         _check_multicommand(self, name, cmd, register=True)
         self.commands[name] = cmd
 
-    @t.overload
-    def command(self, __func: t.Callable[..., t.Any]) -> Command:
-        ...
-
-    @t.overload
-    def command(
-        self, *args: t.Any, **kwargs: t.Any
-    ) -> t.Callable[[t.Callable[..., t.Any]], Command]:
-        ...
-
     def command(
         self, *args: t.Any, **kwargs: t.Any
     ) -> t.Union[t.Callable[[t.Callable[..., t.Any]], Command], Command]:
@@ -1844,11 +1834,8 @@ class Group(MultiCommand):
         func: t.Optional[t.Callable] = None
 
         if args and callable(args[0]):
-            assert (
-                len(args) == 1 and not kwargs
-            ), "Use 'command(**kwargs)(callable)' to provide arguments."
-            (func,) = args
-            args = ()
+            func = args[0]
+            args = args[1:]
 
         def decorator(f: t.Callable[..., t.Any]) -> Command:
             cmd: Command = command(*args, **kwargs)(f)
@@ -1859,16 +1846,6 @@ class Group(MultiCommand):
             return decorator(func)
 
         return decorator
-
-    @t.overload
-    def group(self, __func: t.Callable[..., t.Any]) -> "Group":
-        ...
-
-    @t.overload
-    def group(
-        self, *args: t.Any, **kwargs: t.Any
-    ) -> t.Callable[[t.Callable[..., t.Any]], "Group"]:
-        ...
 
     def group(
         self, *args: t.Any, **kwargs: t.Any
@@ -1892,11 +1869,8 @@ class Group(MultiCommand):
         func: t.Optional[t.Callable] = None
 
         if args and callable(args[0]):
-            assert (
-                len(args) == 1 and not kwargs
-            ), "Use 'group(**kwargs)(callable)' to provide arguments."
-            (func,) = args
-            args = ()
+            func = args[0]
+            args = args[1:]
 
         if self.group_class is not None and kwargs.get("cls") is None:
             if self.group_class is type:
@@ -2579,9 +2553,6 @@ class Option(Parameter):
 
                 if self.is_flag:
                     raise TypeError("'count' is not valid with 'is_flag'.")
-
-            if self.multiple and self.is_flag:
-                raise TypeError("'multiple' is not valid with 'is_flag', use 'count'.")
 
     def to_info_dict(self) -> t.Dict[str, t.Any]:
         info_dict = super().to_info_dict()

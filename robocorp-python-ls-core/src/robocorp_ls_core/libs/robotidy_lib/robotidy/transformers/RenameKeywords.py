@@ -2,15 +2,17 @@ import re
 import string
 from typing import Optional
 
-from robot.api.parsing import ModelTransformer, Token
+from robot.api.parsing import Token
+from robot.variables.search import VariableIterator
 
 from robotidy.disablers import skip_if_disabled, skip_section_if_disabled
 from robotidy.exceptions import InvalidParameterValueError
+from robotidy.transformers import Transformer
 from robotidy.transformers.run_keywords import get_run_keywords
 from robotidy.utils import is_token_value_in_tokens, normalize_name, split_on_token_type, split_on_token_value
 
 
-class RenameKeywords(ModelTransformer):
+class RenameKeywords(Transformer):
     """
     Enforce keyword naming.
 
@@ -58,6 +60,7 @@ class RenameKeywords(ModelTransformer):
         remove_underscores: bool = True,
         ignore_library: bool = True,
     ):
+        super().__init__()
         self.ignore_library = ignore_library
         self.remove_underscores = remove_underscores
         self.replace_pattern = self.parse_pattern(replace_pattern)
@@ -86,21 +89,68 @@ class RenameKeywords(ModelTransformer):
         return self.generic_visit(node)
 
     def rename_node(self, token, is_keyword_call):
-        values = []
-        split_names = token.value.split(".")
-        for index, value in enumerate(split_names, start=1):
-            if is_keyword_call and self.ignore_library and index != len(split_names):
-                values.append(value)
-                continue
-            if self.replace_pattern is not None:
-                value = self.replace_pattern.sub(repl=self.replace_to, string=value)
-            if self.remove_underscores and set(value) != {"_"}:
-                value = re.sub("_+", " ", value)  # replace one or more _ with one space
-            value = value.strip()
-            # capitalize first letter of every word, leave rest untouched
-            value = "".join([a if a.isupper() else b for a, b in zip(value, string.capwords(value))])
-            values.append(value)
-        token.value = ".".join(values)
+        if self.replace_pattern is not None:
+            new_value = self.rename_with_pattern(token.value, is_keyword_call=is_keyword_call)
+        else:
+            new_value = self.normalize_name(token.value, is_keyword_call=is_keyword_call)
+        if not new_value.strip():  # do not allow renames that removes keywords altogether
+            return
+        token.value = new_value
+
+    def normalize_name(self, value, is_keyword_call):
+        var_found = False
+        parts = []
+        new_name, remaining = "", ""
+        for prefix, match, remaining in VariableIterator(value, ignore_errors=True):
+            var_found = True
+            # rename strips whitespace, so we need to preserve it if needed
+            if not prefix.strip() and parts:
+                parts.extend([" ", match])
+            else:
+                leading_space = " " if prefix.startswith(" ") else ""
+                trailing_space = " " if prefix.endswith(" ") else ""
+                parts.extend([leading_space, self.rename_part(prefix, is_keyword_call), trailing_space, match])
+        if var_found:
+            if remaining.startswith(" "):
+                parts.append(" ")
+            parts.append(self.rename_part(remaining, is_keyword_call))
+            return "".join(parts).strip()
+        return self.rename_part(value, is_keyword_call)
+
+    def rename_part(self, part: str, is_keyword_call: bool):
+        if is_keyword_call and self.ignore_library:
+            lib_name, *kw_name = part.rsplit(".", maxsplit=1)
+            if not kw_name:
+                return self.remove_underscores_and_capitalize(part)
+            return f"{lib_name}.{self.remove_underscores_and_capitalize(kw_name[0])}"
+        return ".".join([self.remove_underscores_and_capitalize(name_part) for name_part in part.split(".")])
+
+    def remove_underscores_and_capitalize(self, value: str):
+        if self.remove_underscores:
+            value = re.sub("_+", " ", value)  # replace one or more _ with one space
+        value = value.strip()
+        # capitalize first letter of every word, leave rest untouched
+        return "".join([a if a.isupper() else b for a, b in zip(value, string.capwords(value))])
+
+    def rename_with_pattern(self, value: str, is_keyword_call: bool):
+        lib_name = ""
+        if is_keyword_call and "." in value:
+            # rename only non lib part
+            found_lib = -1
+            for prefix, _, _ in VariableIterator(value):
+                found_lib = prefix.find(".")
+                break
+            if found_lib != -1:
+                lib_name = value[: found_lib + 1]
+                value = value[found_lib + 1 :]
+            else:
+                lib_name, value = value.split(".", maxsplit=1)
+                lib_name += "."
+        if lib_name and not self.ignore_library:
+            lib_name = self.remove_underscores_and_capitalize(lib_name)
+        return lib_name + self.remove_underscores_and_capitalize(
+            self.replace_pattern.sub(repl=self.replace_to, string=value)
+        )
 
     @skip_if_disabled
     def visit_KeywordName(self, node):  # noqa

@@ -6,6 +6,7 @@ from robot.api.parsing import Token, Variable
 
 from robotidy.disablers import skip_if_disabled, skip_section_if_disabled
 from robotidy.exceptions import InvalidParameterValueError
+from robotidy.skip import Skip
 from robotidy.transformers import Transformer
 
 
@@ -60,12 +61,12 @@ class NormalizeAssignments(Transformer):
     (possible types are: `autodetect`, `remove`, `equal_sign` ('='), `space_and_equal_sign` (' =').
     """
 
+    HANDLES_SKIP = frozenset({"skip_sections"})
+
     def __init__(
-        self,
-        equal_sign_type: str = "autodetect",
-        equal_sign_type_variables: str = "remove",
+        self, equal_sign_type: str = "autodetect", equal_sign_type_variables: str = "remove", skip: Skip = None
     ):
-        super().__init__()
+        super().__init__(skip)
         self.remove_equal_sign = re.compile(r"\s?=$")
         self.file_equal_sign_type = None
         self.file_equal_sign_type_variables = None

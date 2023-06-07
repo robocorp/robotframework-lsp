@@ -1,4 +1,4 @@
-from robot.api.parsing import KeywordCall, Token
+from robot.api.parsing import Token
 
 try:
     from robot.api.parsing import InlineIfHeader, ReturnStatement
@@ -7,9 +7,9 @@ except ImportError:
     ReturnStatement = None
 
 from robotidy.disablers import skip_if_disabled, skip_section_if_disabled
-from robotidy.exceptions import InvalidParameterValueError
 from robotidy.skip import Skip
 from robotidy.transformers import Transformer
+from robotidy.utils import join_comments
 
 
 class NormalizeSeparators(Transformer):
@@ -19,73 +19,45 @@ class NormalizeSeparators(Transformer):
     All separators (pipes included) are converted to fixed length of 4 spaces (configurable via global argument
     ``--spacecount``).
 
-    You can decide which sections should be transformed by configuring
-    ``sections = comments,settings,variables,keywords,testcases`` param.
-
     To not format documentation configure ``skip_documentation`` to ``True``.
     """
 
     HANDLES_SKIP = frozenset(
-        {"skip_documentation", "skip_keyword_call", "skip_keyword_call_pattern", "skip_comments", "skip_block_comments"}
+        {
+            "skip_documentation",
+            "skip_keyword_call",
+            "skip_keyword_call_pattern",
+            "skip_comments",
+            "skip_block_comments",
+            "skip_sections",
+        }
     )
 
-    def __init__(self, sections: str = None, skip: Skip = None):
+    def __init__(self, flatten_lines: bool = False, align_new_line: bool = False, skip: Skip = None):
         super().__init__(skip=skip)
         self.indent = 0
-        self.sections = self.parse_sections(sections)
+        self.flatten_lines = flatten_lines
         self.is_inline = False
+        self.align_new_line = align_new_line
+        self._allowed_line_length = None  # we can only retrieve it after all transformers are initialized
 
-    def parse_sections(self, sections):
-        default = {"comments", "settings", "testcases", "keywords", "variables"}
-        if sections is None:
-            return default
-        if not sections:
-            return {}
-        parts = sections.split(",")
-        parsed_sections = set()
-        for part in parts:
-            part = part.replace("_", "")
-            if part and part[-1] != "s":
-                part += "s"
-            if part not in default:
-                raise InvalidParameterValueError(
-                    self.__class__.__name__,
-                    "sections",
-                    sections,
-                    f"Sections to be transformed should be provided in comma separated "
-                    f"list with valid section names:\n{sorted(default)}",
-                )
-            parsed_sections.add(part)
-        return parsed_sections
+    @property
+    def allowed_line_length(self) -> int:
+        """Get line length from SplitTooLongLine transformer or global config."""
+        if self._allowed_line_length is None:
+            if "SplitTooLongLine" in self.transformers:
+                self._allowed_line_length = self.transformers["SplitTooLongLine"].line_length
+            else:
+                self._allowed_line_length = self.formatting_config.line_length
+        return self._allowed_line_length
 
     def visit_File(self, node):  # noqa
         self.indent = 0
         return self.generic_visit(node)
 
-    def should_visit(self, name, node):
-        if name in self.sections:
-            return self.generic_visit(node)
-        return node
-
     @skip_section_if_disabled
-    def visit_CommentSection(self, node):  # noqa
-        return self.should_visit("comments", node)
-
-    @skip_section_if_disabled
-    def visit_SettingSection(self, node):  # noqa
-        return self.should_visit("settings", node)
-
-    @skip_section_if_disabled
-    def visit_VariableSection(self, node):  # noqa
-        return self.should_visit("variables", node)
-
-    @skip_section_if_disabled
-    def visit_KeywordSection(self, node):  # noqa
-        return self.should_visit("keywords", node)
-
-    @skip_section_if_disabled
-    def visit_TestCaseSection(self, node):  # noqa
-        return self.should_visit("testcases", node)
+    def visit_Section(self, node):  # noqa
+        return self.generic_visit(node)
 
     def indented_block(self, node):
         self.visit_Statement(node.header)
@@ -127,10 +99,11 @@ class NormalizeSeparators(Transformer):
         self.is_inline = False
         return node
 
+    @skip_if_disabled
     def visit_Documentation(self, doc):  # noqa
-        if self.skip.documentation:
+        if self.skip.documentation or self.flatten_lines:
             has_pipes = doc.tokens[0].value.startswith("|")
-            return self._handle_spaces(doc, has_pipes, only_indent=True)
+            return self.handle_spaces(doc, has_pipes, only_indent=True)
         return self.visit_Statement(doc)
 
     def visit_KeywordCall(self, keyword):  # noqa
@@ -138,28 +111,72 @@ class NormalizeSeparators(Transformer):
             return keyword
         return self.visit_Statement(keyword)
 
+    @skip_if_disabled
     def visit_Comment(self, node):  # noqa
         if self.skip.comment(node):
             return node
-        return self.visit_Statement(node)
+        has_pipes = node.tokens[0].value.startswith("|")
+        return self.handle_spaces(node, has_pipes)
 
     def is_keyword_inside_inline_if(self, node):
-        return self.is_inline and (
-            isinstance(node, KeywordCall) or ReturnStatement and isinstance(node, ReturnStatement)
-        )
+        return self.is_inline and not isinstance(node, InlineIfHeader)
 
     @skip_if_disabled
     def visit_Statement(self, statement):  # noqa
         if statement is None:
             return None
         has_pipes = statement.tokens[0].value.startswith("|")
-        return self._handle_spaces(statement, has_pipes)
+        if has_pipes or not self.flatten_lines:
+            return self.handle_spaces(statement, has_pipes)
+        else:
+            return self.handle_spaces_and_flatten_lines(statement)
 
-    def _handle_spaces(self, statement, has_pipes, only_indent=False):
+    def handle_spaces_and_flatten_lines(self, statement):
+        """Normalize separators and flatten multiline statements to one line."""
+        add_eol, prev_sep = False, False
+        add_indent = not self.is_keyword_inside_inline_if(statement)
+        new_tokens, comments = [], []
+        for token in statement.tokens:
+            if token.type == Token.SEPARATOR:
+                if prev_sep:
+                    continue
+                prev_sep = True
+                if add_indent:
+                    token.value = self.formatting_config.indent * self.indent
+                else:
+                    token.value = self.formatting_config.separator
+            elif token.type == Token.EOL:
+                add_eol = True
+                continue
+            elif token.type == Token.CONTINUATION:
+                continue
+            elif token.type == Token.COMMENT:
+                comments.append(token)
+                continue
+            else:
+                prev_sep = False
+            new_tokens.append(token)
+            add_indent = False
+        if new_tokens and new_tokens[-1].type == Token.SEPARATOR:
+            new_tokens.pop()
+        if comments:
+            new_tokens.extend(join_comments(comments))
+        if add_eol:
+            new_tokens.append(Token(Token.EOL))
+        statement.tokens = new_tokens
+        self.generic_visit(statement)
+        return statement
+
+    def handle_spaces(self, statement, has_pipes, only_indent=False):
         new_tokens = []
         prev_token = None
+        first_col_width = 0
+        first_data_token = True
+        is_sep_after_first_data_token = False
+        align_continuation = self.align_new_line
         for line in statement.lines:
             prev_sep = False
+            line_length = 0
             for index, token in enumerate(line):
                 if token.type == Token.SEPARATOR:
                     if prev_sep:
@@ -169,14 +186,27 @@ class NormalizeSeparators(Transformer):
                         token.value = self.formatting_config.indent * self.indent
                     elif not only_indent:
                         if prev_token and prev_token.type == Token.CONTINUATION:
-                            token.value = self.formatting_config.continuation_indent
+                            if align_continuation:
+                                token.value = first_col_width * " "
+                            else:
+                                token.value = self.formatting_config.continuation_indent
                         else:
                             token.value = self.formatting_config.separator
                 else:
                     prev_sep = False
+                    if align_continuation:
+                        if first_data_token:
+                            first_col_width += max(len(token.value), 3) - 3  # remove ... token length
+                            # Check if first line is not longer than allowed line length - we cant align over limit
+                            align_continuation = align_continuation and first_col_width < self.allowed_line_length
+                            first_data_token = False
+                        elif not is_sep_after_first_data_token and token.type != Token.EOL:
+                            is_sep_after_first_data_token = True
+                            first_col_width += len(self.formatting_config.separator)
                     prev_token = token
                 if has_pipes and index == len(line) - 2:
                     token.value = token.value.rstrip()
+                line_length += len(token.value)
                 new_tokens.append(token)
         statement.tokens = new_tokens
         self.generic_visit(statement)

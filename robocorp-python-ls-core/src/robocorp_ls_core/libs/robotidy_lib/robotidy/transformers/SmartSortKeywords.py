@@ -51,12 +51,7 @@ class SmartSortKeywords(Transformer):
 
     ENABLED = False
 
-    def __init__(
-        self,
-        case_insensitive=True,
-        ignore_leading_underscore=False,
-        ignore_other_underscore=True,
-    ):
+    def __init__(self, case_insensitive=True, ignore_leading_underscore=False, ignore_other_underscore=True):
         super().__init__()
         self.ci = case_insensitive
         self.ilu = ignore_leading_underscore
@@ -105,5 +100,4 @@ class SmartSortKeywords(Transformer):
     @staticmethod
     def append_empty_lines(node, empty_lines):
         for kw, lines in zip(node.body, empty_lines):
-            for line in lines:
-                kw.body.append(line)
+            kw.body.extend(lines)

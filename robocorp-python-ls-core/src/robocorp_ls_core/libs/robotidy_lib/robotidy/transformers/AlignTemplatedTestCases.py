@@ -7,6 +7,7 @@ from robot.api.parsing import (
     ForHeader,
     IfHeader,
     ModelVisitor,
+    Template,
     Token,
 )
 
@@ -42,7 +43,7 @@ class AlignTemplatedTestCases(Transformer):
     header names) then configure `only_with_headers` parameter:
 
     ```
-    robotidy -c AlignSettingsSection:only_with_hedaers:True <src>
+    robotidy -c AlignSettingsSection:only_with_headers:True <src>
     ```
 
     For non-templated test cases use ``AlignTestCasesSection`` transformer.
@@ -56,12 +57,13 @@ class AlignTemplatedTestCases(Transformer):
         self.min_width = min_width
         self.widths = None
         self.test_name_len = 0
-        self.name_line = 0
+        self.test_without_eol = False
         self.indent = 0
 
     def visit_File(self, node):  # noqa
         if not is_suite_templated(node):
             return node
+        self.test_without_eol = False
         return self.generic_visit(node)
 
     def visit_If(self, node):  # noqa
@@ -81,11 +83,17 @@ class AlignTemplatedTestCases(Transformer):
         self.widths = counter.widths
         return self.generic_visit(node)
 
+    def visit_TestCase(self, node):  # noqa
+        for statement in node.body:
+            if isinstance(statement, Template) and statement.value is None:
+                return node
+        return self.generic_visit(node)
+
     @skip_if_disabled
     def visit_Statement(self, statement):  # noqa
         if statement.type == Token.TESTCASE_NAME:
             self.test_name_len = len(statement.data_tokens[0].value) if statement.data_tokens else 0
-            self.name_line = statement.lineno
+            self.test_without_eol = statement.tokens[-1].type != Token.EOL
         elif statement.type == Token.TESTCASE_HEADER:
             self.align_header(statement)
         elif not isinstance(
@@ -123,10 +131,9 @@ class AlignTemplatedTestCases(Transformer):
                     exp_pos += max(width + self.formatting_config.space_count, self.min_width)
                 else:
                     exp_pos += width + self.formatting_config.space_count
-                if self.test_name_len:
-                    if self.name_line == statement.lineno:
-                        exp_pos -= self.test_name_len
-                    self.test_name_len = 0
+                if self.test_without_eol:
+                    self.test_without_eol = False
+                    exp_pos -= self.test_name_len
                 tokens.append(Token(Token.SEPARATOR, (exp_pos - line_pos) * " "))
                 tokens.append(token)
                 line_pos += len(token.value) + exp_pos - line_pos
@@ -160,6 +167,12 @@ class ColumnWidthCounter(ModelVisitor):
         if not self.header_with_cols and not self.any_one_line_test and self.widths:
             self.widths[0] = 0
         self.widths = [round_to_four(length) for length in self.widths]
+
+    def visit_TestCase(self, node):  # noqa
+        for statement in node.body:
+            if isinstance(statement, Template) and statement.value is None:
+                return
+        self.generic_visit(node)
 
     @skip_if_disabled
     def visit_Statement(self, statement):  # noqa
