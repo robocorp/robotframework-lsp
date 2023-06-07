@@ -37,6 +37,7 @@ import threading
 import typing
 import itertools
 from robotframework_ls.impl.robot_localization import LocalizationInfo
+from functools import lru_cache
 
 
 log = get_logger(__name__)
@@ -264,9 +265,23 @@ class _ASTIndexer(_AbstractIndexer):
         return self._indexer.iter_indexed(clsname)
 
 
+@lru_cache
+def _get_error_tokens():
+    from robot.api import Token
+
+    ret = [Token.ERROR, Token.FATAL_ERROR]
+    try:
+        # Only available in 6.1 onwards.
+        ret.append(Token.INVALID_HEADER)
+    except AttributeError:
+        pass
+    return tuple(ret)
+
+
 def _get_errors_from_tokens(node):
+    error_tokens = _get_error_tokens()
     for token in node.tokens:
-        if token.type in (token.ERROR, token.FATAL_ERROR):
+        if token.type in error_tokens:
             start = (token.lineno - 1, token.col_offset)
             end = (token.lineno - 1, token.end_col_offset)
             error = Error(token.error, start, end)
