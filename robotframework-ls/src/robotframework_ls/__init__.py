@@ -1,4 +1,4 @@
-__version__ = "1.10.1"
+__version__ = "1.11.0"
 version_info = [int(x) for x in __version__.split(".")]
 
 import os.path

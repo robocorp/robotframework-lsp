@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '1.10.1'
+version '1.11.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -57,14 +57,12 @@ patchPluginXml {
     
     <h3 id="new-features">New features</h3>
     <ul>
-    <li><code>robotfamework-output-stream</code> updated to <code>0.0.6</code>. It now has functionality to hide sensitive data.
-      See: <a href="https://github.com/robocorp/robotframework-output-stream/blob/master/docs/handling_sensitive_data.md">https://github.com/robocorp/robotframework-output-stream/blob/master/docs/handling_sensitive_data.md</a></li>
-    <li>Variables in variable subscript are now properly found. <a href="https://github.com/robocorp/robotframework-lsp/issues/889">#889</a></li>
+    <li><code>Robot Framework 6.1.0</code> is now supported.</li>
+    <li><code>ignore_git_dir=True</code> is now used by default in the <code>robotframework-tidy</code> integration.</li>
+    <li>Bundled <code>robotframework-tidy</code> upgraded to <code>4.3.0</code>.</li>
+    <li>Bundled <code>robotframework-robocop</code> upgraded to <code>3.1.1</code>.</li>
     </ul>
-    <h3 id="bugfixes">Bugfixes</h3>
-    <ul>
-    <li>If the user completes something as <code>&#36;var</code>, complete to <code>&#36;{variable}</code> instead of <code>&#36;{variable}</code>.</li>
-    </ul>
+
 
     <br/>
     

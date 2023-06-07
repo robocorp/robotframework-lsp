@@ -1,3 +1,15 @@
+New in 1.11.0 (2023-06-07)
+-----------------------------
+
+### New features
+
+- `Robot Framework 6.1.0` is now supported.
+- `ignore_git_dir=True` is now used by default in the `robotframework-tidy` integration.
+- Bundled `robotframework-tidy` upgraded to `4.3.0`.
+- Bundled `robotframework-robocop` upgraded to `3.1.1`.
+
+
+
 New in 1.10.0 (2023-04-12)
 -----------------------------
 

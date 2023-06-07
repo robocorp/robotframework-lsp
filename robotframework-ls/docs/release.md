@@ -6,7 +6,7 @@ Steps to do a new release
 
 - Create release branch (`git branch -D release-robotframework-lsp&git checkout -b release-robotframework-lsp`)
 
-- Update version (`python -m dev set-version 1.10.1`).
+- Update version (`python -m dev set-version 1.11.0`).
 
 - Update README.md to add notes on features/fixes (on `robotframework-ls` and `robotframework-intellij`).
 
@@ -16,17 +16,17 @@ Steps to do a new release
   - Use `https://markdowntohtml.com/` to convert the changelog to HTML.
 
 - Push contents, get the build in https://github.com/robocorp/robotframework-lsp/actions and install locally to test.
-  - `mu acp Robot Framework Language Server Release 1.10.1`
+  - `mu acp Robot Framework Language Server Release 1.11.0`
 
 - Rebase with master (`git checkout master&git rebase release-robotframework-lsp`).
 
-- Create a tag (`git tag robotframework-lsp-1.10.1`) and push it.
+- Create a tag (`git tag robotframework-lsp-1.11.0`) and push it.
 
 - Send release msg. i.e.:
 
 Hi @channel,
 
-I'm happy to announce the release of `Robot Framework Language Server 1.10.1`.
+I'm happy to announce the release of `Robot Framework Language Server 1.11.0`.
 
 ### New features
 
