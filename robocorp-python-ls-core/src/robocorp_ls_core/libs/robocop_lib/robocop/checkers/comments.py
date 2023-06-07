@@ -2,23 +2,23 @@
 Comments checkers
 """
 import re
-
 from codecs import BOM_UTF8, BOM_UTF16_BE, BOM_UTF16_LE, BOM_UTF32_BE, BOM_UTF32_LE
 
 from robot.api import Token
 from robot.utils import FileReader
 
 from robocop.checkers import RawFileChecker, VisitorChecker
-from robocop.rules import Rule, RuleSeverity, RuleParam
+from robocop.rules import Rule, RuleParam, RuleSeverity
 from robocop.utils import ROBOT_VERSION
-from robocop.exceptions import ConfigGeneralError
+
 
 def regex(value):
-    converted = rf'{value}'
+    converted = rf"{value}"
     try:
         return re.compile(converted)
     except re.error as regex_err:
-        raise ValueError(f'Regex error: {regex_err}')
+        raise ValueError(f"Regex error: {regex_err}")
+
 
 rules = {
     "0701": Rule(
@@ -37,10 +37,10 @@ rules = {
         By default, it reports TODO and FIXME markers.
 
         Example::
-        
+
             # TODO: Refactor this code
             # fixme
-        
+
         Configuration example::
 
             robocop --configure "todo-in-comment:markers:todo,Remove me,Fix this!"
@@ -63,7 +63,7 @@ rules = {
         Configured regex for block comment should take into account the first character is `#`.
 
         Example::
-        
+
             #bad
             # good
             ### good block
@@ -92,15 +92,15 @@ rules = {
         severity=RuleSeverity.ERROR,
         version="<4.0",
         docs="""
-        In Robot Framework 3.2.2 comments that started from second character in the cell were not recognized as 
+        In Robot Framework 3.2.2 comments that started from second character in the cell were not recognized as
         comments.
-        
+
         Example::
-        
+
             # good
              # bad
               # third cell so it's good
-        
+
         """,
     ),
     "0704": Rule(
@@ -109,26 +109,26 @@ rules = {
         msg="Ignored data found in file",
         severity=RuleSeverity.WARNING,
         docs="""
-        All lines before first test data section 
-        (`ref <https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#test-data-sections>`_) 
+        All lines before first test data section
+        (`ref <https://robotframework.org/robotframework/latest/RobotFrameworkUserGuide.html#test-data-sections>`_)
         are ignored. It's recommended to add `*** Comments ***` section header for lines that should be ignored.
-        
+
         Missing section header::
-    
+
             Resource   file.resource  # it looks like *** Settings *** but section header is missing - line is ignored
-            
+
             *** Keywords ***
             Keyword Name
                No Operation
-        
+
         Comment lines that should be inside `*** Comments ***`::
-            
+
             Deprecated Test
                 Keyword
                 Keyword 2
-            
+
             *** Test Cases ***
-    
+
         """,
     ),
     "0705": Rule(
@@ -209,7 +209,7 @@ class CommentChecker(VisitorChecker):
             return
         if name and name.lstrip().startswith("#"):
             hash_pos = name.find("#")
-            self.report("invalid-comment", node=node, col=node.col_offset + hash_pos + 1)
+            self.report("invalid-comment", node=node, col=node.col_offset + hash_pos + 1, end_col=len(name))
 
     def check_comment_content(self, token, content):
         low_content = content.lower()
@@ -217,7 +217,7 @@ class CommentChecker(VisitorChecker):
             index = low_content.find(violation)
             self.report(
                 "todo-in-comment",
-                marker=content[index:index+len(violation)],
+                marker=content[index : index + len(violation)],
                 lineno=token.lineno,
                 col=token.col_offset + 1 + index,
             )
@@ -227,6 +227,7 @@ class CommentChecker(VisitorChecker):
                     "missing-space-after-comment",
                     lineno=token.lineno,
                     col=token.col_offset + 1,
+                    end_col=token.col_offset + len(content) + 1,
                 )
 
     def is_block_comment(self, comment):
@@ -241,13 +242,18 @@ class IgnoredDataChecker(RawFileChecker):
         "bom-encoding-in-file",
     )
     BOM = [BOM_UTF32_BE, BOM_UTF32_LE, BOM_UTF8, BOM_UTF16_LE, BOM_UTF16_BE]
+    SECTION_HEADER = "***"
+    ROBOCOP_HEADER = "# robocop:"
+    LANGUAGE_HEADER = "language:"
 
     def __init__(self):
         self.is_bom = False
+        self.has_language_header = False
         super().__init__()
 
     def parse_file(self):
         self.is_bom = False
+        self.has_language_header = False
         if self.lines is not None:
             for lineno, line in enumerate(self.lines, start=1):
                 if self.check_line(line, lineno):
@@ -260,15 +266,22 @@ class IgnoredDataChecker(RawFileChecker):
                         break
 
     def check_line(self, line, lineno):
-        if line.startswith("***"):
+        if line.startswith(self.SECTION_HEADER):
             return True
-        if not line.startswith("# robocop:"):
-            if lineno == 1 and self.is_bom:
+        if line.startswith(self.ROBOCOP_HEADER):
+            return False
+        if lineno == 1:
+            if line.lower().startswith(self.LANGUAGE_HEADER):
+                self.has_language_header = True
+                return False
+            elif self.is_bom:
                 # if it's BOM encoded file, first line can be ignored
                 return "***" in line
-            self.report("ignored-data", lineno=lineno, col=1)
-            return True
-        return False
+        if self.has_language_header and not line.strip():
+            # empty lines after language: header can be ignored
+            return False
+        self.report("ignored-data", lineno=lineno, col=1, end_col=len(line))
+        return True
 
     def detect_bom(self, source):
         with open(source, "rb") as raw_file:

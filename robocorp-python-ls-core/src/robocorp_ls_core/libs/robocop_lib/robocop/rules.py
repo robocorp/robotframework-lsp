@@ -29,10 +29,10 @@ from textwrap import dedent
 from typing import Any, Callable, Dict, Optional, Pattern, Union
 
 from jinja2 import Template
-from packaging.specifiers import SpecifierSet
 
 import robocop.exceptions
 from robocop.utils import ROBOT_VERSION
+from robocop.utils.version_matching import VersionSpecifier
 
 
 @total_ordering
@@ -100,7 +100,7 @@ class RuleParam:
     Each rule can have number of parameters (default one is severity).
     """
 
-    def __init__(self, name: str, default: Any, converter: Callable, desc: str):
+    def __init__(self, name: str, default: Any, converter: Callable, desc: str, show_type: Optional[str] = None):
         """
         :param name: Name of the parameter used when configuring rule (also displayed in the docs)
         :param default: Default value of the parameter
@@ -111,6 +111,7 @@ class RuleParam:
         """
         self.name = name
         self.converter = converter
+        self.show_type = show_type
         self.desc = desc
         self.raw_value = None
         self._value = None
@@ -133,6 +134,12 @@ class RuleParam:
             self._value = self.converter(value)
         except ValueError as err:
             raise robocop.exceptions.RuleParamFailedInitError(self, value, str(err)) from None
+
+    @property
+    def param_type(self):
+        if self.show_type is None:
+            return self.converter.__name__
+        return self.show_type
 
 
 class SeverityThreshold:
@@ -254,7 +261,11 @@ class Rule:
         self.docs = dedent(docs)
         self.config = {
             "severity": RuleParam(
-                "severity", severity, RuleSeverity.parser, "Rule severity (E = Error, W = Warning, I = Info)"
+                "severity",
+                severity,
+                RuleSeverity.parser,
+                desc="Rule severity (E = Error, W = Warning, I = Info)",
+                show_type="severity",
             )
         }
         self.severity_threshold = None
@@ -267,6 +278,16 @@ class Rule:
     @property
     def severity(self):
         return self.config["severity"].value
+
+    @property
+    def description(self):
+        desc = ""
+        if not (self.msg.startswith("{{") and self.msg.endswith("}}")):
+            desc += f"{self.msg}."
+        if self.docs:
+            desc += "\n"
+            desc += self.docs
+        return desc
 
     def get_severity_with_threshold(self, threshold_value):
         if threshold_value is None:
@@ -283,7 +304,7 @@ class Rule:
     def supported_in_rf_version(version: str) -> bool:
         if not version:
             return True
-        return ROBOT_VERSION in SpecifierSet(version, prereleases=True)
+        return ROBOT_VERSION in VersionSpecifier(version)
 
     @staticmethod
     def get_template(msg: str) -> Optional[Template]:
@@ -327,7 +348,7 @@ class Rule:
         return count, text
 
     def prepare_message(
-        self, source, node, lineno, col, end_lineno, end_col, ext_disablers, sev_threshold_value, **kwargs
+        self, source, node, lineno, col, end_lineno, end_col, ext_disablers, sev_threshold_value, severity, **kwargs
     ):
         msg = self.get_message(**kwargs)
         return Message(
@@ -341,6 +362,7 @@ class Rule:
             end_lineno=end_lineno,
             ext_disablers=ext_disablers,
             sev_threshold_value=sev_threshold_value,
+            overwrite_severity=severity,
         )
 
     def matches_pattern(self, pattern: Union[str, Pattern]):
@@ -363,11 +385,12 @@ class Message:
         end_col,
         ext_disablers=None,
         sev_threshold_value=None,
+        overwrite_severity=None,
     ):
         self.enabled = rule.enabled
         self.rule_id = rule.rule_id
         self.name = rule.name
-        self.severity = rule.get_severity_with_threshold(sev_threshold_value)
+        self.severity = self.get_severity(overwrite_severity, rule, sev_threshold_value)
         self.desc = msg
         self.source = source
         self.line = 1
@@ -386,6 +409,12 @@ class Message:
             other.col,
             other.rule_id,
         )
+
+    @staticmethod
+    def get_severity(overwrite_severity, rule, sev_threshold_value):
+        if overwrite_severity is not None:
+            return overwrite_severity
+        return rule.get_severity_with_threshold(sev_threshold_value)
 
     def get_fullname(self) -> str:
         return f"{self.severity.value}{self.rule_id} ({self.name})"

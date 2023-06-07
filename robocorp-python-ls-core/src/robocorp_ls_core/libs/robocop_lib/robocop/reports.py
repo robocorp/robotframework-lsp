@@ -21,14 +21,13 @@ import inspect
 import json
 import sys
 from collections import OrderedDict, defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from operator import itemgetter
 from pathlib import Path
 from timeit import default_timer as timer
 from warnings import warn
 
 import pytz
-from dateutil import tz
 
 import robocop.exceptions
 from robocop.rules import Message
@@ -118,7 +117,7 @@ class RulesByIdReport(Report):
         W0201 (missing-doc-keyword)         : 4
         E0401 (parsing-error)               : 3
         W0301 (not-allowed-char-in-name)    : 2
-        E0901 (keyword-after-return)        : 1
+        W0901 (keyword-after-return)        : 1
     """
 
     def __init__(self):
@@ -148,7 +147,7 @@ class RulesBySeverityReport(Report):
 
     Example::
 
-        Found 15 issues: 11 WARNINGs, 4 ERRORs.
+        Found 15 issues: 4 ERRORs, 11 WARNINGs.
     """
 
     def __init__(self):
@@ -374,12 +373,15 @@ class TimestampReport(Report):
 
     def _get_timestamp(self) -> str:
         try:
-            timezone = tz.tzlocal() if self.timezone == "local" else pytz.timezone(self.timezone)
-            return datetime.now(timezone).strftime(self.format)
+            if self.timezone == "local":
+                timezone_code = datetime.now(timezone.utc).astimezone().tzinfo
+            else:
+                timezone_code = pytz.timezone(self.timezone)
+            return datetime.now(timezone_code).strftime(self.format)
         except pytz.exceptions.UnknownTimeZoneError as err:
             raise robocop.exceptions.ConfigGeneralError(
                 f"Provided timezone '{self.timezone}' for report '{getattr(self, 'name')}' is not valid. "
-                "Use timezone names like `Europe\Helsinki`."
+                "Use timezone names like `Europe\\Helsinki`."
                 "See: https://en.wikipedia.org/wiki/List_of_tz_database_time_zone"
             ) from err  # noqa
 
@@ -391,14 +393,14 @@ class SarifReport(Report):
     Report that generates SARIF output file.
 
     This report is not included in the default reports. The ``--reports all`` option will not enable this report.
-    You can still enable it using report name directly: ``--reports sarif`` or ``reports all,sarif``.
+    You can still enable it using report name directly: ``--reports sarif`` or ``--reports all,sarif``.
 
-    All fields required by Github Code Scanning are supported. The output file will be generated
+    All fields required by GitHub Code Scanning are supported. The output file will be generated
     in the current working directory with the ``.sarif.json`` name.
 
     You can configure output directory and report filename::
 
-        robocop --configure sarif:output_dir=C:/sarif_reports --configure sarif:report_filename=.sarif
+        robocop --configure sarif:output_dir:C:/sarif_reports --configure sarif:report_filename:.sarif
 
     """
 
@@ -501,4 +503,4 @@ class SarifReport(Report):
         with open(output_path, "w") as fp:
             json_string = json.dumps(report, indent=4)
             fp.write(json_string)
-        return f"Generated sarif report in {output_path}"
+        return f"Generated SARIF report in {output_path}"

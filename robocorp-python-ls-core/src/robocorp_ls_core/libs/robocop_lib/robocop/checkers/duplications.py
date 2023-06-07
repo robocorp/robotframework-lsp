@@ -156,6 +156,7 @@ rules = {
             name="sections_order",
             default="settings,variables,testcases,keywords",
             converter=configure_sections_order,
+            show_type="str",
             desc="order of sections in comma-separated list",
         ),
         rule_id="0809",
@@ -284,15 +285,34 @@ class DuplicationsChecker(VisitorChecker):
         self.check_duplicates(self.test_cases, "duplicated-test-case")
         self.check_duplicates(self.keywords, "duplicated-keyword")
         self.check_duplicates(self.variables, "duplicated-variable")
-        self.check_duplicates(self.resources, "duplicated-resource")
-        self.check_duplicates(self.libraries, "duplicated-library")
-        self.check_duplicates(self.metadata, "duplicated-metadata")
-        self.check_duplicates(self.variable_imports, "duplicated-variables-import")
+        self.check_duplicates(self.resources, "duplicated-resource", True)
+        self.check_duplicates(self.metadata, "duplicated-metadata", True)
+        self.check_duplicates(self.variable_imports, "duplicated-variables-import", True)
+        self.check_library_duplicates(self.libraries, "duplicated-library")
 
-    def check_duplicates(self, container, rule):
+    def check_duplicates(self, container, rule, underline_whole_line=False):
         for nodes in container.values():
             for duplicate in nodes[1:]:
-                self.report(rule, name=duplicate.name, first_occurrence_line=nodes[0].lineno, node=duplicate)
+                if underline_whole_line:
+                    end_col = duplicate.end_col_offset + 1
+                else:
+                    end_col = duplicate.col_offset + len(duplicate.name) + 1
+                self.report(
+                    rule, name=duplicate.name, first_occurrence_line=nodes[0].lineno, node=duplicate, end_col=end_col
+                )
+
+    def check_library_duplicates(self, container, rule):
+        for nodes in container.values():
+            for duplicate in nodes[1:]:
+                lib_token = duplicate.get_token(Token.NAME)
+                self.report(
+                    rule,
+                    name=duplicate.name,
+                    first_occurrence_line=nodes[0].lineno,
+                    node=duplicate,
+                    col=lib_token.col_offset + 1,
+                    end_col=lib_token.end_col_offset + 1,
+                )
 
     def visit_TestCase(self, node):  # noqa
         testcase_name = normalize_robot_name(node.name)
@@ -316,6 +336,7 @@ class DuplicationsChecker(VisitorChecker):
                     node=node,
                     lineno=var.lineno,
                     col=var.col_offset + 1,
+                    end_col=var.col_offset + len(var.value) + 1,
                 )
             else:
                 seen.add(name)
@@ -369,13 +390,17 @@ class DuplicationsChecker(VisitorChecker):
                     node=node,
                     lineno=arg.lineno,
                     col=arg.col_offset + 1,
+                    end_col=arg.col_offset + len(orig) + 1,
                 )
             else:
                 args.add(name)
 
     def visit_Error(self, node):  # noqa
         for error in get_errors(node):
-            self.report("duplicated-setting", error_msg=error, node=node)
+            if "is allowed only once" in error:
+                self.report(
+                    "duplicated-setting", error_msg=error, node=node, end_col=node.data_tokens[0].end_col_offset
+                )
 
 
 class SectionHeadersChecker(VisitorChecker):
@@ -418,14 +443,15 @@ class SectionHeadersChecker(VisitorChecker):
         section_name = node.type
         if section_name not in self.param("section-out-of-order", "sections_order"):
             return
-        if section_name == Token.TESTCASE_HEADER:
+        if section_name in (Token.TESTCASE_HEADER, "TASK HEADER"):
+            # a bit awkward implementation because before RF 6.0 task header used TESTCASE_HEADER type
             if "task" in node.name.lower():
                 section_name = "TASK HEADER"
                 if Token.TESTCASE_HEADER in self.sections_by_existence:
-                    self.report("both-tests-and-tasks", node=node)
+                    self.report("both-tests-and-tasks", node=node, col=node.col_offset + 1, end_col=node.end_col_offset)
             else:
                 if "TASK HEADER" in self.sections_by_existence:
-                    self.report("both-tests-and-tasks", node=node)
+                    self.report("both-tests-and-tasks", node=node, col=node.col_offset + 1, end_col=node.end_col_offset)
         order_id = self.param("section-out-of-order", "sections_order")[section_name]
         if section_name in self.sections_by_existence:
             self.report(
@@ -433,14 +459,17 @@ class SectionHeadersChecker(VisitorChecker):
                 section_name=node.data_tokens[0].value,
                 first_occurrence_line=self.sections_by_existence[section_name],
                 node=node,
+                end_col=node.end_col_offset,
             )
         else:
             self.sections_by_existence[section_name] = node.lineno
         if any(previous_id > order_id for previous_id in self.sections_by_order):
+            token = node.data_tokens[0]
             self.report(
                 "section-out-of-order",
-                section_name=node.data_tokens[0].value,
+                section_name=token.value,
                 recommended_order=self.section_order_to_str(self.param("section-out-of-order", "sections_order")),
                 node=node,
+                end_col=token.end_col_offset + 1,
             )
         self.sections_by_order.append(order_id)

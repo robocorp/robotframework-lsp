@@ -62,7 +62,7 @@ class Robocop:
     def reload_config(self):
         """Reload checkers and reports based on current config"""
         self.load_checkers()
-        self.config.validate_rule_names(self.rules)
+        self.config.reload(self.rules)
         self.load_reports()
         self.configure_checkers_or_reports()
         self.check_for_disabled_rules()
@@ -177,7 +177,12 @@ class Robocop:
                 "\n    E / error\n    W / warning\n    I / info\n"
             )
         pattern = self.config.list if self.config.list else self.config.list_configurables
-        rule_by_id = {rule.rule_id: rule for rule in self.rules.values() if rule.matches_pattern(pattern)}
+        if pattern in ("ENABLED", "DISABLED"):
+            rule_by_id = {
+                rule.rule_id: rule for rule in self.rules.values() if pattern.lower() in rule.get_enabled_status_desc()
+            }
+        else:
+            rule_by_id = {rule.rule_id: rule for rule in self.rules.values() if rule.matches_pattern(pattern)}
         rule_by_id = sorted(rule_by_id.values(), key=lambda x: x.rule_id)
         severity_counter = Counter({"E": 0, "W": 0, "I": 0})
         for rule in rule_by_id:
@@ -265,7 +270,7 @@ def run_robocop():
     except Exception as err:
         message = (
             "\nFatal exception occurred. You can create an issue at "
-            "https://github.com/MarketSquare/robotframework-robocop/issues/new/choose . Thanks!"
+            "https://github.com/MarketSquare/robotframework-robocop/issues/new/choose - Thanks!"
         )
         err.args = (err.args[0] + message,) + err.args[1:]
         raise err

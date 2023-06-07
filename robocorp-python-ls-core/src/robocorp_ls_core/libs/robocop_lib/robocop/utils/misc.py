@@ -8,21 +8,21 @@ from pathlib import Path
 from typing import Dict, List, Optional, Pattern, Tuple
 
 from robot.api import Token
-from robot.parsing.model.statements import EmptyLine
 
 try:
     from robot.api.parsing import Variable
 except ImportError:
     from robot.parsing.model.statements import Variable
 
-from packaging import version
+from robot.variables.search import VariableIterator
 from robot.version import VERSION as RF_VERSION
 
 from robocop.exceptions import InvalidExternalCheckerError
+from robocop.utils.version_matching import Version
 from robocop.version import __version__
 
-ROBOT_VERSION = version.parse(RF_VERSION)
-ROBOT_WITH_LANG = version.parse("5.1")
+ROBOT_VERSION = Version(RF_VERSION)
+ROBOT_WITH_LANG = Version("6.0")
 
 
 def rf_supports_lang():
@@ -83,6 +83,15 @@ def normalize_robot_name(name: str, remove_prefix: Optional[str] = None) -> str:
 
 def normalize_robot_var_name(name: str) -> str:
     return normalize_robot_name(name)[2:-1] if name else ""
+
+
+def remove_nested_variables(var_name):
+    for prefix, match, suffix in VariableIterator(var_name, ignore_errors=True):
+        if match:  # if nested variable exists
+            # take what surrounds it and run the check again
+            var_name = remove_nested_variables(prefix + suffix)
+            break
+    return var_name.strip()
 
 
 def keyword_col(node) -> int:
@@ -251,13 +260,6 @@ def is_suite_templated(model):
     finder = TestTemplateFinder()
     finder.visit(model)
     return finder.templated
-
-
-def last_non_empty_line(node):
-    for child in node.body[::-1]:
-        if not isinstance(child, EmptyLine):
-            return child.lineno
-    return node.lineno
 
 
 def next_char_is(string: str, i: int, char: str) -> bool:

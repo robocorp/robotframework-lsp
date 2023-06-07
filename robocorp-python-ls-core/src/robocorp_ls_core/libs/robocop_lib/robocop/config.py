@@ -12,9 +12,9 @@ from robot.utils import FileReader
 
 from robocop.exceptions import (
     ArgumentFileNotFoundError,
+    CircularArgumentFileError,
     ConfigGeneralError,
     InvalidArgumentError,
-    NestedArgumentFileError,
 )
 from robocop.files import DEFAULT_EXCLUDES, find_file_in_project_root, find_project_root
 from robocop.rules import RuleSeverity
@@ -82,11 +82,98 @@ def validate_regex(pattern: str) -> Pattern:
         raise ConfigGeneralError(f"Provided regex pattern {pattern} failed to be compiled")
 
 
+def resolve_relative_path(orig_path, config_dir: Path, ensure_exists: bool):
+    path = Path(orig_path)
+    if path.is_absolute():
+        return orig_path
+    resolved_path = config_dir / path
+    if not ensure_exists or resolved_path.exists():
+        return str(resolved_path)
+    return orig_path
+
+
+class ArgumentFileParser:
+    ARGUMENT_FILE_OPTIONS = {"-A", "--argumentfile"}
+    RESOLVE_PATHS_OPTIONS = {"-o", "--output", "-rules", "--ext-rules"}
+    ENSURE_EXIST_PATHS_OPTIONS = {"-rules", "--ext-rules"}
+
+    def __init__(self):
+        self.loaded_argument_files = set()
+        self.config_from = ""
+
+    def expand_argument_files(self, args, config_dir=None):
+        """
+        Find argument files in the argument list and expand argument list with their content.
+        """
+        if not any(arg in self.ARGUMENT_FILE_OPTIONS for arg in args):
+            return list(args)
+        parsed_args = []
+        while args:
+            arg = args.pop(0)
+            if arg not in self.ARGUMENT_FILE_OPTIONS:
+                parsed_args.append(arg)
+                continue
+            if not args:  # argumentfile option declared but filename was not provided
+                raise ArgumentFileNotFoundError("") from None
+            argfile = args.pop(0)
+            argfile_path = Path(argfile)
+            if argfile_path.is_file():
+                loaded_config_dir = argfile_path.parent
+            else:
+                loaded_config_dir = None
+            file_args = self.load_argument_file(argfile, config_dir)
+            file_args = self.resolve_arguments_paths(file_args, config_dir)
+            parsed_args += self.expand_argument_files(file_args, loaded_config_dir)
+        return parsed_args
+
+    def resolve_arguments_paths(self, args, root_dir):
+        if root_dir is None:
+            return args
+        prev_option_like = False
+        prev_arg = "option"
+        resolved = []
+        for arg in args:
+            option_like = arg.startswith("-")
+            # resolve path if previous arg was an option that can be path, or the arg is a source
+            if (prev_option_like and prev_arg in self.RESOLVE_PATHS_OPTIONS) or (  # option value that can be path
+                not prev_option_like and not option_like  # source
+            ):
+                ensure_exists = prev_arg in self.ENSURE_EXIST_PATHS_OPTIONS
+                # TODO: If the --rules is provided as comma separated list, it will not resolve paths
+                arg = resolve_relative_path(arg, root_dir, ensure_exists)
+            resolved.append(arg)
+            prev_option_like = option_like
+            prev_arg = arg
+        return resolved
+
+    def load_argument_file(self, argfile, config_dir):
+        if config_dir is not None:
+            argfile = resolve_relative_path(argfile, config_dir, True)
+        if argfile in self.loaded_argument_files:
+            raise CircularArgumentFileError(argfile) from None
+        else:
+            self.loaded_argument_files.add(argfile)
+        try:
+            with FileReader(argfile) as arg_f:
+                args = []
+                for line in arg_f.readlines():
+                    if line.strip().startswith("#"):
+                        continue
+                    for arg in line.split(" ", 1):
+                        arg = arg.strip()
+                        if arg:
+                            args.append(arg)
+                if args and not self.config_from:
+                    self.config_from = argfile
+                return args
+        except FileNotFoundError:
+            raise ArgumentFileNotFoundError(argfile) from None
+
+
 class Config:
     def __init__(self, root=None, from_cli: bool = False):
         self.from_cli = from_cli
         self.exec_dir = os.path.abspath(".")
-        self.root = Path(root) if root is not None else root
         self.include = set()
         self.exclude = set()
         self.ignore = set()
@@ -108,8 +195,8 @@ class Config:
         self.recursive = True
         self.verbose = False
         self.config_from = ""
-        self.parser = self._create_parser()
-        self.parse_opts(from_cli=from_cli)
+        self.root = find_project_root(root, ["."])
+        self.parse()
 
     def remove_severity(self):
         self.include = {self.replace_severity_values(rule) for rule in self.include}
@@ -184,6 +271,7 @@ class Config:
             "--no-recursive",
             dest="recursive",
             action="store_false",
+            default=self.recursive,
             help="Use this flag to stop scanning directories recursively.",
         )
         optional.add_argument(
@@ -226,7 +314,9 @@ class Config:
             const="",
             default=self.list,
             metavar="PATTERN",
-            help="List all available rules. You can use optional PATTERN argument.",
+            help="List all available rules. You can use optional PATTERN argument to match rule names "
+            "(for example --list *doc*). "
+            "PATTERN can be also ENABLED/DISABLED keyword to list only enabled/disabled rules.",
         )
         optional.add_argument(
             "-lc",
@@ -236,7 +326,9 @@ class Config:
             const="",
             default=self.list_configurables,
             metavar="PATTERN",
-            help="List all available rules with configurable parameters. You can use optional PATTERN argument.",
+            help="List all available rules with configurable parameters. You can use optional PATTERN argument "
+            "to match rule names (for example --list *doc*). "
+            "PATTERN can be also ENABLED/DISABLED keyword to list only enabled/disabled rules.",
         )
         optional.add_argument(
             "-lr",
@@ -303,36 +395,46 @@ class Config:
             help="Display Robocop version.",
         )
         optional.add_argument(
-            "-vv", "--verbose", action="store_true", help="Display extra information during execution."
+            "-vv",
+            "--verbose",
+            action="store_true",
+            default=self.verbose,
+            help="Display extra information during execution.",
         )
         optional.add_argument(
             "--directives",
             action="version",
-            version="1. Serve the public trust\n2. Protect the innocent\n3. Uphold the law\n4. [ACCESS " "DENIED]",
+            version="1. Serve the public trust\n2. Protect the innocent\n3. Uphold the law\n4. [ACCESS DENIED]",
             help=argparse.SUPPRESS,
         )
 
         return parser
 
-    def parse_opts(self, args=None, from_cli: bool = True):
-        if self.root is None:
-            self.root = find_project_root(self.paths)
-        self.load_default_config_file()
+    def parse(self):
+        if not self.from_cli:
+            self.load_default_config_file()
+            return
+        args = sys.argv[1:]
+        if not self.argument_file_in_cli(args):
+            self.load_default_config_file()
+        self.parse_args(args)
 
-        if from_cli:
-            args = self.parse_args(args)
-        else:
-            args = None
+    def argument_file_in_cli(self, args):
+        argument_options = {"-A", "--argumentfile"}
+        for arg in args:
+            if arg in argument_options:
+                return True
+        return False
 
+    def reload(self, rules):
         self.remove_severity()
         self.translate_patterns()
         self.print_config_source()
-
-        return args
+        self.validate_rule_names(rules)
+        self.check_deprecations(rules)
 
     def print_config_source(self):
         # We can only print after reading all configs, since self.verbose is unknown before we read it from config
-        # TODO self.config_from can be multiple configs (if it's from argumentfile)
         if not self.verbose:
             return
         if self.config_from:
@@ -349,7 +451,9 @@ class Config:
         robocop_path = find_file_in_project_root(".robocop", self.root)
         if not robocop_path.is_file():
             return False
-        args = self.load_args_from_file(robocop_path)
+        argument_files_parser = ArgumentFileParser()
+        args = argument_files_parser.load_argument_file(robocop_path, robocop_path.parent)
+        self.config_from = argument_files_parser.config_from
         self.parse_args(args)
         return True
 
@@ -368,56 +472,18 @@ class Config:
             self.config_from = pyproject_path
 
     def parse_args_to_config(self, args):
-        if args is None:
-            return None
-
-        args = self.parser.parse_args(args)
+        parser = self._create_parser()
+        args = parser.parse_args(args)
         for key, value in dict(**vars(args)).items():
             if key in self.__dict__:
                 self.__dict__[key] = value
 
-        return args
-
     def parse_args(self, args):
-        args = self.preparse(args)
-        if args:
-            args = self.parse_args_to_config(args)
-        return args
-
-    def preparse(self, args):
-        args = sys.argv[1:] if args is None else args
-        parsed_args = []
-        args = (arg for arg in args)
-        for arg in args:
-            if arg in ("-A", "--argumentfile"):
-                try:
-                    argfile = next(args)
-                except StopIteration:
-                    raise ArgumentFileNotFoundError("") from None
-                parsed_args += self.load_args_from_file(argfile)
-            else:
-                parsed_args.append(arg)
-        return parsed_args
-
-    def load_args_from_file(self, argfile):
-        try:
-            with FileReader(argfile) as arg_f:
-                args = []
-                for line in arg_f.readlines():
-                    if line.strip().startswith("#"):
-                        continue
-                    for arg in line.split(" ", 1):
-                        arg = arg.strip()
-                        if not arg:
-                            continue
-                        args.append(arg)
-                if "-A" in args or "--argumentfile" in args:
-                    raise NestedArgumentFileError(argfile)
-                if args:
-                    self.config_from = argfile
-                return args
-        except FileNotFoundError:
-            raise ArgumentFileNotFoundError(argfile) from None
+        argument_files_parser = ArgumentFileParser()
+        args = argument_files_parser.expand_argument_files(args)
+        if argument_files_parser.config_from:
+            self.config_from = argument_files_parser.config_from
+        self.parse_args_to_config(args)
 
     @staticmethod
     def replace_in_set(container: Set, old_key: str, new_key: str):
@@ -427,21 +493,44 @@ class Config:
         container.add(new_key)
 
     def validate_rule_names(self, rules):
-        # add rule name in form of old_name: new_name
-        deprecated = {}
         for rule in chain(self.include, self.exclude):
-            if rule in deprecated:  # update warning description to specific case
-                print(
-                    f"### DEPRECATION WARNING ###\nThe name (or ID) of the rule '{rule}' is "
-                    f"renamed to '{deprecated[rule]}'. "
-                    f"Update your configuration if you're using old name. "
-                    f"This information will disappear in the next version (X.Y.Z)\n\n"
-                )
-                self.replace_in_set(self.include, rule, deprecated[rule])
-                self.replace_in_set(self.exclude, rule, deprecated[rule])
-            elif rule not in rules:
+            if rule not in rules:
                 similar = RecommendationFinder().find_similar(rule, rules)
                 raise ConfigGeneralError(f"Provided rule '{rule}' does not exist. {similar}")
+
+    def check_deprecations(self, rules):
+        renamed = {
+            # "old-name": "new-name"
+        }
+        deprecated = {
+            # "rule-name": "deprecation message"
+            "bad-indent": "'strict' and 'ignore_uneven' parameters are no longer available for this rule. Take a look at new E1017 bad-block-indent rule that replaces them."  # warning added in v.3.0.0
+        }
+        deprecation_header = "### DEPRECATION WARNING ###"
+        deprecation_footer = "This information will disappear in the next version.\n\n"
+        # get all rules mentioned in include and exclude CLI options
+        mentioned_rules = self.include.union(self.exclude)
+        # add the rules mentioned in configure CLI option
+        mentioned_rules.update(configured.split(":", 1)[0] for configured in self.configure)
+        for rule in mentioned_rules:
+            if rule not in rules:  # reports can also be configured, but we only want rules here
+                continue
+            rule_name = rules[rule].name
+            if rule_name in renamed:  # update warning description to specific case
+                print(
+                    f"{deprecation_header}\n"
+                    f"Rule '{rule_name}' is renamed to '{renamed[rule_name]}'.\n"
+                    f"Update your configuration if you're using the old name. "
+                    f"{deprecation_footer}"
+                )
+                self.replace_in_set(self.include, rule_name, renamed[rule_name])
+                self.replace_in_set(self.exclude, rule_name, renamed[rule_name])
+            if rule_name in deprecated:
+                print(
+                    f"{deprecation_header}\n"
+                    f"Rule '{rule_name}' is deprecated - {deprecated[rule_name]}\n"
+                    f"{deprecation_footer}"
+                )
 
     def is_rule_enabled(self, rule):
         if self.is_rule_disabled(rule):
@@ -484,15 +573,6 @@ class Config:
                 rule_name = rule_name.replace(char, "")
         return rule_name
 
-    def resolve_relative(self, orig_path, config_dir: Path, ensure_exists: bool):
-        path = Path(orig_path)
-        if path.is_absolute():
-            return orig_path
-        resolved_path = config_dir / path
-        if not ensure_exists or resolved_path.exists():
-            return str(resolved_path)
-        return orig_path
-
     def parse_toml_to_config(self, toml_data: Dict, config_dir: Path):
         if not toml_data:
             return False
@@ -505,9 +585,9 @@ class Config:
             if key in resolve_relative:
                 if isinstance(value, list):
                     for index, val in enumerate(value):
-                        value[index] = self.resolve_relative(val, config_dir, ensure_exists=key == "ext_rules")
+                        value[index] = resolve_relative_path(val, config_dir, ensure_exists=key == "ext_rules")
                 else:
-                    value = self.resolve_relative(value, config_dir, ensure_exists=key == "ext_rules")
+                    value = resolve_relative_path(value, config_dir, ensure_exists=key == "ext_rules")
             if key in assign_type:
                 self.__dict__[key] = value
             elif key in set_type:

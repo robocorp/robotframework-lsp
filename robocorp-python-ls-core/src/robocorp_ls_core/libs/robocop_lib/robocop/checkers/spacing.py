@@ -3,15 +3,23 @@ Spacing checkers
 """
 import re
 from collections import Counter
+from contextlib import contextmanager
 
 from robot.api import Token
 from robot.parsing.model.blocks import Keyword, TestCase
 from robot.parsing.model.statements import Comment, EmptyLine
 from robot.parsing.model.visitor import ModelVisitor
 
+from robocop.utils.misc import ROBOT_VERSION
+
+try:
+    from robot.api.parsing import InlineIfHeader
+except ImportError:
+    InlineIfHeader = None
+
 from robocop.checkers import RawFileChecker, VisitorChecker
 from robocop.rules import Rule, RuleParam, RuleSeverity, SeverityThreshold
-from robocop.utils import get_errors, get_section_name, token_col
+from robocop.utils import get_errors, get_section_name, str2bool, token_col
 
 rules = {
     "1001": Rule(
@@ -68,37 +76,44 @@ rules = {
         msg="Inconsistent use of tabs and spaces in file",
         severity=RuleSeverity.WARNING,
     ),
-    "1007": Rule(
-        rule_id="1007",
-        name="uneven-indent",
-        msg="Line is {{ over_or_under }}-indented",
-        severity=RuleSeverity.WARNING,
-        docs="""
-        Reported when line does not follow indent from the current block. 
-        Example of rule violation::
-        
-            Keyword With Over Indented Setting
-                [Documentation]  this is doc
-                 [Arguments]  ${arg}  # over-indented
-                   No Operation  # over-indented
-                Pass
-                No Operation
-                Fail
-        
-        """,
-    ),
     "1008": Rule(
+        RuleParam(  # TODO: unused, remove in the next release
+            name="strict",
+            default=False,
+            converter=str2bool,
+            desc="Strict checking of the indentation",
+        ),
+        RuleParam(
+            name="indent",
+            default=-1,
+            converter=int,
+            desc="Number of spaces per indentation level",
+        ),
+        RuleParam(  # TODO: unused, remove in the next release
+            name="ignore_uneven",
+            default=False,
+            converter=str2bool,
+            desc="Ignore uneven indent and report only invalid indent",
+        ),
         rule_id="1008",
         name="bad-indent",
-        msg="Indent expected",
-        severity=RuleSeverity.ERROR,
+        msg="{{ bad_indent_msg }}",
+        severity=RuleSeverity.WARNING,
         docs="""
-        Expecting indent. Example of rule violation::
-        
-             FOR  ${elem}  IN  ${list}
-            Log  stuff  # content of FOR blocks should use bigger indentation than FOR header
-             END
-        
+        Line is misaligned or indent is invalid.
+
+        This rule reports warning if the line is misaligned in the current block. Example of rule violation::
+
+            *** Keywords ***
+            Keyword
+                Keyword Call
+                 Misaligned Keyword Call  # line is over-intended by one space
+                IF    $condition    RETURN
+               Keyword Call  # line is under-intended by two spaces
+
+        The correct indentation is determined by the most common indentation in the current block. Although,
+        it allows for more flexible indentation by specifying the ``indent`` parameter for checking if the
+        indentation is the multiple of ``indent`` spaces (default -1, which makes this parameter being ignored).
         """,
     ),
     "1009": Rule(
@@ -116,11 +131,11 @@ rules = {
         severity=RuleSeverity.WARNING,
         docs="""
         Empty lines after the section header are not allowed by default. Example of rule violation::
-        
+
              *** Test Cases ***
-             
+
              Resource  file.resource
-        
+
         It can be configured using `empty_lines` parameter.
         """,
     ),
@@ -138,15 +153,15 @@ rules = {
         severity=RuleSeverity.WARNING,
         docs="""
         Example of rule violation::
-        
+
                 Default Tags       default tag 1    default tag 2    default tag 3
             ...                default tag 4    default tag 5
-            
+
                 *** Test Cases ***
                 Example
                     Do X    first argument    second argument    third argument
                   ...    fourth argument    fifth argument    sixth argument
-        
+
         """,
     ),
     "1012": Rule(
@@ -163,11 +178,11 @@ rules = {
         severity=RuleSeverity.WARNING,
         docs="""
         Example of rule violation::
-        
+
             Keyword
                 Step 1
-                
-                
+
+
                 Step 2
 
         """,
@@ -179,12 +194,12 @@ rules = {
         severity=RuleSeverity.WARNING,
         docs="""
         Example of rule violation::
-        
+
              Keyword
              ...  1
              # empty line in-between multiline statement
              ...  2
-        
+
         """,
     ),
     "1014": Rule(
@@ -195,32 +210,32 @@ rules = {
         version=">=4.0",
         docs="""
         Example of rule violation::
-        
+
             *** Variables ***
              ${VAR}  1
               ${VAR2}  2
-        
+
         """,
     ),
     "1015": Rule(
+        RuleParam(name="ignore_docs", default=True, converter=str2bool, show_type="bool", desc="Ignore documentation"),
         rule_id="1015",
         name="misaligned-continuation-row",
         msg="Each next continuation line should be aligned with the previous one",
         severity=RuleSeverity.WARNING,
         docs="""
         Example of rule violation::
-        
-            *** Settings ***
-            Documentation      Here we have documentation for this suite.
-            ...                Documentation is often quite long.
-            ...
-            ...            It can also contain multiple paragraphs.  # misaligned
-            
+
+            *** Variable ***
+            ${VAR}    This is a long string.
+            ...       It has multiple sentences.
+            ...         And this line is misaligned with previous one.
+
             *** Test Cases ***
-            Test
-            [Tags]    you    probably    do    not    have    this    many
-            ...      tags    in    real    life  # misaligned
-        
+            My Test
+                My Keyword
+                ...    arg1
+                ...   arg2  # misaligned
         """,
     ),
     "1016": Rule(
@@ -231,12 +246,30 @@ rules = {
         version=">=4.0",
         docs="""
         Example of rule violation::
-        
+
             *** Settings ***
                 Library  Collections
                 Resource  data.resource
                 Variables  vars.robot
-        
+
+        """,
+    ),
+    "1017": Rule(
+        rule_id="1017",
+        name="bad-block-indent",
+        msg="Indent expected. Provide 2 or more spaces of indentation for statements inside block",
+        severity=RuleSeverity.ERROR,
+        docs="""
+        If the indentation is less than two spaces than current block parent element
+        (such as FOR/IF/WHILE/TRY header) the indentation is invalid and the rule reports an error::
+
+            *** Keywords ***
+            Some Keyword
+                FOR  ${elem}  IN  ${list}
+                    Log  ${elem}  # this is fine
+               Log  stuff    # this is bad indent
+            # bad comment
+                END
         """,
     ),
 }
@@ -261,7 +294,7 @@ class InvalidSpacingChecker(RawFileChecker):
         if self.raw_lines:
             last_line = self.raw_lines[-1]
             if last_line in ["\n", "\r", "\r\n"]:
-                self.report("too-many-trailing-blank-lines", lineno=len(self.raw_lines) + 1)
+                self.report("too-many-trailing-blank-lines", lineno=len(self.raw_lines) + 1, end_col=len(last_line) + 1)
                 return
             empty_lines = 0
             for line in self.raw_lines[::-1]:
@@ -270,10 +303,10 @@ class InvalidSpacingChecker(RawFileChecker):
                 else:
                     break
                 if empty_lines > 1:
-                    self.report("too-many-trailing-blank-lines", lineno=len(self.raw_lines))
+                    self.report("too-many-trailing-blank-lines", lineno=len(self.raw_lines), end_col=len(last_line) + 1)
                     return
             if not empty_lines and not last_line.endswith(("\n", "\r")):
-                self.report("missing-trailing-blank-line", lineno=len(self.raw_lines))
+                self.report("missing-trailing-blank-line", lineno=len(self.raw_lines), end_col=len(last_line) + 1)
 
     def check_line(self, line, lineno):
         self.raw_lines.append(line)
@@ -300,7 +333,7 @@ class EmptyLinesChecker(VisitorChecker):
         empty_lines = 0
         last_empty_line = None
         data_found = check_leading
-        for line in lines:
+        for i, line in enumerate(lines):
             if isinstance(line, EmptyLine):
                 if not data_found:
                     continue
@@ -308,13 +341,17 @@ class EmptyLinesChecker(VisitorChecker):
                 last_empty_line = line
             else:
                 data_found = True
-                if empty_lines > allowed_consecutive:
+                # allow for violation at the end of section, because we have 1003 rule
+                if empty_lines > allowed_consecutive:  # and i != len(lines)-1:
                     self.report(
                         "consecutive-empty-lines",
                         empty_lines=empty_lines,
                         allowed_empty_lines=allowed_consecutive,
                         node=last_empty_line,
                         sev_threshold_value=empty_lines,
+                        col=1,
+                        lineno=last_empty_line.lineno - empty_lines + 1,
+                        end_lineno=last_empty_line.lineno,
                     )
                 empty_lines = 0
         if check_trailing:
@@ -325,6 +362,9 @@ class EmptyLinesChecker(VisitorChecker):
                     allowed_empty_lines=allowed_consecutive,
                     node=last_empty_line,
                     sev_threshold_value=empty_lines,
+                    col=1,
+                    lineno=last_empty_line.lineno - empty_lines + 1,
+                    end_lineno=last_empty_line.lineno,
                 )
         return empty_lines
 
@@ -377,6 +417,8 @@ class EmptyLinesChecker(VisitorChecker):
                     empty_lines=empty_lines,
                     allowed_empty_lines=allowed_empty_lines,
                     lineno=child.end_lineno,
+                    end_lineno=child.end_lineno + 1,
+                    end_col=len(child.name) + 1,
                 )
         self.generic_visit(node)
 
@@ -424,6 +466,8 @@ class EmptyLinesChecker(VisitorChecker):
                     empty_lines=empty_lines,
                     allowed_empty_lines=self.param("empty-lines-between-sections", "empty_lines"),
                     lineno=section.end_lineno,
+                    col=1,
+                    end_col=child.end_col_offset,
                 )
         super().visit_File(node)
 
@@ -443,6 +487,8 @@ class EmptyLinesChecker(VisitorChecker):
                 allowed_empty_lines=self.param("empty-line-after-section", "empty_lines"),
                 node=empty_lines[-1],
                 sev_threshold_value=len(empty_lines),
+                lineno=section.lineno,
+                end_col=len(get_section_name(section)) + 1,
             )
 
 
@@ -472,23 +518,130 @@ class InconsistentUseOfTabsAndSpacesChecker(VisitorChecker, ModelVisitor):
                 break
 
 
+def get_indent(node):
+    """Calculate the indentation length for given node
+
+    Returns:
+        int: Indentation length
+    """
+    tokens = node.tokens if hasattr(node, "tokens") else node.header.tokens
+    indent_len = 0
+    for token in tokens:
+        if token.type != Token.SEPARATOR:
+            break
+        indent_len += len(token.value.expandtabs(4))
+    return indent_len
+
+
+def count_indents(node):
+    """Counts number of occurrences for unique indent values
+
+    Returns:
+        Counter: A counter of unique indent values with associated number of occurrences in given node
+    """
+    indents = Counter()
+    if node is None:
+        return indents
+    for line in node.body:
+        if isinstance(line, (EmptyLine, Comment)):
+            continue
+        # for templated suite, there can be data on the same line where the test case name is
+        if node.lineno == line.lineno and isinstance(node, TestCase):
+            indents[len(node.name) + (get_indent(line))] += 1
+        else:
+            indents[(get_indent(line))] += 1
+    return indents
+
+
+def most_common_indent(indents):
+    """Returns most commonly occurred indent
+
+    Args:
+        indents (Counter): A counter of unique indent values with associated number of occurrences in given node
+
+    Returns:
+        indent (int): Most common indent or the first one
+    """
+    common_indents = indents.most_common(1)
+    if not common_indents:
+        return 0
+    indent, _ = common_indents[0]
+    return indent
+
+
+@contextmanager
+def replace_parent_indent(checker, node):
+    """
+    Temporarily replace parent indent with current node indent.
+    """
+    parent_line = checker.parent_line
+    parent_indent = checker.parent_indent
+    checker.parent_indent = get_indent(node)
+    checker.parent_line = node.lineno
+    yield
+    checker.parent_indent = parent_indent
+    checker.parent_line = parent_line
+
+
+@contextmanager
+def block_indent(checker, node):
+    """
+    Temporarily replace parent indent and store
+    current node indents in the stack.
+    """
+    with replace_parent_indent(checker, node):
+        indents = count_indents(node)
+        most_common = most_common_indent(indents)
+        checker.indents.append(most_common)
+        yield
+        checker.indents.pop()
+        checker.end_of_node = False
+
+
+def index_of_first_standalone_comment(node):
+    """
+    Get index of first standalone comment.
+    Comment can be standalone only if there are not other data statements in the node.
+    """
+    last_standalone_comment = len(node.body)
+    for index, child in enumerate(node.body[::-1], start=-(len(node.body) - 1)):
+        if not isinstance(child, (EmptyLine, Comment)):
+            return last_standalone_comment
+        if isinstance(child, Comment) and get_indent(child) == 0:
+            last_standalone_comment = abs(index)
+    return last_standalone_comment
+
+
 class UnevenIndentChecker(VisitorChecker):
     """Checker for indentation violations."""
 
-    reports = (
-        "uneven-indent",
-        "bad-indent",
-    )
+    reports = ("bad-indent", "bad-block-indent")
 
-    HEADERS = {
-        Token.ARGUMENTS,
-        Token.DOCUMENTATION,
-        Token.SETUP,
-        Token.TIMEOUT,
-        Token.TEARDOWN,
-        Token.TEMPLATE,
-        Token.TAGS,
-    }
+    def __init__(self):
+        self.indents = []
+        self.parent_indent = 0
+        # used to ignore indents from statements in the same line as parent, i.e. Inline IFs
+        self.parent_line = 0
+        # used to denote end of keyword/test for comments indents
+        self.end_of_node = False
+        super().__init__()
+
+    def visit_File(self, node):  # noqa
+        self.indents = []
+        self.parent_indent = 0
+        self.parent_line = 0
+        self.end_of_node = False
+        self.generic_visit(node)
+
+    def visit_TestCase(self, node):  # noqa
+        end_index = index_of_first_standalone_comment(node)
+        with block_indent(self, node):
+            for index, child in enumerate(node.body):
+                if index == end_index:
+                    self.end_of_node = True
+                self.visit(child)
+
+    visit_Keyword = visit_TestCase  # noqa
 
     def visit_TestCaseSection(self, node):  # noqa
         self.check_standalone_comments_indent(node)
@@ -505,144 +658,115 @@ class UnevenIndentChecker(VisitorChecker):
                 and child.tokens[0].type == Token.SEPARATOR
             ):
                 self.report(
-                    "uneven-indent",
-                    over_or_under="over",
+                    "bad-indent",
+                    bad_indent_msg="Line is over-indented",
                     node=child,
-                    col=token_col(child, Token.COMMENT),
+                    col=1,
+                    end_col=token_col(child, Token.COMMENT),
                 )
         self.generic_visit(node)
 
-    def visit_TestCase(self, node):  # noqa
-        self.check_indents(node)
-        self.generic_visit(node)
+    def visit_For(self, node):
+        self.visit_Statement(node.header)
+        with block_indent(self, node):
+            for child in node.body:
+                self.visit(child)
+        self.visit_Statement(node.end)
 
-    def visit_Keyword(self, node):  # noqa
-        if not node.name.lstrip().startswith("#"):
-            self.check_indents(node)
-        self.generic_visit(node)
+    visit_While = visit_ForLoop = visit_For
 
-    def visit_ForLoop(self, node):  # noqa
-        column_index = 2 if node.end is not None else 0
-        self.check_indents(node, node.header.tokens[1].col_offset + 1, column_index)
+    def get_common_if_indent(self, node):
+        indents = count_indents(node)
+        head = node
+        while head.orelse:
+            head = head.orelse
+            indents += count_indents(head)
+        most_common = most_common_indent(indents)
+        self.indents.append(most_common)
 
-    visit_For = visit_If = visit_While = visit_ForLoop
+    def get_common_try_indent(self, node):
+        indents = count_indents(node)
+        head = node
+        while head.next:
+            head = head.next
+            indents += count_indents(head)
+        most_common = most_common_indent(indents)
+        self.indents.append(most_common)
 
-    def visit_Try(self, node):  # noqa
-        column_index = 2 if node.end is not None else 0
-        self.check_indents(node, node.header.tokens[1].col_offset + 1, column_index)
-        while node.next:
-            node = node.next
-            self.check_indents(node, node.header.tokens[1].col_offset + 1, column_index)
+    def visit_statements_in_branch(self, node):
+        with replace_parent_indent(self, node):
+            for child in node.body:
+                self.visit(child)
 
-    @staticmethod
-    def get_indent(node):
-        tokens = node.tokens if hasattr(node, "tokens") else node.header.tokens
-        indent_len = 0
-        for token in tokens:
-            if token.type != Token.SEPARATOR:
-                break
-            indent_len += len(token.value.expandtabs(4))
-        return indent_len
+    def visit_If(self, node):
+        self.visit_Statement(node.header)
+        if node.type == "INLINE IF":
+            return
+        self.get_common_if_indent(node)
+        self.visit_statements_in_branch(node)
+        if node.orelse is not None:
+            self.visit_IfBranch(node.orelse)
+        self.indents.pop()
+        self.visit_Statement(node.end)
 
-    def check_indents(self, node, req_indent=0, column_index=0, previous_indent=None):
-        indents = []
-        header_indents = []
-        templated = self.is_templated(node)
-        end_of_block = self.find_block_end(node) if not column_index else len(node.body)
-        for index, child in enumerate(node.body):
-            if index == end_of_block:
-                break
-            if child.lineno == node.lineno or isinstance(child, EmptyLine):
-                continue
-            indent_len = self.get_indent(child)
-            if indent_len is None:
-                continue
-            if hasattr(child, "type") and child.type in UnevenIndentChecker.HEADERS:
-                if templated:
-                    header_indents.append((indent_len, child))
-                else:
-                    indents.append((indent_len, child))
-            else:
-                if indent_len < req_indent:
-                    self.report("bad-indent", node=child)
-                else:
-                    indents.append((indent_len, child))
-        if not column_index:
-            self.validate_standalone_comments(node.body[end_of_block:])
-        previous_indent = self.validate_indent_lists(indents, previous_indent)
-        if templated:
-            self.validate_indent_lists(header_indents)
-        if getattr(node, "orelse", None):
-            self.check_indents(node.orelse, req_indent, column_index, previous_indent)
+    def visit_IfBranch(self, node):  # noqa
+        indent = self.indents.pop()
+        self.visit_Statement(node.header)
+        self.indents.append(indent)
+        self.visit_statements_in_branch(node)
+        if node.orelse is not None:
+            self.visit_IfBranch(node.orelse)
 
-    def validate_indent_lists(self, indents, previous_indent=None):
-        counter = Counter(indent[0] for indent in indents)
-        if previous_indent:  # in case of continuing blocks, ie if else blocks, remember the indent
-            counter = previous_indent + counter
-        elif len(indents) < 2:
-            return counter
-        if len(counter) == 1:  # everything have the same indent
-            return counter
-        common_indent = counter.most_common(1)[0][0]
-        for indent in indents:
-            if indent[0] != common_indent:
-                self.report(
-                    "uneven-indent",
-                    over_or_under="over" if indent[0] > common_indent else "under",
-                    node=indent[1],
-                    col=indent[0] + 1,
-                )
-        return counter
+    def visit_Try(self, node):
+        self.visit_Statement(node.header)
+        self.get_common_try_indent(node)
+        self.visit_statements_in_branch(node)
+        if node.next is not None:
+            self.visit_TryBranch(node.next)
+        self.indents.pop()
+        self.visit_Statement(node.end)
 
-    def validate_standalone_comments(self, comments_and_eols):
-        """
-        Report any comment that does not start from col 1.
+    def visit_TryBranch(self, node):  # noqa
+        indent = self.indents.pop()
+        self.visit_Statement(node.header)
+        self.indents.append(indent)
+        self.visit_statements_in_branch(node)
+        if node.next is not None:
+            self.visit_TryBranch(node.next)
 
-        :param comments_and_eols: list of comments and empty lines (outside keyword and test case definitions)
-        """
-        for child in comments_and_eols:
-            if getattr(child, "type", "invalid") != Token.COMMENT:
-                continue
-            col = token_col(child, Token.COMMENT)
-            if col != 1:
-                self.report("uneven-indent", over_or_under="over", node=child, col=col)
+    def get_required_indent(self, statement):
+        if isinstance(statement, Comment) and self.end_of_node:
+            return 0
+        if self.param("bad-indent", "indent") != -1:
+            return self.param("bad-indent", "indent") * len(self.indents)
+        return self.indents[-1]
 
-    @staticmethod
-    def find_block_end(node):
-        """
-        Find where the keyword/test case/block ends. If there are only comments and new lines left, the
-        first comment that starts from col 1 is considered outside your block::
-
-            Keyword
-                Line
-                # comment
-                Other Line
-               # comment belonging to Keyword
-
-            # This should not belong to Keyword
-              # Since there was comment starting from col 1, this comment is also outside block
-        """
-        for index, child in reversed(list(enumerate(node.body))):
-            node_type = getattr(child, "type", "")
-            if not node_type:
-                return len(node.body) - 1
-            if node_type not in (Token.COMMENT, Token.EOL):
-                break
-        else:
-            return len(node.body) - 1
-        for block_index, child in enumerate(node.body[index + 1 :]):
-            if getattr(child, "type", "invalid") == Token.COMMENT and token_col(child, Token.COMMENT) == 1:
-                return block_index + index + 1
-        return len(node.body) - 1
-
-    @staticmethod
-    def is_templated(node):
-        if not isinstance(node, TestCase):
-            return False
-        for child in node.body:
-            if hasattr(child, "type") and child.type == "TEMPLATE":
-                return True
-        return False
+    def visit_Statement(self, statement):  # noqa
+        if statement is None or isinstance(statement, EmptyLine) or not self.indents:
+            return
+        # Ignore indent if current line is on the same line as parent, i.e. test case header or inline IFs
+        if self.parent_line == statement.lineno:
+            return
+        indent = get_indent(statement)
+        if self.parent_indent and (indent - 2 < self.parent_indent):
+            self.report(
+                "bad-block-indent",
+                node=statement,
+                col=1,
+                end_col=indent + 1,
+            )
+            return
+        req_indent = self.get_required_indent(statement)
+        if indent == req_indent:
+            return
+        over_or_under = "over" if indent > req_indent else "under"
+        self.report(
+            "bad-indent",
+            bad_indent_msg=f"Line is {over_or_under}-indented",
+            node=statement,
+            col=1,
+            end_col=indent + 1,
+        )
 
 
 class MisalignedContinuation(VisitorChecker, ModelVisitor):
@@ -652,6 +776,15 @@ class MisalignedContinuation(VisitorChecker, ModelVisitor):
         "misaligned-continuation",
         "misaligned-continuation-row",
     )
+
+    @staticmethod
+    def is_inline_if(node):
+        return isinstance(node.header, InlineIfHeader)
+
+    def visit_If(self, node):
+        # suppress the rules if the multiline-inline-if is already reported
+        if ROBOT_VERSION.major >= 5 and self.is_inline_if(node):
+            return
 
     def visit_Statement(self, node):  # noqa
         if not node.data_tokens:
@@ -674,19 +807,28 @@ class MisalignedContinuation(VisitorChecker, ModelVisitor):
                             "misaligned-continuation",
                             lineno=token.lineno,
                             col=token.col_offset + 1,
+                            end_col=token.end_col_offset + 1,
                         )
                         break
                     indent = 0
                 elif token.type != Token.EOL and token.value.strip():  # ignore trailing whitespace
+                    ignore_docs = self.param("misaligned-continuation-row", "ignore_docs")
+                    if node.type == Token.DOCUMENTATION and ignore_docs:
+                        break
                     if first_column:
                         if indent != first_column:
+                            cont = [token for token in line if token.type == "CONTINUATION"]
+                            if not cont:
+                                break
                             self.report(
                                 "misaligned-continuation-row",
                                 node=token,
-                                col=token.col_offset + 1,
+                                end_col=token.col_offset + 1,
+                                col=cont[0].end_col_offset + 1,
                             )
                     else:
-                        first_column = indent
+                        if token.type != Token.COMMENT:
+                            first_column = indent
                     break  # check only first value
 
     @staticmethod
@@ -760,7 +902,7 @@ class LeftAlignedChecker(VisitorChecker):
                     pos = len(token.value) - len(token.value.lstrip()) + 1
                 else:
                     pos = child.get_token(Token.ARGUMENT).col_offset + 1
-                self.report("variable-should-be-left-aligned", lineno=token.lineno, col=pos)
+                self.report("variable-should-be-left-aligned", lineno=token.lineno, col=1, end_col=pos)
 
     def visit_SettingSection(self, node):  # noqa
         for child in node.body:
@@ -780,6 +922,7 @@ class LeftAlignedChecker(VisitorChecker):
                     "suite-setting-should-be-left-aligned",
                     node=setting_cand,
                     col=setting_cand.col_offset + 1,
+                    end_col=setting_cand.end_col_offset + 1,
                 )
         elif not setting_error[0].strip():  # starts with space/tab
             suite_sett_cand = setting_error.replace(" ", "").lower()

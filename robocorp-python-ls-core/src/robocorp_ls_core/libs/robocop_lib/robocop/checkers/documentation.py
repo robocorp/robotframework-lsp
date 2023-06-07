@@ -1,6 +1,8 @@
 """
 Documentation checkers
 """
+from pathlib import Path
+
 from robot.parsing.model.blocks import SettingSection
 from robot.parsing.model.statements import Documentation
 
@@ -16,7 +18,7 @@ rules = {
         severity=RuleSeverity.WARNING,
         docs="""
         You can add documentation to keyword using following syntax::
-        
+
             Keyword
                 [Documentation]  Keyword documentation
                 Keyword Step
@@ -29,6 +31,7 @@ rules = {
             name="ignore_templated",
             default="True",
             converter=str2bool,
+            show_type="bool",
             desc="whether templated tests should be documented or not",
         ),
         rule_id="0202",
@@ -37,16 +40,16 @@ rules = {
         severity=RuleSeverity.WARNING,
         docs="""
         You can add documentation to test case using following syntax::
-        
+
             Test
                 [Documentation]  Test documentation
                 Keyword Step
                 Other Step
-        
+
         The rule by default ignores templated test cases but it can be configured with::
-        
+
             robocop --configure missing-doc-test-case:ignore_templated:False
-        
+
         Possible values are: Yes / 1 / True (default) or No / False / 0.
         """,
     ),
@@ -57,9 +60,22 @@ rules = {
         severity=RuleSeverity.WARNING,
         docs="""
         You can add documentation to suite using following syntax::
-        
+
             *** Settings ***
             Documentation    Suite documentation
+
+        """,
+    ),
+    "0204": Rule(
+        rule_id="0204",
+        name="missing-doc-resource-file",
+        msg="Missing documentation in resource file",
+        severity=RuleSeverity.WARNING,
+        docs="""
+        You can add documentation to resource file using following syntax::
+
+            *** Settings ***
+            Documentation    Resource file documentation
 
         """,
     ),
@@ -73,6 +89,7 @@ class MissingDocumentationChecker(VisitorChecker):
         "missing-doc-keyword",
         "missing-doc-test-case",
         "missing-doc-suite",
+        "missing-doc-resource-file",
     )
 
     def visit_Keyword(self, node):  # noqa
@@ -93,7 +110,15 @@ class MissingDocumentationChecker(VisitorChecker):
             if isinstance(section, SettingSection):
                 break
         else:
-            self.report("missing-doc-suite", node=node, lineno=1)
+            source = node.source if node.source else self.source
+            if source:
+                extension = Path(source).suffix
+                if ".resource" in extension:
+                    self.report("missing-doc-resource-file", node=node, lineno=1, col=1)
+                else:
+                    self.report("missing-doc-suite", node=node, lineno=1, col=1)
+            else:
+                self.report("missing-doc-suite", node=node, lineno=1, col=1)
         super().visit_File(node)
 
     def check_if_docs_are_present(self, node, msg):
@@ -102,6 +127,6 @@ class MissingDocumentationChecker(VisitorChecker):
                 break
         else:
             if hasattr(node, "name"):
-                self.report(msg, name=node.name, node=node)
+                self.report(msg, name=node.name, node=node, end_col=node.col_offset + len(node.name) + 1)
             else:
-                self.report(msg, node=node)
+                self.report(msg, node=node, end_col=node.end_col_offset)

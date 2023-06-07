@@ -36,19 +36,19 @@ rules = {
         msg="{{ error_msg }}",
         severity=RuleSeverity.WARNING,
         docs="""
-        To improve readability use `[Return]` setting at the end of the keyword. If you want to return immediately from 
-        the keyword use `RETURN` statement instead (`[Return]` does not return until all steps in the 
-        keyword are completed).
-        
+        To improve readability use ``[Return]`` setting at the end of the keyword. If you want to return immediately
+        from the keyword, use ``RETURN`` statement instead. ``[Return]`` does not return from the keyword but only
+        sets the values that will be returned at the end of the keyword.
+
         Bad::
-        
+
             Keyword
                 Step
                 [Return]    ${variable}
                 ${variable}    Other Step
-        
+
         Good::
-        
+
             Keyword
                 Step
                 ${variable}    Other Step
@@ -62,8 +62,8 @@ rules = {
         msg="[Return] is empty",
         severity=RuleSeverity.WARNING,
         docs="""
-        `[Return]` statement is used to define variables returned from keyword. If you don't return anything from 
-        keyword,  don't use `[Return]`.
+        ``[Return]`` statement is used to define variables returned from keyword. If you don't return anything from
+        keyword,  don't use ``[Return]``.
         """,
     ),
     "0907": Rule(
@@ -74,7 +74,7 @@ rules = {
         version="<4.0",
         docs="""
         Older versions of Robot Framework did not support nested for loops::
-        
+
             FOR    ${var}    IN RANGE    10
                 FOR   ${other_var}   IN    a  b
                     # Nesting supported from Robot Framework 4.0+
@@ -98,6 +98,7 @@ rules = {
             name="assignment_sign_type",
             default="autodetect",
             converter=parse_assignment_sign_type,
+            show_type="assignment sign type",
             desc="possible values: 'autodetect' (default), 'none' (''), "
             "'equal_sign' ('=') or space_and_equal_sign (' =')",
         ),
@@ -107,27 +108,27 @@ rules = {
         "but got '{{ actual_sign }}' instead",
         severity=RuleSeverity.WARNING,
         docs="""
-        Use only one type of assignment sign in a file. 
-        
+        Use only one type of assignment sign in a file.
+
         Example of rule violation::
-        
+
             *** Keywords ***
             Keyword
                 ${var} =  Other Keyword
                 No Operation
-            
+
             Keyword 2
                 No Operation
-                ${var}  ${var2}  Some Keyword  # this assignment doesn't use equal sign while the previous one uses ` =`
-        
-        By default Robocop looks for most popular assignment sign in the file. It is possible to define expected 
+                ${var}  ${var2}  Some Keyword  # this assignment doesn't use equal sign while the previous one uses ' ='
+
+        By default Robocop looks for most popular assignment sign in the file. It is possible to define expected
         assignment sign by running::
-        
+
             robocop --configure inconsistent-assignment:assignment_sign_type:equal_sign
-        
-        You can choose between following signs: 'autodetect' (default), 'none' (''), 'equal_sign' ('=') or 
+
+        You can choose between following signs: 'autodetect' (default), 'none' (''), 'equal_sign' ('=') or
         space_and_equal_sign (' =').
-    
+
         """,
     ),
     "0910": Rule(
@@ -135,6 +136,7 @@ rules = {
             name="assignment_sign_type",
             default="autodetect",
             converter=parse_assignment_sign_type,
+            show_type="assignment sign type",
             desc="possible values: 'autodetect' (default), 'none' (''), "
             "'equal_sign' ('=') or space_and_equal_sign (' =')",
         ),
@@ -144,25 +146,25 @@ rules = {
         "but got '{{ actual_sign }}' instead",
         severity=RuleSeverity.WARNING,
         docs="""
-        Use one type of assignment sign in Variables section. 
-        
+        Use one type of assignment sign in Variables section.
+
         Example of rule violation::
-        
+
             *** Variables ***
             ${var} =    1
             ${var2}=    2
             ${var3} =   3
             ${var4}     a
             ${var5}     b
-        
-        By default Robocop looks for most popular assignment sign in the file. It is possible to define expected 
+
+        By default Robocop looks for most popular assignment sign in the file. It is possible to define expected
         assignment sign by running::
-        
+
             robocop --configure inconsistent-assignment-in-variables:assignment_sign_type:equal_sign
-        
-        You can choose between following signs: 'autodetect' (default), 'none' (''), 'equal_sign' ('=') or 
+
+        You can choose between following signs: 'autodetect' (default), 'none' (''), 'equal_sign' ('=') or
         space_and_equal_sign (' =').
-        
+
         """,
     ),
     "0911": Rule(
@@ -172,7 +174,7 @@ rules = {
         severity=RuleSeverity.WARNING,
         docs="""
         Example of rule violation::
-        
+
             *** Settings ***
             Library    Collections
             Library    CustomLibrary
@@ -187,7 +189,7 @@ rules = {
         severity=RuleSeverity.INFO,
         docs="""
         Example of rule violation::
-        
+
             *** Variables ***
             ${VAR_NO_VALUE}                   # missing value
             ${VAR_WITH_EMPTY}       ${EMPTY}
@@ -215,9 +217,9 @@ rules = {
         version=">=4.0",
         docs="""
         IF statement follows another IF with identical conditions. It can be possibly merged into one.
-        
+
         Example of rule violation::
-        
+
             IF  ${var} == 4
                 Keyword
             END
@@ -225,11 +227,11 @@ rules = {
             IF  ${var}  == 4
                 Keyword 2
             END
-        
-        IF statement is considered identical only if all branches have identical conditions. 
-        
+
+        IF statement is considered identical only if all branches have identical conditions.
+
         Similar but not identical IF::
-        
+
             IF  ${variable}
                 Keyword
             ELSE
@@ -252,10 +254,10 @@ rules = {
             - ``Exit For Loop``,
             - ``Exit For Loop If``,
             - ``Continue For Loop``,
-            - ``Continue For Loop If ``
+            - ``Continue For Loop If``
             - ``CONTINUE``,
             - ``BREAK``
-        
+
         """,
     ),
     "0916": Rule(
@@ -273,17 +275,68 @@ rules = {
         version=">=5.0",
         docs="""
         Short and simple IFs can be replaced with inline IF.
-        
+
         Following IF::
-        
+
             IF    $condition
                 BREAK
             END
-        
+
         can be replaced with::
-        
+
             IF    $condition    BREAK
 
+        """,
+    ),
+    "0917": Rule(
+        rule_id="0917",
+        name="unreachable-code",
+        msg="Unreachable code after {{ statement }} statement",
+        severity=RuleSeverity.WARNING,
+        version=">=5.0",
+        docs="""
+        Detect the unreachable code after RETURN, BREAK or CONTINUE statements.
+
+        For example::
+
+        Example Keyword
+            FOR    ${animal}    IN    cat    dog
+                IF    '${animal}' == 'cat'
+                    CONTINUE
+                    Log  ${animal}  # unreachable log
+                END
+                BREAK
+                Log    Unreachable log
+            END
+            RETURN
+            Log    Unreachable log
+        """,
+    ),
+    "0918": Rule(
+        rule_id="0918",
+        name="multiline-inline-if",
+        msg="Avoid splitting inline IF to multiple lines",
+        severity=RuleSeverity.WARNING,
+        version=">=5.0",
+        docs="""
+        It's allowed to create inline IF that spans multiple lines, but it should be avoided,
+        since it decreases readability. Try to use normal IF/ELSE instead.
+
+        Bad::
+
+            IF  ${condition}  Log  hello
+            ...    ELSE       Log  hi!
+
+        Good::
+
+            IF  ${condition}    Log  hello     ELSE    Log  hi!
+        or::
+
+            IF  ${condition}
+                Log  hello
+            ELSE
+                Log  hi!
+            END
         """,
     ),
 }
@@ -310,10 +363,13 @@ class ReturnChecker(VisitorChecker):
                     "Note that [Return] does not quit from keyword but only set variables to be returned"
                 )
                 if not child.values:
-                    self.report("empty-return", node=child, col=child.end_col_offset)
-            elif ReturnStatement and isinstance(child, ReturnStatement):  # type: ignore[arg-type]
-                return_setting_node = child
-                error = "RETURN is not defined at the end of keyword"
+                    token = child.data_tokens[0]
+                    self.report(
+                        "empty-return",
+                        node=child,
+                        col=token.col_offset + 1,
+                        end_col=token.col_offset + len(token.value),
+                    )
             elif not isinstance(child, (EmptyLine, Comment, Teardown)):
                 if return_setting_node is not None:
                     keyword_after_return = True
@@ -327,7 +383,42 @@ class ReturnChecker(VisitorChecker):
                     return_from = True
         if keyword_after_return:
             token = return_setting_node.data_tokens[0]
-            self.report("keyword-after-return", error_msg=error, node=token, col=token.col_offset + 1)
+            self.report(
+                "keyword-after-return",
+                error_msg=error,
+                node=token,
+                col=token.col_offset + 1,
+                end_col=token.end_col_offset + 1,
+            )
+        self.generic_visit(node)
+
+    visit_If = visit_For = visit_While = visit_Try = visit_Keyword
+
+
+class UnreachableCodeChecker(VisitorChecker):
+    """Checker for unreachable code after RETURN, BREAK or CONTINUE statements."""
+
+    reports = ("unreachable-code",)
+
+    def visit_Keyword(self, node):  # noqa
+        statement_node = None
+
+        for child in node.body:
+            if ReturnStatement and isinstance(child, (ReturnStatement, Break, Continue)):  # type: ignore[arg-type]
+                statement_node = child
+            elif not isinstance(child, (EmptyLine, Comment, Teardown)):
+                if statement_node is not None:
+                    token = statement_node.data_tokens[0]
+                    code_after_statement = child.data_tokens[0] if hasattr(child, "data_tokens") else child
+                    self.report(
+                        "unreachable-code",
+                        statement=token.value,
+                        node=child,
+                        col=code_after_statement.col_offset + 1,
+                        end_col=child.end_col_offset + 1,
+                    )
+                    statement_node = None
+
         self.generic_visit(node)
 
     visit_If = visit_For = visit_While = visit_Try = visit_Keyword
@@ -345,7 +436,8 @@ class NestedForLoopsChecker(VisitorChecker):
         # For RF 4.0 node is "For" but we purposely don't visit it because nested for loop is allowed in 4.0
         for child in node.body:
             if child.type == "FOR":
-                self.report("nested-for-loop", node=child)
+                token = child.get_token(Token.FOR)
+                self.report("nested-for-loop", node=child, col=token.col_offset + 1, end_col=token.end_col_offset + 1)
 
 
 class IfBlockCanBeUsed(VisitorChecker):
@@ -362,7 +454,7 @@ class IfBlockCanBeUsed(VisitorChecker):
             return
         if normalize_robot_name(node.keyword, remove_prefix="builtin.") in self.run_keyword_variants:
             col = keyword_col(node)
-            self.report("if-can-be-used", run_keyword=node.keyword, node=node, col=col)
+            self.report("if-can-be-used", run_keyword=node.keyword, node=node, col=col, end_col=col + len(node.keyword))
 
 
 class ConsistentAssignmentSignChecker(VisitorChecker):
@@ -440,7 +532,8 @@ class ConsistentAssignmentSignChecker(VisitorChecker):
                 expected_sign=expected,
                 actual_sign=sign,
                 lineno=token.lineno,
-                col=token.end_col_offset + 1,
+                col=token.col_offset + 1,
+                end_col=token.end_col_offset + 1,
             )
 
     @staticmethod
@@ -472,11 +565,14 @@ class SettingsOrderChecker(VisitorChecker):
                     first_non_builtin = library.name
             else:
                 if library.name in STDLIBS:
+                    lib_name = library.get_token(Token.NAME)
                     self.report(
                         "wrong-import-order",
                         builtin_import=library.name,
                         custom_import=first_non_builtin,
                         node=library,
+                        col=lib_name.col_offset + 1,
+                        end_col=lib_name.end_col_offset + 1,
                     )
 
     def visit_LibraryImport(self, node):  # noqa
@@ -494,7 +590,7 @@ class EmptyVariableChecker(VisitorChecker):
         if get_errors(node):
             return
         if not node.value:  # catch variable declaration without any value
-            self.report("empty-variable", var_type=node.name[0], node=node)
+            self.report("empty-variable", var_type=node.name[0], node=node, end_col=node.end_col_offset)
         for token in node.get_tokens(Token.ARGUMENT):
             if not token.value or token.value == "\\":
                 self.report(
@@ -502,7 +598,8 @@ class EmptyVariableChecker(VisitorChecker):
                     var_type="$",
                     node=token,
                     lineno=token.lineno,
-                    col=token.col_offset,
+                    col=1,
+                    end_col=token.end_col_offset + 1,
                 )
 
 
@@ -531,6 +628,7 @@ class IfChecker(VisitorChecker):
     reports = (
         "if-can-be-merged",
         "inline-if-can-be-used",
+        "multiline-inline-if",
     )
 
     def visit_TestCase(self, node):  # noqa
@@ -541,7 +639,7 @@ class IfChecker(VisitorChecker):
     visit_For = visit_If = visit_Keyword = visit_TestCase  # TODO  While, Try Except?
 
     @staticmethod
-    def is_if_inline(node):
+    def is_inline_if(node):
         return isinstance(node.header, InlineIfHeader)
 
     def check_adjacent_ifs(self, node):
@@ -592,7 +690,16 @@ class IfChecker(VisitorChecker):
     def check_whether_if_should_be_inline(self, node):
         if ROBOT_VERSION.major < 5:
             return
-        if self.is_if_inline(node):
+        if self.is_inline_if(node):
+            if node.lineno != node.end_lineno:
+                if_header = node.header.data_tokens[0]
+                self.report(
+                    "multiline-inline-if",
+                    node=node,
+                    col=if_header.col_offset + 1,
+                    end_lineno=node.end_lineno,
+                    end_col=node.end_col_offset + 1,
+                )
             return
         if (
             len(node.body) != 1
@@ -632,12 +739,14 @@ class LoopStatementsChecker(VisitorChecker):
         if node.errors or self.loops:
             return
         if normalize_robot_name(node.keyword, remove_prefix="builtin.") in self.for_keyword:
+            col = keyword_col(node)
             self.report(
                 "statement-outside-loop",
                 name=f"'{node.keyword}'",
                 statement_type="keyword",
                 node=node,
-                col=keyword_col(node),
+                col=col,
+                end_col=col + len(node.keyword),
             )
 
     def visit_Continue(self, node):  # noqa
