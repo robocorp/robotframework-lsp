@@ -65,11 +65,13 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
             OPTION_ROBOT_TIMEOUT_USE,
         )
 
-        timeout=30
-        if config and not config.get_setting(OPTION_ROBOT_TIMEOUT_USE, bool, USE_TIMEOUTS):
-            timeout=NO_TIMEOUT
+        timeout = 30
+        if config and not config.get_setting(
+            OPTION_ROBOT_TIMEOUT_USE, bool, USE_TIMEOUTS
+        ):
+            timeout = NO_TIMEOUT
         if not USE_TIMEOUTS:
-            timeout=NO_TIMEOUT
+            timeout = NO_TIMEOUT
 
         return self.request(
             {
