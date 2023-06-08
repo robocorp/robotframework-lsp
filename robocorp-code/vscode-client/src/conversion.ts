@@ -325,23 +325,23 @@ export async function convertAndSaveResults(
                     tempFolder: tempDir,
                     outputRelativePath: join(nextBasename, "analysis"),
                 });
-                for (const it of opts.input) {
-                    const adapterFilePaths = [];
 
-                    if (existsSync(opts.adapterFolderPath)) {
-                        const stat = statSync(opts.adapterFolderPath);
-                        if (stat.isDirectory()) {
-                            const files = readdirSync(opts.adapterFolderPath);
-                            for (const file of files) {
-                                const filepath = path.join(opts.adapterFolderPath, file);
-                                const fileStat = statSync(filepath);
-                                if (fileStat.isFile()) {
-                                    adapterFilePaths.push(filepath);
-                                }
+                const adapterFilePaths = [];
+                if (existsSync(opts.adapterFolderPath)) {
+                    const stat = statSync(opts.adapterFolderPath);
+                    if (stat.isDirectory()) {
+                        const files = readdirSync(opts.adapterFolderPath);
+                        for (const file of files) {
+                            const filepath = path.join(opts.adapterFolderPath, file);
+                            const fileStat = statSync(filepath);
+                            if (fileStat.isFile()) {
+                                adapterFilePaths.push(filepath);
                             }
                         }
                     }
+                }
 
+                for (const it of opts.input) {
                     rpaConversionCommands.push({
                         vendor: Format.A360,
                         command: CommandType.Convert,
