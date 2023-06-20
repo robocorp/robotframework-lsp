@@ -475,6 +475,10 @@ export async function convertAndSaveResults(
                     encoding: BufferEncoding = "utf-8"
                 ): Promise<void> {
                     filesWritten.push(file);
+                    const { dir } = path.parse(file);
+                    if (dir) {
+                        await makeDirs(dir);
+                    }
                     await writeToFile(file, content, { encoding });
                 }
 
