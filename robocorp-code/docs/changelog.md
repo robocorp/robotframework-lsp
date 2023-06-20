@@ -1,4 +1,4 @@
-New in 1.3.1 (2023-06-20)
+New in 1.3.2 (2023-06-20)
 -----------------------------
 
 - Improvements in the `Conversion Accelerator` integration.
