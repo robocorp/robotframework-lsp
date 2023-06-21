@@ -45,7 +45,7 @@ def get_json_contents():
         "categories": ["Debuggers"],
         "activationEvents": get_activation_events_for_json()
         + views.get_activation_events_for_json()
-        + ["onLanguage:json", "onLanguage:yaml"],
+        + ["onLanguage:json", "onLanguage:yaml", "onLanguage:python"],
         "contributes": {
             "configuration": {
                 "title": "Robocorp Code Language Server Configuration",
@@ -129,23 +129,23 @@ def get_json_contents():
             "prettier-fix": "npx prettier -w vscode-client/**/*.ts",
         },
         "devDependencies": {
+            "@types/adm-zip": "^0.5.0",
             "@types/mocha": "^2.2.32",
             "@types/node": "^15.0.00",
-            "@types/vscode": "1.65.0",
-            "@types/adm-zip": "^0.5.0",
             "@types/rimraf": "^3.0.2",
+            "@types/vscode": "1.65.0",
             "prettier": "2.4.1",
-            "vscode-test": "1.5.1",
             "typescript": "^4.5.4",
+            "vscode-test": "1.5.1",
         },
         "dependencies": {
-            "vscode-languageclient": "^7.0.0",
-            "path-exists": "^4.0.0",
+            "adm-zip": "^0.5.9",
             "http-proxy-agent": "^2.1.0",
             "https-proxy-agent": "^2.2.4",
-            "vscode-nls": "^4.1.2",
-            "adm-zip": "^0.5.9",
+            "path-exists": "^4.0.0",
             "rimraf": "^3.0.2",
+            "vscode-languageclient": "^7.0.0",
+            "vscode-nls": "^4.1.2",
         },
     }
     return base_package_contents

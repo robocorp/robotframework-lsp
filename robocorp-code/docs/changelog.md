@@ -1,3 +1,10 @@
+NEXT
+-----------------------------
+
+- When `Robocorp Log` with html target is found on the terminal, properly add option to open the html in the browser.
+- Created code-lenses to `Run Task` and `Debug Task` from `robocorp.tasks`.
+
+
 New in 1.3.2 (2023-06-20)
 -----------------------------
 

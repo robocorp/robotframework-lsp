@@ -95,8 +95,8 @@ def test_list_rcc_robot_templates(
     )["result"]
     assert result["success"]
     template_names = [template["name"] for template in result["result"]]
-    assert "standard" in template_names
-    assert "python" in template_names
+    assert "01-python" in template_names
+    assert "11-rfw-standard" in template_names
 
     target = str(tmpdir.join("dest"))
     language_server.change_workspace_folders(added_folders=[target], removed_folders=[])
@@ -117,7 +117,7 @@ def test_list_rcc_robot_templates(
     # Error
     result = language_server.execute_command(
         commands.ROBOCORP_CREATE_ROBOT_INTERNAL,
-        [{"directory": target, "name": "example", "template": "standard"}],
+        [{"directory": target, "name": "example", "template": "01-python"}],
     )["result"]
     assert not result["success"]
     assert "Error creating robot" in result["message"]
@@ -126,7 +126,7 @@ def test_list_rcc_robot_templates(
 
     result = language_server.execute_command(
         commands.ROBOCORP_CREATE_ROBOT_INTERNAL,
-        [{"directory": ws_root_path, "name": "example2", "template": "standard"}],
+        [{"directory": ws_root_path, "name": "example2", "template": "01-python"}],
     )["result"]
     assert result["success"]
 
@@ -352,7 +352,7 @@ def test_upload_to_cloud(
     found_package: PackageInfoDict = found_packages[0]
     result = client.execute_command(
         commands.ROBOCORP_CREATE_ROBOT_INTERNAL,
-        [{"directory": ws_root_path, "name": "example", "template": "standard"}],
+        [{"directory": ws_root_path, "name": "example", "template": "01-python"}],
     )["result"]
     assert result["success"]
 

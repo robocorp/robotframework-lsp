@@ -21,6 +21,7 @@ export const ROBOCORP_AUTO_SET_PYTHON_EXTENSION_INTERPRETER = "robocorp.autoSetP
 export const ROBOCORP_AUTO_SET_PYTHON_EXTENSION_DISABLE_ACTIVATE_TERMINAL = "robocorp.autoSetPythonExtensionDisableActivateTerminal";
 export const ROBOCORP_PROCEED_WITH_LONG_PATHS_DISABLED = "robocorp.proceedWithLongPathsDisabled";
 export const ROBOCORP_VAULT_TOKEN_TIMEOUT_IN_MINUTES = "robocorp.vaultTokenTimeoutInMinutes";
+export const ROBOCORP_CODE_LENS_ROBO_LAUNCH = "robocorp.codeLens.roboLaunch";
 
 export function getLanguageServerTcpPort(): number {
     let key = ROBOCORP_LANGUAGE_SERVER_TCP_PORT;
@@ -195,6 +196,21 @@ export function getVaulttokentimeoutinminutes(): number {
 
 export async function setVaulttokentimeoutinminutes(value): Promise<void> {
     let key = ROBOCORP_VAULT_TOKEN_TIMEOUT_IN_MINUTES;
+    let i = key.lastIndexOf('.');
+
+    let config = workspace.getConfiguration(key.slice(0, i));
+    await config.update(key.slice(i + 1), value, ConfigurationTarget.Global);
+}
+
+
+export function getCodelensRobolaunch(): boolean {
+    let key = ROBOCORP_CODE_LENS_ROBO_LAUNCH;
+    return get<boolean>(key);
+}
+
+
+export async function setCodelensRobolaunch(value): Promise<void> {
+    let key = ROBOCORP_CODE_LENS_ROBO_LAUNCH;
     let i = key.lastIndexOf('.');
 
     let config = workspace.getConfiguration(key.slice(0, i));

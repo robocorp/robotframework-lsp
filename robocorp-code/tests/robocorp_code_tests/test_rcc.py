@@ -19,8 +19,8 @@ def test_rcc_template_names(rcc: IRcc):
     assert result.success
     assert result.result
     template_names = [template["name"] for template in result.result]
-    assert "standard" in template_names
-    assert "python" in template_names
+    assert "01-python" in template_names
+    assert "11-rfw-standard" in template_names
 
 
 def test_rcc_cloud_issues(rcc: IRcc, ci_credentials: str, tmpdir, rcc_patch: RccPatch):
@@ -168,7 +168,7 @@ def test_rcc_cloud(rcc: IRcc, ci_credentials: str, tmpdir):
 
     wsdir = str(tmpdir.join("ws"))
 
-    result = rcc.create_robot("standard", wsdir)
+    result = rcc.create_robot("01-python", wsdir)
     assert result.success
     result = rcc.cloud_set_robot_contents(wsdir, ws.workspace_id, act.robot_id)
     assert result.success

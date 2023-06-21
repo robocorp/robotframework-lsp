@@ -39,6 +39,8 @@
         "onCommand:robocorp.debugRobotRcc",
         "onCommand:robocorp.robotsViewTaskRun",
         "onCommand:robocorp.robotsViewTaskDebug",
+        "onCommand:robocorp.runRobocorpsPythonTask",
+        "onCommand:robocorp.debugRobocorpsPythonTask",
         "onCommand:robocorp.saveInDiskLRU",
         "onCommand:robocorp.loadFromDiskLRU",
         "onCommand:robocorp.computeRobotLaunchFromRobocorpCodeLaunch",
@@ -110,7 +112,8 @@
         "onView:robocorp-resources-tree",
         "onView:robocorp-cloud-tree",
         "onLanguage:json",
-        "onLanguage:yaml"
+        "onLanguage:yaml",
+        "onLanguage:python"
     ],
     "contributes": {
         "configuration": {
@@ -176,6 +179,11 @@
                     "type": "number",
                     "default": 30,
                     "description": "Specifies the timeout in minutes for the token generated to access the vault when a launch is made. Note: max 60, min 5, additional timeout may be added internally to reuse the token in future runs (please use Robocorp Control Room or Robocorp Assistant for longer runs)."
+                },
+                "robocorp.codeLens.roboLaunch": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Specifies whether the 'Run Task' and 'Debug Task' code lenses should be shown."
                 }
             }
         },
@@ -298,6 +306,24 @@
             {
                 "command": "robocorp.robotsViewTaskDebug",
                 "title": "Debug Task",
+                "category": "Robocorp",
+                "icon": {
+                    "light": "images/light/debug.svg",
+                    "dark": "images/dark/debug.svg"
+                }
+            },
+            {
+                "command": "robocorp.runRobocorpsPythonTask",
+                "title": "Run Robocorp's Python Task",
+                "category": "Robocorp",
+                "icon": {
+                    "light": "images/light/run.svg",
+                    "dark": "images/dark/run.svg"
+                }
+            },
+            {
+                "command": "robocorp.debugRobocorpsPythonTask",
+                "title": "Debug Robocorp's Python Task",
                 "category": "Robocorp",
                 "icon": {
                     "light": "images/light/debug.svg",
@@ -856,6 +882,14 @@
                 },
                 {
                     "command": "robocorp.robotsViewTaskDebug",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.runRobocorpsPythonTask",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.debugRobocorpsPythonTask",
                     "when": "false"
                 },
                 {

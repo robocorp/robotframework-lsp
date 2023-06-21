@@ -135,6 +135,8 @@ import {
     ROBOCORP_NEW_ROBOCORP_INSPECTOR_WEB_RECORDER,
     ROBOCORP_PROFILE_IMPORT,
     ROBOCORP_PROFILE_SWITCH,
+    ROBOCORP_RUN_ROBOCORPS_PYTHON_TASK,
+    ROBOCORP_DEBUG_ROBOCORPS_PYTHON_TASK,
 } from "./robocorpCommands";
 import { installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
@@ -149,6 +151,7 @@ import { showSubmitIssueUI } from "./submitIssue";
 import { showConvertUI } from "./conversionView";
 import { profileImport, profileSwitch } from "./profiles";
 import { registerLinkProviders } from "./robo/linkProvider";
+import { runRobocorpTasks } from "./robo/runRobocorpTasks";
 
 interface InterpreterInfo {
     pythonExe: string;
@@ -161,6 +164,9 @@ const clientOptions: LanguageClientOptions = {
         { language: "json", pattern: "**/locators.json" },
         { language: "yaml", pattern: "**/conda.yaml" },
         { language: "yaml", pattern: "**/robot.yaml" },
+
+        // Needed to detect tasks decorated with @task (from robocorp.tasks).
+        { language: "python", pattern: "**/*.py" },
     ],
     synchronize: {
         configurationSection: "robocorp",
@@ -354,6 +360,8 @@ function registerRobocorpCodeCommands(C: CommandRegistry, context: ExtensionCont
     C.register(ROBOCORP_REFRESH_CLOUD_VIEW, () => refreshCloudTreeView());
     C.register(ROBOCORP_ROBOTS_VIEW_TASK_RUN, (entry: RobotEntry) => views.runSelectedRobot(true, entry));
     C.register(ROBOCORP_ROBOTS_VIEW_TASK_DEBUG, (entry: RobotEntry) => views.runSelectedRobot(false, entry));
+    C.register(ROBOCORP_RUN_ROBOCORPS_PYTHON_TASK, (args: string[]) => runRobocorpTasks(true, args));
+    C.register(ROBOCORP_DEBUG_ROBOCORPS_PYTHON_TASK, (args: string[]) => runRobocorpTasks(false, args));
     C.register(ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR, (locator?: LocatorEntry) =>
         inspector.openRobocorpInspector(undefined, locator)
     );

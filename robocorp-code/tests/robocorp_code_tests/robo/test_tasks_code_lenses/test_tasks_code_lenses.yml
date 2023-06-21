@@ -1,0 +1,30 @@
+- command:
+    arguments:
+    - filepath.py
+    - -t
+    - my_entry_point
+    command: robocorp.runRobocorpsPythonTask
+    title: Run Task
+  data: null
+  range:
+    end:
+      character: 0
+      line: 3
+    start:
+      character: 0
+      line: 3
+- command:
+    arguments:
+    - filepath.py
+    - -t
+    - my_entry_point
+    command: robocorp.debugRobocorpsPythonTask
+    title: Debug Task
+  data: null
+  range:
+    end:
+      character: 0
+      line: 3
+    start:
+      character: 0
+      line: 3
