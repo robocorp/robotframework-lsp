@@ -5,9 +5,6 @@ export async function registerLinkProviders(extensionContext: ExtensionContext) 
     extensionContext.subscriptions.push(
         window.registerTerminalLinkProvider({
             provideTerminalLinks(context: TerminalLinkContext) {
-                if(context.line.indexOf("Robocorp Log") != -1){
-                    console.log('here');
-                }
                 const regex = /(Robocorp Log(\s*\(html\)\s*)?:\s*)(.+\.html)/;
                 const match = context.line.match(regex);
                 if(match){
