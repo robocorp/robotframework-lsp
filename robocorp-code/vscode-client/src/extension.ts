@@ -148,6 +148,7 @@ import { feedback } from "./rcc";
 import { showSubmitIssueUI } from "./submitIssue";
 import { showConvertUI } from "./conversionView";
 import { profileImport, profileSwitch } from "./profiles";
+import { registerLinkProviders } from "./robo/linkProvider";
 
 interface InterpreterInfo {
     pythonExe: string;
@@ -584,6 +585,8 @@ export async function activate(context: ExtensionContext) {
     GLOBAL_STATE = context.globalState;
     let timing = new Timing();
     OUTPUT_CHANNEL.appendLine("Activating Robocorp Code extension.");
+    registerLinkProviders(context);
+
     C = new CommandRegistry(context);
 
     try {
