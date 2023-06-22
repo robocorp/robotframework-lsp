@@ -1,4 +1,4 @@
-NEXT
+New in 1.4.0 (2023-06-22)
 -----------------------------
 
 - When `Robocorp Log` with html target is found on the terminal, properly add option to open the html in the browser.
@@ -9,6 +9,7 @@ New in 1.3.2 (2023-06-20)
 -----------------------------
 
 - Improvements in the `Conversion Accelerator` integration.
+
 
 New in 1.3.0 (2023-05-10)
 -----------------------------

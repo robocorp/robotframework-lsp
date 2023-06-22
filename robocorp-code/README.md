@@ -69,8 +69,11 @@ Find the full installation instructions at [https://robocorp.com/docs/product-ma
 
 During the first activation, the extension will download additional dependencies (such as Conda manager) that are required for it to run.
 
-### Features (1.3.2)
+### Features (1.4.0)
 
+- Preliminary support for [Robo](https://github.com/robocorp/robo) (Robocorp's Python Framework for automation).
+    - Ctrl+Click on terminal for the 'Robocorp html Log` opens external browser.
+    - Code Lenses to `Run Task` / `Debug Task` for tasks decorated with `@task`.
 - Support for [Work Items](https://robocorp.com/docs/developer-tools/visual-studio-code/extension-features#using-work-items).
 - Automatic bootstrapping of the Python environment for the `Robot Framework Language Server`.
 - Create a Robot from a pre-configured template using the `Robocorp: Create Robot` action.
