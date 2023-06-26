@@ -37,8 +37,6 @@ from robocorp_ls_core.cache import CachedFileInfo
 from robocorp_ls_core.protocols import (
     IConfig,
     LibraryVersionInfoDict,
-    IDocument,
-    IMonitor,
 )
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.robotframework_log import get_logger
@@ -47,11 +45,6 @@ from robocorp_ls_core import watchdog_wrapper
 import time
 from robocorp_ls_core.command_dispatcher import _CommandDispatcher
 import weakref
-from robocorp_ls_core.jsonrpc.endpoint import require_monitor
-from robocorp_ls_core.lsp import (
-    CodeLensTypedDict,
-)
-import re
 
 log = get_logger(__name__)
 
@@ -439,7 +432,6 @@ class RobocorpLanguageServer(PythonLanguageServer):
         DEFAULT_SORT_KEY = 10
         ws_id_and_pack_id_to_lru_index: Dict = {}
         for i, entry in enumerate(cache_lru_list):
-
             if i >= DEFAULT_SORT_KEY:
                 break
 
@@ -1142,107 +1134,13 @@ class RobocorpLanguageServer(PythonLanguageServer):
         return {"success": True, "message": None, "result": None}
 
     def m_text_document__code_lens(self, **kwargs) -> Optional[partial]:
-        from robocorp_ls_core import uris
+        from robocorp_code.robo.launch_code_lens import compute_launch_robo_code_lens
 
         doc_uri = kwargs["textDocument"]["uri"]
-        if not uris.to_fs_path(doc_uri).endswith(".py"):
-            return None
-        ws = self._workspace
-        if ws is None:
-            return None
 
-        config_provider = self._config_provider
-        config: Optional[IConfig] = None
-        compute_launch = True
-        if config_provider is not None:
-            config = config_provider.config
-            if config:
-                from robocorp_code.settings import (
-                    ROBOCORP_CODE_LENS_ROBO_LAUNCH,
-                )
-
-                compute_launch = config.get_setting(
-                    ROBOCORP_CODE_LENS_ROBO_LAUNCH, bool, True
-                )
-
-        if not compute_launch:
-            return None
-
-        document: Optional[IDocument] = ws.get_document(doc_uri, accept_from_file=True)
-        if document is None:
-            return None
-
-        return require_monitor(partial(self._collect_tasks_in_thread, document))
-
-    def _collect_tasks_in_thread(
-        self, document: IDocument, monitor: IMonitor
-    ) -> Optional[List[CodeLensTypedDict]]:
-        code_lenses: List[CodeLensTypedDict] = []
-        contents = document.source
-        found_task_decorator_at_line = -1
-
-        for i, line in enumerate(contents.splitlines()):
-            if found_task_decorator_at_line != -1:
-                if i < found_task_decorator_at_line + 3:
-                    use_line = found_task_decorator_at_line
-                    found_task_decorator_at_line = -1
-                    if line.startswith("def "):
-                        re_match = re.match(r"\s*def\s+(\w*).*", line)
-                        if re_match:
-                            function_name = re_match.group(1)
-                            if function_name:
-                                code_lenses.append(
-                                    {
-                                        "range": {
-                                            "start": {
-                                                "line": use_line,
-                                                "character": 0,
-                                            },
-                                            "end": {
-                                                "line": use_line,
-                                                "character": 0,
-                                            },
-                                        },
-                                        "command": {
-                                            "title": "Run Task",
-                                            "command": "robocorp.runRobocorpsPythonTask",
-                                            "arguments": [
-                                                document.path,
-                                                "-t",
-                                                function_name,
-                                            ],
-                                        },
-                                        "data": None,
-                                    }
-                                )
-                                code_lenses.append(
-                                    {
-                                        "range": {
-                                            "start": {
-                                                "line": use_line,
-                                                "character": 0,
-                                            },
-                                            "end": {
-                                                "line": use_line,
-                                                "character": 0,
-                                            },
-                                        },
-                                        "command": {
-                                            "title": "Debug Task",
-                                            "command": "robocorp.debugRobocorpsPythonTask",
-                                            "arguments": [
-                                                document.path,
-                                                "-t",
-                                                function_name,
-                                            ],
-                                        },
-                                        "data": None,
-                                    }
-                                )
-
-            if line.strip().startswith("@task"):
-                found_task_decorator_at_line = i
-        return code_lenses
+        return compute_launch_robo_code_lens(
+            self._workspace, self._config_provider, doc_uri
+        )
 
     def m_text_document__hover(self, **kwargs) -> Any:
         """
