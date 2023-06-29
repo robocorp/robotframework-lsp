@@ -46,6 +46,7 @@ ROBOCORP_NEW_ROBOCORP_INSPECTOR_BROWSER = "robocorp.newRobocorpInspectorBrowser"
 ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE = "robocorp.newRobocorpInspectorImage"  # Add Image Locator
 ROBOCORP_NEW_ROBOCORP_INSPECTOR_WINDOWS = "robocorp.newRobocorpInspectorWindows"  # Add Windows Locator
 ROBOCORP_NEW_ROBOCORP_INSPECTOR_WEB_RECORDER = "robocorp.newRobocorpInspectorWebRecorder"  # Record Browser actions as code (beta)
+ROBOCORP_OPEN_PLAYWRIGHT_INSPECTOR = "robocorp.openPlaywrightInspector"  # Open Playwright Inspector
 ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR = "robocorp.editRobocorpInspectorLocator"  # Edit locator
 ROBOCORP_COPY_LOCATOR_TO_CLIPBOARD_INTERNAL = "robocorp.copyLocatorToClipboard.internal"  # Copy locator name to clipboard
 ROBOCORP_OPEN_ROBOT_TREE_SELECTION = "robocorp.openRobotTreeSelection"  # Configure Robot (robot.yaml)

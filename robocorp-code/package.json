@@ -64,6 +64,7 @@
         "onCommand:robocorp.newRobocorpInspectorImage",
         "onCommand:robocorp.newRobocorpInspectorWindows",
         "onCommand:robocorp.newRobocorpInspectorWebRecorder",
+        "onCommand:robocorp.openPlaywrightInspector",
         "onCommand:robocorp.editRobocorpInspectorLocator",
         "onCommand:robocorp.copyLocatorToClipboard.internal",
         "onCommand:robocorp.openRobotTreeSelection",
@@ -433,6 +434,15 @@
                 "title": "Record Browser actions as code (beta)",
                 "category": "Robocorp",
                 "icon": "$(add)"
+            },
+            {
+                "command": "robocorp.openPlaywrightInspector",
+                "title": "Open Playwright Inspector",
+                "category": "Robocorp",
+                "icon": {
+                    "light": "images/light/run.svg",
+                    "dark": "images/dark/run.svg"
+                }
             },
             {
                 "command": "robocorp.editRobocorpInspectorLocator",
