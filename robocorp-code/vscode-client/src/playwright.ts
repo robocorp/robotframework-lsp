@@ -74,7 +74,7 @@ const runPythonWithMessage = async (
     }
 };
 
-export async function openRobocorpPlaywright(): Promise<void> {
+export async function openPlaywrightRecorder(): Promise<void> {
     let selectedEntry: RobotEntry = getSelectedRobot();
     let robot: LocalRobotMetadataInfo | undefined = selectedEntry?.robot;
     if (robot === undefined) {

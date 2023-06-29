@@ -138,7 +138,7 @@ import {
     ROBOCORP_PROFILE_SWITCH,
     ROBOCORP_RUN_ROBOCORPS_PYTHON_TASK,
     ROBOCORP_DEBUG_ROBOCORPS_PYTHON_TASK,
-    ROBOCORP_OPEN_PLAYWRIGHT_INSPECTOR,
+    ROBOCORP_OPEN_PLAYWRIGHT_RECORDER,
 } from "./robocorpCommands";
 import { installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
@@ -379,7 +379,7 @@ function registerRobocorpCodeCommands(C: CommandRegistry, context: ExtensionCont
     C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_WEB_RECORDER, () =>
         inspector.openRobocorpInspector(inspector.InspectorType.WebRecorder)
     );
-    C.register(ROBOCORP_OPEN_PLAYWRIGHT_INSPECTOR, () => playwright.openRobocorpPlaywright());
+    C.register(ROBOCORP_OPEN_PLAYWRIGHT_RECORDER, () => playwright.openPlaywrightRecorder());
     C.register(ROBOCORP_COPY_LOCATOR_TO_CLIPBOARD_INTERNAL, (locator?: LocatorEntry) =>
         copySelectedToClipboard(locator)
     );

@@ -64,7 +64,7 @@
         "onCommand:robocorp.newRobocorpInspectorImage",
         "onCommand:robocorp.newRobocorpInspectorWindows",
         "onCommand:robocorp.newRobocorpInspectorWebRecorder",
-        "onCommand:robocorp.openPlaywrightInspector",
+        "onCommand:robocorp.openPlaywrightRecorder",
         "onCommand:robocorp.editRobocorpInspectorLocator",
         "onCommand:robocorp.copyLocatorToClipboard.internal",
         "onCommand:robocorp.openRobotTreeSelection",
@@ -436,8 +436,8 @@
                 "icon": "$(add)"
             },
             {
-                "command": "robocorp.openPlaywrightInspector",
-                "title": "Open Playwright Inspector",
+                "command": "robocorp.openPlaywrightRecorder",
+                "title": "Open Playwright Recorder",
                 "category": "Robocorp",
                 "icon": {
                     "light": "images/light/run.svg",
