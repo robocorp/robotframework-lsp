@@ -84,9 +84,11 @@ def _collect_tasks_in_thread(
                                         "title": "Run Task",
                                         "command": "robocorp.runRobocorpsPythonTask",
                                         "arguments": [
-                                            document.path,
-                                            "-t",
-                                            function_name,
+                                            [
+                                                document.path,
+                                                "-t",
+                                                function_name,
+                                            ]
                                         ],
                                     },
                                     "data": None,
@@ -108,9 +110,11 @@ def _collect_tasks_in_thread(
                                         "title": "Debug Task",
                                         "command": "robocorp.debugRobocorpsPythonTask",
                                         "arguments": [
-                                            document.path,
-                                            "-t",
-                                            function_name,
+                                            [
+                                                document.path,
+                                                "-t",
+                                                function_name,
+                                            ]
                                         ],
                                     },
                                     "data": None,

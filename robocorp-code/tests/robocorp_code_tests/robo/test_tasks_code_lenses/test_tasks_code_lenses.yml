@@ -1,8 +1,8 @@
 - command:
     arguments:
-    - filepath.py
-    - -t
-    - my_entry_point
+    - - filepath.py
+      - -t
+      - my_entry_point
     command: robocorp.runRobocorpsPythonTask
     title: Run Task
   data: null
@@ -15,9 +15,9 @@
       line: 3
 - command:
     arguments:
-    - filepath.py
-    - -t
-    - my_entry_point
+    - - filepath.py
+      - -t
+      - my_entry_point
     command: robocorp.debugRobocorpsPythonTask
     title: Debug Task
   data: null

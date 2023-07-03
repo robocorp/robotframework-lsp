@@ -105,6 +105,8 @@
         "onCommand:robocorp.profileSwitch",
         "onCommand:robocorp.profileSwitch.internal",
         "onCommand:robocorp.profileList.internal",
+        "onCommand:robocorp.hasPreRunScripts.internal",
+        "onCommand:robocorp.runPreRunScripts.internal",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
@@ -648,6 +650,16 @@
                 "command": "robocorp.profileList.internal",
                 "title": "List Profiles",
                 "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.hasPreRunScripts.internal",
+                "title": "Has Pre Run Scripts",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.runPreRunScripts.internal",
+                "title": "Run Pre Run Scripts",
+                "category": "Robocorp"
             }
         ],
         "menus": {
@@ -1034,6 +1046,14 @@
                 },
                 {
                     "command": "robocorp.profileList.internal",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.hasPreRunScripts.internal",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.runPreRunScripts.internal",
                     "when": "false"
                 }
             ]

@@ -101,6 +101,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         from robocorp_code._language_server_login import _Login
         from robocorp_code._language_server_profile import _Profile
         from robocorp_code._language_server_feedback import _Feedback
+        from robocorp_code._language_server_pre_run_scripts import _PreRunScripts
 
         user_home = os.getenv("ROBOCORP_CODE_USER_HOME", None)
         if user_home is None:
@@ -145,6 +146,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         self._dir_cache = DirCache(cache_dir)
         self._rcc = Rcc(self)
         self._feedback = _Feedback(self._rcc)
+        self._pre_run_scripts = _PreRunScripts(command_dispatcher)
         self._local_list_robots_cache: Dict[
             Path, CachedFileInfo[LocalRobotMetadataInfoDict]
         ] = {}
@@ -712,7 +714,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
             stat = path.stat()
         except Exception:
             message = f"Expected {path} to exist."
-            log.exception("message")
+            log.exception(message)
             return dict(success=False, message=message, result=None)
 
         robot_yaml = self._find_robot_yaml_path_from_path(path, stat)
@@ -847,22 +849,9 @@ class RobocorpLanguageServer(PythonLanguageServer):
         return recyclable_output_work_items + non_recyclable_output_work_items
 
     def _find_robot_yaml_path_from_path(self, path: Path, stat) -> Optional[Path]:
-        from stat import S_ISDIR
+        from robocorp_code import find_robot_yaml
 
-        if not S_ISDIR(stat.st_mode):
-            # If we have the stat it already exists, so, just checking if it's a dir/file.
-            if path.name == "robot.yaml":
-                return path
-            else:
-                path = path.parent
-
-        for _i in range(3):
-            robot_yaml = path / "robot.yaml"
-            if robot_yaml.is_file():
-                return robot_yaml
-            path = path.parent
-
-        return robot_yaml
+        return find_robot_yaml.find_robot_yaml_path_from_path(path, stat)
 
     @command_dispatcher(commands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL)
     def _local_list_robots(self, params=None) -> ActionResultDictLocalRobotMetadata:
@@ -1061,10 +1050,6 @@ class RobocorpLanguageServer(PythonLanguageServer):
         from robocorp_ls_core import yaml_wrapper
 
         conda_prefix = Path(params["conda_prefix"])
-        library = params["library"]
-        version = params["version"]
-        expected_version = _parse_version(version)
-
         if not conda_prefix.exists():
             return {
                 "success": False,
@@ -1088,6 +1073,9 @@ class RobocorpLanguageServer(PythonLanguageServer):
             log.exception(msg)
             return {"success": False, "message": msg, "result": None}
 
+        libs_and_version = params["libs_and_version"]
+        lib_to_version = dict(libs_and_version)
+
         if not isinstance(yaml_contents, list):
             return {
                 "success": False,
@@ -1095,27 +1083,40 @@ class RobocorpLanguageServer(PythonLanguageServer):
                 "result": None,
             }
 
+        version_mismatch_error_msgs: List[str] = []
         for entry in yaml_contents:
             if isinstance(entry, dict):
                 name = entry.get("name")
-                found_version = entry.get("version")
-                if name == library and found_version:
-                    if _verify_version(_parse_version(found_version), expected_version):
-                        return {
-                            "success": True,
-                            "message": "",
-                            "result": {"library": name, "version": found_version},
-                        }
+                if not isinstance(name, str):
+                    continue
 
+                found_version = entry.get("version")
+                version = lib_to_version.get(name)
+                if version is None or found_version is None:
+                    continue
+
+                # Ok, this is one of the expected libraries.
+                expected_version = _parse_version(version)
+                if _verify_version(_parse_version(found_version), expected_version):
                     return {
-                        "success": False,
-                        "message": f"{name} {found_version} does not match minimum required version ({version}).",
+                        "success": True,
+                        "message": "",
                         "result": {"library": name, "version": found_version},
                     }
 
+                version_mismatch_error_msgs.append(
+                    f"{name} {found_version} does not match minimum required version ({version})."
+                )
+
+        if version_mismatch_error_msgs:
+            return {
+                "success": False,
+                "message": "\n".join(version_mismatch_error_msgs),
+                "result": None,
+            }
         return {
             "success": False,
-            "message": f"{library} not found in environment.",
+            "message": f"Libraries: {', '.join([str(x) for x in lib_to_version])} not found in environment.",
             "result": None,
         }
 

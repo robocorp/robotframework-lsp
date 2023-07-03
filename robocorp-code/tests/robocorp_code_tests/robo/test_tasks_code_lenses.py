@@ -27,6 +27,6 @@ def my_entry_point():
     result = ret["result"]
     assert len(result) == 2
     for r in result:
-        assert r["command"]["arguments"][0].lower() == path.lower()
-        r["command"]["arguments"][0] = "filepath.py"
+        assert r["command"]["arguments"][0][0].lower() == path.lower()
+        r["command"]["arguments"][0][0] = "filepath.py"
     data_regression.check(result)

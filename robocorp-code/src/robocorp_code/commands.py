@@ -87,6 +87,8 @@ ROBOCORP_PROFILE_IMPORT_INTERNAL = "robocorp.profileImport.internal"  # Import P
 ROBOCORP_PROFILE_SWITCH = "robocorp.profileSwitch"  # Switch Profile
 ROBOCORP_PROFILE_SWITCH_INTERNAL = "robocorp.profileSwitch.internal"  # Switch Profile
 ROBOCORP_PROFILE_LIST_INTERNAL = "robocorp.profileList.internal"  # List Profiles
+ROBOCORP_HAS_PRE_RUN_SCRIPTS_INTERNAL = "robocorp.hasPreRunScripts.internal"  # Has Pre Run Scripts
+ROBOCORP_RUN_PRE_RUN_SCRIPTS_INTERNAL = "robocorp.runPreRunScripts.internal"  # Run Pre Run Scripts
 
 ALL_SERVER_COMMANDS = [
     ROBOCORP_GET_PLUGINS_DIR,
@@ -117,6 +119,8 @@ ALL_SERVER_COMMANDS = [
     ROBOCORP_PROFILE_IMPORT_INTERNAL,
     ROBOCORP_PROFILE_SWITCH_INTERNAL,
     ROBOCORP_PROFILE_LIST_INTERNAL,
+    ROBOCORP_HAS_PRE_RUN_SCRIPTS_INTERNAL,
+    ROBOCORP_RUN_PRE_RUN_SCRIPTS_INTERNAL,
 ]
 
 # fmt: on

@@ -1,3 +1,14 @@
+NEXT
+-----------------------------
+
+- Fixed issues in `Run Task` / `Debug Task` (launching `robocorp.tasks`):
+    - Robot environment properly used when robot is available.
+    - The input work item is properly selected when available.
+    - If multiple entry points in the same file were available the selected one will be run.
+
+- If a `robot.yaml` has `preRunScripts` they'll be run prior to launching.
+
+
 New in 1.4.0 (2023-06-22)
 -----------------------------
 

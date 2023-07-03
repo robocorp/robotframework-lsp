@@ -861,7 +861,61 @@ export async function createRobot() {
 }
 
 export async function updateLaunchEnvironment(args): Promise<{ [key: string]: string } | "cancelled"> {
+    let newEnv: any;
+    try {
+        newEnv = await updateLaunchEnvironmentPart0(args);
+    } catch (error) {
+        logError("Error computing launch env.", error, "ERROR_LAUNCH_ENV");
+        throw error;
+    }
+    if (newEnv !== "cancelled") {
+        try {
+            // Ok, also check for pre-run scripts.
+            const hasPreRunScripts = await commands.executeCommand(roboCommands.ROBOCORP_HAS_PRE_RUN_SCRIPTS_INTERNAL, {
+                "robot": args["targetRobot"],
+            });
+            if (hasPreRunScripts) {
+                const runPreRunScripts = async () =>
+                    await window.withProgress(
+                        {
+                            location: vscode.ProgressLocation.Notification,
+                            title: "Running preRunScripts (see 'OUTPUT > Robocorp Code' for details).",
+                            cancellable: false,
+                        },
+                        async (
+                            progress: vscode.Progress<{ message?: string; increment?: number }>,
+                            token: vscode.CancellationToken
+                        ): Promise<void> => {
+                            let result = await commands.executeCommand(
+                                roboCommands.ROBOCORP_RUN_PRE_RUN_SCRIPTS_INTERNAL,
+                                {
+                                    "robot": args["targetRobot"],
+                                    "env": newEnv,
+                                }
+                            );
+                            if (result) {
+                                if (!result["success"]) {
+                                    OUTPUT_CHANNEL.show();
+                                    window.showErrorMessage(
+                                        "There was a problem running preRunScripts. See `OUTPUT > Robocorp Code` for more details."
+                                    );
+                                }
+                            }
+                        }
+                    );
+                await runPreRunScripts();
+            }
+        } catch (error) {
+            logError("Error checking or executing preRunScripts.", error, "ERR_PRE_RUN_SCRIPTS");
+        }
+    }
+    return newEnv;
+}
+
+export async function updateLaunchEnvironmentPart0(args): Promise<{ [key: string]: string } | "cancelled"> {
     let robot = args["targetRobot"];
+    // Note: the 'robot' may not be the robot.yaml, it may be a .robot or a .py
+    // which is about to be launched (the robot.yaml must be derived from it).
     let environment: { [key: string]: string } = args["env"];
     if (!robot) {
         throw new Error("robot argument is required.");
@@ -932,8 +986,10 @@ export async function updateLaunchEnvironment(args): Promise<{ [key: string]: st
             roboCommands.ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL,
             {
                 "conda_prefix": condaPrefix,
-                "library": "rpaframework",
-                "version": "11.3",
+                "libs_and_version": [
+                    ["rpaframework", "11.3"],
+                    ["robocorp-workitems", "0.0.1"], // Any version will do
+                ],
             }
         );
     } catch (error) {

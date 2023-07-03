@@ -215,7 +215,7 @@ def test_verify_library_version(
     for v in ("10", "11", "11.1", "11.1.1", "11.1.2"):
         ret = client.execute_command(
             ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL,
-            [{"conda_prefix": str(tmpdir), "library": "rpaframework", "version": v}],
+            [{"conda_prefix": str(tmpdir), "libs_and_version": [["rpaframework", v]]}],
         )
         result = ret["result"]
         assert result["success"]
@@ -224,8 +224,8 @@ def test_verify_library_version(
     for v in ("12", "11.2", "11.1.3"):
         ret = client.execute_command(
             ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL,
-            [{"conda_prefix": str(tmpdir), "library": "rpaframework", "version": v}],
+            [{"conda_prefix": str(tmpdir), "libs_and_version": [["rpaframework", v]]}],
         )
         result = ret["result"]
         assert not result["success"]
-        assert result["result"] == {"library": "rpaframework", "version": "11.1.2"}
+        assert result["result"] == None

@@ -632,6 +632,20 @@ COMMANDS = [
         server_handled=True,
         hide_from_command_palette=True,
     ),
+    Command(
+        "robocorp.hasPreRunScripts.internal",
+        "Has Pre Run Scripts",
+        add_to_package_json=True,
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
+    Command(
+        "robocorp.runPreRunScripts.internal",
+        "Run Pre Run Scripts",
+        add_to_package_json=True,
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
 ]
 
 

@@ -86,3 +86,5 @@ export const ROBOCORP_PROFILE_IMPORT_INTERNAL = "robocorp.profileImport.internal
 export const ROBOCORP_PROFILE_SWITCH = "robocorp.profileSwitch";  // Switch Profile
 export const ROBOCORP_PROFILE_SWITCH_INTERNAL = "robocorp.profileSwitch.internal";  // Switch Profile
 export const ROBOCORP_PROFILE_LIST_INTERNAL = "robocorp.profileList.internal";  // List Profiles
+export const ROBOCORP_HAS_PRE_RUN_SCRIPTS_INTERNAL = "robocorp.hasPreRunScripts.internal";  // Has Pre Run Scripts
+export const ROBOCORP_RUN_PRE_RUN_SCRIPTS_INTERNAL = "robocorp.runPreRunScripts.internal";  // Run Pre Run Scripts
