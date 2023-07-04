@@ -875,6 +875,7 @@ export async function updateLaunchEnvironment(args): Promise<{ [key: string]: st
                 "robot": args["targetRobot"],
             });
             if (hasPreRunScripts) {
+                OUTPUT_CHANNEL.appendLine(`preRunScripts found for ${args["targetRobot"]}.`);
                 const runPreRunScripts = async () =>
                     await window.withProgress(
                         {
@@ -904,6 +905,8 @@ export async function updateLaunchEnvironment(args): Promise<{ [key: string]: st
                         }
                     );
                 await runPreRunScripts();
+            } else {
+                OUTPUT_CHANNEL.appendLine(`preRunScripts NOT found for ${args["targetRobot"]}.`);
             }
         } catch (error) {
             logError("Error checking or executing preRunScripts.", error, "ERR_PRE_RUN_SCRIPTS");

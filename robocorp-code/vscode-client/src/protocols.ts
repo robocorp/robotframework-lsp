@@ -80,20 +80,11 @@ export interface ActionResultWorkItems {
     result?: WorkItemsInfo;
 }
 
-export interface LibraryVersionDict {
-    library: string;
-    version: string;
-}
-
 export interface LibraryVersionInfoDict {
     success: boolean;
 
     // if success == False, this can be some message to show to the user
     message?: string;
-
-    //Note that if the library was found but the version doesn't match, the
-    // result should still be provided.
-    result?: LibraryVersionDict;
 }
 
 // these declarations are a superficial variant of the implemented ones in the converter bundle

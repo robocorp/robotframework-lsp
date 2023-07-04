@@ -328,8 +328,10 @@ export class WorkItemsTreeDataProvider extends RobotSelectionTreeDataProviderBas
                 ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL,
                 {
                     "conda_prefix": condaPrefix,
-                    "library": "rpaframework",
-                    "version": "11.3",
+                    "libs_and_version": [
+                        ["rpaframework", "11.3"],
+                        ["robocorp-workitems", "0.0.1"], // Any version will do
+                    ],
                 }
             );
 

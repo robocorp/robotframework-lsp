@@ -191,7 +191,7 @@ def test_verify_library_version(
 
     ret = client.execute_command(
         ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL,
-        [{"conda_prefix": str(tmpdir), "library": "rpaframework", "version": "11.1"}],
+        [{"conda_prefix": str(tmpdir), "libs_and_version": [["rpaframework", "11.1"]]}],
     )
     result = ret["result"]
     assert not result["success"]
