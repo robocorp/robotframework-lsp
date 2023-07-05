@@ -69,25 +69,30 @@ class _Playwright(object):
                     output += b_output.decode("utf-8", "replace")
                     log.debug("Recording ended successfully")
 
-                    val = {
-                        "success": True,
-                        "message": None,
-                        "result": output,
-                    }
-                    return val
+                    return ActionResultDict(
+                        {
+                            "success": True,
+                            "message": None,
+                            "result": output,
+                        }
+                    )
         except Exception as e:
             log.error("Opening recorder failed:", e)
-            return {
-                "success": False,
-                "message": "Running the Playwright Recorder failed. Please check environment for playwright package and try again."
-                + str(e),
-                "result": None,
-            }
+            return ActionResultDict(
+                {
+                    "success": False,
+                    "message": "Running the Playwright Recorder failed. Please check environment for playwright package and try again."
+                    + str(e),
+                    "result": None,
+                }
+            )
 
         # i.e.: no error but we couldn't find an interpreter.
         log.error("Could not resolve interpreter")
-        return {
-            "success": False,
-            "message": "Could not resolve interpreter. Please check output logs.",
-            "result": None,
-        }
+        return ActionResultDict(
+            {
+                "success": False,
+                "message": "Could not resolve interpreter. Please check output logs.",
+                "result": None,
+            }
+        )
