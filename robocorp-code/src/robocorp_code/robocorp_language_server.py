@@ -88,6 +88,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
     def __init__(self, read_stream, write_stream):
         from robocorp_code.rcc import Rcc
+        from robocorp_code.playwright import _Playwright
         from robocorp_ls_core.cache import DirCache
         from robocorp_ls_core.pluginmanager import PluginManager
         from robocorp_ls_core.ep_providers import DefaultConfigurationProvider
@@ -194,6 +195,12 @@ class RobocorpLanguageServer(PythonLanguageServer):
         self._paths_remover = None
         self._paths_remover_queue = Queue()
         register_plugins(self._pm)
+
+        self._playwright = _Playwright(
+            base_command_dispatcher=command_dispatcher,
+            feedback=self._feedback,
+            plugin_manager=self._pm,
+        )
 
     def _discard_listed_workspaces_info(self):
         self._dir_cache.discard(self.CLOUD_LIST_WORKSPACE_CACHE_KEY)

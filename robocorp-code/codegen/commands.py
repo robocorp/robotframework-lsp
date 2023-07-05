@@ -354,6 +354,14 @@ COMMANDS = [
         icon={"light": "images/light/run.svg", "dark": "images/dark/run.svg"},
     ),
     Command(
+        "robocorp.openPlaywrightRecorder.internal",
+        "Open Playwright Recorder Internal",
+        add_to_package_json=True,
+        server_handled=True,
+        hide_from_command_palette=True,
+        icon={"light": "images/light/run.svg", "dark": "images/dark/run.svg"},
+    ),
+    Command(
         "robocorp.editRobocorpInspectorLocator",
         "Edit locator",
         add_to_package_json=True,
