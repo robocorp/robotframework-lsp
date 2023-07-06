@@ -140,7 +140,7 @@ class _PreRunScripts:
                         cwd=cwd,
                         show_interactive_output=True,
                         env=env,
-                        shell=command[0].endswith(".bat"),
+                        shell=command[0].endswith((".bat", ".sh", ".py")),
                     )
                     if not result.success:
                         return result.as_dict()
