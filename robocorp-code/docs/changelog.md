@@ -1,4 +1,4 @@
-NEXT
+New in 1.5.0 (2023-07-06)
 -----------------------------
 
 - Fixed issues in `Run Task` / `Debug Task` (launching `robocorp.tasks`):

@@ -69,7 +69,7 @@ Find the full installation instructions at [https://robocorp.com/docs/product-ma
 
 During the first activation, the extension will download additional dependencies (such as Conda manager) that are required for it to run.
 
-### Features (1.4.0)
+### Features (1.5.0)
 
 - Preliminary support for [Robo](https://github.com/robocorp/robo) (Robocorp's Python Framework for automation).
     - Ctrl+Click on terminal for the 'Robocorp html Log` opens external browser.
