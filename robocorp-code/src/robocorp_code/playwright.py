@@ -46,7 +46,7 @@ class _Playwright(object):
                     )
                 )
                 if interpreter_info is not None:
-                    self.launch_playwright(interpreter_info.get_python_exe())
+                    self.launch_playwright_recorder(interpreter_info.get_python_exe())
                     return ActionResultDict(
                         {
                             "success": True,
@@ -75,7 +75,7 @@ class _Playwright(object):
             }
         )
 
-    def launch_playwright(self, python_exe):
+    def launch_playwright_recorder(self, python_exe):
         import os
         import sys
         import threading
@@ -105,18 +105,18 @@ class _Playwright(object):
             except Exception as e:
                 log.error("Streaming failed:", e)
 
-        with subprocess.Popen(cmd, **kwargs) as process:
-            threads = [
-                threading.Thread(
-                    target=stream_reader,
-                    args=(process.stdout, on_output),
-                    name="stream_reader_stdout",
-                ),
-                threading.Thread(
-                    target=stream_reader,
-                    args=(process.stderr, on_output),
-                    name="stream_reader_stderr",
-                ),
-            ]
-            for t in threads:
-                t.start()
+        process = subprocess.Popen(cmd, **kwargs)
+        threads = [
+            threading.Thread(
+                target=stream_reader,
+                args=(process.stdout, on_output),
+                name="stream_reader_stdout",
+            ),
+            threading.Thread(
+                target=stream_reader,
+                args=(process.stderr, on_output),
+                name="stream_reader_stderr",
+            ),
+        ]
+        for t in threads:
+            t.start()
