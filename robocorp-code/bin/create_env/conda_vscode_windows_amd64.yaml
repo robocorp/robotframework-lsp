@@ -9,5 +9,4 @@ dependencies:
     - pywin32=303 # https://github.com/mhammond/pywin32/blob/main/CHANGES.txt
     - pip:
           - robocorp-inspector==0.9.1 # https://github.com/robocorp/inspector/blob/master/CHANGELOG.md
-          - playwright==1.35.0 # https://pypi.org/project/playwright/#history
           - robotframework==5.0.1 # https://github.com/robotframework/robotframework/blob/master/doc/releasenotes/rf-5.0.1.rst

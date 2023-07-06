@@ -8,5 +8,4 @@ dependencies:
     - pip=22.1.2 # https://pip.pypa.io/en/stable/news/
     - pip:
           - robocorp-inspector==0.9.1 # https://github.com/robocorp/inspector/blob/master/CHANGELOG.md
-          - playwright==1.35.0 # https://pypi.org/project/playwright/#history
           - robotframework==5.0.1 # https://github.com/robotframework/robotframework/blob/master/doc/releasenotes/rf-5.0.1.rst
