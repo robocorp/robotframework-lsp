@@ -152,6 +152,8 @@ import { showConvertUI } from "./conversionView";
 import { profileImport, profileSwitch } from "./profiles";
 import { registerLinkProviders } from "./robo/linkProvider";
 import { runRobocorpTasks } from "./robo/runRobocorpTasks";
+import { RobotOutputViewProvider } from "./output/outView";
+import { setupDebugSessionOutViewIntegration } from "./output/outViewRunIntegration";
 
 interface InterpreterInfo {
     pythonExe: string;
@@ -652,6 +654,13 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
     // Register other commands (which will have an error message shown depending on whether
     // the extension was activated properly).
     registerRobocorpCodeCommands(C, context);
+
+    const outputProvider = new RobotOutputViewProvider(context);
+    const options = { webviewOptions: { retainContextWhenHidden: true } };
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider(RobotOutputViewProvider.viewType, outputProvider, options)
+    );
+    await setupDebugSessionOutViewIntegration(context);
 
     const extension = extensions.getExtension("robocorp.robotframework-lsp");
     if (extension) {

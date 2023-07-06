@@ -19,6 +19,15 @@ export function getExtensionRelativeFile(relativeLocation: string, mustExist: bo
     return targetFile;
 }
 
+export async function isFile(filename: string): Promise<boolean> {
+    try {
+        const stat = await fs.promises.stat(filename);
+        return stat.isFile();
+    } catch (err) {
+        return false;
+    }
+}
+
 export function verifyFileExists(targetFile: string, warnUser: boolean = true): boolean {
     if (!fs.existsSync(targetFile)) {
         let msg = "Error. Expected: " + targetFile + " to exist.";

@@ -196,6 +196,13 @@
                     "title": "Robocorp Code",
                     "icon": "images/robocorp-outline.svg"
                 }
+            ],
+            "panel": [
+                {
+                    "id": "robocorp-python-view-output",
+                    "title": "Robo Tasks Output",
+                    "icon": "$(output)"
+                }
             ]
         },
         "views": {
@@ -219,6 +226,14 @@
                     "id": "robocorp-cloud-tree",
                     "name": "Robocorp",
                     "contextualTitle": "Robocorp"
+                }
+            ],
+            "robocorp-python-view-output": [
+                {
+                    "type": "webview",
+                    "id": "robocorp.python.view.output",
+                    "name": "Robo Tasks Output",
+                    "contextualTitle": "Robo Tasks Output"
                 }
             ]
         },

@@ -37,6 +37,7 @@ import {
     WorkItemsInfo,
     WorkspaceInfo,
 } from "./protocols";
+import { envVarsForOutViewIntegration } from "./output/outViewRunIntegration";
 
 export async function cloudLogin(): Promise<boolean> {
     let loggedIn: boolean;
@@ -942,6 +943,9 @@ export async function updateLaunchEnvironmentPart0(args): Promise<{ [key: string
     // - Work items
 
     let newEnv: { [key: string]: string } = { ...environment };
+    for (const [key, val] of envVarsForOutViewIntegration) {
+        newEnv[key] = val;
+    }
 
     let vaultInfoActionResult: ActionResult<IVaultInfo> = await commands.executeCommand(
         roboCommands.ROBOCORP_GET_CONNECTED_VAULT_WORKSPACE_INTERNAL

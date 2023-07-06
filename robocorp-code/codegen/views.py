@@ -316,7 +316,16 @@ def get_views_containers():
         }
         for tree_view_container in TREE_VIEW_CONTAINERS
     ]
-    return {"activitybar": activity_bar_contents}
+    return {
+        "activitybar": activity_bar_contents,
+        "panel": [
+            {
+                "id": "robocorp-python-view-output",
+                "title": "Robo Tasks Output",
+                "icon": "$(output)",
+            },
+        ],
+    }
 
 
 def get_tree_views_for_package_json():
@@ -328,6 +337,16 @@ def get_tree_views_for_package_json():
             for tree in tree_view_container.tree_views
             if tree.add_to_package_json
         ]
+
+    ret["robocorp-python-view-output"] = [
+        {
+            "type": "webview",
+            "id": "robocorp.python.view.output",
+            "name": "Robo Tasks Output",
+            "contextualTitle": "Robo Tasks Output",
+        }
+    ]
+
     return ret
 
 

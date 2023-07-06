@@ -8,6 +8,9 @@ NEXT
 
 - If a `robot.yaml` has `preRunScripts` they'll be run prior to launching.
 
+- Integrated `ROBO TASKS OUTPUT` view which shows the output of running with `robocorp.tasks`.
+  Note: Requires `robocorp.tasks` version `2.1.1`.
+
 
 New in 1.4.0 (2023-06-22)
 -----------------------------
