@@ -1,3 +1,13 @@
+New in 1.6.0 (2023-07-10)
+-----------------------------
+
+- Updated `ROBO TASKS OUTPUT` so that places showing the file/line of messages are now clickable and
+  can be used to open the file location inside of VSCode.
+  
+- In the `ROBO TASKS OUTPUT`, it's possible to view log messages along with the terminal
+  output.
+
+
 New in 1.5.0 (2023-07-06)
 -----------------------------
 
