@@ -171,6 +171,7 @@ export interface A360ConvertCommand {
     command: CommandType.Convert;
     vendor: Format.A360;
     projectFolderPath: string;
+    targetLanguage: string;
     adapterFilePaths: Array<string>;
     onProgress: Progress;
     outputRelativePath: string; // Used internally in Robocorp Code
@@ -199,6 +200,7 @@ export interface UiPathConvertCommand {
     command: CommandType.Convert;
     vendor: Format.UIPATH;
     projectFolderPath: string;
+    targetLanguage: string;
     onProgress: Progress;
     outputRelativePath: string; // Used internally in Robocorp Code
 }
@@ -226,6 +228,7 @@ export interface BlueprismConvertCommand {
     command: CommandType.Convert;
     vendor: Format.BLUEPRISM;
     releaseFileContent: string;
+    targetLanguage: string;
     apiImplementationFolderPath?: string;
     onProgress: Progress;
     outputRelativePath: string; // Used internally in Robocorp Code
@@ -246,6 +249,7 @@ export interface AAV11ConvertCommand {
     /* path to aapkg files */
     projects: Array<string>;
     tempFolder: string;
+    targetLanguage: string;
     onProgress: Progress;
     outputRelativePath: string; // Used internally in Robocorp Code
 }

@@ -96,6 +96,7 @@
             "input": ["c:/temp/file.uipath", "c:/temp/file2.uipath"],
             "generationResults": "",
             "outputFolder": "",
+            "targetLanguage": "PYTHON",
             "typeToLastOptions": {
                 "uipath": {
                     "input": [],
@@ -221,6 +222,11 @@
             }
         }
 
+        function updateUITargetLanguageFromData() {
+            const targetLanguageSelect = document.getElementById("targetLanguage");
+            targetLanguageSelect.value = globalConversionInfo.targetLanguage;
+        }
+
         function updateUIOutputFolderFromData() {
             const outputFolderText = document.getElementById("outputFolderText");
             outputFolderText.value = globalConversionInfo.outputFolder;
@@ -231,6 +237,7 @@
             updateUIConversionResultFromData();
             updateUIFilesFromData();
             updateUIOutputFolderFromData();
+            updateUITargetLanguageFromData();
 
             // The UI has just been updated, so, it's Ok to update one UI setting
             // from another UI setting...
@@ -356,6 +363,14 @@
             persistState();
         }
 
+         function onTargetLanguageChanged() {
+            const targetLanguageSelect = document.getElementById("targetLanguage");
+            const selectedTargetLanguage = targetLanguageSelect.value;
+            globalConversionInfo.targetLanguage = selectedTargetLanguage;
+            persistState();
+        }
+
+
         function onClickConvert() {
             if (vscode) {
                 // Disable button while sending.
@@ -367,6 +382,7 @@
                     command: "onClickConvert",
                     contents: {
                         outputFolder: globalConversionInfo.outputFolder,
+                        targetLanguage: globalConversionInfo.targetLanguage,
                         inputType: globalConversionInfo.inputType,
                         input: globalConversionInfo.input,
                     },
@@ -510,6 +526,15 @@
                     <input value="Select" type="submit" id="addBt" onclick="onClickAdd()" />
                 </div>
                 <div id="inputFilesOrFolders"></div>
+            </div>
+
+            <div id="targetLanguageDiv" class="divEntry">
+                <label>Target language:</label>
+                <br />
+                <select id="targetLanguage" onchange="onTargetLanguageChanged()">
+                    <option value="PYTHON" selected="selected">Python</option>
+                    <option value="RF">Robotframework</option>
+                </select>
             </div>
 
             <div id="outputFolderDiv" class="divEntry">

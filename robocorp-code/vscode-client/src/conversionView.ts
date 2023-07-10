@@ -21,6 +21,7 @@ interface ConversionInfo {
     input: string[];
     generationResults: string;
     outputFolder: string;
+    targetLanguage: string;
     typeToLastOptions: Map<RPATypes, ConversionInfoLastOptions>;
 }
 
@@ -83,6 +84,7 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
         "generationResults": "",
         "outputFolder": outputFolder,
         "typeToLastOptions": typeToLastOptions,
+        "targetLanguage": "python",
     };
 
     const oldState = context.globalState.get("robocorpConversionViewState");
@@ -130,6 +132,7 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
                     try {
                         const contents = message.contents;
                         const outputFolder = contents["outputFolder"];
+                        const targetLanguage = contents["targetLanguage"];
                         const inputType = contents["inputType"];
                         const input = contents["input"];
                         // adapter files are at the machine level and location cannot be changed by converter webview
@@ -138,6 +141,7 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
 
                         result = await onClickConvert(convertBundlePromise, {
                             outputFolder,
+                            targetLanguage,
                             inputType,
                             input,
                             adapterFolderPath,
@@ -225,6 +229,7 @@ async function onClickConvert(
         inputType: RPATypes;
         input: string[];
         outputFolder: string;
+        targetLanguage: string;
         adapterFolderPath: string;
     }
 ): Promise<{
