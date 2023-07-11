@@ -16,7 +16,6 @@ if sys.version_info[:2] < (3, 8):
             pass
 
 else:
-
     from typing import TypedDict
 
 from robocorp_ls_core.constants import NULL
@@ -143,13 +142,10 @@ def launch(
             # we only print if some error happened.
             if not show_interactive_output:
                 # Not sure why, but (just when running in VSCode) something as:
-                # "python -m import sys;print(sys.executable)"
-                # Note the error: this should raise an import error with:
-                # "No module named import"
-                # but the command actually got stuck unless a \n was written
+                # launching sys.executable actually got stuck unless a \n was written
                 # (even if stdin was closed it wasn't enough).
-                # This is why we always write a \n now (even though it shouldn't
-                # be needed).
+                # -- note: this may be particular to my machine (fabioz), but it
+                # may also be related to VSCode + Windows 11 + Windows Defender + python
                 suprocesskwargs["input"] = b"\n"
                 boutput = check_output(args, timeout=timeout, **suprocesskwargs)
             else:
@@ -326,13 +322,10 @@ def check_output_interactive(
 
         if process.stdin:
             # Not sure why, but (just when running in VSCode) something as:
-            # "python -m import sys;print(sys.executable)"
-            # Note the error: this should raise an import error with:
-            # "No module named import"
-            # but the command actually got stuck unless a \n was written
+            # launching sys.executable actually got stuck unless a \n was written
             # (even if stdin was closed it wasn't enough).
-            # This is why we always write a \n now (even though it shouldn't
-            # be needed).
+            # -- note: this may be particular to my machine (fabioz), but it
+            # may also be related to VSCode + Windows 11 + Windows Defender + python
             _stdin_write(process, b"\n")
 
         for t in threads:

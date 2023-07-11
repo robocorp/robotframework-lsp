@@ -17,7 +17,6 @@ from robocorp_code.protocols import (
     UploadNewRobotParamsDict,
     CreateRobotParamsDict,
     CloudListWorkspaceDict,
-    CloudLoginParamsDict,
     ListWorkspacesActionResultDict,
     PackageInfoInLRUDict,
     RunInRccParamsDict,
@@ -88,7 +87,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
     def __init__(self, read_stream, write_stream):
         from robocorp_code.rcc import Rcc
-        from robocorp_code.playwright import _Playwright
+        from robocorp_code._language_server_playwright import _Playwright
         from robocorp_ls_core.cache import DirCache
         from robocorp_ls_core.pluginmanager import PluginManager
         from robocorp_ls_core.ep_providers import DefaultConfigurationProvider
@@ -1257,7 +1256,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
     @command_dispatcher(commands.ROBOCORP_GET_LOCATORS_JSON_INFO)
     def _get_locators_json_info(
-        self, params: dict = None
+        self, params: Optional[dict] = None
     ) -> ActionResultDictLocatorsJsonInfo:
         from RPA.core.locators.containers import Locator
 
@@ -1316,7 +1315,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
     @command_dispatcher(commands.ROBOCORP_REMOVE_LOCATOR_FROM_JSON_INTERNAL)
     def _remove_locator_from_json_internal(
-        self, params: dict = None
+        self, params: Optional[dict] = None
     ) -> ActionResultDict:
         if not params or "robotYaml" not in params or "name" not in params:
             return {
