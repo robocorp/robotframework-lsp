@@ -143,6 +143,8 @@ class _Playwright(object):
         def stream_reader(stream):
             try:
                 for line in iter(stream.readline, b""):
+                    if not line:
+                        break
                     if b"Playwright recorder started" in line:
                         event.set()
                     sys.stderr.buffer.write(line)

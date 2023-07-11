@@ -277,6 +277,8 @@ def check_output_interactive(
 
     def stream_reader(stream, callback, contents_list: List[bytes]):
         for line in iter(stream.readline, b""):
+            if not line:
+                break
             contents_list.append(line)
             callback(line)
 

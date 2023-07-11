@@ -19,9 +19,9 @@ def _stderr_reader(stream):
     try:
         while True:
             line = stream.readline()
-            sys.stderr.buffer.write(line)
             if not line:
                 break
+            sys.stderr.buffer.write(line)
     except:
         log.exception("Error reading from server api process stream.")
     finally:
