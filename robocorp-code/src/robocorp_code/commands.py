@@ -46,6 +46,8 @@ ROBOCORP_NEW_ROBOCORP_INSPECTOR_BROWSER = "robocorp.newRobocorpInspectorBrowser"
 ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE = "robocorp.newRobocorpInspectorImage"  # Add Image Locator
 ROBOCORP_NEW_ROBOCORP_INSPECTOR_WINDOWS = "robocorp.newRobocorpInspectorWindows"  # Add Windows Locator
 ROBOCORP_NEW_ROBOCORP_INSPECTOR_WEB_RECORDER = "robocorp.newRobocorpInspectorWebRecorder"  # Record Browser actions as code (beta)
+ROBOCORP_OPEN_PLAYWRIGHT_RECORDER = "robocorp.openPlaywrightRecorder"  # Open Playwright Recorder
+ROBOCORP_OPEN_PLAYWRIGHT_RECORDER_INTERNAL = "robocorp.openPlaywrightRecorder.internal"  # Open Playwright Recorder Internal
 ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR = "robocorp.editRobocorpInspectorLocator"  # Edit locator
 ROBOCORP_COPY_LOCATOR_TO_CLIPBOARD_INTERNAL = "robocorp.copyLocatorToClipboard.internal"  # Copy locator name to clipboard
 ROBOCORP_OPEN_ROBOT_TREE_SELECTION = "robocorp.openRobotTreeSelection"  # Configure Robot (robot.yaml)
@@ -109,6 +111,7 @@ ALL_SERVER_COMMANDS = [
     ROBOCORP_CLOUD_LOGOUT_INTERNAL,
     ROBOCORP_GET_LOCATORS_JSON_INFO,
     ROBOCORP_REMOVE_LOCATOR_FROM_JSON_INTERNAL,
+    ROBOCORP_OPEN_PLAYWRIGHT_RECORDER_INTERNAL,
     ROBOCORP_SEND_METRIC,
     ROBOCORP_CONFIGURATION_DIAGNOSTICS_INTERNAL,
     ROBOCORP_LIST_WORK_ITEMS_INTERNAL,
