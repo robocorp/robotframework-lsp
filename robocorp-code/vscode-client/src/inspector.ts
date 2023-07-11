@@ -109,7 +109,15 @@ Note: the "Evergreen Bootstrapper" is recommended, but the "Evergreen Standalone
 }
 
 export async function openRobocorpInspector(locatorType?: InspectorTypes, locator?: LocatorEntry): Promise<void> {
-    const localLocatorType = locatorType !== undefined ? locatorType : InspectorType.Browser;
+    let localLocatorType = locatorType;
+    if (locatorType === undefined) {
+        if (locator !== undefined) {
+            localLocatorType = locator.type as InspectorTypes;
+        } else {
+            window.showErrorMessage("Internal error: either the locatorType or the locator entry must be specified.");
+            return;
+        }
+    }
     if (localLocatorType === InspectorType.Windows && process.platform !== "win32") {
         window.showInformationMessage("This feature is Windows specific and not supported on other platforms.");
         return; // Windows only feature
@@ -164,7 +172,13 @@ export async function _internalOpenRobocorpInspector(
         args.push("--database", locatorJson);
     }
 
-    if (locatorType) {
+    if (locator !== undefined) {
+        if (locator.type === "error") {
+            OUTPUT_CHANNEL.appendLine("Trying to edit non-existing (error) locator.");
+            return;
+        }
+        args.push("edit", locator.name);
+    } else if (locatorType) {
         // if locatorType is given prioritize that. Else Ensure that a locator is selected!
         args.push("open");
         args.push(locatorType);
@@ -176,7 +190,7 @@ export async function _internalOpenRobocorpInspector(
                 moreThanOneSelectionMessage: "Please select only one locator.",
             }));
         if (locatorSelected.type === "error") {
-            OUTPUT_CHANNEL.appendLine("Trying to edit non-existing locator.");
+            OUTPUT_CHANNEL.appendLine("Trying to edit non-existing (error) locator.");
             return;
         }
         if (locatorSelected) {

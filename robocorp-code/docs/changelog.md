@@ -1,3 +1,10 @@
+NEXT
+-----------------------------
+
+- Created action to start Playwright recorder (`Robocorp: Open Playwright Recorder`).
+- Fixed editing of locators (used with `rpaframework`).
+
+
 New in 1.6.0 (2023-07-10)
 -----------------------------
 
