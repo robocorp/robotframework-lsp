@@ -16,13 +16,11 @@ playwright_command_dispatcher = _SubCommandDispatcher("_playwright")
 
 class _Playwright(object):
     def __init__(
-        self,
-        base_command_dispatcher,
-        feedback,
-        plugin_manager,
+        self, base_command_dispatcher, feedback, plugin_manager, lsp_messages
     ) -> None:
         from robocorp_code._language_server_feedback import _Feedback
         from robocorp_ls_core.pluginmanager import PluginManager
+        from robocorp_ls_core.lsp import LSPMessages
 
         self._feedback: _Feedback = feedback
         self._pm: PluginManager = plugin_manager
@@ -30,6 +28,7 @@ class _Playwright(object):
         base_command_dispatcher.register_sub_command_dispatcher(
             playwright_command_dispatcher
         )
+        self._lsp_messages: LSPMessages = lsp_messages
 
     @playwright_command_dispatcher(
         commands.ROBOCORP_OPEN_PLAYWRIGHT_RECORDER_INTERNAL,
@@ -176,13 +175,30 @@ class _Playwright(object):
         for t in threads:
             t.start()
 
+        def report_errors():
+            from robocorp_ls_core.lsp import MessageType
+
+            playwright_recorder_returncode = process.wait()
+            # We didn't get the event saying that it started but the
+            # process already finished.
+            event.set()
+
+            if playwright_recorder_returncode != 0:
+                self._lsp_messages.show_message(
+                    "There was some error running the Playwright recorder.\nPlease see `View > OUTPUT > Robocorp Code` for more details.",
+                    MessageType.Error,
+                )
+
+        threading.Thread(target=report_errors).start()
+
         # Wait until we get a signal that the playwright recorder started
         # (or the timeout elapses -- ideally we should just leave this method when
         # the browser window is actually opened).
         if not event.wait(20):
-            log.info(
-                "Progress being hidden due to timeout (playwright recorder may not have started yet)."
-            )
+            if process.returncode is not None:
+                log.info(
+                    "Progress being hidden due to timeout (playwright recorder may not have started yet)."
+                )
 
 
 def _stdin_write(process, input):

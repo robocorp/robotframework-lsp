@@ -201,6 +201,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
             base_command_dispatcher=command_dispatcher,
             feedback=self._feedback,
             plugin_manager=self._pm,
+            lsp_messages=self._lsp_messages,
         )
 
     def _discard_listed_workspaces_info(self):

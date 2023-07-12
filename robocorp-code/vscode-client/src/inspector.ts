@@ -4,7 +4,7 @@ import { getLanguageServerPythonInfo } from "./extension";
 import { verifyFileExists } from "./files";
 import { listAndAskRobotSelection } from "./activities";
 import { getSelectedLocator, getSelectedRobot, LocatorEntry, RobotEntry } from "./viewsCommon";
-import { execFilePromise, ExecFileReturn, mergeEnviron } from "./subprocess";
+import { execFilePromise, mergeEnviron } from "./subprocess";
 import { logError, OUTPUT_CHANNEL } from "./channel";
 import { ChildProcess } from "child_process";
 import { feedback } from "./rcc";
@@ -16,6 +16,7 @@ export enum InspectorType {
     Windows = "windows",
     Image = "image",
     WebRecorder = "web-recorder",
+    PlaywrightRecorder = "playwright-recorder",
 }
 
 export type InspectorTypes = `${InspectorType}`;
@@ -25,6 +26,7 @@ export const DEFAULT_INSPECTOR_VALUE = {
     image: false,
     windows: false,
     "web-recorder": false,
+    "playwright-recorder": false,
 };
 
 let _openingInspector: { [K in InspectorTypes]: boolean } = DEFAULT_INSPECTOR_VALUE;

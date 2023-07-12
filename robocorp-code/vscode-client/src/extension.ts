@@ -381,7 +381,9 @@ function registerRobocorpCodeCommands(C: CommandRegistry, context: ExtensionCont
     C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_WEB_RECORDER, () =>
         inspector.openRobocorpInspector(inspector.InspectorType.WebRecorder)
     );
-    C.register(ROBOCORP_OPEN_PLAYWRIGHT_RECORDER, () => playwright.openPlaywrightRecorder());
+    C.register(ROBOCORP_OPEN_PLAYWRIGHT_RECORDER, (useTreeSelected: boolean = false) =>
+        playwright.openPlaywrightRecorder(useTreeSelected)
+    );
     C.register(ROBOCORP_COPY_LOCATOR_TO_CLIPBOARD_INTERNAL, (locator?: LocatorEntry) =>
         copySelectedToClipboard(locator)
     );

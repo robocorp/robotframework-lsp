@@ -5,11 +5,13 @@ import { logError } from "./channel";
 import { commands, ProgressLocation, Uri, window } from "vscode";
 import { ROBOCORP_OPEN_PLAYWRIGHT_RECORDER_INTERNAL } from "./robocorpCommands";
 
-export async function openPlaywrightRecorder(): Promise<void> {
-    let currentUri: Uri;
-    if (window.activeTextEditor && window.activeTextEditor.document) {
+export async function openPlaywrightRecorder(useTreeSelected: boolean = false): Promise<void> {
+    let currentUri: Uri | undefined = undefined;
+    if (!useTreeSelected && window.activeTextEditor && window.activeTextEditor.document) {
         currentUri = window.activeTextEditor.document.uri;
-    } else {
+    }
+
+    if (!currentUri) {
         // User doesn't have a current editor opened, get from the tree
         // selection.
         let selectedEntry: RobotEntry = getSelectedRobot();
@@ -23,8 +25,13 @@ export async function openPlaywrightRecorder(): Promise<void> {
             if (!robot) {
                 return;
             }
-            currentUri = Uri.file(robot.filePath);
         }
+        currentUri = Uri.file(robot.filePath);
+    }
+
+    if (!currentUri) {
+        window.showErrorMessage("Unable to get selection for recording with playwright.");
+        return;
     }
 
     let resolveProgress = undefined;

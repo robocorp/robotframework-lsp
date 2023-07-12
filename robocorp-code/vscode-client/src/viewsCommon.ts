@@ -11,6 +11,7 @@ export interface LocatorEntry {
     column: number;
     type: string; // "browser", "image", "coordinate", "error", "info",...
     filePath: string;
+    tooltip: string|undefined;
 }
 
 export enum RobotEntryType {

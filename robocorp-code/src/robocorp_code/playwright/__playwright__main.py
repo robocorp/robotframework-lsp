@@ -181,5 +181,9 @@ def launch() -> None:
 
 
 if __name__ == "__main__":
+    # Import playwright just to make sure it's in the env (otherwise we can't
+    # really do anything).
+    import playwright
+
     print("Opening playwright recorder...", flush=True)
     launch()

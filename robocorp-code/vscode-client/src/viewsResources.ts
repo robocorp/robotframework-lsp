@@ -29,9 +29,11 @@ export class ResourcesTreeDataProvider extends RobotSelectionTreeDataProviderBas
         if (!element) {
             return [
                 {
-                    name: "Locators",
+                    name: "Recorders / Locators",
                     resourcesTreeType: ROOT_TYPE,
                     subTree: SUBTREE_LOCATORS,
+                    tooltip:
+                        "Recorders which output code and locators (which identify how to locate a specific element in a given library).",
                 },
                 {
                     name: "Work Items",
@@ -72,6 +74,9 @@ export class ResourcesTreeDataProvider extends RobotSelectionTreeDataProviderBas
             } else if (element.subTree === SUBTREE_WORK_ITEMS) {
                 item.contextValue = "workItemsRoot";
                 item.iconPath = new vscode.ThemeIcon("combine");
+            }
+            if (element.tooltip !== undefined) {
+                item.tooltip = element.tooltip;
             }
             return item;
         }
