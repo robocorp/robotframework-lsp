@@ -14,6 +14,7 @@ interface ConversionInfoLastOptions {
     input: string[];
     generationResults: string;
     outputFolder: string;
+    targetLanguage: string;
 }
 
 interface ConversionInfo {
@@ -70,6 +71,7 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
             "input": [], // files for BP, folders for others.
             "generationResults": "",
             "outputFolder": outputFolder,
+            "targetLanguage": "RF",
         };
     }
 
@@ -84,7 +86,7 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
         "generationResults": "",
         "outputFolder": outputFolder,
         "typeToLastOptions": typeToLastOptions,
-        "targetLanguage": "python",
+        "targetLanguage": "RF",
     };
 
     const oldState = context.globalState.get("robocorpConversionViewState");

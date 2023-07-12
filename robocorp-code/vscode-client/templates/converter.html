@@ -171,6 +171,7 @@
                 "input": globalConversionInfo.input,
                 "generationResults": globalConversionInfo.generationResults,
                 "outputFolder": globalConversionInfo.outputFolder,
+                "targetLanguage": globalConversionInfo.targetLanguage
             };
             globalConversionInfo.typeToLastOptions[globalConversionInfo.inputType] = currOptions;
         }
@@ -179,6 +180,7 @@
             const lastOptions = globalConversionInfo.typeToLastOptions[globalConversionInfo.inputType];
             globalConversionInfo.input = lastOptions.input;
             globalConversionInfo.generationResults = lastOptions.generationResults;
+            globalConversionInfo.targetLanguage = lastOptions.targetLanguage;
             if (lastOptions.outputFolder) {
                 // Keep the same output folder (just set it if it was already saved for the other type).
                 globalConversionInfo.outputFolder = lastOptions.outputFolder;
@@ -532,7 +534,7 @@
                 <label>Target language:</label>
                 <br />
                 <select id="targetLanguage" onchange="onTargetLanguageChanged()">
-                    <option value="PYTHON" selected="selected">Python</option>
+                    <option value="PYTHON">Python</option>
                     <option value="RF">Robotframework</option>
                 </select>
             </div>
