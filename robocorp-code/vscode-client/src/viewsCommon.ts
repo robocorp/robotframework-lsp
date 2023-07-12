@@ -11,7 +11,7 @@ export interface LocatorEntry {
     column: number;
     type: string; // "browser", "image", "coordinate", "error", "info",...
     filePath: string;
-    tooltip: string|undefined;
+    tooltip: string | undefined;
 }
 
 export enum RobotEntryType {
@@ -44,6 +44,7 @@ export interface RobotEntry {
     iconPath: string;
     type: RobotEntryType;
     parent: RobotEntry | undefined;
+    collapsed?: boolean | undefined;
 }
 
 export interface FSEntry {

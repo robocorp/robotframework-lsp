@@ -50,9 +50,12 @@ ignore_missing_imports = true
 module = "robot.parsing.*"
 ignore_missing_imports = true
 
-
 [[tool.mypy.overrides]]
 module = "py.path.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "playwright.*"
 ignore_missing_imports = true
 
 

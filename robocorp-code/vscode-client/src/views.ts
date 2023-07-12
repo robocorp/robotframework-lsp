@@ -9,7 +9,6 @@ import { ExtensionContext } from "vscode";
 import { runRobotRCC, uploadRobot } from "./activities";
 import { createRccTerminal } from "./rccTerminal";
 import { RobotContentTreeDataProvider } from "./viewsRobotContent";
-import { WorkItemsTreeDataProvider } from "./viewsWorkItems";
 import {
     debounce,
     getSelectedRobot,
@@ -23,7 +22,6 @@ import {
 } from "./viewsCommon";
 import { CloudTreeDataProvider } from "./viewsRobocorp";
 import { RobotsTreeDataProvider } from "./viewsRobots";
-import { LocatorsTreeDataProvider } from "./viewsLocators";
 import { ResourcesTreeDataProvider } from "./viewsResources";
 import * as path from "path";
 import { verifyFileExists } from "./files";

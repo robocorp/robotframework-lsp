@@ -278,6 +278,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
             return [];
         }
 
+        const collapsed = robotsInfo.length > 1;
         return robotsInfo.map((robotInfo: LocalRobotMetadataInfo) => ({
             "label": getRobotLabel(robotInfo),
             "uri": vscode.Uri.file(robotInfo.filePath),
@@ -285,6 +286,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
             "iconPath": "package",
             "type": RobotEntryType.Robot,
             "parent": element,
+            "collapsed": collapsed,
         }));
     }
 
@@ -356,6 +358,11 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
         }
         if (element.iconPath) {
             treeItem.iconPath = new vscode.ThemeIcon(element.iconPath);
+        }
+        if (element.collapsed !== undefined) {
+            treeItem.collapsibleState = element.collapsed
+                ? vscode.TreeItemCollapsibleState.Collapsed
+                : vscode.TreeItemCollapsibleState.Expanded;
         }
         return treeItem;
     }
