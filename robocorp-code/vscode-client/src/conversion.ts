@@ -39,6 +39,13 @@ export enum RPATypes {
     aav11 = "aav11",
 }
 
+export enum TargetLanguages {
+    RF = "RF",
+    PYTHON = "PYTHON",
+}
+
+export const DEFAULT_TARGET_LANGUAGE = TargetLanguages.RF;
+
 export const RPA_TYPE_TO_CAPTION = {
     "uipath": "UiPath",
     "blueprism": "Blue Prism",
