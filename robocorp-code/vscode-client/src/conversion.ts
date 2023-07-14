@@ -39,6 +39,13 @@ export enum RPATypes {
     aav11 = "aav11",
 }
 
+export enum TargetLanguages {
+    RF = "RF",
+    PYTHON = "PYTHON",
+}
+
+export const DEFAULT_TARGET_LANGUAGE = TargetLanguages.RF;
+
 export const RPA_TYPE_TO_CAPTION = {
     "uipath": "UiPath",
     "blueprism": "Blue Prism",
@@ -161,6 +168,7 @@ export async function convertAndSaveResults(
         inputType: RPATypes;
         input: string[];
         outputFolder: string;
+        targetLanguage: string;
         adapterFolderPath: string;
     }
 ): Promise<{
@@ -201,6 +209,7 @@ export async function convertAndSaveResults(
 
     try {
         let nextBasename: string;
+        const targetLanguage = opts.targetLanguage;
         switch (opts.inputType) {
             case RPATypes.uipath: {
                 nextBasename = await findNextBasenameIn(opts.outputFolder, "converted-uipath");
@@ -237,6 +246,7 @@ export async function convertAndSaveResults(
                         vendor: Format.UIPATH,
                         command: CommandType.Convert,
                         projectFolderPath: it,
+                        targetLanguage,
                         onProgress: undefined,
                         outputRelativePath: join(nextBasename, basename(it)),
                     });
@@ -290,6 +300,7 @@ export async function convertAndSaveResults(
                         command: CommandType.Convert,
                         releaseFileContent: contents,
                         apiImplementationFolderPath: converterLocation.pathToConvertYaml,
+                        targetLanguage,
                         onProgress: undefined,
                         outputRelativePath: join(nextBasename, basename(it)),
                     });
@@ -347,6 +358,7 @@ export async function convertAndSaveResults(
                         command: CommandType.Convert,
                         projectFolderPath: it,
                         adapterFilePaths,
+                        targetLanguage,
                         onProgress: undefined,
                         outputRelativePath: join(nextBasename, basename(it)),
                     });
@@ -400,6 +412,7 @@ export async function convertAndSaveResults(
                         command: CommandType.Convert,
                         projects: [it],
                         onProgress: undefined,
+                        targetLanguage,
                         tempFolder: tempDir,
                         outputRelativePath: join(nextBasename, "conversion", basename(it)),
                     });

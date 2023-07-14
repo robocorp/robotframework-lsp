@@ -96,6 +96,7 @@
             "input": ["c:/temp/file.uipath", "c:/temp/file2.uipath"],
             "generationResults": "",
             "outputFolder": "",
+            "targetLanguage": "RF",
             "typeToLastOptions": {
                 "uipath": {
                     "input": [],
@@ -170,6 +171,7 @@
                 "input": globalConversionInfo.input,
                 "generationResults": globalConversionInfo.generationResults,
                 "outputFolder": globalConversionInfo.outputFolder,
+                "targetLanguage": globalConversionInfo.targetLanguage
             };
             globalConversionInfo.typeToLastOptions[globalConversionInfo.inputType] = currOptions;
         }
@@ -178,6 +180,7 @@
             const lastOptions = globalConversionInfo.typeToLastOptions[globalConversionInfo.inputType];
             globalConversionInfo.input = lastOptions.input;
             globalConversionInfo.generationResults = lastOptions.generationResults;
+            globalConversionInfo.targetLanguage = lastOptions.targetLanguage;
             if (lastOptions.outputFolder) {
                 // Keep the same output folder (just set it if it was already saved for the other type).
                 globalConversionInfo.outputFolder = lastOptions.outputFolder;
@@ -221,6 +224,21 @@
             }
         }
 
+        function updateUITargetLanguageFromData() {
+            const targetLanguageSelect = document.getElementById("targetLanguage");
+            targetLanguageSelect.value = globalConversionInfo.targetLanguage;
+        }
+
+        function hideUITargetLanguage() {
+            const targetLanguageSelect = document.getElementById("targetLanguageDiv");
+            targetLanguageDiv.style.display = 'none';
+        }
+
+        function showUITargetLanguage() {
+            const targetLanguageDiv = document.getElementById("targetLanguageDiv");
+            targetLanguageDiv.style.display = 'inline-grid';
+        }
+
         function updateUIOutputFolderFromData() {
             const outputFolderText = document.getElementById("outputFolderText");
             outputFolderText.value = globalConversionInfo.outputFolder;
@@ -231,10 +249,17 @@
             updateUIConversionResultFromData();
             updateUIFilesFromData();
             updateUIOutputFolderFromData();
+            updateUITargetLanguageFromData();
 
             // The UI has just been updated, so, it's Ok to update one UI setting
             // from another UI setting...
             updateUILabelFilesOrFoldersFromUI();
+
+            if (isTargetSelectionDisabled()) {
+                hideUITargetLanguage();
+            } else {
+                showUITargetLanguage();
+            }
         }
 
         function updateUILabelFilesOrFoldersFromUI() {
@@ -264,6 +289,14 @@
                 return false;
             }
             return true;
+        }
+
+        function isTargetSelectionDisabled() {
+            const curr = getCurrentUIType();
+            if (curr === "blueprism") {
+                return true;
+            }
+            return false;
         }
 
         function getCurrentUIType() {
@@ -356,6 +389,14 @@
             persistState();
         }
 
+         function onTargetLanguageChanged() {
+            const targetLanguageSelect = document.getElementById("targetLanguage");
+            const selectedTargetLanguage = targetLanguageSelect.value;
+            globalConversionInfo.targetLanguage = selectedTargetLanguage;
+            persistState();
+        }
+
+
         function onClickConvert() {
             if (vscode) {
                 // Disable button while sending.
@@ -367,6 +408,7 @@
                     command: "onClickConvert",
                     contents: {
                         outputFolder: globalConversionInfo.outputFolder,
+                        targetLanguage: globalConversionInfo.targetLanguage,
                         inputType: globalConversionInfo.inputType,
                         input: globalConversionInfo.input,
                     },
@@ -512,6 +554,15 @@
                 <div id="inputFilesOrFolders"></div>
             </div>
 
+            <div id="targetLanguageDiv" class="divEntry">
+                <label>Target language:</label>
+                <br />
+                <select id="targetLanguage" onchange="onTargetLanguageChanged()">
+                    <option value="PYTHON">Python</option>
+                    <option value="RF">Robot Framework</option>
+                </select>
+            </div>
+
             <div id="outputFolderDiv" class="divEntry">
                 <label
                     >Output folder (a new folder will be created in the specified Output folder to store the
@@ -542,7 +593,7 @@
             <br /> -->
 
             <div id="conversionDiv" class="divEntry">
-                <input value="Convert to Robot" type="submit" id="convertBt" onclick="onClickConvert()" />
+                <input value="Convert" type="submit" id="convertBt" onclick="onClickConvert()" />
                 <pre id="conversionResults">Conversion results:</pre>
             </div>
         </div>

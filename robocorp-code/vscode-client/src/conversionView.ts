@@ -6,7 +6,14 @@ import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import * as vscode from "vscode";
 import { logError } from "./channel";
-import { ensureConvertBundle, convertAndSaveResults, RPATypes, RPA_TYPE_TO_CAPTION } from "./conversion";
+import {
+    ensureConvertBundle,
+    convertAndSaveResults,
+    RPATypes,
+    RPA_TYPE_TO_CAPTION,
+    TargetLanguages,
+    DEFAULT_TARGET_LANGUAGE,
+} from "./conversion";
 import { getExtensionRelativeFile } from "./files";
 import { getRobocorpHome } from "./rcc";
 
@@ -14,6 +21,7 @@ interface ConversionInfoLastOptions {
     input: string[];
     generationResults: string;
     outputFolder: string;
+    targetLanguage: TargetLanguages;
 }
 
 interface ConversionInfo {
@@ -22,6 +30,7 @@ interface ConversionInfo {
     generationResults: string;
     outputFolder: string;
     typeToLastOptions: Map<RPATypes, ConversionInfoLastOptions>;
+    targetLanguage: TargetLanguages;
 }
 
 let panel: vscode.WebviewPanel | undefined = undefined;
@@ -69,6 +78,7 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
             "input": [], // files for BP, folders for others.
             "generationResults": "",
             "outputFolder": outputFolder,
+            "targetLanguage": DEFAULT_TARGET_LANGUAGE,
         };
     }
 
@@ -83,6 +93,7 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
         "generationResults": "",
         "outputFolder": outputFolder,
         "typeToLastOptions": typeToLastOptions,
+        "targetLanguage": DEFAULT_TARGET_LANGUAGE,
     };
 
     const oldState = context.globalState.get("robocorpConversionViewState");
@@ -94,6 +105,20 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
 
         if (conversionInfo.typeToLastOptions[RPATypes.aav11] === undefined) {
             conversionInfo.typeToLastOptions[RPATypes.aav11] = generateDefaultOptions();
+        }
+
+        // if previous old state, target language might not be defined
+        if (conversionInfo.typeToLastOptions[RPATypes.a360].targetLanguage === undefined) {
+            conversionInfo.typeToLastOptions[RPATypes.a360].targetLanguage = DEFAULT_TARGET_LANGUAGE;
+        }
+        if (conversionInfo.typeToLastOptions[RPATypes.blueprism].targetLanguage === undefined) {
+            conversionInfo.typeToLastOptions[RPATypes.blueprism].targetLanguage = DEFAULT_TARGET_LANGUAGE;
+        }
+        if (conversionInfo.typeToLastOptions[RPATypes.uipath].targetLanguage === undefined) {
+            conversionInfo.typeToLastOptions[RPATypes.uipath].targetLanguage = DEFAULT_TARGET_LANGUAGE;
+        }
+        if (conversionInfo.typeToLastOptions[RPATypes.aav11].targetLanguage === undefined) {
+            conversionInfo.typeToLastOptions[RPATypes.aav11].targetLanguage = DEFAULT_TARGET_LANGUAGE;
         }
     }
 
@@ -130,6 +155,7 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
                     try {
                         const contents = message.contents;
                         const outputFolder = contents["outputFolder"];
+                        const targetLanguage = contents["targetLanguage"];
                         const inputType = contents["inputType"];
                         const input = contents["input"];
                         // adapter files are at the machine level and location cannot be changed by converter webview
@@ -138,6 +164,7 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
 
                         result = await onClickConvert(convertBundlePromise, {
                             outputFolder,
+                            targetLanguage,
                             inputType,
                             input,
                             adapterFolderPath,
@@ -225,6 +252,7 @@ async function onClickConvert(
         inputType: RPATypes;
         input: string[];
         outputFolder: string;
+        targetLanguage: string;
         adapterFolderPath: string;
     }
 ): Promise<{
