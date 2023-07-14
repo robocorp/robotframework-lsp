@@ -114,10 +114,10 @@ export async function showConvertUI(context: vscode.ExtensionContext) {
         if (conversionInfo.typeToLastOptions[RPATypes.blueprism].targetLanguage === undefined) {
             conversionInfo.typeToLastOptions[RPATypes.blueprism].targetLanguage = DEFAULT_TARGET_LANGUAGE;
         }
-        if (conversionInfo.typeToLastOptions[RPATypes.uipath].targetLanguage  === undefined) {
+        if (conversionInfo.typeToLastOptions[RPATypes.uipath].targetLanguage === undefined) {
             conversionInfo.typeToLastOptions[RPATypes.uipath].targetLanguage = DEFAULT_TARGET_LANGUAGE;
         }
-        if (conversionInfo.typeToLastOptions[RPATypes.aav11].targetLanguage  === undefined) {
+        if (conversionInfo.typeToLastOptions[RPATypes.aav11].targetLanguage === undefined) {
             conversionInfo.typeToLastOptions[RPATypes.aav11].targetLanguage = DEFAULT_TARGET_LANGUAGE;
         }
     }
