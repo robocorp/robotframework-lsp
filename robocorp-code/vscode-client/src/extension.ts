@@ -121,8 +121,8 @@ import {
     ROBOCORP_OPEN_IN_VS_CODE,
     ROBOCORP_REVEAL_IN_EXPLORER,
     ROBOCORP_REVEAL_ROBOT_IN_EXPLORER,
-    ROBOCORP_CONNECT_VAULT,
-    ROBOCORP_DISCONNECT_VAULT,
+    ROBOCORP_CONNECT_WORKSPACE,
+    ROBOCORP_DISCONNECT_WORKSPACE,
     ROBOCORP_OPEN_VAULT_HELP,
     ROBOCORP_CLEAR_ENV_AND_RESTART,
     ROBOCORP_NEW_ROBOCORP_INSPECTOR_WINDOWS,
@@ -142,7 +142,7 @@ import {
 } from "./robocorpCommands";
 import { installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
-import { connectVault, disconnectVault } from "./vault";
+import { connectWorkspace, disconnectWorkspace } from "./vault";
 import { CACHE_KEY_LAST_WORKED, getLanguageServerPythonInfoUncached } from "./extensionCreateEnv";
 import { registerDebugger } from "./debugger";
 import { clearRCCEnvironments, clearRobocorpCodeCaches, computeEnvsToCollect } from "./clear";
@@ -410,8 +410,8 @@ function registerRobocorpCodeCommands(C: CommandRegistry, context: ExtensionCont
     C.register(ROBOCORP_DELETE_RESOURCE_IN_ROBOT_CONTENT_VIEW, deleteResourceInRobotContentTree);
     C.register(ROBOCORP_RENAME_RESOURCE_IN_ROBOT_CONTENT_VIEW, renameResourceInRobotContentTree);
     C.register(ROBOCORP_UPDATE_LAUNCH_ENV, updateLaunchEnvironment);
-    C.register(ROBOCORP_CONNECT_VAULT, connectVault);
-    C.register(ROBOCORP_DISCONNECT_VAULT, disconnectVault);
+    C.register(ROBOCORP_CONNECT_WORKSPACE, connectWorkspace);
+    C.register(ROBOCORP_DISCONNECT_WORKSPACE, disconnectWorkspace);
     C.register(ROBOCORP_OPEN_CLOUD_HOME, async () => {
         const cloudBaseUrl = await getEndpointUrl("cloud-ui");
         commands.executeCommand("vscode.open", Uri.parse(cloudBaseUrl + "home"));

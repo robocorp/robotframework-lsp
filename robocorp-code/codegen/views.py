@@ -280,14 +280,14 @@ TREE_VIEW_CONTAINERS = [
                             when="viewItem == cloudLogoutItem",
                         ),
                         Menu(
-                            "robocorp.connectVault",
+                            "robocorp.connectWorkspace",
                             MenuGroup.INLINE,
-                            when="viewItem == vaultDisconnected",
+                            when="viewItem == workspaceDisconnected",
                         ),
                         Menu(
-                            "robocorp.disconnectVault",
+                            "robocorp.disconnectWorkspace",
                             MenuGroup.INLINE,
-                            when="viewItem == vaultConnected",
+                            when="viewItem == workspaceConnected",
                         ),
                         Menu(
                             "robocorp.profileImport",

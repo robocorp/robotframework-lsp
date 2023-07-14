@@ -49,16 +49,19 @@ export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry
 
             if (!vaultInfoResult || !vaultInfoResult.success || !vaultInfoResult.result) {
                 ret.push({
-                    "label": "Vault: disconnected.",
+                    "label": "Workspace (vault, storage): disconnected.",
                     "iconPath": "unlock",
-                    "viewItemContextValue": "vaultDisconnected",
+                    "viewItemContextValue": "workspaceDisconnected",
+                    "tooltip": `Connecting to a workspace enables accessing vault and storage settings in the selected workspace.`,
                 });
             } else {
                 const result: IVaultInfo = vaultInfoResult.result;
+                const desc = getWorkspaceDescription(result);
                 ret.push({
-                    "label": "Vault: connected to: " + getWorkspaceDescription(result),
+                    "label": "Workspace: " + desc,
                     "iconPath": "lock",
-                    "viewItemContextValue": "vaultConnected",
+                    "viewItemContextValue": "workspaceConnected",
+                    "tooltip": `Enables access to vault and storage settings in: "${getWorkspaceDescription(result)}"`,
                 });
             }
         }
@@ -139,6 +142,9 @@ export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry
         treeItem.iconPath = new vscode.ThemeIcon(element.iconPath);
         if (element.viewItemContextValue) {
             treeItem.contextValue = element.viewItemContextValue;
+        }
+        if (element.tooltip) {
+            treeItem.tooltip = element.tooltip;
         }
         return treeItem;
     }

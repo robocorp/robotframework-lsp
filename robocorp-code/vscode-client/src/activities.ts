@@ -22,6 +22,7 @@ import {
     showSelectOneQuickPick,
     getWorkspaceDescription,
     selectWorkspace,
+    showSelectOneStrQuickPick,
 } from "./ask";
 import { feedback, feedbackRobocorpCodeError, getEndpointUrl } from "./rcc";
 import { refreshCloudTreeView } from "./viewsRobocorp";
@@ -38,6 +39,7 @@ import {
     WorkspaceInfo,
 } from "./protocols";
 import { envVarsForOutViewIntegration } from "./output/outViewRunIntegration";
+import { connectWorkspace } from "./vault";
 
 export async function cloudLogin(): Promise<boolean> {
     let loggedIn: boolean;
@@ -79,6 +81,15 @@ export async function cloudLogin(): Promise<boolean> {
             }
         }
     } while (!loggedIn);
+
+    const doConnectToWorkspace = await showSelectOneStrQuickPick(
+        ["Yes", "No"],
+        "Linked account. Connect to a workspace to access related Vault Secrets and Storage?"
+    );
+    if (doConnectToWorkspace === "Yes") {
+        const checkLogin = false; // no need to check login, we just logged in.
+        await connectWorkspace(checkLogin);
+    }
 
     return true;
 }

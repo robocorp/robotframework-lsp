@@ -83,7 +83,7 @@ class _Vault:
             ).as_dict()
 
         except Exception as e:
-            log.exception("Error loading VAULT_WORKSPACE_INFO.")
+            log.exception("Error loading WORKSPACE_INFO.")
             return ActionResult(False, str(e), None).as_dict()
 
     @vault_command_dispatcher(commands.ROBOCORP_SET_CONNECTED_VAULT_WORKSPACE_INTERNAL)

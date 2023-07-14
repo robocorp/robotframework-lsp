@@ -34,6 +34,7 @@ export interface CloudEntry {
     command?: vscode.Command;
     children?: CloudEntry[];
     viewItemContextValue?: string;
+    tooltip?: string;
 }
 
 export interface RobotEntry {
