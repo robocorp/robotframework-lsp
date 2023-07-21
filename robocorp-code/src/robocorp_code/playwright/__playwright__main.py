@@ -83,7 +83,13 @@ def _stdin_write(process, input):
 
 def run_playwright_in_thread(launched_event):
     from concurrent.futures import Future
+    from threading import Timer
 
+    def mark_run_playwright_as_started():
+        launched_event.set()
+        print("Playwright recorder started.", flush=True)
+
+    launched_event_timer = Timer(8, mark_run_playwright_as_started)
     future = Future()
 
     def in_thread():
@@ -118,20 +124,11 @@ def run_playwright_in_thread(launched_event):
             # -- note: this may be particular to my machine (fabioz), but it
             # may also be related to VSCode + Windows 11 + Windows Defender + python
             _stdin_write(process, b"\n")
-            _stdin_write(process, b"\n")
 
-            launched_count = 0
-            for line in iter(process.stdout.readline, ""):
-                contents = line.decode("utf-8", "replace")
-                if not contents:
-                    break
-                full_output.append(contents)
-                if "<launched>" in contents:
-                    launched_count += 1
-                    if launched_count == 2:
-                        # It launches the browser and the 2nd window.
-                        launched_event.set()
+            # launch event timer -> it will release the lock on the launch event
+            launched_event_timer.start()
 
+            # wait for playwright process to finish
             returncode = process.wait()
 
             if returncode != 0:
@@ -140,9 +137,12 @@ def run_playwright_in_thread(launched_event):
                         f"Playwright recorder failed. Output: {''.join(full_output)}"
                     )
                 )
+                launched_event_timer.cancel()
             else:
                 future.set_result(returncode)
+
         except Exception as e:
+            launched_event_timer.cancel()
             future.set_exception(e)
         finally:
             # If it still wasn't set, set it now.
@@ -165,11 +165,13 @@ def launch_playwright() -> None:
     future = run_playwright_in_thread(launched_event)
 
     # Wait for the browser to be launched to print the monitored string ("Playwright recorder started.")
+    print("Waiting...", flush=True)
     launched_event.wait()
 
-    # Note: This string is being monitored, so, if it's renamed it
-    # must also be renamed in `robocorp_code.playwright._Playwright._launch_playwright_recorder`.
-    print("Playwright recorder started.", flush=True)
+    if future.exception() is None:
+        # Note: This string is being monitored, so, if it's renamed it
+        # must also be renamed in `robocorp_code.playwright._Playwright._launch_playwright_recorder`.
+        print("Playwright recorder started. If not already triggered.", flush=True)
 
     # Now, wait for the process to finish (either with the result or exception).
     returncode = future.result()
@@ -181,8 +183,11 @@ def launch() -> None:
         launch_playwright()
     except Exception as e:
         print(f"Failed opening recorder:", flush=True)
-        print(e.__repr__().encode("utf-8"), flush=True)
+        # using correct representation as it seems that playwright outputs strange characters
+        sys.stdout.buffer.write(f"{e}\n".encode(sys.stdout.encoding, "replace"))
+        # attempt to install browsers & drivers
         install_browsers()
+        # attempt to launch playwright again
         launch_playwright()
 
 

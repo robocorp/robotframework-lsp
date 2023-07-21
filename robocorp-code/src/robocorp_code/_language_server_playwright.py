@@ -144,7 +144,7 @@ class _Playwright(object):
                 for line in iter(stream.readline, b""):
                     if not line:
                         break
-                    if b"Playwright recorder started" in line:
+                    if b"Playwright recorder started." in line:
                         event.set()
                     sys.stderr.buffer.write(line)
             except Exception as e:
@@ -194,7 +194,7 @@ class _Playwright(object):
         # Wait until we get a signal that the playwright recorder started
         # (or the timeout elapses -- ideally we should just leave this method when
         # the browser window is actually opened).
-        if not event.wait(20):
+        if not event.wait(60):
             if process.returncode is not None:
                 log.info(
                     "Progress being hidden due to timeout (playwright recorder may not have started yet)."
