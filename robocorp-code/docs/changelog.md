@@ -4,6 +4,7 @@ NEXT
 - Conversion accelerator now accepts Python as a target language.
 - When linking an account the workspace to connect to is asked right away.
 - The UI now makes it clearer that when connecting a workspace both the vault and the storage work with it.
+- `ROBO TASKS OUTPUT` updated to latest version (needed for seeing failed `assert` statements properly).
 
 
 New in 1.7.0 (2023-07-12)
