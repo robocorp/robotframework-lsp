@@ -57,6 +57,8 @@ def _stdin_write(process, input):
             process.stdin.write(input)
         except BrokenPipeError:
             pass  # communicate() must ignore broken pipe errors.
+        except ValueError:
+            pass  # communicate() must ignore broken closed pipes
         except OSError as exc:
             if exc.errno == errno.EINVAL:
                 # bpo-19612, bpo-30418: On Windows, stdin.write() fails
@@ -70,6 +72,8 @@ def _stdin_write(process, input):
         process.stdin.close()
     except BrokenPipeError:
         pass  # communicate() must ignore broken pipe errors.
+    except ValueError:
+        pass  # communicate() must ignore broken closed pipes
     except OSError as exc:
         if exc.errno == errno.EINVAL:
             pass
@@ -113,6 +117,7 @@ def run_playwright_in_thread(launched_event):
             # (even if stdin was closed it wasn't enough).
             # -- note: this may be particular to my machine (fabioz), but it
             # may also be related to VSCode + Windows 11 + Windows Defender + python
+            _stdin_write(process, b"\n")
             _stdin_write(process, b"\n")
 
             launched_count = 0
@@ -168,14 +173,15 @@ def launch_playwright() -> None:
 
     # Now, wait for the process to finish (either with the result or exception).
     returncode = future.result()
-    print(f"Playwright recorder finished. returcode: {returncode}", flush=True)
+    print(f"Playwright recorder finished. returncode: {returncode}", flush=True)
 
 
 def launch() -> None:
     try:
         launch_playwright()
     except Exception as e:
-        print(f"Failed opening recorder: {e}", flush=True)
+        print(f"Failed opening recorder:", flush=True)
+        print(e.__repr__().encode("utf-8"), flush=True)
         install_browsers()
         launch_playwright()
 
