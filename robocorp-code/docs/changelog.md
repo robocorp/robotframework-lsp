@@ -1,3 +1,9 @@
+New in 1.8.1 (2023-07-26)
+-----------------------------
+
+- Fixed issue with `preRunScripts` (launching python now always uses python in the robot target environment).
+
+
 New in 1.8.0 (2023-07-21)
 -----------------------------
 

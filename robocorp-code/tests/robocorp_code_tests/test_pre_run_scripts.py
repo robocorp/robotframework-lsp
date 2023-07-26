@@ -4,6 +4,13 @@ import sys
 import os
 
 
+def get_env():
+    env = os.environ.copy()
+    path = env["PATH"]
+    env["PATH"] = os.path.dirname(sys.executable) + os.pathsep + path
+    return env
+
+
 def test_run_pre_run_scripts_skip_plat(tmpdir):
     if sys.platform == "win32":
         all_skipped_content = """
@@ -64,7 +71,7 @@ echo WORKED!
     assert pre_run_scripts._has_pre_run_scripts_internal(params={"robot": str(tmpdir)})
 
     result = pre_run_scripts._run_pre_run_scripts_internal(
-        params={"robot": str(tmpdir), "env": os.environ.copy()}
+        params={"robot": str(tmpdir), "env": get_env()}
     )
     assert result is None
     captured = capsys.readouterr()
@@ -85,7 +92,57 @@ preRunScripts: ['python -m import sys;print(sys.executable)']
     assert pre_run_scripts._has_pre_run_scripts_internal(params={"robot": str(tmpdir)})
 
     result = pre_run_scripts._run_pre_run_scripts_internal(
-        params={"robot": str(tmpdir), "env": os.environ.copy()}
+        params={"robot": str(tmpdir), "env": get_env()}
     )
     assert result
     assert not result["success"]
+
+
+def test_run_pre_run_scripts_python_ok(tmpdir, capsys):
+    content = """
+preRunScripts: 
+- python -c "import sys;print(sys.executable)"
+"""
+
+    robot = Path(str(tmpdir)) / "robot.yaml"
+    robot.write_text(content)
+    from robocorp_code._language_server_pre_run_scripts import _PreRunScripts
+
+    pre_run_scripts = _PreRunScripts(NULL)
+    assert pre_run_scripts._has_pre_run_scripts_internal(params={"robot": str(tmpdir)})
+
+    result = pre_run_scripts._run_pre_run_scripts_internal(
+        params={"robot": str(tmpdir), "env": get_env()}
+    )
+    assert result is None
+    captured = capsys.readouterr()
+    assert "python" in captured.err
+
+
+def test_run_pre_run_scripts_python_file_ok(tmpdir, capsys):
+    content = """
+preRunScripts: 
+- python myscript.py
+"""
+
+    robot = Path(str(tmpdir)) / "robot.yaml"
+    robot.write_text(content)
+
+    myscript = Path(str(tmpdir)) / "myscript.py"
+    myscript.write_text(
+        """
+import sys
+print(sys.executable)
+"""
+    )
+    from robocorp_code._language_server_pre_run_scripts import _PreRunScripts
+
+    pre_run_scripts = _PreRunScripts(NULL)
+    assert pre_run_scripts._has_pre_run_scripts_internal(params={"robot": str(tmpdir)})
+
+    result = pre_run_scripts._run_pre_run_scripts_internal(
+        params={"robot": str(tmpdir), "env": get_env()}
+    )
+    assert result is None
+    captured = capsys.readouterr()
+    assert "python" in captured.err

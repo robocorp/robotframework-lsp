@@ -3,7 +3,7 @@ import subprocess
 import sys
 import threading
 import time
-from typing import Any, Generic, List, Optional, TypeVar
+from typing import Any, Generic, List, Optional, TypeVar, Union
 
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
 if sys.version_info[:2] < (3, 8):
@@ -68,7 +68,7 @@ class LaunchActionResult(Generic[T]):
 
 
 def launch(
-    args: List[str],
+    args: Union[List[str], str],
     timeout: float = 35,
     error_msg: str = "",
     mutex_name=None,
@@ -119,7 +119,12 @@ def launch(
     suprocesskwargs: dict = build_subprocess_kwargs(
         cwd, new_env, stderr=stderr, **kwargs
     )
-    cmdline = list2cmdline([str(x) for x in args])
+    cmdline: str
+    if isinstance(args, str):
+        # When shell=True args should be a string.
+        cmdline = args
+    else:
+        cmdline = list2cmdline([str(x) for x in args])
 
     try:
         if mutex_name:
@@ -165,7 +170,7 @@ def launch(
                             progress_reporter.set_additional_info(
                                 content.decode("utf-8", "replace")
                             )
-                    except:
+                    except Exception:
                         log.exception("Error reporting interactive output.")
 
                 boutput = check_output_interactive(

@@ -1,7 +1,7 @@
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Optional, Union
 
 from robocorp_code import commands
 from robocorp_ls_core.command_dispatcher import _SubCommandDispatcher
@@ -121,6 +121,7 @@ class _PreRunScripts:
         self, params: dict
     ) -> Optional[LaunchActionResultDict]:
         import shlex
+        import os
         from robocorp_ls_core.subprocess_wrapper import launch
 
         pre_run_scripts = self._get_pre_run_scripts(params["robot"])
@@ -134,22 +135,61 @@ class _PreRunScripts:
                 )
                 command = shlex.split(script, posix=True)
                 if command:
+                    use_command: Union[List[str], str]
+                    if command[0].endswith((".bat", ".sh")):
+                        shell = True
+                        use_command = script
+                    else:
+                        if command[0].endswith(".py"):
+                            command.insert(0, "python")
+
+                        shell = False
+
+                        # We need to search it on based on the 'PATH'
+                        if not os.path.isabs(command[0]):
+                            found = find_executable(env, command[0])
+                            # Note: we need to search the actual executable for
+                            # something as:
+                            # `python prerun.py`
+                            # to work (because otherwise it'll search it based
+                            # on the current environment and not based on the
+                            # target environment).
+                            if found:
+                                command[0] = found
+                            else:
+                                # We couldn't find it and it's not absolute, let
+                                # the shell sort it out.
+                                shell = True
+                                use_command = script
+                        use_command = command
+
                     result = launch(
-                        command,
+                        use_command,
                         timeout=60 * 60,  # 1 hour timeout
                         cwd=cwd,
                         show_interactive_output=True,
                         env=env,
-                        # Note: we need to use shell=True for something as
-                        # `python prerun.py`
-                        # to work (as it'll launch the new shell with the env
-                        # and then it'll use that env to search the executable
-                        # otherwise, it'd search `python` in the current env
-                        # but then run it with the new env, which is not what
-                        # is wanted in general -- searching must always use the
-                        # `PATH` in the new env).
-                        shell=True,
+                        shell=shell,
                     )
                     if not result.success:
                         return result.as_dict()
         return None
+
+
+def find_executable(env: dict, executable_basename: str) -> Optional[str]:
+    import os
+
+    PATH = env.get("PATH")
+    if not PATH:
+        PATH = os.environ["PATH"]
+    paths = PATH.split(os.pathsep)
+
+    if sys.platform == "win32" and not executable_basename.lower().endswith(".exe"):
+        executable_basename += ".exe"
+
+    for path in paths:
+        executable_path = os.path.join(path, executable_basename)
+        if os.path.isfile(executable_path) and os.access(executable_path, os.X_OK):
+            return executable_path
+
+    return None
