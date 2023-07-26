@@ -198,19 +198,19 @@ export async function setupDebugSessionOutViewIntegration(context: vscode.Extens
         globalOutputViewState = new OutputViewState(context.storageUri, context.workspaceState);
 
         const server = net.createServer((socket) => {
-            OUTPUT_CHANNEL.appendLine("Client connected (Robo Tasks Output connection)");
+            // OUTPUT_CHANNEL.appendLine("Client connected (Robo Tasks Output connection)");
             const label = nextRunLabel();
             const uniqueId = nextRunId();
             globalOutputViewState.addRun(uniqueId, label, "");
 
             socket.on("data", (data) => {
                 const strData = data.toString("utf-8");
-                OUTPUT_CHANNEL.appendLine(`Received (Robo Tasks Output connection): ${strData}`);
+                // OUTPUT_CHANNEL.appendLine(`Received (Robo Tasks Output connection): ${strData}`);
                 globalOutputViewState.appendToRunContents(uniqueId, strData);
             });
 
             socket.on("end", () => {
-                OUTPUT_CHANNEL.appendLine("Client disconnected (Robo Tasks Output connection)");
+                // OUTPUT_CHANNEL.appendLine("Client disconnected (Robo Tasks Output connection)");
                 globalOutputViewState.setRunLabel(uniqueId, label + " (finished)");
             });
 
