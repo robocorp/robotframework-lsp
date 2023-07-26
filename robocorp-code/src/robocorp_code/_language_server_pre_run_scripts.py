@@ -140,7 +140,15 @@ class _PreRunScripts:
                         cwd=cwd,
                         show_interactive_output=True,
                         env=env,
-                        shell=command[0].endswith((".bat", ".sh", ".py")),
+                        # Note: we need to use shell=True for something as
+                        # `python prerun.py`
+                        # to work (as it'll launch the new shell with the env
+                        # and then it'll use that env to search the executable
+                        # otherwise, it'd search `python` in the current env
+                        # but then run it with the new env, which is not what
+                        # is wanted in general -- searching must always use the
+                        # `PATH` in the new env).
+                        shell=True,
                     )
                     if not result.success:
                         return result.as_dict()
