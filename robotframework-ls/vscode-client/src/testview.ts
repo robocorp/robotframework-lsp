@@ -411,9 +411,9 @@ async function launch(
         target.push(s);
     }
     function compareAlphabeticallyAscending(a: string, b: string): number {
-        return (a).localeCompare(b, undefined, { numeric: true })
+        return a.localeCompare(b, undefined, { numeric: true });
     }
-    target.sort(compareAlphabeticallyAscending)
+    target.sort(compareAlphabeticallyAscending);
     debugConfiguration.target = target;
 
     if (debugConfiguration.makeSuite) {
