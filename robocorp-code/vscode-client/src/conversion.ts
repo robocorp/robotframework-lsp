@@ -42,6 +42,7 @@ export enum RPATypes {
 export enum TargetLanguages {
     RF = "RF",
     PYTHON = "PYTHON",
+    DOT = "DOT",
 }
 
 export const DEFAULT_TARGET_LANGUAGE = TargetLanguages.RF;
