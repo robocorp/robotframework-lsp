@@ -146,3 +146,39 @@ print(sys.executable)
     assert result is None
     captured = capsys.readouterr()
     assert "python" in captured.err
+
+
+def test_run_pre_run_scripts_python_file_no_python_exe(tmpdir, capsys):
+    content = """
+preRunScripts: 
+- myscript.py
+"""
+
+    robot = Path(str(tmpdir)) / "robot.yaml"
+    robot.write_text(content)
+
+    bin_dir = Path(str(tmpdir)) / "bin"
+    bin_dir.mkdir()
+    myscript = bin_dir / "myscript.py"
+    myscript.write_text(
+        """#! /usr/bin/env python
+
+import sys
+print(sys.executable)
+"""
+    )
+    from robocorp_code._language_server_pre_run_scripts import _PreRunScripts
+
+    pre_run_scripts = _PreRunScripts(NULL)
+    assert pre_run_scripts._has_pre_run_scripts_internal(params={"robot": str(tmpdir)})
+
+    env = get_env()
+    path = env["PATH"]
+    env["PATH"] = str(bin_dir) + os.pathsep + path
+
+    result = pre_run_scripts._run_pre_run_scripts_internal(
+        params={"robot": str(tmpdir), "env": env}
+    )
+    assert result is None
+    captured = capsys.readouterr()
+    assert "python" in captured.err

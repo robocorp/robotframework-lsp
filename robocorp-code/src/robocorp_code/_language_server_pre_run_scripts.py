@@ -141,6 +141,15 @@ class _PreRunScripts:
                         use_command = script
                     else:
                         if command[0].endswith(".py"):
+                            # 1. Find the .py file in the PATH and make it absolute
+                            if not os.path.isabs(command[0]):
+                                found = find_in_path(env, command[0], False)
+                                if found:
+                                    command[0] = found
+
+                            # 2. Make python the executable so that it'll run
+                            # that file with python and not do what's registered
+                            # in the system (as that could fail on Windows).
                             command.insert(0, "python")
 
                         shell = False
@@ -176,7 +185,7 @@ class _PreRunScripts:
         return None
 
 
-def find_executable(env: dict, executable_basename: str) -> Optional[str]:
+def find_in_path(env: dict, basename: str, check_access: bool) -> Optional[str]:
     import os
 
     PATH = env.get("PATH")
@@ -184,12 +193,21 @@ def find_executable(env: dict, executable_basename: str) -> Optional[str]:
         PATH = os.environ["PATH"]
     paths = PATH.split(os.pathsep)
 
+    for path in paths:
+        full_path = os.path.join(path, basename)
+        if os.path.isfile(full_path):
+            if not check_access:
+                return full_path
+
+            if os.access(full_path, os.X_OK):
+                return full_path
+
+    return None
+
+
+def find_executable(env: dict, executable_basename: str) -> Optional[str]:
+
     if sys.platform == "win32" and not executable_basename.lower().endswith(".exe"):
         executable_basename += ".exe"
 
-    for path in paths:
-        executable_path = os.path.join(path, executable_basename)
-        if os.path.isfile(executable_path) and os.access(executable_path, os.X_OK):
-            return executable_path
-
-    return None
+    return find_in_path(env, executable_basename, check_access=True)
