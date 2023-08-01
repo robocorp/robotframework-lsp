@@ -32,6 +32,17 @@ export async function autoUpdateInterpreter(docUri: Uri) {
     if (pythonExecutable != interpreter.pythonExe) {
         setPythonInterpreterForPythonExtension(interpreter.pythonExe, docUri);
     }
+
+    const additional = interpreter.additionalPythonpathEntries;
+    if (additional && additional.length > 0) {
+        workspace.getConfiguration("python", docUri).update(
+            "analysis.extraPaths",
+            additional.map((el) => {
+                return el.replaceAll("\\", "/");
+            }),
+            ConfigurationTarget.WorkspaceFolder
+        );
+    }
 }
 
 export async function installPythonInterpreterCheck(context: ExtensionContext) {
