@@ -873,6 +873,7 @@ export async function createRobot() {
 }
 
 export async function updateLaunchEnvironment(args): Promise<{ [key: string]: string } | "cancelled"> {
+    OUTPUT_CHANNEL.appendLine(`updateLaunchEnvironment for ${args["targetRobot"]}.`);
     let newEnv: any;
     try {
         newEnv = await updateLaunchEnvironmentPart0(args);
@@ -989,6 +990,7 @@ export async function updateLaunchEnvironmentPart0(args): Promise<{ [key: string
     );
 
     if (!workItemsActionResult || !workItemsActionResult.success) {
+        OUTPUT_CHANNEL.appendLine(`No work items available. ${JSON.stringify(workItemsActionResult)}`);
         return newEnv;
     }
 
