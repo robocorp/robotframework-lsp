@@ -878,6 +878,9 @@ export async function updateLaunchEnvironment(args): Promise<{ [key: string]: st
     try {
         newEnv = await updateLaunchEnvironmentPart0(args);
     } catch (error) {
+        window.showErrorMessage(
+            `It was not properly to build the Robot launch environment for the launch. Error: ${JSON.stringify(error)}`
+        );
         logError("Error computing launch env.", error, "ERROR_LAUNCH_ENV");
         throw error;
     }
@@ -990,7 +993,7 @@ export async function updateLaunchEnvironmentPart0(args): Promise<{ [key: string
     );
 
     if (!workItemsActionResult || !workItemsActionResult.success) {
-        OUTPUT_CHANNEL.appendLine(`No work items available. ${JSON.stringify(workItemsActionResult)}`);
+        OUTPUT_CHANNEL.appendLine(`Unable to get work items: ${JSON.stringify(workItemsActionResult)}`);
         return newEnv;
     }
 
