@@ -239,6 +239,30 @@
             targetLanguageDiv.style.display = 'inline-grid';
         }
 
+        function hideUITargetLanguageOption(optionValue) {
+            const selectElement = document.getElementById('targetLanguage');
+            const options = selectElement.getElementsByTagName('option');
+            for (let i = 0; i < options.length; i++) {
+                const option = options[i];
+                if (option.value === optionValue) {
+                    option.style.display = 'none';
+                    break;
+                }
+            }
+        }
+
+        function showUITargetLanguageOption(optionValue) {
+            const selectElement = document.getElementById('targetLanguage');
+            const options = selectElement.getElementsByTagName('option');
+            for (let i = 0; i < options.length; i++) {
+                const option = options[i];
+                if (option.value === optionValue) {
+                    option.style.display = 'block';
+                    break;
+                }
+            }
+        }
+
         function updateUIOutputFolderFromData() {
             const outputFolderText = document.getElementById("outputFolderText");
             outputFolderText.value = globalConversionInfo.outputFolder;
@@ -259,6 +283,12 @@
                 hideUITargetLanguage();
             } else {
                 showUITargetLanguage();
+
+                if (isTargetSelectionOptionDisabled('DOT')) {
+                    hideUITargetLanguageOption('DOT');
+                } else {
+                    showUITargetLanguageOption('DOT');
+                }
             }
         }
 
@@ -294,6 +324,14 @@
         function isTargetSelectionDisabled() {
             const curr = getCurrentUIType();
             if (curr === "blueprism") {
+                return true;
+            }
+            return false;
+        }
+
+        function isTargetSelectionOptionDisabled(option) {
+            const curr = getCurrentUIType();
+            if (curr !== "uipath" && option === 'DOT') {
                 return true;
             }
             return false;
@@ -560,6 +598,7 @@
                 <select id="targetLanguage" onchange="onTargetLanguageChanged()">
                     <option value="PYTHON">Python</option>
                     <option value="RF">Robot Framework</option>
+                    <option value="DOT">Graphviz DOT</option>
                 </select>
             </div>
 
