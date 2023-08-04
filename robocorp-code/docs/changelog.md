@@ -1,4 +1,14 @@
-New in 1.8.1 (2023-07-26)
+New in 1.9.0 (2023-08-04)
+-----------------------------
+
+- If the robot has additional pythonpath entries, set those in the VSCode settings (`python.analysis.extraPaths`).
+- If there's some issue computing the Robot environment for a launch that's now shown in the UI.
+- `ROBO TASKS OUTPUT` updated to latest version (added status level filtering, tree navigation and search).
+- Fixed issue with `preRunScripts` (when target executable is a `.py`, it's searched in the `PATH`).
+- Converter now has DOT as a target language.
+
+
+New in 1.8.1 (2023-08-04)
 -----------------------------
 
 - Fixed issue with `preRunScripts` (launching python now always uses python in the robot target environment).
