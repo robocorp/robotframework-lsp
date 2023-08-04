@@ -137,3 +137,5 @@ robotframework-intellij/.gradle
 
 # virtual environment
 .venv/
+
+*.robolog

@@ -1,7 +1,11 @@
 import json
 import tempfile
 from robocorp_ls_core.command_dispatcher import _CommandDispatcher
-from robocorp_ls_core.python_ls import PythonLanguageServer
+from robocorp_ls_core.python_ls import (
+    PythonLanguageServer,
+    BaseLintManager,
+    BaseLintInfo,
+)
 from robocorp_ls_core.basic import (
     overrides,
     log_and_silence_errors,
@@ -10,7 +14,7 @@ from robocorp_ls_core.basic import (
 import os
 import time
 from robocorp_ls_core.robotframework_log import get_logger
-from typing import Any, Optional, Dict, Sequence, Set, ContextManager, Union
+from typing import Any, Optional, Dict, Union
 from robocorp_ls_core.protocols import (
     IConfig,
     IWorkspace,
@@ -18,7 +22,6 @@ from robocorp_ls_core.protocols import (
     IRobotFrameworkApiClient,
     IMonitor,
     IEndPoint,
-    IProgressReporter,
     ActionResultDict,
     IFuture,
     Sentinel,
@@ -31,7 +34,6 @@ from robotframework_ls.ep_providers import (
 )
 from robocorp_ls_core.jsonrpc.endpoint import require_monitor
 from functools import partial
-import itertools
 from robotframework_ls import __version__, rf_interactive_integration
 import typing
 import sys
@@ -68,35 +70,29 @@ from io import StringIO
 
 log = get_logger(__name__)
 
-_LINT_DEBOUNCE_IN_SECONDS_LOW = 0.2
-_LINT_DEBOUNCE_IN_SECONDS_HIGH = 0.8
+
+command_dispatcher = _CommandDispatcher()
 
 
-class _CurrLintInfo(object):
+class _CurrLintInfo(BaseLintInfo):
     def __init__(
         self,
         rf_lint_api_client: IRobotFrameworkApiClient,
         lsp_messages,
         doc_uri,
         is_saved,
-        on_finish,
+        weak_lint_manager,
     ) -> None:
-        from robocorp_ls_core.lsp import LSPMessages
-        from robocorp_ls_core.jsonrpc.monitor import Monitor
-
         self._rf_lint_api_client = rf_lint_api_client
-        self.lsp_messages: LSPMessages = lsp_messages
-        self.doc_uri = doc_uri
-        self.is_saved = is_saved
-        self._monitor = Monitor()
-        self._on_finish = on_finish
+        BaseLintInfo.__init__(self, lsp_messages, doc_uri, is_saved, weak_lint_manager)
 
-    def __call__(self) -> None:
-        from robocorp_ls_core.jsonrpc.exceptions import JsonRpcRequestCancelled
-        from robocorp_ls_core.client_base import wait_for_message_matcher
+    @overrides(BaseLintInfo._do_lint)
+    def _do_lint(self):
         from robotframework_ls.server_api.client import SubprocessDiedError
 
         try:
+            from robocorp_ls_core.client_base import wait_for_message_matcher
+
             doc_uri = self.doc_uri
             self._monitor.check_cancelled()
             found = []
@@ -113,186 +109,36 @@ class _CurrLintInfo(object):
                         found = diagnostics_msg.get("result", [])
                     self._monitor.check_cancelled()
                     self.lsp_messages.publish_diagnostics(doc_uri, found)
-        except JsonRpcRequestCancelled:
-            log.debug("Cancelled linting: %s.", self.doc_uri)
-
         except SubprocessDiedError:
             log.debug("Subprocess exited while linting: %s.", self.doc_uri)
 
-        except Exception:
-            log.exception("Error linting: %s.", self.doc_uri)
 
-        finally:
-            self._on_finish(self)
-
-    def cancel(self):
-        self._monitor.cancel()
-
-
-def run_in_new_thread(func, thread_name):
-    import threading
-
-    t = threading.Thread(target=func)
-    t.name = thread_name
-    t.start()
-
-
-class _LintManager(object):
+class _LintManager(BaseLintManager):
     def __init__(
         self, server_manager, lsp_messages, endpoint: IEndPoint, read_queue
     ) -> None:
-        import threading
-        import queue
         from robotframework_ls.server_manager import ServerManager
 
         self._server_manager: ServerManager = server_manager
-        self._lsp_messages = lsp_messages
-        self._endpoint = endpoint
-        self._read_queue: queue.Queue = read_queue
+        BaseLintManager.__init__(self, lsp_messages, endpoint, read_queue)
 
-        self._next_id = partial(next, itertools.count())
-
-        self._lock = threading.Lock()
-        self._doc_id_to_info: Dict[str, _CurrLintInfo] = {}  # requires lock
-        self._uris_to_lint: Set[str] = set()  # requires lock
-
-        self._progress_context: Optional[ContextManager[IProgressReporter]] = None
-        self._progress_reporter: Optional[IProgressReporter] = None
-
-    def schedule_lint(self, doc_uri: str, is_saved: bool, timeout: float) -> None:
-        self.cancel_lint(doc_uri)
-
+    @overrides(BaseLintManager._create_curr_lint_info)
+    def _create_curr_lint_info(
+        self, doc_uri: str, is_saved: bool, timeout: float
+    ) -> Optional[BaseLintInfo]:
         # Note: this call must be done in the main thread.
         rf_lint_api_client = self._server_manager.get_lint_rf_api_client(doc_uri)
         if rf_lint_api_client is None:
             log.info("Unable to get lint api for: %s", doc_uri)
-            return
+            return None
 
-        lock = self._lock
-        doc_id_to_info = self._doc_id_to_info
-
-        weak_self = weakref.ref(self)
-
-        def on_finish(curr_info: _CurrLintInfo):
-            from robocorp_ls_core.progress_report import progress_context
-
-            # When it's finished, remove it from our references (if it's still
-            # the current one...).
-            #
-            # Also, if we have remaining items which were manually scheduled,
-            # we need to lint those.
-            try:
-                s = weak_self()
-                next_uri_to_lint = None
-                remaining_count = 0
-                with lock:
-                    if doc_id_to_info.get(curr_info.doc_uri) is curr_info:
-                        del doc_id_to_info[curr_info.doc_uri]
-
-                    if s is not None:
-                        if self._progress_reporter is not None:
-                            if self._progress_reporter.cancelled:
-                                s._uris_to_lint.clear()
-
-                        if s._uris_to_lint:
-                            next_uri_to_lint = s._uris_to_lint.pop()
-                            remaining_count = len(self._uris_to_lint)
-
-                    if self._progress_context is None:
-                        if remaining_count > 0:
-                            self._progress_context = progress_context(
-                                self._endpoint,
-                                "Linting files... ",
-                                None,
-                                cancellable=True,
-                            )
-                            self._progress_reporter = self._progress_context.__enter__()
-                    else:
-                        if remaining_count == 0:
-                            self._progress_context.__exit__(None, None, None)
-                            self._progress_context = None
-                            self._progress_reporter = None
-                        else:
-                            if self._progress_reporter is not None:
-                                self._progress_reporter.set_additional_info(
-                                    f"(remaining: {remaining_count})"
-                                )
-
-                if next_uri_to_lint and s is not None:
-                    # As schedule lint must be done in the main thread, we
-                    # we put an item in the queue to process the main thread.
-                    def _schedule():
-                        s = weak_self()
-                        if s is not None:
-                            s.schedule_lint(next_uri_to_lint, True, 0.0)
-
-                    self._read_queue.put(_schedule)
-            except:
-                log.exception("Unhandled error on lint finish.")
+        weak_lint_manager = weakref.ref(self)
 
         log.debug("Schedule lint for: %s", doc_uri)
         curr_info = _CurrLintInfo(
-            rf_lint_api_client, self._lsp_messages, doc_uri, is_saved, on_finish
+            rf_lint_api_client, self._lsp_messages, doc_uri, is_saved, weak_lint_manager
         )
-        with self._lock:
-            self._doc_id_to_info[doc_uri] = curr_info
-
-        from robocorp_ls_core.timeouts import TimeoutTracker
-
-        timeout_tracker = TimeoutTracker.get_singleton()
-        timeout_tracker.call_on_timeout(
-            timeout,
-            partial(run_in_new_thread, curr_info, f"Lint: {doc_uri}"),
-        )
-
-    def cancel_lint(self, doc_uri: str) -> None:
-        with self._lock:
-            curr_info = self._doc_id_to_info.pop(doc_uri, None)
-            if curr_info is not None:
-                log.debug("Cancel lint for: %s", doc_uri)
-
-                curr_info.cancel()
-
-    def schedule_manual_lint(self, lint_paths: Sequence[str]) -> None:
-        """
-        This method is called to lint the given paths and provide the diagnostics
-        as needed.
-
-        It doesn't require files to be open and folders are recursively checked
-        for files (.robot and .resource files).
-
-        :param lint_paths: The paths that should be linted.
-        """
-        from robocorp_ls_core import uris
-
-        new_uris_to_lint_set = set()
-
-        for path in lint_paths:
-            if path.lower().endswith((".robot", ".resource")):
-                uri = uris.from_fs_path(str(path))
-                new_uris_to_lint_set.add(uri)
-                continue
-
-            p = Path(path)
-            if not p.is_dir():
-                continue
-
-            for f in p.rglob("*"):
-                if f.suffix.lower() in (".robot", ".resource"):
-                    uri = uris.from_fs_path(str(f))
-                    new_uris_to_lint_set.add(uri)
-
-        next_uri_to_lint = None
-        with self._lock:
-            self._uris_to_lint.update(new_uris_to_lint_set)
-            if new_uris_to_lint_set:
-                next_uri_to_lint = new_uris_to_lint_set.pop()
-
-        if next_uri_to_lint:
-            self.schedule_lint(next_uri_to_lint, True, 0.0)
-
-
-command_dispatcher = _CommandDispatcher()
+        return curr_info
 
 
 class RobotFrameworkLanguageServer(PythonLanguageServer):
@@ -393,14 +239,17 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         remote_observer.start_server(log_file=log_file, verbose=verbose)
 
         self._server_manager = ServerManager(self._pm, language_server=self)
-        self._lint_manager = _LintManager(
+        self._robot_framework_ls_completion_impl = _RobotFrameworkLsCompletionImpl(
+            self._server_manager, self
+        )
+
+    @overrides(PythonLanguageServer._create_lint_manager)
+    def _create_lint_manager(self) -> BaseLintManager:
+        return _LintManager(
             self._server_manager,
             self._lsp_messages,
             self._endpoint,
             self._jsonrpc_stream_reader.get_read_queue(),
-        )
-        self._robot_framework_ls_completion_impl = _RobotFrameworkLsCompletionImpl(
-            self._server_manager, self
         )
 
     def _execute_on_main_thread(self, on_main_thread_callback):
@@ -1064,29 +913,6 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         )
 
     # --- Customized implementation
-
-    @overrides(PythonLanguageServer.lint)
-    def lint(self, doc_uri, is_saved, content_changes=None) -> None:
-        # We want the timeout to be shorter if it was saved or if the user
-        # typed a new line.
-        timeout = _LINT_DEBOUNCE_IN_SECONDS_LOW
-        if not is_saved:
-            timeout = _LINT_DEBOUNCE_IN_SECONDS_HIGH
-            for change in content_changes:
-                try:
-                    text = change.get("text", "")
-                    if "\n" in text or "\r" in text:
-                        timeout = _LINT_DEBOUNCE_IN_SECONDS_LOW
-                        break
-                except:
-                    log.exception(
-                        "Error computing lint timeout with: %s", content_changes
-                    )
-        self._lint_manager.schedule_lint(doc_uri, is_saved, timeout)
-
-    @overrides(PythonLanguageServer.cancel_lint)
-    def cancel_lint(self, doc_uri) -> None:
-        self._lint_manager.cancel_lint(doc_uri)
 
     def m_completion_item__resolve(self, **params):
         completion_item: CompletionItemTypedDict = params

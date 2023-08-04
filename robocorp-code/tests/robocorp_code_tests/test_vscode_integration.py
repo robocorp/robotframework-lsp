@@ -1,16 +1,19 @@
 import logging
 import os.path
 import sys
+import time
+from typing import List
+
+import pytest
 from robocorp_code.protocols import (
+    ActionResult,
     LocalRobotMetadataInfoDict,
     WorkspaceInfoDict,
-    ActionResult,
 )
-from typing import List
-import time
-from robocorp_code_tests.protocols import IRobocorpLanguageServerClient
 from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
+
 from robocorp_code_tests.fixtures import RccPatch
+from robocorp_code_tests.protocols import IRobocorpLanguageServerClient
 
 log = logging.getLogger(__name__)
 
@@ -53,9 +56,8 @@ def test_exit_with_parent_process_died(
     """
     :note: Only check with the language_server_io (because that's in another process).
     """
+    from robocorp_ls_core.basic import is_process_alive, kill_process_and_subprocesses
     from robocorp_ls_core.subprocess_wrapper import subprocess
-    from robocorp_ls_core.basic import is_process_alive
-    from robocorp_ls_core.basic import kill_process_and_subprocesses
     from robocorp_ls_core.unittest_tools.fixtures import wait_for_test_condition
 
     language_server = language_server_io
@@ -225,7 +227,6 @@ def test_cloud_list_workspaces_basic(
     rcc_patch: RccPatch,
     data_regression,
 ):
-
     client = language_server_initialized
 
     rcc_patch.apply()
@@ -254,7 +255,6 @@ def test_cloud_list_workspaces_errors_single_ws_not_available(
     rcc_patch: RccPatch,
     data_regression,
 ):
-
     client = language_server_initialized
 
     def custom_handler(args, *sargs, **kwargs):
@@ -286,7 +286,6 @@ def test_cloud_list_workspaces_errors_single_ws_not_available(
 def test_cloud_list_workspaces_errors_no_ws_available(
     language_server_initialized: IRobocorpLanguageServerClient, rcc_patch: RccPatch
 ):
-
     client = language_server_initialized
 
     def custom_handler(args, *sargs, **kwargs):
@@ -556,10 +555,12 @@ def test_hover_browser_integration(
 def test_hover_image_integration(
     language_server_initialized: IRobocorpLanguageServerClient, tmpdir
 ):
-    from robocorp_ls_core.workspace import Document
-    from robocorp_code_tests.fixtures import IMAGE_IN_BASE64
     import base64
+
     from robocorp_ls_core import uris
+    from robocorp_ls_core.workspace import Document
+
+    from robocorp_code_tests.fixtures import IMAGE_IN_BASE64
 
     locators_json = tmpdir.join("locators.json")
     locators_json.write_text("", "utf-8")
@@ -600,7 +601,6 @@ def test_hover_image_integration(
 def test_obtain_locator_info(
     language_server_initialized: IRobocorpLanguageServerClient, tmpdir, data_regression
 ) -> None:
-
     from robocorp_code import commands
 
     # robot.yaml contents don't matter for this test (it just needs to be there).
@@ -646,9 +646,9 @@ def test_obtain_locator_info(
 def test_remove_locator(
     language_server_initialized: IRobocorpLanguageServerClient, tmpdir, data_regression
 ) -> None:
+    import json
 
     from robocorp_code import commands
-    import json
 
     # robot.yaml contents don't matter for this test (it just needs to be there).
     robot_yaml = tmpdir.join("robot.yaml")
@@ -727,7 +727,6 @@ def test_internal_load_locators_db(
 
 
 def test_metric(language_server_initialized: IRobocorpLanguageServerClient) -> None:
-
     from robocorp_code import commands
 
     language_server = language_server_initialized
@@ -756,7 +755,7 @@ def sort_diagnostics(diagnostics):
     return sorted(diagnostics, key=key)
 
 
-def test_lint_robot_integration(
+def test_lint_robot_integration_rcc(
     language_server_initialized: IRobocorpLanguageServerClient, tmpdir, data_regression
 ):
     from robocorp_ls_core import uris
@@ -795,6 +794,63 @@ dependencies:
         {"method": "textDocument/publishDiagnostics"}
     )
     language_server.open_doc(robot_yaml_uri, 1, robot_yaml_text)
+
+    assert message_matcher.event.wait(TIMEOUT)
+    diag = message_matcher.msg["params"]["diagnostics"]
+    data_regression.check(sort_diagnostics(diag))
+
+
+@pytest.fixture
+def disable_rcc_diagnostics():
+    from robocorp_code._lint import DiagnosticsConfig
+
+    DiagnosticsConfig.analyze_rcc = False
+    yield
+    DiagnosticsConfig.analyze_rcc = True
+
+
+def test_lint_robot_integration_deps(
+    language_server_initialized: IRobocorpLanguageServerClient,
+    tmpdir,
+    data_regression,
+    disable_rcc_diagnostics,
+):
+    from robocorp_ls_core import uris
+    from robocorp_ls_core.unittest_tools.fixtures import TIMEOUT
+
+    robot_yaml = tmpdir.join("robot.yaml")
+    robot_yaml_text = """
+tasks:
+  Obtain environment information:
+    command:
+      - python
+      - get_env_info.py
+
+artifactsDir: output
+
+condaConfigFile: conda.yaml
+
+"""
+    robot_yaml.write_text(robot_yaml_text, "utf-8")
+
+    conda_yaml = tmpdir.join("conda.yaml")
+    conda_yaml_text = """
+    channels:
+      - conda-forge
+    dependencies:
+      - python=3.7
+    """
+    conda_yaml.write_text(
+        conda_yaml_text,
+        "utf-8",
+    )
+
+    language_server = language_server_initialized
+    conda_yaml_uri = uris.from_fs_path(str(conda_yaml))
+    message_matcher = language_server.obtain_pattern_message_matcher(
+        {"method": "textDocument/publishDiagnostics"}
+    )
+    language_server.open_doc(conda_yaml_uri, 1, conda_yaml_text)
 
     assert message_matcher.event.wait(TIMEOUT)
     diag = message_matcher.msg["params"]["diagnostics"]

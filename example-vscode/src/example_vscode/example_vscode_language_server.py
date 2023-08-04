@@ -1,7 +1,9 @@
+from typing import Optional
+
 from robocorp_ls_core.basic import overrides
-from robocorp_ls_core.python_ls import PythonLanguageServer
-from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.protocols import IConfig
+from robocorp_ls_core.python_ls import BaseLintManager, PythonLanguageServer
+from robocorp_ls_core.robotframework_log import get_logger
 
 log = get_logger(__name__)
 
@@ -98,11 +100,8 @@ class ExampleVSCodeLanguageServer(PythonLanguageServer):
         # return {"data": [1, 0, 10, 1, 0, 1, 0, 10, 1, 0]}
         return {"data": []}
 
-    def lint(self, doc_uri, is_saved, content_changes=None):
-        pass
-
-    def cancel_lint(self, doc_uri):
-        pass
+    def _create_lint_manager(self) -> Optional[BaseLintManager]:
+        return None
 
     def _create_config(self) -> IConfig:
         from robocorp_ls_core.config import Config

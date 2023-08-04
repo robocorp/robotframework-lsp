@@ -1,10 +1,9 @@
 import sys
-from typing import Optional, List, Any, TypeVar, Dict, ContextManager, Tuple
 from pathlib import Path
+from typing import Any, ContextManager, Dict, List, Optional, Tuple, TypeVar
 
 # Backward-compatibility imports:
 from robocorp_ls_core.protocols import ActionResult, ActionResultDict  # noqa
-
 
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
 if sys.version_info[:2] < (3, 8):
@@ -16,8 +15,7 @@ if sys.version_info[:2] < (3, 8):
         pass
 
 else:
-    from typing import Protocol
-    from typing import TypedDict
+    from typing import Protocol, TypedDict
 
 
 class LocalRobotMetadataInfoDict(TypedDict):
@@ -372,4 +370,7 @@ class IRcc(Protocol):
         pass
 
     def profile_list(self) -> ActionResult[ProfileListResultTypedDict]:
+        pass
+
+    def configuration_diagnostics(self, robot_yaml, json=True) -> ActionResult[str]:
         pass

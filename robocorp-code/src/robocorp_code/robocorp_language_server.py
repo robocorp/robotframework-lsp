@@ -1,49 +1,47 @@
-from functools import partial
 import os
 import sys
-from pathlib import Path
-from typing import List, Any, Optional, Dict, Iterator
+import time
+import weakref
 from base64 import b64encode
+from functools import partial
+from pathlib import Path
+from typing import Any, Dict, Iterator, List, Optional
+
+from robocorp_ls_core import watchdog_wrapper
+from robocorp_ls_core.basic import overrides
+from robocorp_ls_core.cache import CachedFileInfo
+from robocorp_ls_core.command_dispatcher import _CommandDispatcher
+from robocorp_ls_core.protocols import IConfig, LibraryVersionInfoDict
+from robocorp_ls_core.python_ls import BaseLintManager, PythonLanguageServer
+from robocorp_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.watchdog_wrapper import IFSObserver
 
 from robocorp_code import commands
 from robocorp_code.protocols import (
-    IRccWorkspace,
-    IRccRobotMetadata,
-    LocalRobotMetadataInfoDict,
-    WorkspaceInfoDict,
-    PackageInfoDict,
     ActionResultDict,
-    UploadRobotParamsDict,
-    UploadNewRobotParamsDict,
-    CreateRobotParamsDict,
-    CloudListWorkspaceDict,
-    ListWorkspacesActionResultDict,
-    PackageInfoInLRUDict,
-    RunInRccParamsDict,
     ActionResultDictLocalRobotMetadata,
-    ActionResultDictRobotLaunch,
-    TypedDict,
     ActionResultDictLocatorsJson,
     ActionResultDictLocatorsJsonInfo,
-    LocatorEntryInfoDict,
-    ConfigurationDiagnosticsDict,
+    ActionResultDictRobotLaunch,
     ActionResultDictWorkItems,
+    CloudListWorkspaceDict,
+    ConfigurationDiagnosticsDict,
+    CreateRobotParamsDict,
+    IRccRobotMetadata,
+    IRccWorkspace,
     ListWorkItemsParams,
+    ListWorkspacesActionResultDict,
+    LocalRobotMetadataInfoDict,
+    LocatorEntryInfoDict,
+    PackageInfoDict,
+    PackageInfoInLRUDict,
+    RunInRccParamsDict,
+    TypedDict,
+    UploadNewRobotParamsDict,
+    UploadRobotParamsDict,
     WorkItem,
+    WorkspaceInfoDict,
 )
-from robocorp_ls_core.basic import overrides
-from robocorp_ls_core.cache import CachedFileInfo
-from robocorp_ls_core.protocols import (
-    IConfig,
-    LibraryVersionInfoDict,
-)
-from robocorp_ls_core.python_ls import PythonLanguageServer
-from robocorp_ls_core.robotframework_log import get_logger
-from robocorp_ls_core.watchdog_wrapper import IFSObserver
-from robocorp_ls_core import watchdog_wrapper
-import time
-from robocorp_ls_core.command_dispatcher import _CommandDispatcher
-import weakref
 
 log = get_logger(__name__)
 
@@ -61,7 +59,7 @@ def _parse_version(version) -> tuple:
     for v in version.split("."):
         try:
             ret.append(int(v))
-        except:
+        except Exception:
             ret.append(v)
     return tuple(ret)
 
@@ -86,22 +84,26 @@ class RobocorpLanguageServer(PythonLanguageServer):
     PACKAGE_ACCESS_LRU_CACHE_KEY = "PACKAGE_ACCESS_LRU_CACHE"
 
     def __init__(self, read_stream, write_stream):
-        from robocorp_code.rcc import Rcc
-        from robocorp_code._language_server_playwright import _Playwright
-        from robocorp_ls_core.cache import DirCache
-        from robocorp_ls_core.pluginmanager import PluginManager
-        from robocorp_ls_core.ep_providers import DefaultConfigurationProvider
-        from robocorp_ls_core.ep_providers import EPConfigurationProvider
-        from robocorp_ls_core.ep_providers import DefaultDirCacheProvider
-        from robocorp_ls_core.ep_providers import EPDirCacheProvider
-        from robocorp_ls_core.ep_providers import DefaultEndPointProvider
-        from robocorp_ls_core.ep_providers import EPEndPointProvider
         from queue import Queue
-        from robocorp_code._language_server_vault import _Vault
-        from robocorp_code._language_server_login import _Login
-        from robocorp_code._language_server_profile import _Profile
+
+        from robocorp_ls_core.cache import DirCache
+        from robocorp_ls_core.ep_providers import (
+            DefaultConfigurationProvider,
+            DefaultDirCacheProvider,
+            DefaultEndPointProvider,
+            EPConfigurationProvider,
+            EPDirCacheProvider,
+            EPEndPointProvider,
+        )
+        from robocorp_ls_core.pluginmanager import PluginManager
+
         from robocorp_code._language_server_feedback import _Feedback
+        from robocorp_code._language_server_login import _Login
+        from robocorp_code._language_server_playwright import _Playwright
         from robocorp_code._language_server_pre_run_scripts import _PreRunScripts
+        from robocorp_code._language_server_profile import _Profile
+        from robocorp_code._language_server_vault import _Vault
+        from robocorp_code.rcc import Rcc
 
         user_home = os.getenv("ROBOCORP_CODE_USER_HOME", None)
         if user_home is None:
@@ -112,7 +114,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
         try:
             import ssl
-        except:
+        except Exception:
             # This means that we won't be able to download drivers to
             # enable the creation of browser locators!
             # Let's print a bit more info.
@@ -254,86 +256,16 @@ class RobocorpLanguageServer(PythonLanguageServer):
             self._fs_observer = watchdog_wrapper.create_observer("dummy", ())
         return self._fs_observer
 
-    @overrides(PythonLanguageServer.cancel_lint)
-    def cancel_lint(self, doc_uri):
-        pass  # no-op (we don't cancel it if the file changes)
+    def _create_lint_manager(self) -> Optional[BaseLintManager]:
+        from robocorp_code._lint import LintManager
 
-    @overrides(PythonLanguageServer.lint)
-    def lint(self, doc_uri, is_saved, content_changes=None):
-        from robocorp_ls_core.lsp import DiagnosticSeverity
-        from robocorp_ls_core import uris
-        import json
-
-        if is_saved:
-            # When a document is saved, if it's a conda.yaml or a robot.yaml,
-            # validate it.
-            if doc_uri.endswith("conda.yaml") or doc_uri.endswith("robot.yaml"):
-                robot_yaml_fs_path = uris.to_fs_path(doc_uri)
-                if robot_yaml_fs_path.endswith("conda.yaml"):
-                    p = os.path.dirname(robot_yaml_fs_path)
-                    for _ in range(3):
-                        target = os.path.join(p, "robot.yaml")
-                        if target and os.path.exists(target):
-                            robot_yaml_fs_path = target
-                            break
-                    else:
-                        # We didn't find the 'robot.yaml' for the 'conda.yaml'
-                        # bail out.
-                        return
-
-                action_result = self._rcc.configuration_diagnostics(robot_yaml_fs_path)
-                if action_result.success:
-                    json_contents = action_result.result
-                    as_dict = json.loads(json_contents)
-                    checks = as_dict.get("checks", [])
-                    found = []
-
-                    CategoryLockFile = 1020
-                    CategoryLockPid = 1021
-
-                    if isinstance(checks, (list, tuple)):
-                        for check in checks:
-                            if isinstance(check, dict):
-                                status = check.get("status", "ok").lower()
-
-                                if status != "ok":
-                                    if check.get("category") in (
-                                        CategoryLockFile,
-                                        CategoryLockPid,
-                                    ):
-                                        continue
-
-                                    # Default is error (for fail/fatal)
-                                    severity = DiagnosticSeverity.Error
-
-                                    if status in ("warn", "warning"):
-                                        severity = DiagnosticSeverity.Warning
-                                    elif status in ("info", "information"):
-                                        severity = DiagnosticSeverity.Information
-
-                                    # The actual line is not given by rcc, so, put
-                                    # all errors in the first 2 lines.
-                                    message = check.get(
-                                        "message", "<unable to get error message>"
-                                    )
-
-                                    url = check.get("url")
-                                    if url:
-                                        message += (
-                                            f" -- see: {url} for more information."
-                                        )
-                                    found.append(
-                                        {
-                                            "range": {
-                                                "start": {"line": 0, "character": 0},
-                                                "end": {"line": 1, "character": 0},
-                                            },
-                                            "severity": severity,
-                                            "source": "robocorp-code",
-                                            "message": message,
-                                        }
-                                    )
-                    self._lsp_messages.publish_diagnostics(doc_uri, found)
+        return LintManager(
+            self,
+            self._rcc,
+            self._lsp_messages,
+            self._endpoint,
+            self._jsonrpc_stream_reader.get_read_queue(),
+        )
 
     @overrides(PythonLanguageServer._create_config)
     def _create_config(self) -> IConfig:
@@ -344,6 +276,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
     @overrides(PythonLanguageServer.capabilities)
     def capabilities(self):
         from robocorp_ls_core.lsp import TextDocumentSyncKind
+
         from robocorp_code.commands import ALL_SERVER_COMMANDS
 
         server_capabilities = {
@@ -402,7 +335,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         lru_size = params["lru_size"]
         try:
             cache_lru_list = self._dir_cache.load(name, list)
-        except:
+        except Exception:
             cache_lru_list = []
 
         try:
@@ -411,7 +344,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
                 return {"success": True, "message": "", "result": entry}
 
             cache_lru_list.remove(entry)
-        except:
+        except Exception:
             pass  # If empty or if entry is not there, just proceed.
 
         if len(cache_lru_list) >= lru_size:
@@ -426,7 +359,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         try:
             name = params["name"]
             cache_lru_list = self._dir_cache.load(name, list)
-        except:
+        except Exception:
             cache_lru_list = []
 
         return cache_lru_list
@@ -661,7 +594,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
                 )
                 return cached_file_info.value
 
-            except:
+            except Exception:
                 log.exception(f"Unable to get load robot metadata for: {robot_yaml}")
 
         return None
@@ -741,7 +674,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         def sort_by_number_postfix(entry: WorkItem):
             try:
                 return int(entry["name"].rsplit("-", 1)[-1])
-            except:
+            except Exception:
                 # That's ok, item just doesn't match our expected format.
                 return 9999999
 
@@ -803,7 +736,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
             if name.startswith(output_prefix):
                 try:
                     run_number = int(name[len(output_prefix) :])
-                except:
+                except Exception:
                     pass  # Just ignore (it wouldn't clash anyways)
                 else:
                     if run_number > max_run:
@@ -1023,8 +956,10 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
     @command_dispatcher(commands.ROBOCORP_RESOLVE_INTERPRETER, dict)
     def _resolve_interpreter(self, params=None) -> ActionResultDict:
-        from robocorp_ls_core.ep_resolve_interpreter import EPResolveInterpreter
-        from robocorp_ls_core.ep_resolve_interpreter import IInterpreterInfo
+        from robocorp_ls_core.ep_resolve_interpreter import (
+            EPResolveInterpreter,
+            IInterpreterInfo,
+        )
 
         try:
             from robocorp_ls_core import uris
@@ -1075,7 +1010,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         try:
             with golden_ee.open("r", encoding="utf-8") as stream:
                 yaml_contents = yaml_wrapper.load(stream)
-        except:
+        except Exception:
             msg = f"Error loading: {golden_ee} as yaml."
             log.exception(msg)
             return {"success": False, "message": msg, "result": None}
@@ -1159,11 +1094,8 @@ class RobocorpLanguageServer(PythonLanguageServer):
         locators.json.
         """
         from robocorp_ls_core import uris
-        from robocorp_ls_core.protocols import IDocument
-        from robocorp_ls_core.protocols import IDocumentSelection
-        from robocorp_ls_core.lsp import Range
-        from robocorp_ls_core.lsp import MarkupKind
-        from robocorp_ls_core.lsp import MarkupContent
+        from robocorp_ls_core.lsp import MarkupContent, MarkupKind, Range
+        from robocorp_ls_core.protocols import IDocument, IDocumentSelection
 
         doc_uri = kwargs["textDocument"]["uri"]
         # Note: 0-based
@@ -1248,7 +1180,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
                 if isinstance(error, tuple) and len(error) == 2:
                     try:
                         error = error[0] % error[1]
-                    except:
+                    except Exception:
                         error = str(error)
                 else:
                     error = str(error)

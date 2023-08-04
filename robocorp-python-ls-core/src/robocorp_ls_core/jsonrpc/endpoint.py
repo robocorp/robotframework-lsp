@@ -76,6 +76,9 @@ class Endpoint(object):
         max_workers = min(15, (os.cpu_count() or 1) + 4)
         self._executor_service = futures.ThreadPoolExecutor(max_workers=max_workers)
 
+        # Also put it in the public API.
+        self.executor_service = self._executor_service
+
     def shutdown(self):
         self._executor_service.shutdown(wait=False)
 
