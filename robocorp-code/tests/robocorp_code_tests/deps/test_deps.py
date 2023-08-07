@@ -1,26 +1,83 @@
+from typing import Iterator
+
 import pytest
+from robocorp_ls_core.protocols import IDocument
+
+
+def get_conda_yaml_doc(datadir, name) -> IDocument:
+    from robocorp_ls_core import uris
+    from robocorp_ls_core.watchdog_wrapper import create_observer
+    from robocorp_ls_core.workspace import Workspace
+
+    ws = Workspace(str(datadir), create_observer("dummy", None))
+    check_path = datadir / name
+    uri = uris.from_fs_path(str(check_path / "conda.yaml"))
+    doc = ws.get_document(uri, accept_from_file=True)
+    assert doc
+    return doc
 
 
 @pytest.fixture
-def check_conda_yaml(datadir, data_regression):
+def check_conda_yaml(datadir, data_regression) -> Iterator:
     def check(name):
-        from robocorp_code.deps import analyzer
-        from robocorp_ls_core import uris
-        from robocorp_ls_core.watchdog_wrapper import create_observer
-        from robocorp_ls_core.workspace import Workspace
+        from robocorp_code.deps.analyzer import Analyzer
 
-        ws = Workspace(str(datadir), create_observer("dummy", None))
-        check_path = datadir / name
-        uri = uris.from_fs_path(str(check_path / "conda.yaml"))
-        doc = ws.get_document(uri, accept_from_file=True)
+        doc = get_conda_yaml_doc(datadir, name)
 
-        data_regression.check(
-            list(analyzer.Analyzer(doc.source, doc.path).iter_issues())
-        )
+        analyzer = Analyzer(doc.source, doc.path)
+        data_regression.check(list(analyzer.iter_issues()))
 
     yield check
 
 
 @pytest.mark.parametrize("name", ["check_python_version", "check_bad_conda"])
-def test_python_version(check_conda_yaml, name):
+def test_python_version(check_conda_yaml, name: str, patch_pypi_cloud) -> None:
     check_conda_yaml(name)
+
+
+def test_conda_version_spec_api():
+    from robocorp_code.deps.conda_impl import conda_version
+
+    v = conda_version.VersionSpec("22.1.3")
+    op = v.get_matcher(">=22")[1]
+    assert op(v)
+
+    v24 = conda_version.VersionSpec("24")
+    assert op(v24)
+
+    v21 = conda_version.VersionSpec("21")
+    assert not op(v21)
+
+
+def test_pypi_cloud(patch_pypi_cloud) -> None:
+    from robocorp_code.deps._pypi_cloud import PyPiCloud
+
+    pypi_cloud = PyPiCloud()
+
+    versions = pypi_cloud.get_versions_newer_than("rpaframework", "22.1")
+    assert versions == [
+        "22.1.1",
+        "22.2.0",
+        "22.2.1",
+        "22.2.2",
+        "22.2.3",
+        "22.3.0",
+        "22.4.0",
+        "22.5.0",
+        "22.5.1",
+        "22.5.2",
+        "22.5.3",
+        "23.0.0",
+        "23.1.0",
+        "23.2.0",
+        "23.2.1",
+        "23.3.0",
+        "23.4.0",
+        "23.5.0",
+        "23.5.1",
+        "23.5.2",
+        "24.0.0",
+        "24.1.0",
+        "24.1.1",
+        "24.1.2",
+    ]

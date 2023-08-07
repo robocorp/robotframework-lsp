@@ -4,3 +4,4 @@ mypy==0.910
 types-docutils
 types-PyYAML
 fire
+types-requests

@@ -9,3 +9,15 @@
       line: 10
   severity: 2
   source: robocorp-code
+- message: 'Consider updating ''rpaframework'' to the latest version: ''24.1.2''.
+    Found 13 versions newer than the current one: 23.0.0, 23.1.0, 23.2.0, 23.2.1,
+    23.3.0, 23.4.0, 23.5.0, 23.5.1, 23.5.2, 24.0.0, 24.1.0, 24.1.1, 24.1.2.'
+  range:
+    end:
+      character: 28
+      line: 14
+    start:
+      character: 8
+      line: 14
+  severity: 2
+  source: robocorp-code

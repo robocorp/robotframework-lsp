@@ -1,16 +1,15 @@
 import os
+import sys
+from pathlib import Path
+from typing import Any
 
 import pytest
-
+from robocorp_code.protocols import ActionResult, IRcc
 from robocorp_ls_core.protocols import IConfigProvider
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
-from robocorp_code.protocols import IRcc, ActionResult
-import sys
-from typing import Any
-from pathlib import Path
-from robocorp_code_tests.protocols import IRobocorpLanguageServerClient
 
+from robocorp_code_tests.protocols import IRobocorpLanguageServerClient
 
 log = get_logger(__name__)
 
@@ -42,8 +41,7 @@ def main_module():
 
 @pytest.fixture
 def rcc_location() -> str:
-    from robocorp_code.rcc import download_rcc
-    from robocorp_code.rcc import get_default_rcc_location
+    from robocorp_code.rcc import download_rcc, get_default_rcc_location
 
     location = get_default_rcc_location()
     download_rcc(location, force=False)
@@ -198,10 +196,11 @@ class RccPatch(object):
         return self._current_mock(args, *starargs, **kwargs)
 
     def mock_run_rcc_default(self, args, *sargs, **kwargs) -> ActionResult:
-        import json
         import copy
-        from robocorp_code.rcc import ACCOUNT_NAME
+        import json
         import shutil
+
+        from robocorp_code.rcc import ACCOUNT_NAME
 
         if self.custom_handler is not None:
             ret = self.custom_handler(args, *sargs, **kwargs)
@@ -352,3 +351,22 @@ def language_server_initialized(
         raise AssertionError(f"Unexpected result: {result}")
 
     return language_server
+
+
+@pytest.fixture
+def patch_pypi_cloud(monkeypatch):
+    from robocorp_code.deps._pypi_cloud import PyPiCloud
+
+    from robocorp_code_tests.deps.cloud_mock_data import RPAFRAMEWORK_PYPI_MOCK_DATA
+
+    def _get_json_from_cloud(self, url):
+        if url == "https://pypi.org/pypi/rpaframework/json":
+            return RPAFRAMEWORK_PYPI_MOCK_DATA
+        else:
+            raise AssertionError(f"Unexpected: {url}")
+
+    monkeypatch.setattr(
+        PyPiCloud,
+        "_get_json_from_cloud",
+        _get_json_from_cloud,
+    )
