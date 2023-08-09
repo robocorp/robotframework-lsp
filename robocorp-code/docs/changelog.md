@@ -1,3 +1,13 @@
+NEXT
+-----------------------------
+
+- Upgrade RCC from v14.6.0 to v14.15.1
+- Show information from pypi on hover for pypi packages in `conda.yaml`.
+- Warn if the versions for pypi in `conda.yaml` have updates.
+- Check that python is `>= 3.8` in `conda.yaml`
+- Check that pip is `>= 22.0` in `conda.yaml`
+
+
 New in 1.9.0 (2023-08-04)
 -----------------------------
 
