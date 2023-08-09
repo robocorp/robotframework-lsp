@@ -30,9 +30,38 @@ def check_conda_yaml(datadir, data_regression) -> Iterator:
     yield check
 
 
-@pytest.mark.parametrize("name", ["check_python_version", "check_bad_conda"])
+@pytest.mark.parametrize(
+    "name",
+    [
+        "check_python_version",
+        "check_bad_conda",
+        "check_bad_version",
+        "check_bad_version2",
+    ],
+)
 def test_python_version(check_conda_yaml, name: str, patch_pypi_cloud) -> None:
     check_conda_yaml(name)
+
+
+def test_hover_conda_yaml_pos(datadir, patch_pypi_cloud):
+    from robocorp_code.deps.analyzer import Analyzer
+
+    doc = get_conda_yaml_doc(datadir, "check_python_version")
+
+    analyzer = Analyzer(doc.source, doc.path)
+    pip_dep = analyzer.find_pip_dep_at(14, 17)
+    assert pip_dep is not None
+    assert pip_dep.name == "rpaframework"
+
+
+def test_hover_conda_yaml_rpaframework(datadir, data_regression, patch_pypi_cloud):
+    from robocorp_code.deps.pypi_cloud import PyPiCloud
+    from robocorp_code.hover import hover_on_conda_yaml
+
+    doc = get_conda_yaml_doc(datadir, "check_python_version")
+
+    pypi_cloud = PyPiCloud()
+    data_regression.check(hover_on_conda_yaml(doc, 14, 17, pypi_cloud))
 
 
 def test_conda_version_spec_api():
@@ -50,7 +79,7 @@ def test_conda_version_spec_api():
 
 
 def test_pypi_cloud(patch_pypi_cloud) -> None:
-    from robocorp_code.deps._pypi_cloud import PyPiCloud
+    from robocorp_code.deps.pypi_cloud import PyPiCloud
 
     pypi_cloud = PyPiCloud()
 

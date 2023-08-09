@@ -4,74 +4,18 @@ it a standalone package in the future (maybe with a command line UI).
 """
 
 import pathlib
-from typing import Any, Iterator, List, Optional, Tuple, TypedDict, Union
+from typing import Any, Iterator, List, Optional, Tuple
 
 import yaml
+from robocorp_code.deps._deps_protocols import (
+    _DiagnosticSeverity,
+    _DiagnosticsTypedDict,
+    _RangeTypedDict,
+)
 
-
-class _DiagnosticSeverity(object):
-    Error = 1
-    Warning = 2
-    Information = 3
-    Hint = 4
-
-
-class _PositionTypedDict(TypedDict):
-    # Line position in a document (zero-based).
-    line: int
-
-    # Character offset on a line in a document (zero-based). Assuming that
-    # the line is represented as a string, the `character` value represents
-    # the gap between the `character` and `character + 1`.
-    #
-    # If the character value is greater than the line length it defaults back
-    # to the line length.
-    character: int
-
-
-class _RangeTypedDict(TypedDict):
-    start: _PositionTypedDict
-    end: _PositionTypedDict
-
-
-class _DiagnosticsTypedDict(TypedDict, total=False):
-    # The range at which the message applies.
-    range: _RangeTypedDict
-
-    # The diagnostic's severity. Can be omitted. If omitted it is up to the
-    # client to interpret diagnostics as error, warning, info or hint.
-    severity: Optional[int]  # DiagnosticSeverity
-
-    # The diagnostic's code, which might appear in the user interface.
-    code: Union[int, str]
-
-    # An optional property to describe the error code.
-    #
-    # @since 3.16.0
-    codeDescription: Any
-
-    # A human-readable string describing the source of this
-    # diagnostic, e.g. 'typescript' or 'super lint'.
-    source: Optional[str]
-
-    # The diagnostic's message.
-    message: str
-
-    # Additional metadata about the diagnostic.
-    #
-    # @since 3.15.0
-    tags: list  # DiagnosticTag[];
-
-    # An array of related diagnostic information, e.g. when symbol-names within
-    # a scope collide all definitions can be marked via this property.
-    relatedInformation: list  # DiagnosticRelatedInformation[];
-
-    # A data entry field that is preserved between a
-    # `textDocument/publishDiagnostics` notification and
-    # `textDocument/codeAction` request.
-    #
-    # @since 3.16.0
-    data: Optional[Any]  # unknown;
+from ._deps_protocols import IPyPiCloud
+from ._pip_deps import PipDepInfo
+from .pypi_cloud import PyPiCloud
 
 
 class ScalarInfo:
@@ -151,7 +95,11 @@ class LoaderWithLines(yaml.SafeLoader):
 
 
 class Analyzer:
-    def __init__(self, contents: str, path: str):
+    _pypi_cloud: IPyPiCloud
+
+    def __init__(
+        self, contents: str, path: str, pypi_cloud: Optional[IPyPiCloud] = None
+    ):
         """
         Args:
             contents: The contents of the conda.yaml.
@@ -159,7 +107,6 @@ class Analyzer:
         """
         from ._conda_deps import CondaDeps
         from ._pip_deps import PipDeps
-        from ._pypi_cloud import PyPiCloud
 
         self.contents = contents
         self.path = path
@@ -170,7 +117,10 @@ class Analyzer:
 
         self._pip_deps = PipDeps()
         self._conda_deps = CondaDeps()
-        self._pypi_cloud = PyPiCloud()
+        if pypi_cloud is None:
+            self._pypi_cloud = PyPiCloud()
+        else:
+            self._pypi_cloud = pypi_cloud
 
     def load_conda_yaml(self) -> None:
         if self._loaded_conda_yaml:
@@ -241,10 +191,22 @@ class Analyzer:
         yield from self.iter_pip_issues()
 
     def iter_pip_issues(self):
-        from robocorp_code.deps.pip_impl import pip_packaging_version
+        from .pip_impl import pip_packaging_version
 
         for dep_info in self._pip_deps.iter_pip_dep_infos():
-            if len(dep_info.constraints) == 1:
+            if dep_info.error_msg:
+                diagnostic = {
+                    "range": dep_info.dep_range,
+                    "severity": _DiagnosticSeverity.Error,
+                    "source": "robocorp-code",
+                    "message": dep_info.error_msg,
+                }
+
+                yield diagnostic
+
+                continue
+
+            if dep_info.constraints and len(dep_info.constraints) == 1:
                 # For now just checking versions '=='.
                 constraint = next(iter(dep_info.constraints))
                 if constraint[0] == "==":
@@ -300,6 +262,24 @@ class Analyzer:
             }
 
             yield diagnostic
+
+    def find_pip_dep_at(self, line, col) -> Optional[PipDepInfo]:
+        self.load_conda_yaml()
+        for dep_info in self._pip_deps.iter_pip_dep_infos():
+            if is_inside(dep_info.dep_range, line, col):
+                return dep_info
+        return None
+
+
+def is_inside(range_dct: _RangeTypedDict, line: int, col: int) -> bool:
+    from robocorp_ls_core.lsp import Position
+
+    start = range_dct["start"]
+    end = range_dct["end"]
+    start_pos = Position(start["line"], start["character"])
+    end_pos = Position(end["line"], end["character"])
+    curr_pos = Position(line, col)
+    return start_pos <= curr_pos <= end_pos
 
 
 def check_version(dep_vspec, constraint):

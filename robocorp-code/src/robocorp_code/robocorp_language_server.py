@@ -11,12 +11,14 @@ from robocorp_ls_core import watchdog_wrapper
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.cache import CachedFileInfo
 from robocorp_ls_core.command_dispatcher import _CommandDispatcher
-from robocorp_ls_core.protocols import IConfig, LibraryVersionInfoDict
+from robocorp_ls_core.jsonrpc.endpoint import require_monitor
+from robocorp_ls_core.protocols import IConfig, IMonitor, LibraryVersionInfoDict
 from robocorp_ls_core.python_ls import BaseLintManager, PythonLanguageServer
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
 
 from robocorp_code import commands
+from robocorp_code.deps._deps_protocols import IPyPiCloud
 from robocorp_code.protocols import (
     ActionResultDict,
     ActionResultDictLocalRobotMetadata,
@@ -103,6 +105,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         from robocorp_code._language_server_pre_run_scripts import _PreRunScripts
         from robocorp_code._language_server_profile import _Profile
         from robocorp_code._language_server_vault import _Vault
+        from robocorp_code.deps.pypi_cloud import PyPiCloud
         from robocorp_code.rcc import Rcc
 
         user_home = os.getenv("ROBOCORP_CODE_USER_HOME", None)
@@ -194,6 +197,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         from robocorp_code.plugins.resolve_interpreter import register_plugins
 
         self._prefix_to_last_run_number_and_time = {}
+        self._pypi_cloud = PyPiCloud()
 
         self._paths_remover = None
         self._paths_remover_queue = Queue()
@@ -205,6 +209,10 @@ class RobocorpLanguageServer(PythonLanguageServer):
             plugin_manager=self._pm,
             lsp_messages=self._lsp_messages,
         )
+
+    @property
+    def pypi_cloud(self) -> IPyPiCloud:
+        return self._pypi_cloud
 
     def _discard_listed_workspaces_info(self):
         self._dir_cache.discard(self.CLOUD_LIST_WORKSPACE_CACHE_KEY)
@@ -1094,18 +1102,49 @@ class RobocorpLanguageServer(PythonLanguageServer):
         locators.json.
         """
         from robocorp_ls_core import uris
-        from robocorp_ls_core.lsp import MarkupContent, MarkupKind, Range
-        from robocorp_ls_core.protocols import IDocument, IDocumentSelection
 
         doc_uri = kwargs["textDocument"]["uri"]
         # Note: 0-based
         line: int = kwargs["position"]["line"]
         col: int = kwargs["position"]["character"]
-        if not uris.to_fs_path(doc_uri).endswith("locators.json"):
-            return None
+        fspath = uris.to_fs_path(doc_uri)
+
+        if fspath.endswith("locators.json"):
+            return require_monitor(
+                partial(self._hover_on_locators_json, doc_uri, line, col)
+            )
+        if fspath.endswith("conda.yaml"):
+            return require_monitor(
+                partial(self._hover_on_conda_yaml, doc_uri, line, col)
+            )
+        return None
+
+    def _hover_on_conda_yaml(
+        self, doc_uri, line, col, monitor: IMonitor
+    ) -> Optional[dict]:
+        from robocorp_ls_core.protocols import IDocument
+
+        from robocorp_code.hover import hover_on_conda_yaml
+
         ws = self._workspace
         if ws is None:
             return None
+
+        doc: Optional[IDocument] = ws.get_document(doc_uri, accept_from_file=True)
+        if doc is None:
+            return None
+        return hover_on_conda_yaml(doc, line, col, self._pypi_cloud)
+
+    def _hover_on_locators_json(
+        self, doc_uri, line, col, monitor: IMonitor
+    ) -> Optional[dict]:
+        from robocorp_ls_core.lsp import MarkupContent, MarkupKind, Range
+        from robocorp_ls_core.protocols import IDocument, IDocumentSelection
+
+        ws = self._workspace
+        if ws is None:
+            return None
+
         document: Optional[IDocument] = ws.get_document(doc_uri, accept_from_file=True)
         if document is None:
             return None

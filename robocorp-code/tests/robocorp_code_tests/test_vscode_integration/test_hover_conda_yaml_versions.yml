@@ -1,0 +1,347 @@
+contents:
+  kind: markdown
+  value: "# rpaframework\nVersion `22.5.3` was released at: `2023-05-02T04:59:50`\n\
+    \nVersions released in the last 12 months:\n`15.7.0`, `15.8.0`, `15.8.1`, `15.9.0`,\
+    \ `16.0.0`, `16.1.0`, `16.2.0`, `16.3.0`, `17.0.0`, `17.0.1`, `17.1.0`, `17.1.1`,\
+    \ `17.2.0`, `17.3.0`, `17.4.0`, `17.5.0`, `17.5.1`, `17.5.2`, `17.6.0`, `17.7.0`,\
+    \ `18.0.0`, `19.0.0`, `19.1.0`, `19.1.1`, `19.1.2`, `19.2.0`, `19.3.0`, `19.3.1`,\
+    \ `19.4.0`, `19.4.1`, `19.4.2`, `20.0.0`, `20.0.1`, `20.0.2`, `20.1.0`, `20.1.1`,\
+    \ `20.1.2`, `21.0.0`, `21.0.1`, `21.1.0`, `21.1.1`, `22.0.0`, `22.0.1`, `22.1.0`,\
+    \ `22.1.1`, `22.2.0`, `22.2.1`, `22.2.2`, `22.2.3`, `22.3.0`, `22.4.0`, `22.5.0`,\
+    \ `22.5.1`, `22.5.2`, `22.5.3`, `23.0.0`, `23.1.0`, `23.2.0`, `23.2.1`, `23.3.0`,\
+    \ `23.4.0`, `23.5.0`, `23.5.1`, `23.5.2`, `24.0.0`, `24.1.0`, `24.1.1`, `24.1.2`\n\
+    \n**Home Page**: https://rpaframework.org/\n\n**Package URL**: https://pypi.org/project/rpaframework/\n\
+    \n**Repository**: https://github.com/robocorp/rpaframework\n## Requirements:\n\
+    - docutils\n- rpaframework-core (>=11.0.5,<12.0.0)\n- rpaframework-pdf (>=7.1.5,<8.0.0)\n\
+    - rpaframework-windows (>=7.3.2,<8.0.0) ; sys_platform == \"win32\"\n- java-access-bridge-wrapper\
+    \ (==0.14.1)\n- robocorp-storage (>=0.3.2,<0.4.0)\n- jsonpath-ng (>=1.5.2,<2.0.0)\n\
+    - robotframework (>=4.0.0,!=4.0.1,<6.0.0)\n- robotframework-sapguilibrary (>=1.1,<2.0)\
+    \ ; sys_platform == \"win32\"\n- robotframework-seleniumlibrary (>=6.0.0,<7.0.0)\n\
+    - robotframework-seleniumtestability (>=2.0.0,<3.0.0)\n- robotframework-requests\
+    \ (>=0.9.1,<0.10.0)\n- pywinauto (>=0.6.8,<0.7.0) ; python_full_version != \"\
+    3.7.6\" and python_full_version != \"3.8.1\" and sys_platform == \"win32\"\n-\
+    \ pywin32 (>=302,<304) ; python_full_version != \"3.7.6\" and python_full_version\
+    \ != \"3.8.1\" and sys_platform == \"win32\"\n- comtypes (>=1.1.11,<2.0.0) ; sys_platform\
+    \ == \"win32\"\n- robotframework-pythonlibcore (>=4.0.0,<5.0.0)\n- pynput-robocorp-fork\
+    \ (>=5.0.0,<6.0.0)\n- python-xlib (>=0.17) ; sys_platform == \"linux\"\n- psutil\
+    \ (>=5.7.0,<6.0.0) ; sys_platform == \"win32\"\n- pyperclip (>=1.8.0,<2.0.0)\n\
+    - exchangelib (>=4.7.6,<5.0.0)\n- tzlocal (>=4.2,<5.0)\n- xlrd (>=2.0.1,<3.0.0)\n\
+    - xlwt (>=1.3.0,<2.0.0)\n- xlutils (>=2.0.0,<3.0.0)\n- openpyxl (>=3.0.9,<4.0.0)\n\
+    - pillow (>=9.1.1,<10.0.0)\n- simple_salesforce (>=1.0.0,<2.0.0)\n- netsuitesdk\
+    \ (>=1.1.0,<2.0.0)\n- tweepy (>=3.8.0,<4.0.0)\n- graphviz (>=0.13.2,<0.14.0)\n\
+    - notifiers (>=1.3.3,<2.0.0)\n- cryptography (>=41.0.1,<42.0.0)\n- mss (>=6.0.0,<7.0.0)\n\
+    - chardet (>=3.0.0,<4.0.0)\n- PySocks (>=1.5.6,!=1.5.7,<2.0.0)\n- selenium (>=4.6.1,<5.0.0,!=4.10.0)\n\
+    - click (>=8.1.2,<9.0.0)\n- PyYAML (>=5.4.1,<7.0.0)\n- tenacity (>=8.0.1,<9.0.0)\n\
+    - htmldocx (>=0.0.6,<0.0.7)\n- hubspot-api-client (>=4.0.6,<5.0.0)\n- pyotp (>=2.6.0,<3.0.0)\n\
+    - importlib-metadata (>=4.13.0,<5.0.0)\n- O365 (>=2.0.21,<2.0.27)\n- requests\
+    \ (>=2.28.1,<3.0.0)\n- oauthlib (>=3.2.2,<4.0.0)\n- requests-oauthlib (>=1.3.1,<2.0.0)\n\
+    - PyJWT (>=2.6.0,<3.0.0)\n- validators (>=0.20.0,<0.21.0)\n- smartsheet-python-sdk\
+    \ (>=3.0.0,<4.0.0)\n- pendulum (>=2.1.2,<3.0.0)\n- holidays (>=0.21,<0.22)\n#\
+    \ Description\nRPA Framework\n=============\n\nREQUEST for user input!\n-----------------------\n\
+    \nWe are looking at improving our keyword usage to cover situations where developer\
+    \ might be\nstruggling to smoothly write task for a Robot. Describe the situation\
+    \ where your **implementation speed slows** due to the lack of easier syntax.\n\
+    \n`Comment HERE <https://github.com/robocorp/rpaframework/issues/738>`_\n\n..\
+    \ contents:: Table of Contents\n   :local:\n   :depth: 1\n\n.. include-marker\n\
+    \n\n\nIntroduction\n------------\n\n`RPA Framework` is a collection of open-source\
+    \ libraries and tools for\nRobotic Process Automation (RPA), and it is designed\
+    \ to be used with both\n`Robot Framework`_ and `Python`_. The goal is to offer\
+    \ well-documented and\nactively maintained core libraries for Software Robot Developers.\n\
+    \nLearn more about RPA at `Robocorp Documentation`_.\n\n**The project is:**\n\n\
+    - 100% Open Source\n- Sponsored by Robocorp_\n- Optimized for Robocorp `Control\
+    \ Room`_ and `Developer Tools`_\n- Accepting external contributions\n\n.. _Robot\
+    \ Framework: https://robotframework.org\n.. _Robot Framework Foundation: https://robotframework.org/foundation/\n\
+    .. _Python: https://www.python.org/\n.. _Robocorp: https://robocorp.com\n.. _Robocorp\
+    \ Documentation: https://robocorp.com/docs/\n.. _Control Room: https://robocorp.com/docs/control-room\n\
+    .. _Developer Tools: https://robocorp.com/downloads\n.. _Installing Python Packages:\
+    \ https://robocorp.com/docs/setup/installing-python-package-dependencies\n\nLinks\n\
+    ^^^^^\n\n- Homepage: `<https://www.github.com/robocorp/rpaframework/>`_\n- Documentation:\
+    \ `<https://rpaframework.org/>`_\n- PyPI: `<https://pypi.org/project/rpaframework/>`_\n\
+    - Release notes: `<https://rpaframework.org/releasenotes.html>`_\n- RSS feed:\
+    \ `<https://rpaframework.org/releases.xml>`_\n\n------------\n\n.. image:: https://img.shields.io/github/actions/workflow/status/robocorp/rpaframework/main.yaml?style=for-the-badge\n\
+    \   :target: https://github.com/robocorp/rpaframework/actions/workflows/main.yaml\n\
+    \   :alt: Status\n\n.. image:: https://img.shields.io/pypi/dw/rpaframework?style=for-the-badge\n\
+    \   :target: https://pypi.python.org/pypi/rpaframework\n   :alt: rpaframework\n\
+    \n.. image:: https://img.shields.io/pypi/l/rpaframework.svg?style=for-the-badge&color=brightgreen\n\
+    \   :target: http://www.apache.org/licenses/LICENSE-2.0.html\n   :alt: License\n\
+    \n------------\n\nPackages\n--------\n\n.. image:: https://img.shields.io/pypi/v/rpaframework.svg?label=rpaframework&style=for-the-badge\n\
+    \   :target: https://pypi.python.org/pypi/rpaframework\n   :alt: rpaframework\
+    \ latest version\n\n\n.. image:: https://img.shields.io/pypi/v/rpaframework-assistant.svg?label=rpaframework-assistant&style=for-the-badge\n\
+    \   :target: https://pypi.python.org/pypi/rpaframework-assistant\n   :alt: rpaframework-assistant\
+    \ latest version\n\n\n.. image:: https://img.shields.io/pypi/v/rpaframework-aws.svg?label=rpaframework-aws&style=for-the-badge\n\
+    \   :target: https://pypi.python.org/pypi/rpaframework-aws\n   :alt: rpaframework-aws\
+    \ latest version\n\n\n\n.. image:: https://img.shields.io/pypi/v/rpaframework-core.svg?label=rpaframework-core&style=for-the-badge\n\
+    \   :target: https://pypi.python.org/pypi/rpaframework-core\n   :alt: rpaframework-core\
+    \ latest version\n\n\n\n.. image:: https://img.shields.io/pypi/v/rpaframework-dialogs.svg?label=rpaframework-dialogs&style=for-the-badge&color=blue\n\
+    \   :target: https://pypi.python.org/pypi/rpaframework-dialogs\n   :alt: rpaframework-dialogs\
+    \ latest version\n\n\n\n.. image:: https://img.shields.io/pypi/v/rpaframework-google.svg?label=rpaframework-google&style=for-the-badge&color=blue\n\
+    \   :target: https://pypi.python.org/pypi/rpaframework-google\n   :alt: rpaframework-google\
+    \ latest version\n\n\n.. image:: https://img.shields.io/pypi/v/rpaframework-openai.svg?label=rpaframework-openai&style=for-the-badge&color=blue\n\
+    \   :target: https://pypi.python.org/pypi/rpaframework-openai\n   :alt: rpaframework-openai\
+    \ latest version\n\n\n.. image:: https://img.shields.io/pypi/v/rpaframework-pdf.svg?label=rpaframework-pdf&style=for-the-badge&color=blue\n\
+    \   :target: https://pypi.python.org/pypi/rpaframework-pdf\n   :alt: rpaframework-pdf\
+    \ latest version\n\n\n\n.. image:: https://img.shields.io/pypi/v/rpaframework-recognition.svg?label=rpaframework-recognition&style=for-the-badge&color=blue\n\
+    \   :target: https://pypi.python.org/pypi/rpaframework-recognition\n   :alt: rpaframework-recognition\
+    \ latest version\n\n\n\n.. image:: https://img.shields.io/pypi/v/rpaframework-windows.svg?label=rpaframework-windows&style=for-the-badge&color=blue\n\
+    \   :target: https://pypi.python.org/pypi/rpaframework-windows\n   :alt: rpaframework-windows\
+    \ latest version\n\nFrom the above packages **rpaframework-core** and **rpaframework-recognition**\
+    \ are support packages, which themselves do **not** contain any libraries.\n\n\
+    \nLibraries\n---------\n\nThe RPA Framework project currently includes the following\
+    \ libraries:\n\nThe ``x`` in the **PACKAGE** column means that library **is**\
+    \ included in the **rpaframework** package and for example. ``x,dialogs`` means\
+    \ that ``RPA.Dialogs`` library is provided in both the **rpaframework** and **rpaframework-dialogs**\
+    \ packages.\n\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | **LIBRARY NAME**           | **DESCRIPTION**                               \
+    \        | **PACKAGE**            |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Archive`_                 | Archiving TAR and ZIP files                   \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Assistant`_               | Display information to a user and request input.\
+    \      | assistant              |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Browser.Selenium`_        | Control browsers and automate the web         \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Browser.Playwright`_      | Newer way to control browsers                 \
+    \        | special (more below)   |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Calendar`_                | For date and time manipulations               \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Cloud.AWS`_               | Use Amazon AWS services                       \
+    \        | x,aws                  |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Cloud.Azure`_             | Use Microsoft Azure services                  \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Cloud.Google`_            | Use Google Cloud services                     \
+    \        | google                 |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Crypto`_                  | Common hashing and encryption operations      \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Database`_                | Interact with databases                       \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Desktop`_                 | Cross-platform desktop automation             \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Desktop.Clipboard`_       | Interact with the system clipboard            \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Desktop.OperatingSystem`_ | Read OS information and manipulate processes  \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Dialogs`_                 | Request user input during executions          \
+    \        | dialogs                |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `DocumentAI`_              | Intelligent Document Processing wrapper       \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `DocumentAI.Base64AI`_     | Intelligent Document Processing service       \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `DocumentAI.Nanonets`_     | Intelligent Document Processing service       \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Email.Exchange`_          | E-Mail operations (Exchange protocol)         \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Email.ImapSmtp`_          | E-Mail operations (IMAP & SMTP)               \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Excel.Application`_       | Control the Excel desktop application         \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Excel.Files`_             | Manipulate Excel files directly               \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `FileSystem`_              | Read and manipulate files and paths           \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `FTP`_                     | Interact with FTP servers                     \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `HTTP`_                    | Interact directly with web APIs               \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Hubspot`_                 | Access HubSpot CRM data objects               \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Images`_                  | Manipulate images                             \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `JavaAccessBridge`_        | Control Java applications                     \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `JSON`_                    | Manipulate JSON objects                       \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `MFA`_                     | Authenticate using one-time passwords (OTP) & OAuth2\
+    \  | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Notifier`_                | Notify messages using different services      \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `OpenAI`_                  | Artificial Intelligence service               \
+    \        | openai                 |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Outlook.Application`_     | Control the Outlook desktop application       \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `PDF`_                     | Read and create PDF documents                 \
+    \        | x,pdf                  |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Robocorp.Process`_        | Use the Robocorp Process API                  \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Robocorp.WorkItems`_      | Use the Robocorp Work Items API               \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Robocorp.Vault`_          | Use the Robocorp Secrets API                  \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Robocorp.Storage`_        | Use the Robocorp Asset Storage API            \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Salesforce`_              | Salesforce operations                         \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `SAP`_                     | Control SAP GUI desktop client                \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Smartsheet`_              | Access Smartsheet sheets                      \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Tables`_                  | Manipulate, sort, and filter tabular data     \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Tasks`_                   | Control task execution                        \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Twitter`_                 | Twitter API interface                         \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Windows`_                 | Alternative library for Windows automation    \
+    \        | x,windows              |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    | `Word.Application`_        | Control the Word desktop application          \
+    \        | x                      |\n+----------------------------+-------------------------------------------------------+------------------------+\n\
+    \n.. _Archive: https://rpaframework.org/libraries/archive/\n.. _Assistant: https://rpaframework.org/libraries/assistant/\n\
+    .. _Browser.Playwright: https://rpaframework.org/libraries/browser_playwright/\n\
+    .. _Browser.Selenium: https://rpaframework.org/libraries/browser_selenium/\n..\
+    \ _Calendar: https://rpaframework.org/libraries/calendar/\n.. _Cloud.AWS: https://rpaframework.org/libraries/cloud_aws/\n\
+    .. _Cloud.Azure: https://rpaframework.org/libraries/cloud_azure/\n.. _Cloud.Google:\
+    \ https://rpaframework.org/libraries/cloud_google/\n.. _Crypto: https://rpaframework.org/libraries/crypto/\n\
+    .. _Database: https://rpaframework.org/libraries/database/\n.. _Desktop: https://rpaframework.org/libraries/desktop/\n\
+    .. _Desktop.Clipboard: https://rpaframework.org/libraries/desktop_clipboard/\n\
+    .. _Desktop.Operatingsystem: https://rpaframework.org/libraries/desktop_operatingsystem/\n\
+    .. _Dialogs: https://rpaframework.org/libraries/dialogs/\n.. _DocumentAI: https://rpaframework.org/libraries/documentai\n\
+    .. _DocumentAI.Base64AI: https://rpaframework.org/libraries/documentai_base64ai/\n\
+    .. _DocumentAI.Nanonets: https://rpaframework.org/libraries/documentai_nanonets/\n\
+    .. _Email.Exchange: https://rpaframework.org/libraries/email_exchange/\n.. _Email.ImapSmtp:\
+    \ https://rpaframework.org/libraries/email_imapsmtp/\n.. _Excel.Application: https://rpaframework.org/libraries/excel_application/\n\
+    .. _Excel.Files: https://rpaframework.org/libraries/excel_files/\n.. _FileSystem:\
+    \ https://rpaframework.org/libraries/filesystem/\n.. _FTP: https://rpaframework.org/libraries/ftp/\n\
+    .. _HTTP: https://rpaframework.org/libraries/http/\n.. _Hubspot: https://rpaframework.org/libraries/hubspot/\n\
+    .. _Images: https://rpaframework.org/libraries/images/\n.. _JavaAccessBridge:\
+    \ https://rpaframework.org/libraries/javaaccessbridge/\n.. _JSON: https://rpaframework.org/libraries/json/\n\
+    .. _MFA: https://rpaframework.org/libraries/mfa/\n.. _Notifier: https://rpaframework.org/libraries/notifier/\n\
+    .. _OpenAI: https://rpaframework.org/libraries/openai/\n.. _Outlook.Application:\
+    \ https://rpaframework.org/libraries/outlook_application/\n.. _PDF: https://rpaframework.org/libraries/pdf/\n\
+    .. _Robocorp.Process: https://rpaframework.org/libraries/robocorp_process/\n..\
+    \ _Robocorp.WorkItems: https://rpaframework.org/libraries/robocorp_workitems/\n\
+    .. _Robocorp.Vault: https://rpaframework.org/libraries/robocorp_vault/\n.. _Robocorp.Storage:\
+    \ https://rpaframework.org/libraries/robocorp_storage/\n.. _Salesforce: https://rpaframework.org/libraries/salesforce/\n\
+    .. _SAP: https://rpaframework.org/libraries/sap/\n.. _Smartsheet: https://rpaframework.org/libraries/smartsheet/\n\
+    .. _Tables: https://rpaframework.org/libraries/tables/\n.. _Tasks: https://rpaframework.org/libraries/tasks/\n\
+    .. _Twitter: https://rpaframework.org/libraries/twitter/\n.. _Windows: https://rpaframework.org/libraries/windows/\n\
+    .. _Word.Application: https://rpaframework.org/libraries/word_application/\n\n\
+    Installation of RPA.Browser.Playwright\n--------------------------------------\n\
+    \nThe **RPA.Browser.Playwright** at the moment requires special installation,\
+    \ because\nof the package size and the post install step it needs to be fully\
+    \ installed.\n\nMinimum required conda.yaml to install Playwright:\n\n.. code-block::\
+    \ yaml\n\n   channels:\n     - conda-forge\n   dependencies:\n     - python=3.9.13\n\
+    \     - pip=22.1.2\n     - nodejs=16.4.2\n     - pip:\n       - robotframework-browser==13.3.0\n\
+    \       - rpaframework==22.2.1\n   rccPostInstall:\n     - rfbrowser init\n\n\
+    Installation\n------------\n\nLearn about installing Python packages at `Installing\
+    \ Python Packages`_.\n\nDefault installation method with Robocorp `Developer Tools`_\
+    \ using conda.yaml:\n\n.. code-block:: yaml\n\n   channels:\n     - conda-forge\n\
+    \   dependencies:\n     - python=3.9.13\n     - pip=22.1.2\n     - pip:\n    \
+    \   - rpaframework==22.2.1\n\nTo install all extra packages (including Playwright\
+    \ dependencies), you can use:\n\n.. code-block:: yaml\n\n   channels:\n     -\
+    \ conda-forge\n   dependencies:\n     - python=3.9.13\n     - tesseract=4.1.1\n\
+    \     - pip=22.1.2\n     - nodejs=16.14.2\n     - pip:\n       - robotframework-browser==13.3.0\n\
+    \       - rpaframework==22.2.1\n       - rpaframework-aws==5.0.0\n       - rpaframework-google==6.1.1\n\
+    \       - rpaframework-recognition==5.0.0\n   rccPostInstall:\n     - rfbrowser\
+    \ init\n\nSeparate installation of AWS, Dialogs, PDF and Windows libraries without\
+    \ main rpaframework:\n\n.. code-block:: yaml\n\n   channels:\n     - conda-forge\n\
+    \   dependencies:\n     - python=3.9.13\n     - pip=22.1.2\n     - pip:\n    \
+    \   - rpaframework-aws==5.0.0 # included in the rpaframework as an extra\n   \
+    \    - rpaframework-dialogs==4.0.0  # included in the rpaframework by default\n\
+    \       - rpaframework-pdf==5.0.0  # included in the rpaframework by default\n\
+    \       - rpaframework-windows==6.0.1 # included in the rpaframework by default\n\
+    \n\n.. note:: Python 3.7 or higher is required\n\nExample\n-------\n\nAfter installation\
+    \ the libraries can be directly imported inside\n`Robot Framework`_:\n\n.. code::\
+    \ robotframework\n\n    *** Settings ***\n    Library    RPA.Browser.Selenium\n\
+    \n    *** Tasks ***\n    Login as user\n        Open available browser    https://example.com\n\
+    \        Input text    id:user-name    ${USERNAME}\n        Input text    id:password\
+    \     ${PASSWORD}\n\nThe libraries are also available inside Python_:\n\n.. code::\
+    \ python\n\n    from RPA.Browser.Selenium import Selenium\n\n    lib = Selenium()\n\
+    \n    lib.open_available_browser(\"https://example.com\")\n    lib.input_text(\"\
+    id:user-name\", username)\n    lib.input_text(\"id:password\", password)\n\nSupport\
+    \ and contact\n-------------------\n\n- `rpaframework.org <https://rpaframework.org/>`_\
+    \ for library documentation\n- `Robocorp Documentation`_ for guides and tutorials\n\
+    - **#rpaframework** channel in `Robot Framework Slack`_ if you\n  have open questions\
+    \ or want to contribute\n- `Robocorp Forum`_ for discussions about RPA\n- Communicate\
+    \ with your fellow Software Robot Developers and Robocorp experts\n  at `Robocorp\
+    \ Developers Slack`_\n\n.. _Robot Framework Slack: https://robotframework-slack-invite.herokuapp.com/\n\
+    .. _Robocorp Forum: https://forum.robocorp.com\n.. _Robocorp Developers Slack:\
+    \ https://robocorp-developers.slack.com\n\nContributing\n------------\n\nFound\
+    \ a bug? Missing a critical feature? Interested in contributing?\nHead over to\
+    \ the `Contribution guide <https://rpaframework.org/contributing/guide.html>`_\n\
+    to see where to get started.\n\nDevelopment\n-----------\n\nRepository development\
+    \ is `Python`_ based and requires at minimum\nPython version 3.7+ installed on\
+    \ the development machine. The default Python version used in the\nRobocorp Robot\
+    \ template is 3.7.5 so it is a good choice for the version to install. Not recommended\n\
+    versions are 3.7.6 and 3.8.1, because they have issues with some of the dependencies\
+    \ related to rpaframework.\nAt the time the newer Python versions starting from\
+    \ 3.9 are also not recommended, because some of\nthe dependencies might cause\
+    \ issues.\n\nRepository development tooling is based on basically on `poetry`_\
+    \ and `invoke`_. Poetry is the\nunderlying tool used for compiling, building and\
+    \ running the package. Invoke is used for scripting\npurposes for example for\
+    \ linting, testing and publishing tasks.\n\nFirst steps to start developing:\n\
+    \n1. initial poetry configuration\n\n.. code:: shell\n\n   poetry config virtualenvs.path\
+    \ null\n   poetry config virtualenvs.in-project true\n   poetry config repositories.devpi\
+    \ \"https://devpi.robocorp.cloud/ci/test\"\n\n2. git clone the repository\n#.\
+    \ create a new Git branch or switch to correct branch or stay in master branch\n\
+    \n   - some branch naming conventions **feature/name-of-feature**, **hotfix/name-of-the-issue**,\
+    \ **release/number-of-release**\n\n#. ``poetry install`` which install package\
+    \ with its dependencies into the **.venv** directory of the package, for example\
+    \ **packages/main/.venv**\n#. if testing against Robocorp Robot which is using\
+    \ **devdata/env.json**\n\n   - set environment variables\n   - or ``poetry build``\
+    \ and use resulting .whl file (in the **dist/** directory) in the Robot **conda.yaml**\n\
+    \   - or ``poetry build`` and push resulting .whl file  (in the **dist/** directory)\
+    \ into a repository and use raw url\n     to include it in the Robot **conda.yaml**\n\
+    \   - another possibility for Robocorp internal development is to use Robocorp\
+    \ **devpi** instance, by ``poetry publish --ci``\n     and point **conda.yaml**\
+    \ to use rpaframework version in devpi\n\n#. ``poetry run python -m robot <ROBOT_ARGS>\
+    \ <TARGET_ROBOT_FILE>``\n\n   - common *ROBOT_ARGS* from Robocorp Robot template:\
+    \ ``--report NONE --outputdir output --logtitle \"Task log\"``\n\n#. ``poetry\
+    \ run python <TARGET_PYTHON_FILE>``\n#. ``invoke lint`` to make sure that code\
+    \ formatting is according to **rpaframework** repository guidelines.\n   It is\
+    \ possible and likely that Github action will fail the if developer has not linted\
+    \ the code changes. Code\n   formatting is based on `black`_ and `flake8`_ and\
+    \ those are run with the ``invoke lint``.\n#. the library documentation can be\
+    \ created in the repository root (so called \"meta\" package level). The documentation\
+    \ is\n   built by the docgen tools using the locally installed version of the\
+    \ project, local changes for the main package\n   will be reflected each time\
+    \ you generate the docs, but if you want to see local changes for optional packages,\
+    \ you must\n   utilize ``invoke install-local --package <package_name>`` using\
+    \ the appropriate package name (e.g., ``rpaframework-aws``). This\n   will reinstall\
+    \ that package as a local editable version instead of from PyPI. Multiple such\
+    \ packages can be added by\n   repeating the use of the ``--package`` option.\
+    \ In order to reset this, use ``invoke install --reset``.\n\n   - ``poetry update``\
+    \ and/or ``invoke install-local --package <package name>``\n   - ``make docs``\n\
+    \   - open ``docs/build/html/index.html`` with the browser to view the changes\
+    \ or execute ``make local`` and navigate to\n     ``localhost:8000`` to view docs\
+    \ as a live local webpage.\n\n   .. code-block:: toml\n\n      # Before\n    \
+    \  [tool.poetry.dependencies]\n      python = \"^3.7\"\n      rpaframework = {\
+    \ path = \"packages/main\", extras = [\"cv\", \"playwright\", \"aws\"] }\n   \
+    \   rpaframework-google = \"^4.0.0\"\n      rpaframework-windows = \"^4.0.0\"\n\
+    \n      # After\n      [tool.poetry.dependencies]\n      python = \"^3.7\"\n \
+    \     rpaframework = { path = \"packages/main\", extras = [\"cv\", \"playwright\"\
+    ] }\n      rpaframework-aws = { path = \"packages/aws\" }\n      rpaframework-google\
+    \ = \"^4.0.0\"\n      rpaframework-windows = \"^4.0.0\"\n\n#. ``invoke test``\
+    \ (this will run both Python unittests and robotframework tests defined in the\
+    \ packages **tests/ directory**)\n\n   - to run specific Python test: ``poetry\
+    \ run pytest path/to/test.py::test_function``\n   - to run specific Robotframework\
+    \ test: ``inv testrobot -r <robot_name> -t <task_name>``\n\n#. git commit changes\n\
+    #. git push changes to remote\n#. create pull request from the branch describing\
+    \ changes included in the description\n#. update **docs/source/releasenotes.rst**\
+    \ with changes (commit and push)\n\nPackaging and publishing are done after changes\
+    \ have been merged into master branch.\nAll the following steps should be done\
+    \ within master branch.\n\n#. git pull latest changes into master branch\n#. in\
+    \ the package directory containing changes execute ``invoke lint`` and ``invoke\
+    \ test``\n#. update **pyproject.toml** with new version according to semantic\
+    \ versioning\n#. update **docs/source/releasenotes.rst** with changes\n#. in the\
+    \ repository root (so called \"meta\" package level) run command ``poetry update``\n\
+    #. git commit changed **poetry.lock** files (on meta and target package level),\
+    \ **releasenotes.rst**\n   and **pyproject.toml** with message \"PACKAGE. version\
+    \ x.y.z\"\n#. git push\n#. ``invoke publish`` after Github action on master branch\
+    \ is all green\n\nSome recommended tools for development\n\n- `Visual Studio Code`_\
+    \ as a code editor with following extensions:\n\n   - `Robocorp Code`_\n   - `Robot\
+    \ Framework Language Server`_\n   - `GitLens`_\n   - `Python extension`_\n\n-\
+    \ `GitHub Desktop`_ will make version management less prone to errors\n\n.. _poetry:\
+    \ https://python-poetry.org\n.. _invoke: https://www.pyinvoke.org\n.. _Visual\
+    \ Studio Code: https://code.visualstudio.com\n.. _GitHub Desktop: https://desktop.github.com\n\
+    .. _Robocorp Code: https://marketplace.visualstudio.com/items?itemName=robocorp.robocorp-code\n\
+    .. _Robot Framework Language Server: https://marketplace.visualstudio.com/items?itemName=robocorp.robotframework-lsp\n\
+    .. _GitLens: https://marketplace.visualstudio.com/items?itemName=eamodio.gitlens\n\
+    .. _Python extension: https://marketplace.visualstudio.com/items?itemName=ms-python.python\n\
+    .. _black: https://pypi.org/project/black/\n.. _flake8: https://pypi.org/project/flake8/\n\
+    \nLicense\n-------\n\nThis project is open-source and licensed under the terms\
+    \ of the\n`Apache License 2.0 <http://apache.org/licenses/LICENSE-2.0>`_.\n"
+range:
+  end:
+    character: 28
+    line: 9
+  start:
+    character: 8
+    line: 9

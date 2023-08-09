@@ -8,6 +8,7 @@ from robocorp_ls_core.protocols import IEndPoint, IMonitor, IWorkspace
 from robocorp_ls_core.python_ls import BaseLintInfo, BaseLintManager
 from robocorp_ls_core.robotframework_log import get_logger
 
+from robocorp_code.deps._deps_protocols import IPyPiCloud
 from robocorp_code.protocols import IRcc
 from robocorp_code.robocorp_language_server import RobocorpLanguageServer
 
@@ -20,7 +21,10 @@ class DiagnosticsConfig:
 
 
 def collect_conda_yaml_diagnostics(
-    workspace: IWorkspace, conda_yaml_uri: str, monitor: Optional[IMonitor]
+    pypi_cloud: IPyPiCloud,
+    workspace: IWorkspace,
+    conda_yaml_uri: str,
+    monitor: Optional[IMonitor],
 ) -> List[DiagnosticsTypedDict]:
     from robocorp_code.deps import analyzer
 
@@ -32,7 +36,7 @@ def collect_conda_yaml_diagnostics(
         return []
     if monitor:
         monitor.check_cancelled()
-    return list(analyzer.Analyzer(doc.source, doc.path).iter_issues())
+    return list(analyzer.Analyzer(doc.source, doc.path, pypi_cloud).iter_issues())
 
 
 def collect_rcc_configuration_diagnostics(
@@ -120,6 +124,10 @@ class _CurrLintInfo(BaseLintInfo):
 
         from robocorp_ls_core import uris
 
+        robocorp_language_server = self._weak_robocorp_language_server()
+        if robocorp_language_server is None:
+            return
+
         is_saved = self.is_saved
         doc_uri = self.doc_uri
 
@@ -157,12 +165,16 @@ class _CurrLintInfo(BaseLintInfo):
             # Ok, we started collecting RCC diagnostics in a thread. We
             # can now also collect other diagnostics here.
             if doc_uri.endswith("conda.yaml"):
-                robocorp_language_server = self._weak_robocorp_language_server()
                 if robocorp_language_server is not None:
                     ws = robocorp_language_server.workspace
                     if ws is not None:
                         found.extend(
-                            collect_conda_yaml_diagnostics(ws, doc_uri, self._monitor)
+                            collect_conda_yaml_diagnostics(
+                                robocorp_language_server.pypi_cloud,
+                                ws,
+                                doc_uri,
+                                self._monitor,
+                            )
                         )
 
             if is_saved:
