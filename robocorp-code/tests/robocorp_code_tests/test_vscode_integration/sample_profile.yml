@@ -1,0 +1,7 @@
+name: sample
+description: sample profile
+settings:
+  endpoints:
+    conda: ""
+    pypi: ""
+    pypi-trusted: https://test.pypi.org/

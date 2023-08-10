@@ -1,6 +1,7 @@
 import datetime
 import typing
-from typing import Dict, Iterator, List, Optional, Union
+import weakref
+from typing import Dict, Iterator, List, Optional, Sequence, Union
 
 from robocorp_code.deps._deps_protocols import (
     PyPiInfoTypedDict,
@@ -81,21 +82,24 @@ class PackageData:
 
 
 class PyPiCloud:
-    def __init__(self) -> None:
+    def __init__(
+        self, get_base_urls_weak_method: Optional[weakref.WeakMethod] = None
+    ) -> None:
         self._cached_package_data: Dict[str, PackageData] = {}
         self._cached_cloud: Dict[str, PackageData] = {}
-        self._base_url = "https://pypi.org"
+        self._last_base_urls: Sequence[str] = ()
 
-    @property
-    def base_url(self) -> str:
-        return self._base_url
+        if get_base_urls_weak_method is None:
+            # use pypi.org
+            def get_weak():
+                def get_pypi_url():
+                    return ("https://pypi.org",)
 
-    @base_url.setter
-    def base_url(self, base_url: str) -> None:
-        if self._base_url != base_url:
-            self._base_url = base_url
-            self._cached_package_data.clear()
-            self._cached_cloud.clear()
+                return get_pypi_url
+
+            self.get_base_urls_weak_method = get_weak
+        else:
+            self.get_base_urls_weak_method = get_base_urls_weak_method
 
     def _get_json_from_cloud(self, url: str) -> Optional[dict]:
         try:
@@ -106,8 +110,14 @@ class PyPiCloud:
         import requests
 
         try:
-            info = requests.get(url)
-            self._cached_cloud[url] = info.json()
+            response = requests.get(url)
+            if response.status_code == 200:
+                self._cached_cloud[url] = response.json()
+            else:
+                log.info(
+                    f"Unable to get url (as json): {url}. Status code: {response.status_code}"
+                )
+                return None
         except Exception as e:
             log.info(f"Unable to get url (as json): {url}. Error: {e}")
             return None
@@ -115,30 +125,49 @@ class PyPiCloud:
         return typing.cast(dict, self._cached_cloud[url])
 
     def get_package_data(self, package_name: str) -> Optional[PackageData]:
+        get_base_urls = self.get_base_urls_weak_method()
+        if get_base_urls is None:
+            return None
+
+        base_urls = get_base_urls()
+        if base_urls != self._last_base_urls:
+            # We need to clear packages if urls changed.
+            self._last_base_urls = base_urls
+            self._cached_package_data.clear()
+            self._cached_cloud.clear()
+
         try:
             return self._cached_package_data[package_name]
         except KeyError:
             pass
-        base_url = self._base_url
-        data = self._get_json_from_cloud(f"{base_url}/pypi/{package_name}/json")
-        if not data:
-            return None
-        try:
-            releases = data["releases"]
-        except KeyError:
-            return None
 
-        try:
-            info = data["info"]
-        except KeyError:
-            return None
-        package_data = PackageData(package_name, info)
-        if releases and isinstance(releases, dict):
-            for release_number, release_info in releases.items():
-                package_data.add_release(release_number, release_info)
+        for base_url in base_urls:
+            if base_url.endswith("/"):
+                base_url = base_url[:-1]
+            data = self._get_json_from_cloud(f"{base_url}/pypi/{package_name}/json")
+            if not data:
+                continue  # go to the next url
 
-        self._cached_package_data[package_name] = package_data
-        return self._cached_package_data[package_name]
+            try:
+                releases = data["releases"]
+            except KeyError:
+                continue  # go to the next url
+
+            try:
+                info = data["info"]
+            except KeyError:
+                continue  # go to the next url
+
+            package_data = PackageData(package_name, info)
+            if releases and isinstance(releases, dict):
+                for release_number, release_info in releases.items():
+                    package_data.add_release(release_number, release_info)
+
+            self._cached_package_data[package_name] = package_data
+            return self._cached_package_data[package_name]
+
+        # If there was no match, return.
+        return None
 
     def get_versions_newer_than(
         self, package_name: str, version: Union[Versions, VersionStr]

@@ -355,6 +355,9 @@ def language_server_initialized(
 
 @pytest.fixture
 def patch_pypi_cloud(monkeypatch):
+    import datetime
+
+    from robocorp_code import hover
     from robocorp_code.deps.pypi_cloud import PyPiCloud
 
     from robocorp_code_tests.deps.cloud_mock_data import RPAFRAMEWORK_PYPI_MOCK_DATA
@@ -369,4 +372,9 @@ def patch_pypi_cloud(monkeypatch):
         PyPiCloud,
         "_get_json_from_cloud",
         _get_json_from_cloud,
+    )
+    monkeypatch.setattr(
+        hover,
+        "FORCE_DATETIME_NOW",
+        datetime.datetime(2023, 8, 10),
     )

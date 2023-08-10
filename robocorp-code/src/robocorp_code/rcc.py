@@ -1,36 +1,36 @@
-from subprocess import CalledProcessError, TimeoutExpired, list2cmdline
+import json
+import os.path
 import sys
-from typing import Optional, List, Any, Dict, Set
+import time
 import weakref
+from dataclasses import dataclass
+from pathlib import Path
+from subprocess import CalledProcessError, TimeoutExpired, list2cmdline
+from typing import Any, Dict, List, Optional, Set
 
-from robocorp_ls_core.basic import implements, as_str, is_process_alive
+from robocorp_ls_core.basic import as_str, implements, is_process_alive
 from robocorp_ls_core.constants import NULL
 from robocorp_ls_core.protocols import (
     IConfig,
     IConfigProvider,
-    Sentinel,
     RCCActionResult,
+    Sentinel,
+    check_implements,
 )
-from robocorp_ls_core.robotframework_log import get_logger, get_log_level
-from robocorp_code.protocols import (
-    IRcc,
-    IRccWorkspace,
-    IRccRobotMetadata,
-    ActionResult,
-    IRobotYamlEnvInfo,
-    IRccListener,
-    RobotTemplate,
-    AuthorizeTokenDict,
-    ProfileListResultTypedDict,
-)
-from pathlib import Path
-import os.path
-import json
-from robocorp_ls_core.protocols import check_implements
-from dataclasses import dataclass
-import time
-from robocorp_code.rcc_space_info import RCCSpaceInfo, SpaceState
+from robocorp_ls_core.robotframework_log import get_log_level, get_logger
 
+from robocorp_code.protocols import (
+    ActionResult,
+    AuthorizeTokenDict,
+    IRcc,
+    IRccListener,
+    IRccRobotMetadata,
+    IRccWorkspace,
+    IRobotYamlEnvInfo,
+    ProfileListResultTypedDict,
+    RobotTemplate,
+)
+from robocorp_code.rcc_space_info import RCCSpaceInfo, SpaceState
 
 log = get_logger(__name__)
 
@@ -269,8 +269,9 @@ class Rcc(object):
             If given sets the stderr redirection (by default it's subprocess.PIPE,
             but users could change it to something as subprocess.STDOUT).
         """
-        from robocorp_ls_core.basic import build_subprocess_kwargs
         from subprocess import check_output
+
+        from robocorp_ls_core.basic import build_subprocess_kwargs
         from robocorp_ls_core.subprocess_wrapper import subprocess
 
         if stderr is Sentinel.SENTINEL:
@@ -317,11 +318,12 @@ class Rcc(object):
                 if not show_interactive_output:
                     boutput = check_output(args, timeout=timeout, **kwargs)
                 else:
-                    from robocorp_code.subprocess_check_output_interactive import (
-                        check_output_interactive,
-                    )
                     from robocorp_ls_core.progress_report import (
                         get_current_progress_reporter,
+                    )
+
+                    from robocorp_code.subprocess_check_output_interactive import (
+                        check_output_interactive,
                     )
 
                     progress_reporter = get_current_progress_reporter()
@@ -1113,9 +1115,6 @@ class Rcc(object):
             log_errors=False,
         )
 
-    def __typecheckself__(self) -> None:
-        _: IRcc = check_implements(self)
-
     def configuration_diagnostics(self, robot_yaml, json=True) -> ActionResult[str]:
         return self._run_rcc(
             ["configuration", "diagnostics"]
@@ -1124,6 +1123,16 @@ class Rcc(object):
             mutex_name=None,
             timeout=60,
         )
+
+    def configuration_settings(self) -> ActionResult[str]:
+        return self._run_rcc(
+            ["configuration", "settings", "--json"],
+            mutex_name=None,
+            timeout=60,
+        )
+
+    def __typecheckself__(self) -> None:
+        _: IRcc = check_implements(self)
 
 
 def make_numbered_in_temp(
@@ -1137,9 +1146,12 @@ def make_numbered_in_temp(
     of old contents.
     """
     import tempfile
-    from robocorp_code.path_operations import get_user
-    from robocorp_code.path_operations import make_numbered_dir_with_cleanup
-    from robocorp_code.path_operations import LOCK_TIMEOUT
+
+    from robocorp_code.path_operations import (
+        LOCK_TIMEOUT,
+        get_user,
+        make_numbered_dir_with_cleanup,
+    )
 
     user = get_user() or "unknown"
     temproot = tmpdir if tmpdir else Path(tempfile.gettempdir())

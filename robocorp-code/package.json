@@ -109,6 +109,7 @@
         "onCommand:robocorp.profileList.internal",
         "onCommand:robocorp.hasPreRunScripts.internal",
         "onCommand:robocorp.runPreRunScripts.internal",
+        "onCommand:robocorp.getPyPiBaseUrls.internal",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-robots-tree",
@@ -695,6 +696,11 @@
                 "command": "robocorp.runPreRunScripts.internal",
                 "title": "Run Pre Run Scripts",
                 "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.getPyPiBaseUrls.internal",
+                "title": "Get PyPi base urls",
+                "category": "Robocorp"
             }
         ],
         "menus": {
@@ -1093,6 +1099,10 @@
                 },
                 {
                     "command": "robocorp.runPreRunScripts.internal",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.getPyPiBaseUrls.internal",
                     "when": "false"
                 }
             ]

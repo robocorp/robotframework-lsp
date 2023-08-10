@@ -1,12 +1,20 @@
+import datetime
 from typing import Optional
 
 from robocorp_ls_core.protocols import IDocument
 
 from robocorp_code.deps._deps_protocols import IPyPiCloud, ReleaseData
 
+# Can be used in tests to force a date.
+FORCE_DATETIME_NOW: Optional[datetime.datetime] = None
 
-def hover_on_conda_yaml(doc: IDocument, line: int, col: int, pypi_cloud: IPyPiCloud):
-    import datetime
+
+def hover_on_conda_yaml(
+    doc: IDocument,
+    line: int,
+    col: int,
+    pypi_cloud: IPyPiCloud,
+):
 
     from robocorp_ls_core.lsp import MarkupContent, MarkupKind
     from robocorp_ls_core.protocols import IDocumentSelection
@@ -39,7 +47,11 @@ def hover_on_conda_yaml(doc: IDocument, line: int, col: int, pypi_cloud: IPyPiCl
 
     desc_parts = [f"# {package_data.package_name}"]
 
-    current_datetime = datetime.datetime.now()
+    current_datetime = (
+        FORCE_DATETIME_NOW
+        if FORCE_DATETIME_NOW is not None
+        else datetime.datetime.now()
+    )
     last_year = current_datetime - datetime.timedelta(days=365)
     releases_data = sorted(package_data.iter_versions_released_after(last_year))
 

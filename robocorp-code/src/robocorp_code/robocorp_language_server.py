@@ -5,7 +5,7 @@ import weakref
 from base64 import b64encode
 from functools import partial
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional
+from typing import Any, Dict, Iterator, List, Optional, Sequence
 
 from robocorp_ls_core import watchdog_wrapper
 from robocorp_ls_core.basic import overrides
@@ -197,7 +197,8 @@ class RobocorpLanguageServer(PythonLanguageServer):
         from robocorp_code.plugins.resolve_interpreter import register_plugins
 
         self._prefix_to_last_run_number_and_time = {}
-        self._pypi_cloud = PyPiCloud()
+
+        self._pypi_cloud = PyPiCloud(weakref.WeakMethod(self._get_pypi_base_urls))
 
         self._paths_remover = None
         self._paths_remover_queue = Queue()
@@ -209,6 +210,9 @@ class RobocorpLanguageServer(PythonLanguageServer):
             plugin_manager=self._pm,
             lsp_messages=self._lsp_messages,
         )
+
+    def _get_pypi_base_urls(self) -> Sequence[str]:
+        return self._profile.get_pypi_base_urls()
 
     @property
     def pypi_cloud(self) -> IPyPiCloud:
@@ -1133,6 +1137,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         doc: Optional[IDocument] = ws.get_document(doc_uri, accept_from_file=True)
         if doc is None:
             return None
+
         return hover_on_conda_yaml(doc, line, col, self._pypi_cloud)
 
     def _hover_on_locators_json(

@@ -836,6 +836,66 @@ def disable_rcc_diagnostics():
     DiagnosticsConfig.analyze_rcc = True
 
 
+def test_profile_import(
+    language_server_initialized: IRobocorpLanguageServerClient,
+    datadir,
+    disable_rcc_diagnostics,
+):
+    from robocorp_code.commands import (
+        ROBOCORP_GET_PY_PI_BASE_URLS_INTERNAL,
+        ROBOCORP_PROFILE_IMPORT_INTERNAL,
+        ROBOCORP_PROFILE_LIST_INTERNAL,
+        ROBOCORP_PROFILE_SWITCH_INTERNAL,
+    )
+    from robocorp_ls_core import uris
+
+    result = language_server_initialized.execute_command(
+        ROBOCORP_GET_PY_PI_BASE_URLS_INTERNAL,
+        [],
+    )["result"]
+    assert result == ["https://pypi.org"]
+
+    # Import sample profile.
+    sample_profile = datadir / "sample_profile.yml"
+    result = language_server_initialized.execute_command(
+        ROBOCORP_PROFILE_IMPORT_INTERNAL,
+        [{"profileUri": uris.from_fs_path(str(sample_profile))}],
+    )["result"]
+    assert result["success"]
+
+    # List profiles
+    result = language_server_initialized.execute_command(
+        ROBOCORP_PROFILE_LIST_INTERNAL,
+        [],
+    )["result"]
+    assert result["success"]
+    loaded_profiles = result["result"]
+    assert "sample" in loaded_profiles["profiles"]
+    current = loaded_profiles["current"]
+    if current.lower() == "default":
+        current = "<remove-current-back-to-defaults>"
+
+    try:
+        result = language_server_initialized.execute_command(
+            ROBOCORP_PROFILE_SWITCH_INTERNAL,
+            [{"profileName": "sample"}],
+        )["result"]
+        assert result["success"]
+
+        result = language_server_initialized.execute_command(
+            ROBOCORP_GET_PY_PI_BASE_URLS_INTERNAL,
+            [],
+        )["result"]
+        assert result == ["https://test.pypi.org", "https://pypi.org"]
+
+    finally:
+        result = language_server_initialized.execute_command(
+            ROBOCORP_PROFILE_SWITCH_INTERNAL,
+            [{"profileName": current}],
+        )["result"]
+        assert result["success"]
+
+
 def test_lint_robot_integration_deps(
     language_server_initialized: IRobocorpLanguageServerClient,
     tmpdir,

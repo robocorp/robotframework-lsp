@@ -374,3 +374,6 @@ class IRcc(Protocol):
 
     def configuration_diagnostics(self, robot_yaml, json=True) -> ActionResult[str]:
         pass
+
+    def configuration_settings(self) -> ActionResult[str]:
+        pass

@@ -661,6 +661,13 @@ COMMANDS = [
         server_handled=True,
         hide_from_command_palette=True,
     ),
+    Command(
+        "robocorp.getPyPiBaseUrls.internal",
+        "Get PyPi base urls",
+        add_to_package_json=True,
+        server_handled=True,
+        hide_from_command_palette=True,
+    ),
 ]
 
 
