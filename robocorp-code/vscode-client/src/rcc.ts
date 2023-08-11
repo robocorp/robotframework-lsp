@@ -142,16 +142,16 @@ function getBaseAsZipBasename() {
     if (process.platform == "win32") {
         if (process.arch === "x64" || process.env.hasOwnProperty("PROCESSOR_ARCHITEW6432")) {
             // Check if node is a 64 bit process or if it's a 32 bit process running in a 64 bit processor.
-            basename = "978947424da5b5d4_windows_amd64.zip";
+            basename = "8b52318016cc550a_windows_amd64.zip";
         } else {
             throw new Error("Currently only Windows amd64 is supported.");
         }
     } else if (process.platform == "darwin") {
-        basename = "05466b72750b50bb_darwin_amd64.zip";
+        basename = "10fe8858c1480f5a_darwin_amd64.zip";
     } else {
         // Linux
         if (process.arch === "x64") {
-            basename = "21263ad0be4ba1d6_linux_amd64.zip";
+            basename = "ad4ecd607ed40a13_linux_amd64.zip";
         } else {
             throw new Error("Currently only Linux amd64 is supported.");
         }
@@ -249,11 +249,11 @@ export async function download(
             } else {
                 throw Error(
                     "Unable to download from " +
-                        url +
-                        ". Response status: " +
-                        response.status +
-                        "Response message: " +
-                        response.responseText
+                    url +
+                    ". Response status: " +
+                    response.status +
+                    "Response message: " +
+                    response.responseText
                 );
             }
         } catch (error) {
@@ -401,8 +401,7 @@ export async function runConfigDiagnostics(
                 OUTPUT_CHANNEL.appendLine("  RCC Checks:");
                 for (const check of checks) {
                     OUTPUT_CHANNEL.appendLine(
-                        `    ${check.type.padEnd(10)} - ${check.status.padEnd(7)} - ${check.message} (${
-                            check.category
+                        `    ${check.type.padEnd(10)} - ${check.status.padEnd(7)} - ${check.message} (${check.category
                         })`
                     );
                 }
@@ -422,10 +421,10 @@ export async function runConfigDiagnostics(
         logError("Error getting RCC diagnostics.", error, "RCC_DIAGNOSTICS");
         OUTPUT_CHANNEL.appendLine(
             "RCC Diagnostics:" +
-                "\nStdout:\n" +
-                configureLongpathsOutput.stdout +
-                "\nStderr:\n" +
-                configureLongpathsOutput.stderr
+            "\nStdout:\n" +
+            configureLongpathsOutput.stdout +
+            "\nStderr:\n" +
+            configureLongpathsOutput.stderr
         );
         return undefined;
     } finally {
@@ -827,12 +826,12 @@ export async function collectBaseEnv(
         try {
             // Try to remove the file related to recycling this dir (we don't want to
             // recycle the TEMP dir of this particular env).
-            fs.unlink(path.join(tempDir, "recycle.now"), (err) => {});
-        } catch (err) {}
+            fs.unlink(path.join(tempDir, "recycle.now"), (err) => { });
+        } catch (err) { }
         try {
             // Create the temp dir (if not there)
-            fs.mkdir(tempDir, { "recursive": true }, (err) => {});
-        } catch (err) {}
+            fs.mkdir(tempDir, { "recursive": true }, (err) => { });
+        } catch (err) { }
     }
 
     return { "env": finalEnv, "robocorpHome": robocorpHome, "rccLocation": rccLocation };
