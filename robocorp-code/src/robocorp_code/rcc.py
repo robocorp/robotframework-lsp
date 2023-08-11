@@ -1131,6 +1131,45 @@ class Rcc(object):
             timeout=60,
         )
 
+    def holotree_import(self, zip_file: Path, enable_shared: bool) -> ActionResult[str]:
+        if enable_shared:
+            result = self._run_rcc(
+                ["holotree", "shared", "--enable", "--once"],
+                mutex_name=None,
+                timeout=60,
+            )
+
+            if not result.success:
+                return result
+
+            result = self._run_rcc(
+                ["holotree", "init"],
+                mutex_name=None,
+                timeout=60,
+            )
+
+            if not result.success:
+                return result
+
+        return self._run_rcc(
+            ["holotree", "import", str(zip_file)],
+            mutex_name=None,
+            timeout=500,
+        )
+
+    def holotree_variables(
+        self, conda_yaml: Path, space_name: str, no_build: bool
+    ) -> ActionResult[str]:
+        args = ["holotree", "variables", "--space", space_name, "--json"]
+        if no_build:
+            args.append("--no-build")
+        args.append(str(conda_yaml))
+        return self._run_rcc(
+            args,
+            mutex_name=None,
+            timeout=500,
+        )
+
     def __typecheckself__(self) -> None:
         _: IRcc = check_implements(self)
 

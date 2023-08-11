@@ -137,21 +137,27 @@ async function downloadRcc(
     return await download(url, progress, token, location);
 }
 
+// Note: python tests scan this file and get these contants, so, if the format
+// changes the (failing) test also needs to change.
+const BASENAME_PREBUILT_WIN_AMD64 = "8b52318016cc550a_windows_amd64.zip";
+const BASENAME_PREBUILT_DARWIN = "10fe8858c1480f5a_darwin_amd64.zip";
+const BASENAME_PREBUILT_LINUX_AMD64 = "ad4ecd607ed40a13_linux_amd64.zip";
+
 function getBaseAsZipBasename() {
     let basename: string;
     if (process.platform == "win32") {
         if (process.arch === "x64" || process.env.hasOwnProperty("PROCESSOR_ARCHITEW6432")) {
             // Check if node is a 64 bit process or if it's a 32 bit process running in a 64 bit processor.
-            basename = "8b52318016cc550a_windows_amd64.zip";
+            basename = BASENAME_PREBUILT_WIN_AMD64;
         } else {
             throw new Error("Currently only Windows amd64 is supported.");
         }
     } else if (process.platform == "darwin") {
-        basename = "10fe8858c1480f5a_darwin_amd64.zip";
+        basename = BASENAME_PREBUILT_DARWIN;
     } else {
         // Linux
         if (process.arch === "x64") {
-            basename = "ad4ecd607ed40a13_linux_amd64.zip";
+            basename = BASENAME_PREBUILT_LINUX_AMD64;
         } else {
             throw new Error("Currently only Linux amd64 is supported.");
         }

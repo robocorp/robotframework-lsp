@@ -377,3 +377,11 @@ class IRcc(Protocol):
 
     def configuration_settings(self) -> ActionResult[str]:
         pass
+
+    def holotree_import(self, zip_file: Path, enable_shared: bool) -> ActionResult[str]:
+        pass
+
+    def holotree_variables(
+        self, robot_yaml: Path, space_name: str, no_build: bool
+    ) -> ActionResult[str]:
+        pass
