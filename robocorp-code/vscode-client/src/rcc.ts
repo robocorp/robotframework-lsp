@@ -249,11 +249,11 @@ export async function download(
             } else {
                 throw Error(
                     "Unable to download from " +
-                    url +
-                    ". Response status: " +
-                    response.status +
-                    "Response message: " +
-                    response.responseText
+                        url +
+                        ". Response status: " +
+                        response.status +
+                        "Response message: " +
+                        response.responseText
                 );
             }
         } catch (error) {
@@ -401,7 +401,8 @@ export async function runConfigDiagnostics(
                 OUTPUT_CHANNEL.appendLine("  RCC Checks:");
                 for (const check of checks) {
                     OUTPUT_CHANNEL.appendLine(
-                        `    ${check.type.padEnd(10)} - ${check.status.padEnd(7)} - ${check.message} (${check.category
+                        `    ${check.type.padEnd(10)} - ${check.status.padEnd(7)} - ${check.message} (${
+                            check.category
                         })`
                     );
                 }
@@ -421,10 +422,10 @@ export async function runConfigDiagnostics(
         logError("Error getting RCC diagnostics.", error, "RCC_DIAGNOSTICS");
         OUTPUT_CHANNEL.appendLine(
             "RCC Diagnostics:" +
-            "\nStdout:\n" +
-            configureLongpathsOutput.stdout +
-            "\nStderr:\n" +
-            configureLongpathsOutput.stderr
+                "\nStdout:\n" +
+                configureLongpathsOutput.stdout +
+                "\nStderr:\n" +
+                configureLongpathsOutput.stderr
         );
         return undefined;
     } finally {
@@ -826,12 +827,12 @@ export async function collectBaseEnv(
         try {
             // Try to remove the file related to recycling this dir (we don't want to
             // recycle the TEMP dir of this particular env).
-            fs.unlink(path.join(tempDir, "recycle.now"), (err) => { });
-        } catch (err) { }
+            fs.unlink(path.join(tempDir, "recycle.now"), (err) => {});
+        } catch (err) {}
         try {
             // Create the temp dir (if not there)
-            fs.mkdir(tempDir, { "recursive": true }, (err) => { });
-        } catch (err) { }
+            fs.mkdir(tempDir, { "recursive": true }, (err) => {});
+        } catch (err) {}
     }
 
     return { "env": finalEnv, "robocorpHome": robocorpHome, "rccLocation": rccLocation };
