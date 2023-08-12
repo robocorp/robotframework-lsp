@@ -66,6 +66,7 @@ def test_hover_conda_yaml_rpaframework(datadir, data_regression, patch_pypi_clou
 
 
 def test_conda_version_spec_api():
+    from robocorp_code.deps.analyzer import check_version
     from robocorp_code.deps.conda_impl import conda_version
 
     v = conda_version.VersionSpec("22.1.3")
@@ -77,6 +78,12 @@ def test_conda_version_spec_api():
 
     v21 = conda_version.VersionSpec("21")
     assert not op(v21)
+
+    v = conda_version.VersionSpec("3.8")
+    op = v.get_matcher(">=3.8")[1]
+    assert op(v)
+
+    assert check_version(conda_version.VersionSpec("21"), ">=21")
 
 
 def test_pypi_cloud(patch_pypi_cloud) -> None:

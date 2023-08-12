@@ -232,7 +232,7 @@ class Analyzer:
 
         # See: https://devguide.python.org/versions/
         if dep_vspec is not None and not check_version(
-            dep_vspec, ">3.8"
+            dep_vspec, ">=3.8"
         ):  # 3.7 or earlier
             dep_range = self._conda_deps.get_dep_range("python")
 
@@ -250,7 +250,7 @@ class Analyzer:
         dep_vspec = self._conda_deps.get_dep_vspec("pip")
 
         if dep_vspec is not None and not check_version(
-            dep_vspec, ">22"
+            dep_vspec, ">=22"
         ):  # pip should be 22 or newer
             dep_range = self._conda_deps.get_dep_range("pip")
 

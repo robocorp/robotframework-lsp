@@ -926,6 +926,7 @@ condaConfigFile: conda.yaml
       - conda-forge
     dependencies:
       - python=3.7
+      - pip=22
     """
     conda_yaml.write_text(
         conda_yaml_text,

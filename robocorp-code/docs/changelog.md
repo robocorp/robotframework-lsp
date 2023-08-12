@@ -1,7 +1,7 @@
 NEXT
 -----------------------------
 
-- RCC upgraded from v14.6.0 to v14.15.1
+- RCC upgraded from v14.6.0 to v14.15.2
 - Information from pypi is shown on hover for pypi packages in `conda.yaml`.
 - Warning if the versions for pypi in `conda.yaml` have updates.
 - Warning if `python` version is not `>= 3.8` in `conda.yaml`

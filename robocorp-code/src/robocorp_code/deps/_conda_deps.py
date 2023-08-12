@@ -26,6 +26,8 @@ class CondaDeps:
         try:
             spec = conda_match_spec.parse_spec_str(value)
             version = spec["version"]
+            if version.endswith("*"):
+                version = version[:-1]
             name = spec["name"]
         except Exception:
             pass
