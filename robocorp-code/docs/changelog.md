@@ -1,11 +1,12 @@
 NEXT
 -----------------------------
 
-- RCC upgraded from v14.6.0 to v14.15.2
+- RCC upgraded from v14.6.0 to v14.15.4
 - Information from pypi is shown on hover for pypi packages in `conda.yaml`.
 - Warning if the versions for pypi in `conda.yaml` have updates.
 - Warning if `python` version is not `>= 3.8` in `conda.yaml`
 - Warning if `pip` version is not  `>= 22.0` in `conda.yaml`
+- `ROBO TASKS OUTPUT` updated to latest version (expand subtree, support robocorp-log 2.7.0).
 
 
 New in 1.9.0 (2023-08-04)
