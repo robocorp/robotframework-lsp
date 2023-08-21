@@ -1,12 +1,20 @@
 NEXT
 -----------------------------
 
-- RCC upgraded from v14.6.0 to v14.15.4
+- RCC upgraded from `v14.6.0` to `v14.15.4`.
 - Information from pypi is shown on hover for pypi packages in `conda.yaml`.
 - Warning if the versions for pypi in `conda.yaml` have updates.
 - Warning if `python` version is not `>= 3.8` in `conda.yaml`
 - Warning if `pip` version is not  `>= 22.0` in `conda.yaml`
-- `ROBO TASKS OUTPUT` updated to latest version (expand subtree, support robocorp-log 2.7.0).
+- `ROBO TASKS OUTPUT` updated to latest version:
+    - Support for `robocorp-log 2.7.0`:
+        - `if` statements now create a scope in `log.html` (when the function is not a generator).
+        - If an exception has a cause or context the context/cause is now shown in the log 
+          - (i.e.: when an exception is raised from another exception or is raised while handling another exception all exceptions are shown).
+        - `continue` and `break` inside a loop are properly handled.
+        - `continue` and `break` are now shown in the logs.
+        - It's now possible to expand / collapse recursively in `log.html`.
+        - `log.html`: When navigating using left arrow, if the element is already collapsed the parent is focused.
 
 
 New in 1.9.0 (2023-08-04)

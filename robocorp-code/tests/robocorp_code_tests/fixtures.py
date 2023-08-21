@@ -378,3 +378,30 @@ def patch_pypi_cloud(monkeypatch):
         "FORCE_DATETIME_NOW",
         datetime.datetime(2023, 8, 10),
     )
+
+
+@pytest.fixture
+def patch_pypi_cloud_no_releases_12_months(monkeypatch):
+    import datetime
+
+    from robocorp_code import hover
+    from robocorp_code.deps.pypi_cloud import PyPiCloud
+
+    from robocorp_code_tests.deps.cloud_mock_data import RPAFRAMEWORK_PYPI_MOCK_DATA
+
+    def _get_json_from_cloud(self, url):
+        if url == "https://pypi.org/pypi/rpaframework/json":
+            return RPAFRAMEWORK_PYPI_MOCK_DATA
+        else:
+            raise AssertionError(f"Unexpected: {url}")
+
+    monkeypatch.setattr(
+        PyPiCloud,
+        "_get_json_from_cloud",
+        _get_json_from_cloud,
+    )
+    monkeypatch.setattr(
+        hover,
+        "FORCE_DATETIME_NOW",
+        datetime.datetime(2025, 8, 10),
+    )

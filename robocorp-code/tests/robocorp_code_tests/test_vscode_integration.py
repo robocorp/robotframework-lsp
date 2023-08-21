@@ -553,6 +553,33 @@ dependencies:
     data_regression.check(ret["result"])
 
 
+def test_hover_conda_yaml_versions_no_releases(
+    language_server_initialized: IRobocorpLanguageServerClient,
+    data_regression,
+    patch_pypi_cloud_no_releases_12_months,
+):
+    from robocorp_ls_core.workspace import Document
+
+    client = language_server_initialized
+    uri = "x/y/conda.yaml"
+    txt = """
+channels:
+  - conda-forge
+
+dependencies:
+  - python=3.7               # https://pyreadiness.org/3.9/
+  - pip=22.1.2                  # https://pip.pypa.io/en/stable/news/
+  - pip:
+      # Define pip packages here -> https://pypi.org/
+      - rpaframework==22.5.3"""
+    doc = Document("", txt)
+    client.open_doc(uri, 1, txt)
+    line, col = doc.get_last_line_col()
+    col -= 10
+    ret = client.hover(uri, line, col)
+    data_regression.check(ret["result"])
+
+
 def test_hover_browser_integration(
     language_server_initialized: IRobocorpLanguageServerClient,
 ):

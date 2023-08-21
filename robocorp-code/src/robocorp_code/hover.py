@@ -68,17 +68,18 @@ def hover_on_conda_yaml(
                     f"Version `{local_version}` was released at: `{specified_release_data.upload_time}`"
                 )
 
+    last_release_data: Optional[ReleaseData] = package_data.get_last_release_data()
+    if last_release_data:
+        desc_parts.append(
+            f"\nLast release version: `{last_release_data.version_str}` done at: `{last_release_data.upload_time}`."
+        )
+
     if releases_data:
         desc_parts.append("\nVersions released in the last 12 months:")
-        releases = "`, `".join(x.version_str for x in releases_data)
+        releases = "`, `".join(x.version_str for x in reversed(releases_data))
         desc_parts.append(f"`{releases}`")
     else:
-        last_release_data: Optional[ReleaseData] = package_data.get_last_release_data()
-        if last_release_data:
-            desc_parts.append(
-                f"\nLast release version: `{last_release_data.version_str}` done at: `{last_release_data.upload_time}` (note: no releases in the last 12 months)."
-            )
-            desc_parts.append(", ".join(x.version_str for x in releases_data))
+        desc_parts.append("\nNote: no releases in the last 12 months.")
 
     urls_shown = set()
     home_page = package_data.info.get("home_page")
