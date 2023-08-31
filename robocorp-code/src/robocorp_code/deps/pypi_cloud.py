@@ -60,19 +60,37 @@ class PackageData:
         return self.get_release_data(self.latest_version)
 
     def iter_versions_released_after(
-        self, after_datetime: datetime.datetime
+        self, after_datetime: Optional[datetime.datetime]
     ) -> Iterator[ReleaseData]:
+        """
+        Args:
+            after_datetime: if none all releases (except pre-releases) will
+            be provided.
+        """
+
+        last_release_data = self.get_last_release_data()
+        latest_upload_datetime: Optional[datetime.datetime] = None
+        if last_release_data and last_release_data.upload_time:
+            latest_upload_datetime = datetime.datetime.strptime(
+                last_release_data.upload_time, "%Y-%m-%dT%H:%M:%S"
+            )
 
         for release_data in self._releases.values():
             if release_data.upload_time:
                 upload_datetime = datetime.datetime.strptime(
                     release_data.upload_time, "%Y-%m-%dT%H:%M:%S"
                 )
-                if upload_datetime >= after_datetime:
+
+                if latest_upload_datetime:
+                    # Hide pre-releases.
+                    if upload_datetime > latest_upload_datetime:
+                        continue
+
+                if after_datetime is None or upload_datetime >= after_datetime:
                     yield release_data
 
     def iter_versions_newer_than(self, version: Versions) -> Iterator[ReleaseData]:
-        for release_data in self._releases.values():
+        for release_data in self.iter_versions_released_after(None):
             if release_data.version > version:
                 yield release_data
 

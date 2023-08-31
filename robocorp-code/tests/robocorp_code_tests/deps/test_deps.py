@@ -133,3 +133,14 @@ def test_pypi_cloud(patch_pypi_cloud) -> None:
         "24.1.1",
         "24.1.2",
     ]
+
+
+def test_pypi_cloud_jq(patch_pypi_cloud) -> None:
+    from robocorp_code.deps.pypi_cloud import PyPiCloud
+
+    pypi_cloud = PyPiCloud()
+
+    versions = pypi_cloud.get_versions_newer_than("jq", "1.3")
+    # Note: versions "1.5.0a1", "1.5.0" are marked as uploaded after
+    # the latest release marked (1.4.1) and aren't shown due to that.
+    assert versions == ["1.4.0", "1.4.1"]

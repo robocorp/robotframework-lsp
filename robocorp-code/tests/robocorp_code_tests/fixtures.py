@@ -409,11 +409,16 @@ def patch_pypi_cloud(monkeypatch):
     from robocorp_code import hover
     from robocorp_code.deps.pypi_cloud import PyPiCloud
 
-    from robocorp_code_tests.deps.cloud_mock_data import RPAFRAMEWORK_PYPI_MOCK_DATA
+    from robocorp_code_tests.deps.cloud_mock_data import (
+        JQ_PYPI_MOCK_DATA,
+        RPAFRAMEWORK_PYPI_MOCK_DATA,
+    )
 
     def _get_json_from_cloud(self, url):
         if url == "https://pypi.org/pypi/rpaframework/json":
             return RPAFRAMEWORK_PYPI_MOCK_DATA
+        elif url == "https://pypi.org/pypi/jq/json":
+            return JQ_PYPI_MOCK_DATA
         else:
             raise AssertionError(f"Unexpected: {url}")
 
