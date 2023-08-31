@@ -66,6 +66,7 @@ jobs:
           
           python -m pip install -r robocorp-code/tests/test_requirements.txt
           python -m pip install -r robocorp-code/dev_requirements.txt
+          python -m pip install msgspec
           python -m pip install robotframework
           python -m pip install robotframework-output-stream
           

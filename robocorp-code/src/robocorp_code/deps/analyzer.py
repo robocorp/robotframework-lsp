@@ -7,6 +7,7 @@ import pathlib
 from typing import Any, Iterator, List, Optional, Tuple
 
 import yaml
+from robocorp_code.deps._conda_deps import CondaDepInfo
 from robocorp_code.deps._deps_protocols import (
     _DiagnosticSeverity,
     _DiagnosticsTypedDict,
@@ -266,6 +267,13 @@ class Analyzer:
     def find_pip_dep_at(self, line, col) -> Optional[PipDepInfo]:
         self.load_conda_yaml()
         for dep_info in self._pip_deps.iter_pip_dep_infos():
+            if is_inside(dep_info.dep_range, line, col):
+                return dep_info
+        return None
+
+    def find_conda_dep_at(self, line, col) -> Optional[CondaDepInfo]:
+        self.load_conda_yaml()
+        for dep_info in self._conda_deps.iter_conda_dep_infos():
             if is_inside(dep_info.dep_range, line, col):
                 return dep_info
         return None

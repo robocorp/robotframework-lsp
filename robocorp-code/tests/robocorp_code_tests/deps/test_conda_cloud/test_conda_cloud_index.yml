@@ -1,0 +1,14 @@
+- package_name: aadict
+  subdir_to_build_and_depends_json_bytes:
+    noarch:
+    - - pyh9f0ad1d_0
+      - '["python","six >=1.6.0"]'
+  timestamp: 1602526568722
+  version: 0.2.3
+- package_name: aadict
+  subdir_to_build_and_depends_json_bytes:
+    noarch:
+    - - pyh9f0ad1d_0
+      - '["python","six >=1.6.0"]'
+  timestamp: 1602526578722
+  version: 0.2.5

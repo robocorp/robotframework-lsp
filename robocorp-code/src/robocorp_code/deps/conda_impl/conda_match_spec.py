@@ -1,3 +1,4 @@
+# Based on: https://github.com/conda/conda/blob/main/conda/models/match_spec.py
 """
 Original license:
 BSD 3-Clause License

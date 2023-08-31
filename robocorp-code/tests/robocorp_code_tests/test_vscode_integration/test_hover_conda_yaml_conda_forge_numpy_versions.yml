@@ -1,0 +1,62 @@
+contents:
+  kind: markdown
+  value: '# numpy
+
+    Conda-forge information:
+
+
+    Last release version: `1.25.2` done at: `2023-08-03`.
+
+    ## Requirements (win-64):
+
+    - libblas
+
+    - libcblas
+
+    - liblapack
+
+    - pypy3.9
+
+    - python
+
+    - python_abi
+
+    - ucrt
+
+    - vc
+
+    - vc14_runtime
+
+    ## Requirements difference in linux-64 (compared with win-64):
+
+    - Added: libgcc-ng
+
+    - Added: libstdcxx-ng
+
+    - Removed: ucrt
+
+    - Removed: vc
+
+    - Removed: vc14_runtime
+
+    ## Requirements difference in osx-64 (compared with win-64):
+
+    - Added: libcxx
+
+    - Removed: ucrt
+
+    - Removed: vc
+
+    - Removed: vc14_runtime
+
+
+    Versions released in the last 12 months:
+
+    `1.25.2`, `1.24.4`, `1.24.3`, `1.23.5`'
+range:
+  end:
+    character: 9
+    line: 5
+  start:
+    character: 4
+    line: 5

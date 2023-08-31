@@ -83,6 +83,55 @@ def cases(tmpdir_factory) -> CasesFixture:
     return CasesFixture(copy_to, original_resources_dir)
 
 
+@pytest.fixture(
+    scope="session",
+)
+def cached_conda_cloud():
+    from robocorp_code.deps import conda_cloud
+
+    f = __file__
+    original_resources_dir = Path(os.path.join(os.path.dirname(f), "_resources"))
+    assert original_resources_dir.exists()
+    conda_cache = original_resources_dir / "conda-forge cache"
+    conda_indexes = conda_cache / ".conda_indexes"
+
+    # Uncomment to update with the latest conda forge information.
+    # Note: remove existing first to generate with the same index number.
+    # Note: we generate just for the libraries we're interested in to keep
+    # the sqlite db small.
+    #
+    # import shutil
+    # conda_cloud.INDEX_FOR_LIBRARIES = set(["numpy", "mu_repo", "python", "pip"])
+    # if conda_indexes.exists():
+    #     shutil.rmtree(conda_indexes)
+    # conda = conda_cloud.CondaCloud(conda_indexes)
+    # conda.schedule_update(wait=True, force=True)
+
+    assert conda_cache.exists()
+    assert (conda_indexes / "index_0001" / "win-64.db").exists()
+    conda = conda_cloud.CondaCloud(conda_indexes, reindex_if_old=False)
+    assert conda.is_information_cached()
+    return conda
+
+
+@pytest.fixture(scope="session", autouse=True)
+def patch_conda_forge_cloud_setup(cached_conda_cloud):
+    from pytest import MonkeyPatch
+    from robocorp_code.robocorp_language_server import RobocorpLanguageServer
+
+    def _create_conda_cloud(self, _cache_dir: str):
+        return cached_conda_cloud
+
+    monkeypatch = MonkeyPatch()
+    monkeypatch.setattr(
+        RobocorpLanguageServer,
+        "_create_conda_cloud",
+        _create_conda_cloud,
+    )
+    yield
+    monkeypatch.undo()
+
+
 @pytest.fixture
 def robocorp_home(tmpdir) -> str:
     # import shutil

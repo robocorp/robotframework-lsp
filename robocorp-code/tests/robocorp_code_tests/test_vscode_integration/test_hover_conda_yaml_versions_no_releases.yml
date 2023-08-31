@@ -1,14 +1,14 @@
 contents:
   kind: markdown
-  value: "# rpaframework\nVersion `22.5.3` was released at: `2023-05-02T04:59:50`\n\
-    \nLast release version: `24.1.2` done at: `2023-07-27T17:37:55`.\n\nNote: no releases\
-    \ in the last 12 months.\n\n**Home Page**: https://rpaframework.org/\n\n**Package\
-    \ URL**: https://pypi.org/project/rpaframework/\n\n**Repository**: https://github.com/robocorp/rpaframework\n\
-    ## Requirements:\n- docutils\n- rpaframework-core (>=11.0.5,<12.0.0)\n- rpaframework-pdf\
-    \ (>=7.1.5,<8.0.0)\n- rpaframework-windows (>=7.3.2,<8.0.0) ; sys_platform ==\
-    \ \"win32\"\n- java-access-bridge-wrapper (==0.14.1)\n- robocorp-storage (>=0.3.2,<0.4.0)\n\
-    - jsonpath-ng (>=1.5.2,<2.0.0)\n- robotframework (>=4.0.0,!=4.0.1,<6.0.0)\n- robotframework-sapguilibrary\
-    \ (>=1.1,<2.0) ; sys_platform == \"win32\"\n- robotframework-seleniumlibrary (>=6.0.0,<7.0.0)\n\
+  value: "# rpaframework\nVersion `22.5.3` was released at: `2023-05-02`\n\nLast release\
+    \ version: `24.1.2` done at: `2023-07-27`.\n\nNote: no releases in the last 12\
+    \ months.\n\n**Home Page**: https://rpaframework.org/\n\n**Package URL**: https://pypi.org/project/rpaframework/\n\
+    \n**Repository**: https://github.com/robocorp/rpaframework\n## Requirements:\n\
+    - docutils\n- rpaframework-core (>=11.0.5,<12.0.0)\n- rpaframework-pdf (>=7.1.5,<8.0.0)\n\
+    - rpaframework-windows (>=7.3.2,<8.0.0) ; sys_platform == \"win32\"\n- java-access-bridge-wrapper\
+    \ (==0.14.1)\n- robocorp-storage (>=0.3.2,<0.4.0)\n- jsonpath-ng (>=1.5.2,<2.0.0)\n\
+    - robotframework (>=4.0.0,!=4.0.1,<6.0.0)\n- robotframework-sapguilibrary (>=1.1,<2.0)\
+    \ ; sys_platform == \"win32\"\n- robotframework-seleniumlibrary (>=6.0.0,<7.0.0)\n\
     - robotframework-seleniumtestability (>=2.0.0,<3.0.0)\n- robotframework-requests\
     \ (>=0.9.1,<0.10.0)\n- pywinauto (>=0.6.8,<0.7.0) ; python_full_version != \"\
     3.7.6\" and python_full_version != \"3.8.1\" and sys_platform == \"win32\"\n-\

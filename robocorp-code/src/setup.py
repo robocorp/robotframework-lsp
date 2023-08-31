@@ -1,6 +1,7 @@
-from setuptools.dist import Distribution
-from setuptools import find_packages, setup
 import os
+
+from setuptools import find_packages, setup
+from setuptools.dist import Distribution
 
 _dirname = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _readme_filename = os.path.join(_dirname, "README.md")
@@ -33,6 +34,7 @@ setup(
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=[
+        "msgspec",
         "rpaframework-core",
         "rpaframework-recognition",
         "numpy<1.25,>=1.20",

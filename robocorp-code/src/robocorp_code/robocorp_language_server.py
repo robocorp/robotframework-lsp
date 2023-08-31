@@ -5,20 +5,21 @@ import weakref
 from base64 import b64encode
 from functools import partial
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Sequence
+from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
 
 from robocorp_ls_core import watchdog_wrapper
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.cache import CachedFileInfo
 from robocorp_ls_core.command_dispatcher import _CommandDispatcher
 from robocorp_ls_core.jsonrpc.endpoint import require_monitor
+from robocorp_ls_core.lsp import HoverTypedDict
 from robocorp_ls_core.protocols import IConfig, IMonitor, LibraryVersionInfoDict
 from robocorp_ls_core.python_ls import BaseLintManager, PythonLanguageServer
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
 
 from robocorp_code import commands
-from robocorp_code.deps._deps_protocols import IPyPiCloud
+from robocorp_code.deps._deps_protocols import ICondaCloud, IPyPiCloud
 from robocorp_code.protocols import (
     ActionResultDict,
     ActionResultDictLocalRobotMetadata,
@@ -85,7 +86,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
     CLOUD_LIST_WORKSPACE_CACHE_KEY = "CLOUD_LIST_WORKSPACE_CACHE_V3"
     PACKAGE_ACCESS_LRU_CACHE_KEY = "PACKAGE_ACCESS_LRU_CACHE"
 
-    def __init__(self, read_stream, write_stream):
+    def __init__(self, read_stream, write_stream) -> None:
         from queue import Queue
 
         from robocorp_ls_core.cache import DirCache
@@ -146,7 +147,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
                 f"Env vars info: {env_vars_info}\n"
             )
 
-        self._fs_observer = None
+        self._fs_observer: Optional[IFSObserver] = None
 
         self._dir_cache = DirCache(cache_dir)
         self._rcc = Rcc(self)
@@ -196,12 +197,13 @@ class RobocorpLanguageServer(PythonLanguageServer):
         )
         from robocorp_code.plugins.resolve_interpreter import register_plugins
 
-        self._prefix_to_last_run_number_and_time = {}
+        self._prefix_to_last_run_number_and_time: Dict[str, Tuple[int, float]] = {}
 
-        self._pypi_cloud = PyPiCloud(weakref.WeakMethod(self._get_pypi_base_urls))
-
+        self._pypi_cloud = PyPiCloud(weakref.WeakMethod(self._get_pypi_base_urls))  # type: ignore
+        self._cache_dir = cache_dir
         self._paths_remover = None
-        self._paths_remover_queue = Queue()
+        self.__conda_cloud: Optional[ICondaCloud] = None
+        self._paths_remover_queue: "Queue[Path]" = Queue()
         register_plugins(self._pm)
 
         self._playwright = _Playwright(
@@ -210,6 +212,22 @@ class RobocorpLanguageServer(PythonLanguageServer):
             plugin_manager=self._pm,
             lsp_messages=self._lsp_messages,
         )
+
+    @property
+    def _conda_cloud(self) -> ICondaCloud:  # Create it on demand
+        if self.__conda_cloud is None:
+            conda_cloud = self.__conda_cloud = self._create_conda_cloud(self._cache_dir)
+            conda_cloud.schedule_update()
+        return self.__conda_cloud
+
+    def _create_conda_cloud(self, cache_dir: str) -> ICondaCloud:
+        """
+        Note: monkey-patched in tests (so that we don't reindex
+        and specify the conda-indexes to use).
+        """
+        from robocorp_code.deps.conda_cloud import CondaCloud
+
+        return CondaCloud(Path(cache_dir) / ".conda_indexes")
 
     def _get_pypi_base_urls(self) -> Sequence[str]:
         return self._profile.get_pypi_base_urls()
@@ -488,7 +506,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
                 return result.as_dict()
 
             workspaces = result.result
-            for ws in workspaces:
+            for ws in workspaces or []:
                 packages: List[PackageInfoDict] = []
 
                 activity_package: IRccRobotMetadata
@@ -503,7 +521,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
                     continue
 
                 workspace_activities = activities_result.result
-                for activity_package in workspace_activities:
+                for activity_package in workspace_activities or []:
                     key = (ws.workspace_id, activity_package.robot_id)
                     sort_key = "%05d%s" % (
                         ws_id_and_pack_id_to_lru_index.get(key, DEFAULT_SORT_KEY),
@@ -546,7 +564,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         template = params["template"]
 
         name = params.get("name", "").strip()
-        force = params.get("force", False)
+        force: bool = bool(params.get("force", False))
         if name:
             # If the name is given we join it to the directory, otherwise
             # we use the directory directly.
@@ -1125,7 +1143,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
 
     def _hover_on_conda_yaml(
         self, doc_uri, line, col, monitor: IMonitor
-    ) -> Optional[dict]:
+    ) -> Optional[HoverTypedDict]:
         from robocorp_ls_core.protocols import IDocument
 
         from robocorp_code.hover import hover_on_conda_yaml
@@ -1138,7 +1156,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
         if doc is None:
             return None
 
-        return hover_on_conda_yaml(doc, line, col, self._pypi_cloud)
+        return hover_on_conda_yaml(doc, line, col, self._pypi_cloud, self._conda_cloud)
 
     def _hover_on_locators_json(
         self, doc_uri, line, col, monitor: IMonitor

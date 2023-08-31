@@ -1,8 +1,10 @@
 # Versions = Union[LegacyVersion, Version]
 import datetime
 import sys
+import typing
+from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Any, Dict, Iterator, List, Optional, Union
+from typing import Any, Dict, Iterator, List, Optional, Sequence, Set, Tuple, Union
 
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
 if sys.version_info[:2] < (3, 8):
@@ -104,6 +106,72 @@ class IPyPiCloud(Protocol):
             A sorted list containing the versions > than the one passed (the last
             entry is the latest version).
         """
+
+
+SubdirToBuildAndDependsJsonBytesType = Dict[str, List[Tuple[str, bytes]]]
+
+
+@dataclass(unsafe_hash=True)
+class CondaVersionInfo:
+    package_name: str
+    version: str
+    timestamp: int  # Max is given
+    subdir_to_build_and_depends_json_bytes: SubdirToBuildAndDependsJsonBytesType
+
+
+if typing.TYPE_CHECKING:
+    # No need for sqlite3 until it's actually used.
+    from sqlite3 import Cursor
+else:
+    Cursor = object
+
+
+class LatestIndexInfoTypedDict(TypedDict):
+    # The place where the index info is saved.
+    index_dir: str
+    timestamp: datetime.datetime
+
+
+class ISqliteQueries(Protocol):
+    @contextmanager
+    def db_cursors(
+        self, db_cursor: Optional[Sequence[Cursor]] = None
+    ) -> Iterator[Sequence[Cursor]]:
+        pass
+
+    def query_names(self, db_cursors: Optional[Sequence[Cursor]] = None) -> Set[str]:
+        pass
+
+    def query_versions(
+        self, package_name, db_cursors: Optional[Sequence[Cursor]] = None
+    ) -> Set[str]:
+        pass
+
+    def query_version_info(
+        self,
+        package_name: str,
+        version: str,
+        db_cursors: Optional[Sequence[Cursor]] = None,
+    ) -> CondaVersionInfo:
+        pass
+
+
+class IOnFinished(Protocol):
+    def __call__(self):
+        pass
+
+
+class ICondaCloud(Protocol):
+    def is_information_cached(self) -> bool:
+        pass
+
+    def sqlite_queries(self) -> Optional[ISqliteQueries]:
+        pass
+
+    def schedule_update(
+        self, on_finished: Optional[IOnFinished] = None, wait=False, force=False
+    ) -> None:
+        pass
 
 
 class _DiagnosticSeverity(object):

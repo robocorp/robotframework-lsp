@@ -11,6 +11,7 @@ from getpass import getpass
 from os.path import abspath, expanduser
 from typing import Tuple
 from urllib.parse import quote_plus  # noqa: F401
+from urllib.parse import unquote  # noqa (add to public API).
 from urllib.parse import ParseResult
 from urllib.parse import urlparse as _urlparse
 from urllib.parse import urlunparse as _urlunparse  # noqa: F401
