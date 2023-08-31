@@ -1,3 +1,10 @@
+NEXT
+-----------------------------
+
+- When hovering over conda dependencies in `conda.yaml`, information from conda-forge is shown.
+- RCC is now distributed along with `Robocorp Code` (so, it'll no longer be downloaded in the first activation).
+
+
 New in 1.10.0 (2023-08-21)
 -----------------------------
 
