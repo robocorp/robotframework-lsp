@@ -40,28 +40,70 @@ jobs:
       run: |
         cp ../README.md ./README.md
         python setup.py sdist bdist_wheel --universal
-    - run: npm install -g vsce@2.6.7
-    - run: vsce package -o robocorp-code.vsix
-    - uses: actions/upload-artifact@v1
-      with:
-        name: robocorp-code.vsix
-        path: ./robocorp-code/robocorp-code.vsix
+    - run: npm install -g vsce@2.15.0
         
     - name: Check tag version
       run: python -m dev check-tag-version
-#     - name: Upload to PyPI
-#       working-directory: ./robocorp-code/src
-#       run: twine upload dist/*
-#       env:
-#         TWINE_USERNAME: ${{ secrets.TWINE_USERNAME }}
-#         TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
 
-    - name: Publish to vscode marketplace 
-      run: vsce publish -p $VSCE_TOKEN
+    # Deal with Windows --------------
+    - name: Download rcc for windows
+      run: python -m dev download-rcc win32
+      
+    - run: vsce package --target win32-x64 -o robocorp-code-win32-x64.vsix
+
+    - uses: actions/upload-artifact@v1
+      with:
+        name: robocorp-code-win32-x64.vsix
+        path: ./robocorp-code/robocorp-code-win32-x64.vsix
+    
+    - name: Publish pre-release to vscode marketplace
+      run: vsce publish --packagePath ./robocorp-code-win32-x64.vsix -p $VSCE_TOKEN
       env:
         VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
         
-    - name: Publish to open vsx marketplace 
-      run: npx ovsx publish robocorp-code.vsix -p $OPEN_VSX_TOKEN
+    - name: Publish windows to open vsx marketplace 
+      run: npx ovsx publish robocorp-code-win32-x64.vsix -p $OPEN_VSX_TOKEN
+      env:
+        OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
+                
+    # Deal with Linux --------------
+    - name: Download rcc for linux
+      run: python -m dev download-rcc linux
+      
+    - run: vsce package --target linux-x64 -o robocorp-code-linux-x64.vsix
+
+    - uses: actions/upload-artifact@v1
+      with:
+        name: robocorp-code-linux-x64.vsix
+        path: ./robocorp-code/robocorp-code-linux-x64.vsix
+    
+    - name: Publish pre-release to vscode marketplace
+      run: vsce publish --packagePath ./robocorp-code-linux-x64.vsix -p $VSCE_TOKEN
+      env:
+        VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+        
+    - name: Publish linux to open vsx marketplace 
+      run: npx ovsx publish robocorp-code-linux-x64.vsix -p $OPEN_VSX_TOKEN
+      env:
+        OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
+        
+    # Deal with Darwin --------------
+    - name: Download rcc for darwin
+      run: python -m dev download-rcc darwin
+      
+    - run: vsce package --target darwin-x64 -o robocorp-code-darwin-x64.vsix
+
+    - uses: actions/upload-artifact@v1
+      with:
+        name: robocorp-code-darwin-x64.vsix
+        path: ./robocorp-code/robocorp-code-darwin-x64.vsix
+    
+    - name: Publish pre-release to vscode marketplace
+      run: vsce publish --packagePath ./robocorp-code-darwin-x64.vsix -p $VSCE_TOKEN
+      env:
+        VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+        
+    - name: Publish darwin to open vsx marketplace 
+      run: npx ovsx publish robocorp-code-darwin-x64.vsix -p $OPEN_VSX_TOKEN
       env:
         OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}

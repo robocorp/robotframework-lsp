@@ -56,16 +56,55 @@ jobs:
         cp ../README.md ./README.md
         python setup.py sdist bdist_wheel --universal
         
-    - run: npm install -g vsce@2.6.7
+    - run: npm install -g vsce@2.15.0
     
-    - run: vsce package -o robocorp-code.vsix
+    
+    # Platforms: win32-x64, win32-ia32, win32-arm64, linux-x64, linux-arm64, linux-armhf, alpine-x64, alpine-arm64, darwin-x64, darwin-arm64 and web.
+    
+    # Deal with Windows --------------
+    - name: Download rcc for windows
+      run: python -m dev download-rcc win32
+      
+    - run: vsce package --pre-release --target win32-x64 -o robocorp-code-win32-x64.vsix
 
     - uses: actions/upload-artifact@v1
       with:
-        name: robocorp-code.vsix
-        path: ./robocorp-code/robocorp-code.vsix
+        name: robocorp-code-win32-x64.vsix
+        path: ./robocorp-code/robocorp-code-win32-x64.vsix
     
     - name: Publish pre-release to vscode marketplace
-      run: vsce publish -p $VSCE_TOKEN --pre-release
+      run: vsce publish --packagePath ./robocorp-code-win32-x64.vsix -p $VSCE_TOKEN --pre-release
+      env:
+        VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+        
+    # Deal with Linux --------------
+    - name: Download rcc for linux
+      run: python -m dev download-rcc linux
+      
+    - run: vsce package --pre-release --target linux-x64 -o robocorp-code-linux-x64.vsix
+
+    - uses: actions/upload-artifact@v1
+      with:
+        name: robocorp-code-linux-x64.vsix
+        path: ./robocorp-code/robocorp-code-linux-x64.vsix
+    
+    - name: Publish pre-release to vscode marketplace
+      run: vsce publish --packagePath ./robocorp-code-linux-x64.vsix -p $VSCE_TOKEN --pre-release
+      env:
+        VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+        
+    # Deal with Darwin --------------
+    - name: Download rcc for darwin
+      run: python -m dev download-rcc darwin
+      
+    - run: vsce package --pre-release --target darwin-x64 -o robocorp-code-darwin-x64.vsix
+
+    - uses: actions/upload-artifact@v1
+      with:
+        name: robocorp-code-darwin-x64.vsix
+        path: ./robocorp-code/robocorp-code-darwin-x64.vsix
+    
+    - name: Publish pre-release to vscode marketplace
+      run: vsce publish --packagePath ./robocorp-code-darwin-x64.vsix -p $VSCE_TOKEN --pre-release
       env:
         VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}

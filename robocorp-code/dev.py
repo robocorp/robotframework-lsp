@@ -9,8 +9,8 @@ Some example commands:
     python -m dev check-tag-version
     python -m dev vendor-robocorp-ls-core
 """
-import sys
 import os
+import sys
 import traceback
 
 __file__ = os.path.abspath(__file__)
@@ -137,8 +137,8 @@ class Dev(object):
             sys.exit(1)
 
     def remove_vendor_robocorp_ls_core(self):
-        import time
         import shutil
+        import time
 
         vendored_dir = os.path.join(
             os.path.dirname(__file__),
@@ -228,9 +228,10 @@ class Dev(object):
             f.write(new_content)
 
     def generate_license_file(self):
-        import tempfile
         import subprocess
+        import tempfile
         import time
+
         from robocorp_code.rcc import download_rcc
 
         rcc_location = os.path.join(tempfile.mkdtemp(), "rcc.exe")
@@ -249,6 +250,42 @@ class Dev(object):
                 in decoded
             )
             f.write(decoded)
+
+    def download_rcc(self, plat):
+        assert plat in ("win32", "linux", "darwin")
+        import stat
+        import time
+
+        from robocorp_code.rcc import download_rcc
+
+        root = os.path.dirname(__file__)
+        bin_dir = os.path.join(root, "bin")
+        assert os.path.exists(bin_dir)
+
+        rcc_location_win = os.path.join(bin_dir, "rcc.exe")
+        if os.path.exists(rcc_location_win):
+            os.chmod(rcc_location_win, stat.S_IWRITE)
+            os.remove(rcc_location_win)
+            time.sleep(0.1)
+
+        rcc_location_linux_darwin = os.path.join(bin_dir, "rcc")
+        if os.path.exists(rcc_location_linux_darwin):
+            os.chmod(rcc_location_linux_darwin, stat.S_IWRITE)
+            os.remove(rcc_location_linux_darwin)
+            time.sleep(0.1)
+
+        assert not os.path.exists(rcc_location_win)
+        assert not os.path.exists(rcc_location_linux_darwin)
+
+        if plat == "win32":
+            rcc_location = rcc_location_win
+        else:
+            rcc_location = rcc_location_linux_darwin
+
+        download_rcc(rcc_location, force=True, sys_platform=plat)
+        time.sleep(0.2)
+        print(f"Downloaded rcc to: {rcc_location}")
+        assert os.path.exists(rcc_location)
 
     def local_install(self):
         """

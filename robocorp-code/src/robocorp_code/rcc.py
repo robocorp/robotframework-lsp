@@ -40,7 +40,9 @@ RCC_CREDENTIALS_MUTEX_NAME = "rcc_credentials"
 ACCOUNT_NAME = "robocorp-code"
 
 
-def download_rcc(location: str, force: bool = False) -> None:
+def download_rcc(
+    location: str, force: bool = False, sys_platform: Optional[str] = None
+) -> None:
     """
     Downloads rcc to the given location. Note that we don't overwrite it if it
     already exists (unless force == True).
@@ -52,6 +54,9 @@ def download_rcc(location: str, force: bool = False) -> None:
     """
     from robocorp_ls_core.system_mutex import timed_acquire_mutex
 
+    if sys_platform is None:
+        sys_platform = sys.platform
+
     if not os.path.exists(location) or force:
         with timed_acquire_mutex("robocorp_get_rcc", timeout=120):
             if not os.path.exists(location) or force:
@@ -61,13 +66,13 @@ def download_rcc(location: str, force: bool = False) -> None:
                 machine = platform.machine()
                 is_64 = not machine or "64" in machine
 
-                if sys.platform == "win32":
+                if sys_platform == "win32":
                     if is_64:
                         relative_path = "/windows64/rcc.exe"
                     else:
                         relative_path = "/windows32/rcc.exe"
 
-                elif sys.platform == "darwin":
+                elif sys_platform == "darwin":
                     relative_path = "/macos64/rcc"
 
                 else:
