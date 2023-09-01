@@ -43,6 +43,10 @@ def test_python_version(check_conda_yaml, name: str, patch_pypi_cloud) -> None:
     check_conda_yaml(name)
 
 
+def test_github_custom_package(check_conda_yaml, patch_pypi_cloud) -> None:
+    check_conda_yaml("check_github")
+
+
 def test_hover_conda_yaml_pip_package(datadir, patch_pypi_cloud):
     from robocorp_code.deps.analyzer import Analyzer
 

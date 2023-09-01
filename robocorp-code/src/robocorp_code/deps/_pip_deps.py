@@ -39,6 +39,21 @@ class PipDeps:
             if not remaining or remaining.startswith("#"):
                 return
 
+            if value.startswith(("git+http", "http")) or value.endswith(
+                (".whl", ".zip", "bz2", "gz")
+            ):
+                self._pip_versions[value] = PipDepInfo(
+                    name=value,
+                    extras=None,
+                    constraints=None,
+                    marker=None,
+                    url="",
+                    requirement=value,
+                    dep_range=as_range,
+                    error_msg=None,
+                )
+                return
+
             m = IDENTIFIER.match(remaining)
             if not m:
                 name = "<unknown>"
