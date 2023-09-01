@@ -581,6 +581,32 @@ dependencies:
     data_regression.check(ret["result"])
 
 
+@pytest.mark.skipif(
+    sys.platform != "win32", reason="As the base platform changes so does the result."
+)
+def test_hover_conda_yaml_conda_forge_python_versions(
+    language_server_initialized: IRobocorpLanguageServerClient,
+    data_regression,
+    patch_pypi_cloud,
+):
+    from robocorp_ls_core.workspace import Document
+
+    client = language_server_initialized
+    uri = "x/y/conda.yaml"
+    txt = """
+channels:
+  - conda-forge
+
+dependencies:
+  - python=3.9"""
+    doc = Document("", txt)
+    client.open_doc(uri, 1, txt)
+    line, col = doc.get_last_line_col()
+    col -= 7
+    ret = client.hover(uri, line, col)
+    data_regression.check(ret["result"])
+
+
 def test_hover_conda_yaml_pypi_versions(
     language_server_initialized: IRobocorpLanguageServerClient,
     data_regression,

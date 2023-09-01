@@ -1,30 +1,36 @@
 contents:
   kind: markdown
-  value: '# numpy
+  value: '# python
 
     Conda-forge information:
 
 
     Versions released in the last 12 months:
 
-    `1.25.2`, `1.24.4`, `1.24.3`, `1.23.5`
+    `3.11.5`, `3.10.12`, `3.9.18`, `3.8.17`
 
 
-    Last release version: `1.25.2` done at: `2023-08-03`.
+    Last release version: `3.11.5` done at: `2023-08-27`.
 
     ## Requirements (win-64):
 
-    - libblas
+    - bzip2
 
-    - libcblas
+    - libexpat
 
-    - liblapack
+    - libffi
 
-    - pypy3.9
+    - libsqlite
 
-    - python
+    - libzlib
 
-    - python_abi
+    - openssl
+
+    - pip
+
+    - tk
+
+    - tzdata
 
     - ucrt
 
@@ -32,11 +38,21 @@ contents:
 
     - vc14_runtime
 
+    - xz
+
     ## Requirements difference in linux-64 (compared with win-64):
+
+    - Added: ld_impl_linux-64
 
     - Added: libgcc-ng
 
-    - Added: libstdcxx-ng
+    - Added: libnsl
+
+    - Added: libuuid
+
+    - Added: ncurses
+
+    - Added: readline
 
     - Removed: ucrt
 
@@ -46,7 +62,9 @@ contents:
 
     ## Requirements difference in osx-64 (compared with win-64):
 
-    - Added: libcxx
+    - Added: ncurses
+
+    - Added: readline
 
     - Removed: ucrt
 
@@ -55,7 +73,7 @@ contents:
     - Removed: vc14_runtime'
 range:
   end:
-    character: 9
+    character: 14
     line: 5
   start:
     character: 4

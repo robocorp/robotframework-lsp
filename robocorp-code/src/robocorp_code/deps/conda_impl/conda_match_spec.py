@@ -38,9 +38,6 @@ from . import conda_url
 log = getLogger(__name__)
 
 
-_PARSE_CACHE: dict = {}
-
-
 class InvalidMatchSpec(RuntimeError):
     pass
 
@@ -101,19 +98,19 @@ def _parse_channel(channel_val):
     return channel_name, chn.subdir
 
 
-_PARSE_CACHE = {}
+_PARSE_CACHE: dict = {}
 
 
 def parse_spec_str(spec_str):
+    cached_result = _PARSE_CACHE.get(spec_str)
+    if cached_result:
+        return cached_result
+
     import warnings
 
     from .conda_channel import Channel
     from .conda_path import expand, is_package_file, url_to_path
     from .conda_url import is_url
-
-    cached_result = _PARSE_CACHE.get(spec_str)
-    if cached_result:
-        return cached_result
 
     original_spec_str = spec_str
 

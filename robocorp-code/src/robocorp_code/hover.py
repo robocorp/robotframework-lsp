@@ -179,9 +179,23 @@ def _hover_handle_conda_dep(
             ):
                 last_year_version_infos.append(version_info)
 
-        all_version_infos = list(sorted(all_version_infos, key=lambda a: a.timestamp))
+        def version_key(version_info: CondaVersionInfo):
+            from robocorp_code.deps.conda_impl.conda_version import VersionOrder
+
+            version_order = VersionOrder(version_info.version)
+            return version_order
+
+        desc_parts.append("Conda-forge information:")
+        last_year_version_infos = list(sorted(last_year_version_infos, key=version_key))
+        if last_year_version_infos:
+            desc_parts.append("\nVersions released in the last 12 months:")
+            releases = "`, `".join(x.version for x in reversed(last_year_version_infos))
+            desc_parts.append(f"`{releases}`")
+        else:
+            desc_parts.append("\nNote: no releases in the last 12 months.")
+
+        all_version_infos = list(sorted(all_version_infos, key=version_key))
         if all_version_infos:
-            desc_parts.append("Conda-forge information:")
             last_version_info: Optional[CondaVersionInfo] = all_version_infos[-1]
             if last_version_info:
                 desc_parts.append(
@@ -192,16 +206,6 @@ def _hover_handle_conda_dep(
                 desc_parts.extend(
                     _create_conda_requirements_desc_parts(last_version_info)
                 )
-
-        last_year_version_infos = list(
-            sorted(last_year_version_infos, key=lambda v: v.timestamp)
-        )
-        if last_year_version_infos:
-            desc_parts.append("\nVersions released in the last 12 months:")
-            releases = "`, `".join(x.version for x in reversed(last_year_version_infos))
-            desc_parts.append(f"`{releases}`")
-        else:
-            desc_parts.append("\nNote: no releases in the last 12 months.")
 
     return {
         "contents": MarkupContent(MarkupKind.Markdown, "\n".join(desc_parts)).to_dict(),
