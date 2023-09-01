@@ -195,6 +195,32 @@ WHERE Packages.package_name = ? and Versions.version = ?
             )
 
 
+def version_key(version_info: CondaVersionInfo):
+    from robocorp_code.deps.conda_impl.conda_version import VersionOrder
+
+    version_order = VersionOrder(version_info.version)
+    return version_order
+
+
+def sort_conda_version_infos(
+    versions: Union[Sequence[CondaVersionInfo], Set[CondaVersionInfo]],
+) -> List[CondaVersionInfo]:
+    return list(sorted(versions, key=version_key))
+
+
+def version_str_key(version: str):
+    from robocorp_code.deps.conda_impl.conda_version import VersionOrder
+
+    version_order = VersionOrder(version)
+    return version_order
+
+
+def sort_conda_versions(
+    versions: Union[Sequence[str], Set[str]],
+) -> List[str]:
+    return list(sorted(versions, key=version_str_key))
+
+
 # Can be used in tests to index just a few libraries.
 INDEX_FOR_LIBRARIES: Optional[Set[str]] = None
 

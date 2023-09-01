@@ -1,0 +1,14 @@
+# For more details on the format and content:
+# https://github.com/robocorp/rcc/blob/master/docs/recipes.md#what-is-in-condayaml
+# Tip: Adding a link to the release notes of the packages helps maintenance and security.
+
+channels:
+  - conda-forge
+
+dependencies:
+  # Define conda-forge packages here -> https://anaconda.org/search
+  # When available, prefer the conda-forge packages over pip as installations are more efficient.
+  - python=3.10               # https://pyreadiness.org/3.9/
+  - pip=23                  # https://pip.pypa.io/en/stable/news/
+  - numpy>=1.2.3, <1.3
+  - mu_repo>1.6.0

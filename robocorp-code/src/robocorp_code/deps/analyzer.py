@@ -9,10 +9,12 @@ from typing import Any, Iterator, List, Optional, Tuple
 import yaml
 from robocorp_code.deps._conda_deps import CondaDepInfo
 from robocorp_code.deps._deps_protocols import (
+    ICondaCloud,
     _DiagnosticSeverity,
     _DiagnosticsTypedDict,
     _RangeTypedDict,
 )
+from robocorp_code.deps.conda_impl.conda_version import VersionSpec
 
 from ._deps_protocols import IPyPiCloud
 from ._pip_deps import PipDepInfo
@@ -97,9 +99,14 @@ class LoaderWithLines(yaml.SafeLoader):
 
 class Analyzer:
     _pypi_cloud: IPyPiCloud
+    _conda_cloud: ICondaCloud
 
     def __init__(
-        self, contents: str, path: str, pypi_cloud: Optional[IPyPiCloud] = None
+        self,
+        contents: str,
+        path: str,
+        conda_cloud: ICondaCloud,
+        pypi_cloud: Optional[IPyPiCloud] = None,
     ):
         """
         Args:
@@ -122,6 +129,8 @@ class Analyzer:
             self._pypi_cloud = PyPiCloud()
         else:
             self._pypi_cloud = pypi_cloud
+
+        self._conda_cloud = conda_cloud
 
     def load_conda_yaml(self) -> None:
         if self._loaded_conda_yaml:
@@ -227,42 +236,89 @@ class Analyzer:
 
                         yield diagnostic
 
-    def iter_conda_issues(self):
+    def iter_conda_issues(self) -> Iterator[_DiagnosticsTypedDict]:
+        from robocorp_code.deps.conda_cloud import sort_conda_versions
+
         diagnostic: _DiagnosticsTypedDict
         dep_vspec = self._conda_deps.get_dep_vspec("python")
 
         # See: https://devguide.python.org/versions/
-        if dep_vspec is not None and not check_version(
-            dep_vspec, ">=3.8"
-        ):  # 3.7 or earlier
-            dep_range = self._conda_deps.get_dep_range("python")
 
-            diagnostic = {
-                "range": dep_range,
-                "severity": _DiagnosticSeverity.Warning,
-                "source": "robocorp-code",
-                "message": "The official support for versions lower than Python 3.8 has ended. "
-                + " It is advisable to transition to a newer version "
-                + "(Python 3.9 or newer is recommended).",
-            }
+        if dep_vspec is not None:
+            # We have the dep spec, not the actual version
+            # (so, it could be something as >3.3 <4)
+            # So, if an old version may be gotten from that spec, we warn about it.
+            vspec = VersionSpec(dep_vspec)
+            for old_version in "2 3.1 3.2 3.3 3.4 3.5 3.6 3.7".split(" "):
+                if vspec.match(old_version):
+                    dep_range = self._conda_deps.get_dep_range("python")
 
-            yield diagnostic
+                    diagnostic = {
+                        "range": dep_range,
+                        "severity": _DiagnosticSeverity.Warning,
+                        "source": "robocorp-code",
+                        "message": "The official support for versions lower than Python 3.8 has ended. "
+                        + " It is advisable to transition to a newer version "
+                        + "(Python 3.9 or newer is recommended).",
+                    }
+
+                    yield diagnostic
+                    break
 
         dep_vspec = self._conda_deps.get_dep_vspec("pip")
 
-        if dep_vspec is not None and not check_version(
-            dep_vspec, ">=22"
-        ):  # pip should be 22 or newer
-            dep_range = self._conda_deps.get_dep_range("pip")
+        if dep_vspec is not None:
+            vspec = VersionSpec(dep_vspec)
+            # pip should be 22 or newer, so, check if an older version matches.
+            for old_version in (str(x) for x in range(1, 23)):
+                if vspec.match(old_version):
+                    dep_range = self._conda_deps.get_dep_range("pip")
 
-            diagnostic = {
-                "range": dep_range,
-                "severity": _DiagnosticSeverity.Warning,
-                "source": "robocorp-code",
-                "message": "Consider updating pip to a newer version (at least pip 22 onwards is recommended).",
-            }
+                    diagnostic = {
+                        "range": dep_range,
+                        "severity": _DiagnosticSeverity.Warning,
+                        "source": "robocorp-code",
+                        "message": "Consider updating pip to a newer version (at least pip 22 onwards is recommended).",
+                    }
 
-            yield diagnostic
+                    yield diagnostic
+                    break
+
+        sqlite_queries = self._conda_cloud.sqlite_queries()
+        if sqlite_queries:
+            with sqlite_queries.db_cursors() as db_cursors:
+                for conda_dep in self._conda_deps.iter_conda_dep_infos():
+                    if conda_dep.name in ("python", "pip"):
+                        continue
+
+                    version_spec = conda_dep.get_dep_vspec()
+                    if version_spec is None:
+                        continue
+
+                    versions = sqlite_queries.query_versions(conda_dep.name, db_cursors)
+                    if not versions:
+                        continue
+
+                    sorted_versions = sort_conda_versions(versions)
+                    last_version = sorted_versions[-1]
+                    if not version_spec.match(last_version):
+                        # The latest version doesn't match, let's show a warning.
+                        newer_cloud_versions = []
+                        for v in reversed(sorted_versions):
+                            if not version_spec.match(v):
+                                newer_cloud_versions.append(v)
+                            else:
+                                break
+
+                        diagnostic = {
+                            "range": conda_dep.dep_range,
+                            "severity": _DiagnosticSeverity.Warning,
+                            "source": "robocorp-code",
+                            "message": f"Consider updating '{conda_dep.name}' to match the latest version: '{last_version}'. "
+                            + f"Found {len(newer_cloud_versions)} versions that don't match the version specification: {', '.join(newer_cloud_versions)}.",
+                        }
+
+                        yield diagnostic
 
     def find_pip_dep_at(self, line, col) -> Optional[PipDepInfo]:
         self.load_conda_yaml()
@@ -288,8 +344,3 @@ def is_inside(range_dct: _RangeTypedDict, line: int, col: int) -> bool:
     end_pos = Position(end["line"], end["character"])
     curr_pos = Position(line, col)
     return start_pos <= curr_pos <= end_pos
-
-
-def check_version(dep_vspec, constraint):
-    op = dep_vspec.get_matcher(constraint)[1]
-    return op(dep_vspec)

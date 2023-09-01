@@ -2,6 +2,7 @@ NEXT
 -----------------------------
 
 - When hovering over conda dependencies in `conda.yaml`, information from conda-forge is shown.
+- Warning if the versions for conda-forge in `conda.yaml` have updates.
 - RCC is now distributed along with `Robocorp Code` (so, it'll no longer be downloaded in the first activation).
 - A warning is no longer shown if a pre-release is available in pypi and the latest version is actually being used already. 
 - Fixed issue where a parse exception was shown when a git url was used to install a pip dependency.

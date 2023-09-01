@@ -18,13 +18,13 @@ def get_conda_yaml_doc(datadir, name) -> IDocument:
 
 
 @pytest.fixture
-def check_conda_yaml(datadir, data_regression) -> Iterator:
+def check_conda_yaml(datadir, data_regression, cached_conda_cloud) -> Iterator:
     def check(name):
         from robocorp_code.deps.analyzer import Analyzer
 
         doc = get_conda_yaml_doc(datadir, name)
 
-        analyzer = Analyzer(doc.source, doc.path)
+        analyzer = Analyzer(doc.source, doc.path, conda_cloud=cached_conda_cloud)
         data_regression.check(list(analyzer.iter_issues()))
 
     yield check
@@ -47,23 +47,27 @@ def test_github_custom_package(check_conda_yaml, patch_pypi_cloud) -> None:
     check_conda_yaml("check_github")
 
 
-def test_hover_conda_yaml_pip_package(datadir, patch_pypi_cloud):
+def test_conda_version_old(check_conda_yaml, patch_pypi_cloud) -> None:
+    check_conda_yaml("check_conda_version")
+
+
+def test_hover_conda_yaml_pip_package(datadir, patch_pypi_cloud, cached_conda_cloud):
     from robocorp_code.deps.analyzer import Analyzer
 
     doc = get_conda_yaml_doc(datadir, "check_python_version")
 
-    analyzer = Analyzer(doc.source, doc.path)
+    analyzer = Analyzer(doc.source, doc.path, cached_conda_cloud)
     pip_dep = analyzer.find_pip_dep_at(14, 17)
     assert pip_dep is not None
     assert pip_dep.name == "rpaframework"
 
 
-def test_hover_conda_yaml_conda_package(datadir, patch_pypi_cloud):
+def test_hover_conda_yaml_conda_package(datadir, patch_pypi_cloud, cached_conda_cloud):
     from robocorp_code.deps.analyzer import Analyzer
 
     doc = get_conda_yaml_doc(datadir, "check_python_version")
 
-    analyzer = Analyzer(doc.source, doc.path)
+    analyzer = Analyzer(doc.source, doc.path, cached_conda_cloud)
     conda_dep = analyzer.find_conda_dep_at(10, 7)
     assert conda_dep is not None
     assert conda_dep.name == "python"
@@ -84,8 +88,8 @@ def test_hover_conda_yaml_rpaframework(
 
 
 def test_conda_version_spec_api():
-    from robocorp_code.deps.analyzer import check_version
     from robocorp_code.deps.conda_impl import conda_version
+    from robocorp_code.deps.conda_impl.conda_match_spec import parse_spec_str
 
     v = conda_version.VersionSpec("22.1.3")
     op = v.get_matcher(">=22")[1]
@@ -101,7 +105,20 @@ def test_conda_version_spec_api():
     op = v.get_matcher(">=3.8")[1]
     assert op(v)
 
-    assert check_version(conda_version.VersionSpec("21"), ">=21")
+    assert conda_version.VersionSpec(">=21").match("21")
+
+    s = parse_spec_str("numpy>=1.2.3, <1.3")
+    assert conda_version.VersionSpec(s["version"]).match("1.2.4")
+    assert conda_version.VersionSpec(s["version"]).match("1.2.3")
+    assert not conda_version.VersionSpec(s["version"]).match("1.2.2")
+    assert not conda_version.VersionSpec(s["version"]).match("1.3")
+    assert not conda_version.VersionSpec(s["version"]).match("2")
+
+    assert conda_version.VersionSpec("1.2.*").match("1.2.3")
+    assert conda_version.VersionSpec("1.2").match("1.2.0")
+    assert conda_version.VersionSpec("1.2.0").match("1.2")
+
+    assert not conda_version.VersionSpec("1.2").match("1.2.2")
 
 
 def test_pypi_cloud(patch_pypi_cloud) -> None:

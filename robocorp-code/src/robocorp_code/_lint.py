@@ -8,7 +8,7 @@ from robocorp_ls_core.protocols import IEndPoint, IMonitor, IWorkspace
 from robocorp_ls_core.python_ls import BaseLintInfo, BaseLintManager
 from robocorp_ls_core.robotframework_log import get_logger
 
-from robocorp_code.deps._deps_protocols import IPyPiCloud
+from robocorp_code.deps._deps_protocols import ICondaCloud, IPyPiCloud
 from robocorp_code.protocols import IRcc
 from robocorp_code.robocorp_language_server import RobocorpLanguageServer
 
@@ -22,6 +22,7 @@ class DiagnosticsConfig:
 
 def collect_conda_yaml_diagnostics(
     pypi_cloud: IPyPiCloud,
+    conda_cloud: ICondaCloud,
     workspace: IWorkspace,
     conda_yaml_uri: str,
     monitor: Optional[IMonitor],
@@ -36,7 +37,9 @@ def collect_conda_yaml_diagnostics(
         return []
     if monitor:
         monitor.check_cancelled()
-    return list(analyzer.Analyzer(doc.source, doc.path, pypi_cloud).iter_issues())
+    return list(
+        analyzer.Analyzer(doc.source, doc.path, conda_cloud, pypi_cloud).iter_issues()
+    )
 
 
 def collect_rcc_configuration_diagnostics(
@@ -171,6 +174,7 @@ class _CurrLintInfo(BaseLintInfo):
                         found.extend(
                             collect_conda_yaml_diagnostics(
                                 robocorp_language_server.pypi_cloud,
+                                robocorp_language_server.conda_cloud,
                                 ws,
                                 doc_uri,
                                 self._monitor,

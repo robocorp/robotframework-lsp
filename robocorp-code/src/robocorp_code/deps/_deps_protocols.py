@@ -114,7 +114,7 @@ SubdirToBuildAndDependsJsonBytesType = Dict[str, List[Tuple[str, bytes]]]
 @dataclass(unsafe_hash=True)
 class CondaVersionInfo:
     package_name: str
-    version: str
+    version: str  # This is the version from conda-forge.
     timestamp: int  # Max is given
     subdir_to_build_and_depends_json_bytes: SubdirToBuildAndDependsJsonBytesType
 

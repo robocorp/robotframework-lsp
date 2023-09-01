@@ -236,6 +236,10 @@ class RobocorpLanguageServer(PythonLanguageServer):
     def pypi_cloud(self) -> IPyPiCloud:
         return self._pypi_cloud
 
+    @property
+    def conda_cloud(self) -> ICondaCloud:
+        return self._conda_cloud
+
     def _discard_listed_workspaces_info(self):
         self._dir_cache.discard(self.CLOUD_LIST_WORKSPACE_CACHE_KEY)
 

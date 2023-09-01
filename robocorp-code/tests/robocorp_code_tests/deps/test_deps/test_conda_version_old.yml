@@ -1,0 +1,13 @@
+- message: 'Consider updating ''numpy'' to match the latest version: ''1.25.2''. Found
+    19 versions that don''t match the version specification: 1.25.2, 1.24.4, 1.24.3,
+    1.23.5, 1.22.3, 1.22.1, 1.21.6, 1.20.3, 1.20.2, 1.19.5, 1.17.5, 1.16.6, 1.15.4,
+    1.14.6, 1.13.3, 1.12.1, 1.11.3, 1.10.4, 1.9.3.'
+  range:
+    end:
+      character: 22
+      line: 12
+    start:
+      character: 4
+      line: 12
+  severity: 2
+  source: robocorp-code

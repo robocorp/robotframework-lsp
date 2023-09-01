@@ -31,7 +31,7 @@ def hover_on_conda_yaml(
     from robocorp_code.deps.analyzer import Analyzer
 
     sel: IDocumentSelection = doc.selection(line, col)
-    analyzer = Analyzer(doc.source, doc.path, pypi_cloud)
+    analyzer = Analyzer(doc.source, doc.path, conda_cloud, pypi_cloud)
     pip_dep = analyzer.find_pip_dep_at(sel.line, sel.col)
     if pip_dep is not None:
         return _hover_handle_pip_dep(pypi_cloud, pip_dep)
@@ -125,7 +125,10 @@ def _create_conda_requirements_desc_parts(
 def _hover_handle_conda_dep(
     conda_cloud: ICondaCloud, conda_dep: CondaDepInfo
 ) -> Optional[HoverTypedDict]:
-    from robocorp_code.deps.conda_cloud import timestamp_to_datetime
+    from robocorp_code.deps.conda_cloud import (
+        sort_conda_versions,
+        timestamp_to_datetime,
+    )
 
     if not conda_cloud.is_information_cached():
         return {
@@ -168,7 +171,7 @@ def _hover_handle_conda_dep(
         last_year_version_infos: List[CondaVersionInfo] = []
         all_version_infos: List[CondaVersionInfo] = []
 
-        for version in versions:
+        for version in sort_conda_versions(versions):
             version_info = sqlite_queries.query_version_info(
                 conda_dep.name, version, db_cursors
             )
@@ -179,14 +182,7 @@ def _hover_handle_conda_dep(
             ):
                 last_year_version_infos.append(version_info)
 
-        def version_key(version_info: CondaVersionInfo):
-            from robocorp_code.deps.conda_impl.conda_version import VersionOrder
-
-            version_order = VersionOrder(version_info.version)
-            return version_order
-
         desc_parts.append("Conda-forge information:")
-        last_year_version_infos = list(sorted(last_year_version_infos, key=version_key))
         if last_year_version_infos:
             desc_parts.append("\nVersions released in the last 12 months:")
             releases = "`, `".join(x.version for x in reversed(last_year_version_infos))
@@ -194,7 +190,6 @@ def _hover_handle_conda_dep(
         else:
             desc_parts.append("\nNote: no releases in the last 12 months.")
 
-        all_version_infos = list(sorted(all_version_infos, key=version_key))
         if all_version_infos:
             last_version_info: Optional[CondaVersionInfo] = all_version_infos[-1]
             if last_version_info:
