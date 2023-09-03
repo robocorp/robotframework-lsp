@@ -270,7 +270,7 @@ class Analyzer:
         if dep_vspec is not None:
             vspec = VersionSpec(dep_vspec)
             # pip should be 22 or newer, so, check if an older version matches.
-            for old_version in (str(x) for x in range(1, 23)):
+            for old_version in (str(x) for x in range(1, 22)):
                 if vspec.match(old_version):
                     dep_range = self._conda_deps.get_dep_range("pip")
 
