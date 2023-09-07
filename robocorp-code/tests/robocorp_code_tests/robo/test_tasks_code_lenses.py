@@ -1,5 +1,6 @@
-from robocorp_code_tests.protocols import IRobocorpLanguageServerClient
 import os
+
+from robocorp_code_tests.protocols import IRobocorpLanguageServerClient
 from robocorp_ls_core import uris
 
 
@@ -14,10 +15,14 @@ def test_tasks_code_lenses(
     uri = uris.from_fs_path(path)
 
     txt = """
-from robocorp.tasks import task
+from robocorp.tasks import task, task_cache
 
 @task
 def my_entry_point():
+    pass
+    
+@task_cache
+def cache_on_task():
     pass
 
 """

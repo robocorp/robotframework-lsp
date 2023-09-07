@@ -1,4 +1,4 @@
-NEXT
+New in 1.11.0 (2023-09-07)
 -----------------------------
 
 - When hovering over conda dependencies in `conda.yaml`, information from conda-forge is shown.
@@ -6,6 +6,7 @@ NEXT
 - RCC is now distributed along with `Robocorp Code` (so, it'll no longer be downloaded in the first activation).
 - A warning is no longer shown if a pre-release is available in pypi and the latest version is actually being used already. 
 - Fixed issue where a parse exception was shown when a git url was used to install a pip dependency.
+- Fixed issue where a method decorated with `@task_cache` would have code lenses which should only appear to `@task`.
 
 
 New in 1.10.0 (2023-08-21)
