@@ -452,12 +452,11 @@ class PythonLanguageServer(MethodDispatcher):
 
     __lint_manager: Optional[BaseLintManager]
 
-    def __init__(self, read_stream, write_stream):
+    def __init__(self, read_stream, write_stream) -> None:
         self._config: IConfig = self._create_config()
         self._workspace: Optional[IWorkspace] = None
         self.root_uri = None
         self.watching_thread = None
-        self.uri_workspace_mapper = {}
 
         self._jsonrpc_stream_reader = JsonRpcStreamReader(read_stream)
         self._jsonrpc_stream_writer = JsonRpcStreamWriter(write_stream)

@@ -171,6 +171,26 @@ class IIdMessageMatcher(Generic[T], Protocol):
     msg: T
 
 
+class IResultMessage(TypedDict):
+
+    jsonrpc: str  # Literal["2.0"] (not available on python 3.7)
+    id: int
+    result: Any
+
+
+class IErrorTypedDict(TypedDict):
+
+    code: int
+    message: str
+
+
+class IErrorMessage(TypedDict):
+
+    jsonrpc: str  # Literal["2.0"] (not available on python 3.7)
+    id: int
+    error: IErrorTypedDict
+
+
 COMMUNICATION_DROPPED = CommunicationDropped()
 
 
@@ -229,7 +249,7 @@ class ILanguageServerClientBase(IRequestCancellable, Protocol):
         contents,
         timeout: Union[int, Sentinel] = Sentinel.USE_DEFAULT_TIMEOUT,
         default: Any = COMMUNICATION_DROPPED,
-    ):
+    ) -> Union[IResultMessage, IErrorMessage]:
         """
         :param contents:
         :param timeout:

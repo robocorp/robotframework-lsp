@@ -16,8 +16,8 @@
 # limitations under the License.
 
 import argparse
-import sys
 import os
+import sys
 import traceback
 
 __file__ = os.path.abspath(__file__)
@@ -84,7 +84,12 @@ def add_arguments(parser):
     )
 
 
-def main(args=None, after_bind=lambda server: None, language_server_class=None):
+def main(
+    args=None,
+    after_bind=lambda server: None,
+    language_server_class=None,
+    log_prefix="robocorp code",
+):
     original_args = args if args is not None else sys.argv[1:]
 
     parser = argparse.ArgumentParser()
@@ -105,8 +110,8 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
 
         from robocorp_ls_core.robotframework_log import (
             configure_logger,
-            log_args_and_python,
             get_logger,
+            log_args_and_python,
         )
     except:
         # Failed before having setup the logger (but after reading args).
@@ -134,19 +139,19 @@ def main(args=None, after_bind=lambda server: None, language_server_class=None):
         sys.stdout.flush()
         return
 
-    configure_logger("robocorp code", verbose, log_file)
+    configure_logger(log_prefix, verbose, log_file)
     log = get_logger("robocorp_code.__main__")
     log_args_and_python(log, original_args, robocorp_code)
 
     try:
-        from robocorp_code.options import Setup, Options
+        from robocorp_code.options import Options, Setup
 
         Setup.options = Options(args)
 
         from robocorp_ls_core.python_ls import (
+            binary_stdio,
             start_io_lang_server,
             start_tcp_lang_server,
-            binary_stdio,
         )
 
         if language_server_class is None:
