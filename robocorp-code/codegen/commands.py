@@ -456,6 +456,13 @@ COMMANDS = [
     ),
     Command("robocorp.submitIssue", "Submit issue to Robocorp", server_handled=False),
     Command(
+        "robocorp.inspector.internal",
+        "Inspector Manager (internal)",
+        server_handled=False,
+        hide_from_command_palette=True,
+    ),
+    Command("robocorp.inspector", "Open Robocorp Inspector", server_handled=False),
+    Command(
         "robocorp.errorFeedback.internal",
         "Error feedback (internal)",
         server_handled=False,
