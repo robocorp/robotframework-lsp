@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Submit Issue</title>
+        <style>
+            body {
+                font-family: var(--vscode-editor-font-family);
+                font-weight: var(--vscode-editor-font-weight);
+                font-size: var(--vscode-editor-font-size);
+            }
+
+            div.settings {
+                display: inline-grid;
+                grid-gap: 5px;
+                width: 800px;
+            }
+
+            div.settings input {
+                color: var(--vscode-editor-foreground);
+                background-color: var(--vscode-editor-background);
+                border-width: 1px;
+                border-color: var(--vscode-editor-foreground);
+                padding: 5px;
+            }
+
+            div.settings textarea {
+                color: var(--vscode-editor-foreground);
+                background-color: var(--vscode-editor-background);
+                border-width: 1px;
+                border-color: var(--vscode-editor-foreground);
+                padding: 5px;
+            }
+
+            div.settings label {
+                margin-top: 15px;
+            }
+
+            #submit {
+                height: 20px;
+                margin-top: 15px;
+            }
+        </style>
+    </head>
+
+    <script id="data" type="application/json">
+        { "files": ["c:/temp/foo.txt"] }
+    </script>
+
+    <script>
+        let vscode;
+        try {
+            vscode = acquireVsCodeApi();
+        } catch (err) {
+            // ignore
+        }
+        function onClickSubmit() {
+            console.log("submit.clicked");
+            if (vscode) {
+                // Disable button while sending.
+                const submitBt = document.getElementById("submit");
+                submitBt.value = "Please wait, sending issue...";
+                submitBt.disabled = true;
+                vscode.postMessage({
+                    command: "onClickSubmit",
+                    contents: "clicked.button",
+                });
+            } else {
+                console.log("no.vscode");
+            }
+        }
+
+        window.addEventListener("message", (event) => {
+            const message = event.data;
+
+            switch (message.command) {
+                case "issueSent":
+                    // Re-enable button after sending.
+                    const submitBt = document.getElementById("submit");
+                    submitBt.disabled = false;
+                    submitBt.value = "Submit";
+                    break;
+            }
+        });
+    </script>
+
+    <body>
+        <div>
+            <div>Submit Issue to Robocorp<br /><br /></div>
+            <input value="Submit" type="submit" id="submit" onclick="onClickSubmit()" />
+        </div>
+        <br />
+        <br />
+        <br />
+        <br />
+    </body>
+</html>

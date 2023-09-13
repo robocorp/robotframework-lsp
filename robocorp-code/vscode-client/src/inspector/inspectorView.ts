@@ -63,7 +63,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
     );
 
     panel.onDidDispose(() => {
-        langServer.sendRequest("webInspectorCloseBrowser");
+        langServer.sendRequest("webInspectorCloseBrowser", {});
     });
 
     panel.webview.onDidReceiveMessage(
