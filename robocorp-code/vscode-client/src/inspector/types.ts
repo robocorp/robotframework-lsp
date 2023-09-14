@@ -1,3 +1,8 @@
+/**
+ * @source https://github.com/robocorp/inspector-ext/blob/master/src/utils/types.ts
+ *! THIS FILE NEEDS TO ALWAYS MATCH THE SOURCE
+ */
+
 export declare enum LocatorType {
     Browser = "browser",
     Windows = "windows",

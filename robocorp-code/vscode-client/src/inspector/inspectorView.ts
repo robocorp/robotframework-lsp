@@ -2,17 +2,21 @@
  * Interesting docs related to webviews:
  * https://code.visualstudio.com/api/extension-guides/webview
  */
+import path = require("path");
 import { readFileSync } from "fs";
+
 import * as vscode from "vscode";
+
 import { getExtensionRelativeFile, verifyFileExists } from "../files";
 import { logError } from "../channel";
 import { getSelectedRobot } from "../viewsCommon";
-import path = require("path");
+import { LocatorsMap } from "./types";
+import { IMessage, IMessageType } from "./protocols";
 
 export async function showInspectorUI(context: vscode.ExtensionContext) {
     const panel = vscode.window.createWebviewPanel(
         "robocorpCodeInspector",
-        "Open Robocorp Inspector",
+        "Robocorp Inspector",
         vscode.ViewColumn.One,
         {
             enableScripts: true,
@@ -26,7 +30,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
         if (verifyFileExists(locatorJson, false)) {
             vscode.workspace.openTextDocument(vscode.Uri.file(locatorJson)).then((document) => {
                 let text = document.getText();
-                panel.webview.html = getWebviewContent(JSON.parse(text) as ILocatorsJSON);
+                panel.webview.html = getWebviewContent(JSON.parse(text) as LocatorsMap);
             });
         } else {
             logError("locators.json.not.found", undefined, "");
@@ -36,44 +40,29 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
     }
 
     panel.webview.onDidReceiveMessage(
-        async (message) => {
-            logError(`incoming.contents: ${JSON.stringify(message)}`, undefined, "");
-            // switch (message.command) {
-            //     case "onClickViewFile":
-            //         const file = message.filename;
-            //         vscode.commands.executeCommand("vscode.open", vscode.Uri.file(file));
-            //         return;
-            //     case "onClickSubmit":
-            //         const contents: IReportContents = message.contents;
-            //         try {
-            //             logError(
-            //                 `incoming.contents: ${contents}`,
-            //                 new Error(),
-            //                 "SEND_ISSUE_ERROR_GETTING_DEFAULT_EMAIL"
-            //             );
-            //         } finally {
-            //             panel.webview.postMessage({ command: "issueSent" });
-            //         }
-            //         return;
-            // }
+        async (message: IMessage) => {
+            logError(`incoming.message: ${JSON.stringify(message)}`, undefined, "");
+            switch (message.type) {
+                case IMessageType.REQUEST:
+                    logError(`incoming.request: ${JSON.stringify(message)}`, undefined, "");
+                    return;
+                case IMessageType.RESPONSE:
+                    logError(`incoming.response: ${JSON.stringify(message)}`, undefined, "");
+                    return;
+                case IMessageType.EVENT:
+                    logError(`incoming.event: ${JSON.stringify(message)}`, undefined, "");
+                    return;
+                default:
+                    logError(`unhandled.message: ${JSON.stringify(message)}`, undefined, "");
+                    return;
+            }
         },
         undefined,
         context.subscriptions
     );
 }
 
-interface IReportContents {
-    email: string;
-    summary: string;
-    details: string;
-    files: string[];
-}
-
-interface ILocatorsJSON {
-    [key: string]: object;
-}
-
-function getWebviewContent(jsonData: ILocatorsJSON): string {
+function getWebviewContent(jsonData: LocatorsMap): string {
     const jsonDataStr = JSON.stringify(jsonData, null, 4);
     const templateFile = getExtensionRelativeFile("../../vscode-client/templates/inspector.html", true);
     const data = readFileSync(templateFile, "utf8");
