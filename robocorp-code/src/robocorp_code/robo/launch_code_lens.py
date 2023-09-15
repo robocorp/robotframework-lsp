@@ -6,10 +6,10 @@ from robocorp_ls_core.jsonrpc.endpoint import require_monitor
 from robocorp_ls_core.lsp import CodeLensTypedDict
 from robocorp_ls_core.protocols import (
     IConfig,
+    IConfigProvider,
     IDocument,
     IMonitor,
     IWorkspace,
-    IConfigProvider,
 )
 
 
@@ -30,9 +30,7 @@ def compute_launch_robo_code_lens(
     if config_provider is not None:
         config = config_provider.config
         if config:
-            from robocorp_code.settings import (
-                ROBOCORP_CODE_LENS_ROBO_LAUNCH,
-            )
+            from robocorp_code.settings import ROBOCORP_CODE_LENS_ROBO_LAUNCH
 
             compute_launch = config.get_setting(
                 ROBOCORP_CODE_LENS_ROBO_LAUNCH, bool, True
@@ -121,6 +119,9 @@ def _collect_tasks_in_thread(
                                 }
                             )
 
-        if line.strip().startswith("@task"):
-            found_task_decorator_at_line = i
+        line = line.strip()
+        if line.startswith("@task"):
+            re_match = re.match(r"@\b(task)\b.*", line)
+            if re_match:
+                found_task_decorator_at_line = i
     return code_lenses

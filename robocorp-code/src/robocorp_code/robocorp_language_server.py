@@ -1352,3 +1352,7 @@ class RobocorpLanguageServer(PythonLanguageServer):
             return {"success": False, "message": str(e), "result": None}
 
         return {"success": True, "message": None, "result": None}
+
+    def forward_msg(self, msg: dict) -> None:
+        method = msg["method"]
+        self._endpoint.notify(method, msg["params"])

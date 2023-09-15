@@ -2,6 +2,7 @@ import logging
 import os.path
 import sys
 import time
+import typing
 from typing import List
 
 import pytest
@@ -21,6 +22,8 @@ log = logging.getLogger(__name__)
 def test_missing_message(
     language_server: IRobocorpLanguageServerClient, ws_root_path, initialization_options
 ):
+    from robocorp_ls_core.protocols import IErrorMessage
+
     language_server.initialize(
         ws_root_path, initialization_options=initialization_options
     )
@@ -35,13 +38,18 @@ def test_missing_message(
     )
 
     # Make sure that we have a response if it's a request (i.e.: it has an id).
-    msg = language_server.request(
-        {
-            "jsonrpc": "2.0",
-            "id": "22",
-            "method": "invalidMessageSent",
-            "params": {"textDocument": {"uri": "untitled:Untitled-1", "version": 2}},
-        }
+    msg = typing.cast(
+        IErrorMessage,
+        language_server.request(
+            {
+                "jsonrpc": "2.0",
+                "id": "22",
+                "method": "invalidMessageSent",
+                "params": {
+                    "textDocument": {"uri": "untitled:Untitled-1", "version": 2}
+                },
+            }
+        ),
     )
 
     assert msg["error"]["code"] == -32601
