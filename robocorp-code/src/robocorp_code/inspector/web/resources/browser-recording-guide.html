@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8" />
+    <title>How to record an initial web automation script</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <style>
+    html,
+    body,
+    div,
+    h1,
+    h3,
+    p,
+    a {
+      margin: 0;
+      padding: 0;
+      border: 0;
+      outline: 0;
+      font-size: 100%;
+      vertical-align: baseline;
+      background: transparent;
+    }
+    html {
+      font-family: 'Inter', sans-serif;
+      background: #0b1025;
+      color: #f7f7f8;
+      display: flex;
+      height: 100vh;
+      align-items: center;
+      padding: 24px;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    body {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-weight: 600;
+      font-size: 2.25rem;
+      line-height: 122%;
+      margin-bottom: 3.75rem;
+    }
+    h3 {
+      font-weight: 600;
+      font-size: 18px;
+      line-height: 122%;
+      margin-bottom: 12px;
+    }
+    p {
+      font-size: 0.875rem;
+      line-height: 140%;
+      color: #aba9b8;
+    }
+    a {
+      color: #9d8cf6;
+      text-decoration: none;
+    }
+    a:hover {
+      color: #6c50fa;
+    }
+    main {
+      display: flex;
+    }
+    .step {
+      width: 33%;
+      padding-right: 2.5rem;
+    }
+    .step:last-child {
+      padding-right: 0;
+    }
+    .icon {
+      background: #1a2336;
+      width: 68px;
+      height: 68px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+    .icon svg {
+      margin: 0 auto;
+    }
+    @media screen and (max-width: 700px) {
+      main {
+        flex-direction: column;
+      }
+      .step {
+        width: 100%;
+        padding: 0;
+        margin-bottom: 3rem;
+      }
+    }
+  </style>
+  <body cz-shortcut-listen="true">
+    <h1>How to record an initial web automation script</h1>
+    <main>
+      <div class="step">
+        <div class="icon">
+          <svg
+            width="30"
+            height="30"
+            viewBox="0 0 30 30"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              fill-rule="evenodd"
+              clip-rule="evenodd"
+              d="M3.00004 14.9997C3.00004 8.37226 8.37262 2.99967 15 2.99967C21.6275 2.99967 27 8.37226 27 14.9997C27 21.6271 21.6275 26.9997 15 26.9997C8.37262 26.9997 3.00004 21.6271 3.00004 14.9997ZM15 0.333008C6.89986 0.333008 0.333374 6.8995 0.333374 14.9997C0.333374 23.0998 6.89986 29.6663 15 29.6663C23.1002 29.6663 29.6667 23.0998 29.6667 14.9997C29.6667 6.8995 23.1002 0.333008 15 0.333008ZM21.918 9.76799C22.0777 9.28888 21.953 8.76065 21.5959 8.40354C21.2388 8.04644 20.7105 7.92174 20.2314 8.08144L11.7514 10.9081C11.3533 11.0408 11.0409 11.3532 10.9081 11.7514L8.08148 20.2314C7.92178 20.7105 8.04648 21.2387 8.40359 21.5958C8.7607 21.9529 9.28892 22.0776 9.76803 21.9179L18.248 19.0913C18.6462 18.9586 18.9586 18.6461 19.0913 18.248L21.918 9.76799ZM11.4546 18.5448L13.2272 13.2271L18.5449 11.4545L16.7723 16.7723L11.4546 18.5448Z"
+              fill="#9D8CF7"
+            />
+          </svg>
+        </div>
+        <h3>Navigate to the target webpage</h3>
+        <p>
+          Use the address bar to go to the taget website or start with
+          <a href="https://robotsparebinindustries.com/"
+            >robotsparebinindustries.com</a
+          >
+        </p>
+      </div>
+      <div class="step">
+        <div class="icon">
+          <svg
+            width="32"
+            height="32"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              fill-rule="evenodd"
+              clip-rule="evenodd"
+              d="M11.3333 6.7045V4.66663C11.3333 3.56206 10.4379 2.66663 9.33333 2.66663H2C0.895431 2.66663 0 3.56206 0 4.66663V11.3333C0 12.4379 0.895431 13.3333 2 13.3333H9.33333C10.4379 13.3333 11.3333 12.4379 11.3333 11.3333V9.29542L14.9458 11.8758C15.1491 12.0209 15.4163 12.0403 15.6384 11.9261C15.8604 11.8118 16 11.583 16 11.3333V4.66663C16 4.4169 15.8604 4.18812 15.6384 4.07385C15.4163 3.95958 15.1491 3.97899 14.9458 4.12414L11.3333 6.7045ZM1.33333 4.66663C1.33333 4.29844 1.63181 3.99996 2 3.99996H9.33333C9.70152 3.99996 10 4.29844 10 4.66663V11.3333C10 11.7015 9.70152 12 9.33333 12H2C1.63181 12 1.33333 11.7015 1.33333 11.3333V4.66663ZM14.6667 10.0378L11.8136 7.99996L14.6667 5.96209V10.0378Z"
+              fill="#9d8cf7"
+            />
+          </svg>
+        </div>
+        <h3>Press the ‘Record’ button in the editor</h3>
+        <p>
+          Interactive mode allows you to click on any element on the webpage to
+          get the locator strategy and value generated automatically.
+        </p>
+      </div>
+      <div class="step">
+        <div class="icon">
+          <svg
+            width="32"
+            height="32"
+            viewBox="0 0 32 32"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              fill-rule="evenodd"
+              clip-rule="evenodd"
+              d="M27.6095 7.05752C28.1302 7.57822 28.1302 8.42244 27.6095 8.94313L12.9428 23.6098C12.4221 24.1305 11.5779 24.1305 11.0572 23.6098L4.39052 16.9431C3.86983 16.4224 3.86983 15.5782 4.39052 15.0575C4.91122 14.5368 5.75544 14.5368 6.27614 15.0575L12 20.7814L25.7239 7.05752C26.2446 6.53682 27.0888 6.53682 27.6095 7.05752Z"
+              fill="#9D8CF7"
+            />
+          </svg>
+        </div>
+        <h3>Perform actions to record on the site</h3>
+        <p>
+          Recording mode will generate a script to automate those actions. This
+          script will need manual edits to be production ready.
+        </p>
+      </div>
+      <div class="step">
+        <div class="icon">
+          <svg
+            width="32"
+            height="32"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              fill-rule="evenodd"
+              clip-rule="evenodd"
+              d="M1.99996 7.99996C1.99996 4.68625 4.68625 1.99996 7.99996 1.99996C11.3137 1.99996 14 4.68625 14 7.99996C14 11.3137 11.3137 14 7.99996 14C4.68625 14 1.99996 11.3137 1.99996 7.99996ZM7.99996 0.666626C3.94987 0.666626 0.666626 3.94987 0.666626 7.99996C0.666626 12.05 3.94987 15.3333 7.99996 15.3333C12.05 15.3333 15.3333 12.05 15.3333 7.99996C15.3333 3.94987 12.05 0.666626 7.99996 0.666626ZM5.99996 5.33329C5.63177 5.33329 5.33329 5.63177 5.33329 5.99996V9.99996C5.33329 10.3681 5.63177 10.6666 5.99996 10.6666H9.99996C10.3681 10.6666 10.6666 10.3681 10.6666 9.99996V5.99996C10.6666 5.63177 10.3681 5.33329 9.99996 5.33329H5.99996ZM6.66663 9.33329V6.66663H9.33329V9.33329H6.66663Z"
+              fill="#9d8cf7"
+            />
+          </svg>
+        </div>
+        <h3>Use esc to stop the recording once done</h3>
+        <p>
+          The created recording appears in the recorder output field. The script
+          requires editing to make into a full RPA bot.
+        </p>
+      </div>
+    </main>
+  </body>
+</html>

@@ -129,7 +129,6 @@ def iter_variable_references_in_doc(
 
         variable: IVariableFound
         for variable in collector.matches:
-
             start: PositionTypedDict = {
                 "line": variable.lineno,
                 "character": variable.col_offset,
@@ -243,7 +242,6 @@ def iter_keyword_references_in_doc(
     ) in iter_keyword_usage_references_in_doc(
         completion_context, doc, normalized_name, keyword_found
     ):
-
         token = keyword_usage_info.token
 
         line = token.lineno - 1
@@ -307,7 +305,6 @@ def collect_variable_references(
 def references(
     completion_context: ICompletionContext, include_declaration: bool
 ) -> List[LocationTypedDict]:
-
     var_token_info = completion_context.get_current_variable()
     if var_token_info is not None:
         return collect_variable_references(completion_context, var_token_info)

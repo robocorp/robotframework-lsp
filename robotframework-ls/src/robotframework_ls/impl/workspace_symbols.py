@@ -39,7 +39,6 @@ def _add_to_ret(ret, symbols_cache: ISymbolsCache, query: Optional[str]):
 
 
 class _SymbolKeywordInfoFromKeywordDoc:
-
     _documentation: MarkupContentTypedDict
 
     __slots__ = ["name", "_keyword_doc", "_documentation"]

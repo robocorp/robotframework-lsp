@@ -247,7 +247,7 @@ class SignatureInformation(_Base):
         self,
         label: str,
         documentation: Optional[MarkupContentTypedDict] = None,
-        parameters: List[ParameterInformation] = None,
+        parameters: Optional[List[ParameterInformation]] = None,
     ):
         self.label = label
         self.documentation = documentation
@@ -834,7 +834,6 @@ class CodeActionTypedDict(TypedDict, total=False):
 
 
 class DocumentSymbolTypedDict(TypedDict, total=False):
-
     # The name of this symbol. Will be displayed in the user interface and
     # therefore must not be an empty string or a string only consisting of
     # white spaces.
@@ -869,7 +868,6 @@ class DocumentSymbolTypedDict(TypedDict, total=False):
 
 
 class CodeLensTypedDict(TypedDict, total=False):
-
     # The range in which this code lens is valid. Should only span a single
     # line.
     range: RangeTypedDict
@@ -1058,7 +1056,6 @@ class ICustomDiagnosticDataUnexpectedArgumentTypedDict(TypedDict):
 
 
 class Error(object):
-
     __slots__ = "msg start end severity tags data".split(" ")
 
     if typing.TYPE_CHECKING:

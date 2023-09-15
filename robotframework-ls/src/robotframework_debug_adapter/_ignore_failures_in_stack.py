@@ -74,7 +74,6 @@ class IgnoreFailuresInStack:
                     )
 
                 else:
-
                     for entry in loaded:
                         self.ignore_failures_inside.add(normalize_robot_name(entry))
 

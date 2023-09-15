@@ -23,20 +23,20 @@ jobs:
       fail-fast: false
       matrix:
         name: [
-          "ubuntu-py38",
-          "windows-py38",
-#           "mac-py38", mac disabled because it takes too long for runners to pick the mac job up.
+          "ubuntu-py39",
+          "windows-py39",
+#           "mac-py39", mac disabled because it takes too long for runners to pick the mac job up.
         ]
         
         include:
-          - name: "ubuntu-py38"
-            python: "3.8"
+          - name: "ubuntu-py39"
+            python: "3.9"
             os: ubuntu-latest
-          - name: "windows-py38"
-            python: "3.8"
+          - name: "windows-py39"
+            python: "3.9"
             os: windows-latest
-#           - name: "mac-py38"
-#             python: "3.8"
+#           - name: "mac-py39"
+#             python: "3.9"
 #             os: mac-latest
 
     steps:
@@ -51,25 +51,11 @@ jobs:
     - name: Vendor robocorp_ls_core
       working-directory: ./robocorp-code
       run: |
-        pip install fire
+        pip install fire poetry
         python -m dev vendor-robocorp-ls-core
     - name: setup.py install
       working-directory: ./robocorp-code
-      run: |
-        cd src
-        python setup.py install
-        cd ..
-    - name: Install test deps
-      working-directory: ./robocorp-code
-      run: |
-        cd tests
-        pip install -r test_requirements.txt
-        cd ..
-    - name: Install Chrome
-      run: |
-        wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-        sudo apt install ./google-chrome-stable_current_amd64.deb
-      if: contains(matrix.name, 'ubuntu')
+      run: poetry install
     - name: Test
       working-directory: ./robocorp-code/tests
       env:
@@ -78,9 +64,15 @@ jobs:
         CI_ENDPOINT: ${{ secrets.CI_ENDPOINT }}
         # Big timeout to create environment in windows.
         RUN_TESTS_TIMEOUT: 3000
-      run: python -u ../../robocorp-python-ls-core/tests/run_tests.py -rfE -otests_output -vv .
+      run: poetry run python -u ../../robocorp-python-ls-core/tests/run_tests.py -rfE -otests_output -vv .
     - uses: actions/upload-artifact@v1
+      if: always()
       with:
         name: tests_output.${{ matrix.name }}.txt
         path: robocorp-code/tests/tests_output
+    - uses: actions/upload-artifact@v1
+      if: always()
+      with:
+        name: log.${{ matrix.name }}.html
+        path: robocorp-code/tests/output/log.html
 

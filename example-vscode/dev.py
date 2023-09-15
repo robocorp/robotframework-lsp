@@ -161,7 +161,6 @@ if __name__ == "__main__":
     if TEST:
         test_lines()
     else:
-
         # Workaround so that fire always prints the output.
         # See: https://github.com/google/python-fire/issues/188
         def Display(lines, out):

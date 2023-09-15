@@ -343,7 +343,6 @@ def set_ide_os(os):
 
     _normcase_from_client = normcase
     if os == "WINDOWS":
-
         # Client in Windows and server in Unix, we need to normalize the case.
         if not IS_WINDOWS:
             _normcase_from_client = _normcase_windows

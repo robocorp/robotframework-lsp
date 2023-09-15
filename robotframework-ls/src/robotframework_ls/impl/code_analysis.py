@@ -491,7 +491,6 @@ def collect_analysis_errors(initial_completion_context):
                         if found_in_current:
                             msg = f"Multiple keywords matching: '{keyword_usage_info.name}' in current file."
                         else:
-
                             found_in_str = "'" + "', '".join(sorted(found_in)) + "'"
                             if len(found_in) == 1:
                                 msg = f"Multiple keywords matching: '{keyword_usage_info.name}' in {found_in_str}."
@@ -675,7 +674,6 @@ def _collect_unused_keyword_errors(completion_context: ICompletionContext, error
         bool,
         False,
     ):
-
         from robotframework_ls.impl.collect_keywords import collect_keywords_from_ast
 
         # The lint process usually does not have workspace indexing turned on,
@@ -804,7 +802,6 @@ def _collect_undefined_variables_errors(initial_completion_context):
     env_vars_upper = None
 
     for token_info in ast_utils.iter_variable_references(ast):
-
         initial_completion_context.check_cancelled()
 
         if token_info.node.__class__.__name__ in (
@@ -830,7 +827,6 @@ def _collect_undefined_variables_errors(initial_completion_context):
         var_col_offset = token_info.token.col_offset
 
         if token_info.var_info.var_identifier == "%":
-
             if "=" in var_name + token_info.var_info.extended_part:
                 # Consider case: %{SOME_VAR=}
                 # Consider case: %{SOME_VAR=default val}
@@ -857,7 +853,6 @@ def _collect_undefined_variables_errors(initial_completion_context):
 
         check_names = [normalize_variable_name(var_name)]
         if token_info.var_info.extended_part.strip():
-
             robot_match_in_ext = robot_search_variable(
                 token_info.var_info.extended_part
             )

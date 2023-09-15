@@ -21,14 +21,8 @@ from robocorp_ls_core.robotframework_log import get_logger
 log = get_logger(__name__)
 
 # Py3 compat - alias unicode to str, and xrange to range
-try:
-    unicode  # noqa
-except NameError:
-    unicode = str
-try:
-    xrange  # noqa
-except NameError:
-    xrange = range
+unicode = str
+xrange = range
 
 
 class SafeRepr(object):
@@ -43,29 +37,12 @@ class SafeRepr(object):
     # collections.
     maxstring_outer = 2**16
     maxstring_inner = 30
-    if sys.version_info >= (3, 0):
-        string_types = (str, bytes)
-        bytes = bytes
-        set_info = (set, "{", "}", False)
-        frozenset_info = (frozenset, "frozenset({", "})", False)
-        int_types = (int,)
-        long_iter_types = (list, tuple, bytearray, range, dict, set, frozenset)
-    else:
-        string_types = (str, unicode)
-        bytes = str
-        set_info = (set, "set([", "])", False)
-        frozenset_info = (frozenset, "frozenset([", "])", False)
-        int_types = (int, long)  # noqa
-        long_iter_types = (
-            list,
-            tuple,
-            bytearray,
-            xrange,
-            dict,
-            set,
-            frozenset,
-            buffer,
-        )  # noqa
+    string_types = (str, bytes)
+    bytes = bytes
+    set_info = (set, "{", "}", False)
+    frozenset_info = (frozenset, "frozenset({", "})", False)
+    int_types = (int,)
+    long_iter_types = (list, tuple, bytearray, range, dict, set, frozenset)
 
     # Collection types are recursively iterated for each limit in
     # maxcollection.

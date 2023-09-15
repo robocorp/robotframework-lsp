@@ -79,14 +79,12 @@ def _create_variable_section_refactoring(
     completion_context: ICompletionContext,
     select_range: Range,
 ) -> Iterable[CodeActionTypedDict]:
-
     line = select_range.start.line
     col = select_range.start.character
     endline = select_range.end.line
     endcol = select_range.end.character
 
     if line == endline and col != endcol:
-
         token_info = completion_context.get_current_token()
         if token_info:
             from robotframework_ls.robot_config import get_arguments_separator

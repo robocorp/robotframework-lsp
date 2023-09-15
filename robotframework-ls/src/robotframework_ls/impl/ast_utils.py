@@ -96,7 +96,6 @@ class _PrinterVisitor(ast_module.NodeVisitor):
             )
             tokens = getattr(node, "tokens", [])
             for token in tokens:
-
                 token_lineno = token.lineno
                 if token_lineno != -1:
                     # Make 0-based
@@ -993,7 +992,6 @@ def iter_keyword_arguments_as_tokens(ast) -> Iterator[IRobotToken]:
 def iter_keyword_arguments_as_kwarg(
     ast, tokenize_keyword_name=False
 ) -> Iterator[IKeywordArg]:
-
     from robotframework_ls.impl.robot_specbuilder import KeywordArg
 
     for token in _iter_keyword_arguments_tokens(ast, tokenize_keyword_name):
@@ -1157,7 +1155,6 @@ def _tokenize_subvars_tokens(
     op_type: str = "variableOperator",
     var_type: Optional[str] = None,
 ) -> Iterator[Tuple[IRobotToken, AdditionalVarInfo]]:
-
     from robot.api import Token
 
     if var_type is None:
@@ -1185,7 +1182,6 @@ def _tokenize_subvars_tokens(
     from robotframework_ls.impl.variable_resolve import iter_robot_variable_matches
 
     for robot_match, relative_index in iter_robot_variable_matches(initial_token.value):
-
         yield from robot_match_generator.gen_default_type(
             relative_index + len(robot_match.before)
         )
@@ -1287,7 +1283,6 @@ def iter_variable_references(ast) -> Iterator[VarTokenInfo]:
         keyword_usage_handler = obtain_keyword_usage_handler(stack, node)
         if keyword_usage_handler is not None:
             for usage_info in keyword_usage_handler.iter_keyword_usages_from_node():
-
                 arg_i = 0
                 for token in usage_info.node.tokens:
                     if token.type == token.ARGUMENT:
@@ -2035,7 +2030,6 @@ class RobotMatchTokensGenerator:
             item_index = token.value.find(item, self.last_gen_end_offset)
             if item_index >= 0:
                 if "{" in item:
-
                     yield from self.gen_type(op_type, item_index)
 
                     subvar_tokens = tuple(

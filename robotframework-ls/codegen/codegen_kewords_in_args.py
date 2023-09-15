@@ -47,7 +47,6 @@ def main():
 
     for libname, keyword in RUN_KW_REGISTER._libs.items():
         for keyword_name, arg_i in keyword.items():
-
             if keyword_name in (
                 "pass_execution_if",
                 "return_from_keyword_if",

@@ -148,7 +148,6 @@ class _Collector(AbstractKeywordCollector):
             if not use_libname:
                 use_libname = keyword_found.library_name
             if prefix_with_import_name:
-
                 if self._is_dotted_keyword_name:
                     # Note: the label must also be updated because we're
                     # going to replace from the start, so, the start

@@ -46,7 +46,6 @@ class _Profile(object):
         try:
             profile_uri = params["profileUri"]
             with progress_context(self._endpoint, "Import profile", None):
-
                 file_path = uris.to_fs_path(profile_uri)
                 profile_name: str = ""
                 description: str = ""
@@ -85,7 +84,6 @@ class _Profile(object):
         try:
             profile_name = params["profileName"]
             with progress_context(self._endpoint, "Switch profile", None):
-
                 if not profile_name:
                     return {
                         "success": False,

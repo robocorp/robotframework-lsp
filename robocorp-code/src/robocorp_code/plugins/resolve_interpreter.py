@@ -306,7 +306,6 @@ class _CacheInfo(object):
         if interpreter_info is not None and interpreter_info.is_cache_valid(
             robot_yaml_file_info, conda_config_file_info, env_json_path_file_info
         ):
-
             space_info = interpreter_info.robot_yaml_env_info.space_info
             environ = interpreter_info.info.get_environ()
             if environ is not None:
@@ -560,7 +559,6 @@ class RobocorpResolveInterpreter(object):
 def get_conda_config_path(
     parent: Path, robot_yaml: Path, yaml_contents: dict
 ) -> Optional[Path]:
-
     environments_config = yaml_contents.get("environmentConfigs")
     if environments_config:
         if isinstance(environments_config, (tuple, list)):
@@ -581,7 +579,6 @@ def get_conda_config_path(
 
             for conda_env_conf in environments_config:
                 if plat not in conda_env_conf:
-
                     import re
 
                     m = re.match(".*(windows|darwin|linux).*", conda_env_conf)

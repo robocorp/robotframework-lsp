@@ -49,6 +49,7 @@ else:
 T = TypeVar("T")
 Y = TypeVar("Y", covariant=True)
 
+
 # We don't want to import robot in this case (just do it when type-checking).
 class IRobotToken(Protocol):
     SETTING_HEADER: str
@@ -204,7 +205,6 @@ class NodeInfo(Generic[Y]):
 
 
 class TokenInfo:
-
     __slots__ = ["stack", "node", "token"]
 
     def __init__(self, stack: Tuple[INode, ...], node: INode, token: IRobotToken):
@@ -219,7 +219,6 @@ class TokenInfo:
 
 
 class AdditionalVarInfo:
-
     CONTEXT_UNDEFINED = 0
     CONTEXT_EXPRESSION = 1
 
@@ -261,7 +260,6 @@ class AdditionalVarInfo:
 
 
 class VarTokenInfo:
-
     __slots__ = ["stack", "node", "token", "var_info"]
 
     def __init__(
@@ -702,7 +700,6 @@ class AbstractKeywordCollector:
 
 
 class IDefinition(Protocol):
-
     keyword_name: str = ""  # Can be empty if it's not found as a keyword.
 
     # Note: Could be None (i.e.: we found it in a library spec file which doesn't have the source).
@@ -731,12 +728,10 @@ class IDefinition(Protocol):
 
 
 class IKeywordDefinition(IDefinition, Protocol):
-
     keyword_found: IKeywordFound
 
 
 class IVariableDefinition(IDefinition, Protocol):
-
     variable_found: "IVariableFound"
 
 

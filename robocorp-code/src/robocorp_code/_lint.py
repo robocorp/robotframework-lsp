@@ -196,7 +196,6 @@ class LintManager(BaseLintManager):
         endpoint: IEndPoint,
         read_queue,
     ) -> None:
-
         self._rcc: IRcc = rcc
         self._weak_robocorp_language_server = weakref.ref(robocorp_language_server)
         BaseLintManager.__init__(self, lsp_messages, endpoint, read_queue)

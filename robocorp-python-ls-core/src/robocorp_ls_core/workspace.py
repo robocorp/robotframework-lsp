@@ -62,7 +62,6 @@ class _DirInfo(object):
 
 
 class _VirtualFSThread(threading.Thread):
-
     SLEEP_AMONG_SCANS = 0.5
     INNER_SLEEP = 0.1
 
@@ -691,7 +690,6 @@ class Document(object):
     def _compute_line_start_offsets(self):
         line_start_offset_to_info = self.__line_start_offsets
         if line_start_offset_to_info is None:
-
             line_start_offset_to_info = []
             offset = 0
             for line in self.iter_lines():
@@ -828,7 +826,6 @@ class Document(object):
 
         # Check for an edit occurring at the very end of the file
         if start_line == len(self._lines):
-
             self._source = self.source + text
             return
 

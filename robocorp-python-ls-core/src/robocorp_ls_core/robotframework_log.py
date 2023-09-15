@@ -46,7 +46,6 @@ except:
 
 
 class _LogConfig(object):
-
     __slots__ = ["_lock", "__stream", "prefix", "log_level", "_log_file", "pid"]
 
     def __init__(self):
@@ -82,7 +81,6 @@ class _LogConfig(object):
     def _stream(self):
         stream = self.__stream
         if stream is None:
-
             # open it on demand
             with self._lock:
                 log_file = self._log_file

@@ -72,7 +72,6 @@ def _completion_items(
 def _iter_all_normalized_variables_and_values(
     completion_context: ICompletionContext,
 ) -> Iterator[Tuple[str, Tuple[str, ...]]]:
-
     yield from _iter_normalized_variables_and_values(completion_context)
 
     dependency_graph = completion_context.collect_dependency_graph()

@@ -34,7 +34,6 @@ def _collect_errors(
 
 
 def test_keywords_analyzed(workspace, libspec_manager, data_regression):
-
     workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case2.robot")
     doc = workspace.put_doc(
@@ -1172,7 +1171,6 @@ Something specified with type: ${type} and reference: ${reference}
 def test_code_analysis_ignore_report_undefined_variables(
     workspace, libspec_manager, data_regression
 ):
-
     from robotframework_ls.robot_config import RobotConfig
 
     workspace.set_root("case2", libspec_manager=libspec_manager)
@@ -1192,7 +1190,6 @@ Some test
 def test_code_analysis_ignore_report_undefined_environment_variables(
     workspace, libspec_manager, data_regression
 ):
-
     from robotframework_ls.robot_config import RobotConfig
 
     workspace.set_root("case2", libspec_manager=libspec_manager)
@@ -2253,7 +2250,6 @@ Template with kw with args 1
 def test_code_analysis_preference_to_robot_variables(
     workspace, libspec_manager, data_regression
 ):
-
     from robotframework_ls.robot_config import RobotConfig
     import os
 
@@ -2620,7 +2616,6 @@ Today is ${day1:\w\{6,9\}} and tomorrow is ${day2:\w{6,9}}
 def test_code_analysis_environment_variable_in_resource_import(
     workspace, libspec_manager, data_regression, found, monkeypatch
 ):
-
     if found:
         monkeypatch.setenv("ENV_VAR_IN_RESOURCE_IMPORT", "./my")
     else:
@@ -2681,7 +2676,6 @@ ${RESOURCES}    %{ENV_VAR_IN_RESOURCE_IMPORT}/bar
 
 
 def test_code_analysis_arguments_correct(workspace, libspec_manager, data_regression):
-
     workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.put_doc("keywords.robot")
     doc.source = """
@@ -2698,7 +2692,6 @@ Check Something
 
 
 def test_code_analysis_arguments_correct_2(workspace, libspec_manager, data_regression):
-
     workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.put_doc("keywords.robot")
     doc.source = """
@@ -2717,7 +2710,6 @@ Kw Only Arg
 def test_code_analysis_arguments_handling_of_starargs(
     workspace, libspec_manager, data_regression, tmpdir
 ):
-
     workspace.set_root_writable_dir(tmpdir, "case2", libspec_manager=libspec_manager)
     doc: IDocument = workspace.put_doc("case.robot", text="")
     p = Path(doc.path)
@@ -2778,7 +2770,6 @@ ${RESOURCES}    %{ENV_VAR_IN_RESOURCE_IMPORT}/bar
 def test_code_analysis_environment_variable_in_resource_import_3(
     workspace, libspec_manager, data_regression
 ):
-
     workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.put_doc("my/bar/keywords.resource")
     doc.source = """
@@ -2802,7 +2793,6 @@ ${RESOURCES}    %{ENV_VAR_IN_RESOURCE_IMPORT}/bar
 def test_code_analysis_environment_variable_in_resource_import_4(
     workspace, libspec_manager, data_regression
 ):
-
     workspace.set_root("case2", libspec_manager=libspec_manager)
     doc = workspace.put_doc("my/bar/keywords.resource")
     doc.source = """

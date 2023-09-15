@@ -307,7 +307,6 @@ class _RobotTargetComm(threading.Thread):
         log.info("Normalized %s to %s", path, filename)
 
         if request.arguments.breakpoints:
-
             for bp in request.arguments.breakpoints:
                 source_breakpoint = SourceBreakpoint(**bp)
                 breakpoints.append(

@@ -820,7 +820,6 @@ class LibspecManager(object):
         )
         for libinfo in self._iter_lib_info(builtin):
             if libinfo.library_doc.name not in blacklist:
-
                 deprecated = deprecated_library_name_to_replacement.get(
                     libinfo.library_doc.name
                 )
@@ -846,15 +845,15 @@ class LibspecManager(object):
         # Note: the iteration order is important (first ones are visited earlier
         # and have higher priority).
         iter_in = []
-        for (_uri, info) in self._workspace_folder_uri_to_folder_info.items():
+        for _uri, info in self._workspace_folder_uri_to_folder_info.items():
             if info.libspec_canonical_filename_to_info:
                 iter_in.append((info.libspec_canonical_filename_to_info, False))
 
-        for (_uri, info) in self._pythonpath_folder_to_folder_info.items():
+        for _uri, info in self._pythonpath_folder_to_folder_info.items():
             if info.libspec_canonical_filename_to_info:
                 iter_in.append((info.libspec_canonical_filename_to_info, False))
 
-        for (_uri, info) in self._additional_pythonpath_folder_to_folder_info.items():
+        for _uri, info in self._additional_pythonpath_folder_to_folder_info.items():
             if info.libspec_canonical_filename_to_info:
                 iter_in.append((info.libspec_canonical_filename_to_info, False))
 
@@ -863,7 +862,7 @@ class LibspecManager(object):
             if info.libspec_canonical_filename_to_info:
                 iter_in.append((info.libspec_canonical_filename_to_info, True))
         else:
-            for (_uri, info) in self._internal_folder_to_folder_info.items():
+            for _uri, info in self._internal_folder_to_folder_info.items():
                 if info.libspec_canonical_filename_to_info:
                     iter_in.append((info.libspec_canonical_filename_to_info, True))
 
@@ -871,7 +870,6 @@ class LibspecManager(object):
             for canonical_spec_filename, info in list(
                 canonical_filename_to_info.items()
             ):
-
                 if info is None:
                     info = canonical_filename_to_info[
                         canonical_spec_filename

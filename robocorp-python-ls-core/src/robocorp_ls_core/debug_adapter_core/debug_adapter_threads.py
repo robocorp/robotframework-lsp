@@ -132,7 +132,6 @@ def reader_thread(
             if data is None:
                 break
             try:
-
                 # A response with success == False doesn't need to be translated
                 # as the original response (to avoid the validation).
                 if not data.get("success", True) and data.get("type") == "response":

@@ -1,0 +1,20 @@
+css:
+  matches: 1
+  strategy: css
+  value: '#withImg'
+id:
+  matches: 1
+  strategy: id
+  value: withImg
+xpath:attributes:
+  matches: 1
+  strategy: xpath
+  value: //img[@id='withImg']
+xpath:image:
+  matches: 1
+  strategy: xpath
+  value: //img[@alt='imgAlt']
+xpath:position:
+  matches: 1
+  strategy: xpath
+  value: //img

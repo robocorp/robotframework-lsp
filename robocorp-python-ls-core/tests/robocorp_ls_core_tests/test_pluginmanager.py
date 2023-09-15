@@ -49,7 +49,6 @@ class AnotherFooImpl(EPFoo):
 
 
 def test_plugins():
-
     from robocorp_ls_core.pluginmanager import NotRegisteredError
 
     pm = PluginManager()

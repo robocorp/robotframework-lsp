@@ -372,7 +372,6 @@ if __name__ == "__main__":
     if TEST:
         test_lines()
     else:
-
         try:
             import fire
         except ImportError:

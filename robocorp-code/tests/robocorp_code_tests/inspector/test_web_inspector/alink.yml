@@ -1,0 +1,32 @@
+css:
+  matches: 1
+  strategy: css
+  value: '#alink'
+id:
+  matches: 1
+  strategy: id
+  value: alink
+link:
+  matches: 1
+  strategy: link
+  value: Link "to Something
+xpath:attributes:
+  matches: 1
+  strategy: xpath
+  value: //a[@id='alink']
+xpath:href:
+  matches: 1
+  strategy: xpath
+  value: //a[contains(@href, './something')]
+xpath:inner-text:
+  matches: 1
+  strategy: xpath
+  value: //a[contains(.,'Link "to Something')]
+xpath:link-text:
+  matches: 1
+  strategy: xpath
+  value: //a[contains(text(),'Link "to Something')]
+xpath:position:
+  matches: 1
+  strategy: xpath
+  value: //a

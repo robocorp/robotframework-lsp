@@ -37,7 +37,6 @@ def _critical_msg(msg):
 
 
 def add_arguments(parser):
-
     # Not using this import to be able to use this function before the pythonpath
     # is setup.
     # from robocorp_code.options import Options as DefaultOptions

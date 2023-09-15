@@ -311,7 +311,7 @@ class RfInterpreterServerManager:
                 self._rf_interpreter_api_client = None
 
     def interpreter_start(
-        self, uri: str, workspace_root_path: str = None
+        self, uri: str, workspace_root_path: Optional[str] = None
     ) -> ActionResultDict:
         api = self._get_api_client()
         if api is not None:

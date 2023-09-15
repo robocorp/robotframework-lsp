@@ -18,7 +18,7 @@ class StopControwFlowException(Exception):
 
 
 class RfInterpreterServerApi(PythonLanguageServer):
-    def __init__(self, read_from, write_to):
+    def __init__(self, read_from, write_to) -> None:
         PythonLanguageServer.__init__(self, read_from, write_to)
         from queue import Queue
 
@@ -254,7 +254,7 @@ class _Evaluate(object):
 
 
 class _Stop(object):
-    def __init__(self):
+    def __init__(self) -> None:
         self.event = threading.Event()
         self.action_result_dict: ActionResultDict = {
             "success": False,
@@ -262,6 +262,6 @@ class _Stop(object):
             "result": None,
         }
 
-    def __call__(self, interpreter: IRobotFrameworkInterpreter):
+    def __call__(self, interpreter: IRobotFrameworkInterpreter) -> None:
         self.action_result_dict = {"success": True, "message": None, "result": None}
         raise StopControwFlowException()

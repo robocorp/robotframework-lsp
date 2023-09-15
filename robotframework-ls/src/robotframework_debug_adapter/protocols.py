@@ -100,5 +100,5 @@ class IRobotDebugger(Protocol):
 
 
 class INextId(Protocol):
-    def __call__(self) -> T:
+    def __call__(self) -> int:
         pass

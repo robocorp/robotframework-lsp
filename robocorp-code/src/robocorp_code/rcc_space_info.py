@@ -44,7 +44,6 @@ def write_text(path: Path, contents, encoding="utf-8"):
 
 @dataclass
 class RCCSpaceInfo:
-
     space_name: str
     space_path: Path
     curr_status: CurrentSpaceStatus

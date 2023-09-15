@@ -343,7 +343,6 @@ def debugger_api_core(dap_resources_dir):
 
 @pytest.fixture
 def debugger_api(dap_process, dap_resources_dir):
-
     from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import writer_thread
     from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import reader_thread
 

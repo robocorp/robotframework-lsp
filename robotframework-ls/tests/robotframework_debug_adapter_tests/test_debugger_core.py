@@ -76,7 +76,6 @@ def stack_frames_repr(
     dct = {}
 
     def to_dict(stack_frame):
-
         dct = stack_frame.to_dict()
         del dct["id"]
         path = dct["source"]["path"]

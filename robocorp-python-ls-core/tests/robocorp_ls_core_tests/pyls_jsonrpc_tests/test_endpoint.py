@@ -359,7 +359,6 @@ def test_log_slow_calls(endpoint, dispatcher, consumer, monkeypatch):
     s = io.StringIO()
     log_level = 2
     with configure_logger("", log_level, s):
-
         handler = mock.Mock(return_value=async_slow_handler)
         dispatcher["methodName"] = handler
 
@@ -385,12 +384,12 @@ def test_log_slow_calls(endpoint, dispatcher, consumer, monkeypatch):
 
 
 def test_consume_request_cancel_monitor(endpoint, dispatcher, consumer, monkeypatch):
-
     from robocorp_ls_core.jsonrpc import endpoint as endpoint_module
 
     monkeypatch.setattr(endpoint_module, "FORCE_NON_THREADED_VERSION", False)
 
     endpoint_module.FORCE_NON_THREADED_VERSION = False
+
     # i.e.: cancel after the request already started.
     @require_monitor
     def async_handler(monitor: IMonitor):

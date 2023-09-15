@@ -34,7 +34,6 @@ def main():
     )
     assert target.exists()
     with zipfile.ZipFile(target, "a", zipfile.ZIP_DEFLATED) as target_z:
-
         assert os.path.exists(wheel_file), "%s does not exist." % (wheel_file,)
         with zipfile.ZipFile(wheel_file, "r") as z:
             for name in z.namelist():

@@ -5,7 +5,9 @@ from robocorp_ls_core.basic import wait_for_condition
 
 
 class _Setup:
-    def __init__(self, rf_interpreter_server_manager, received_messages, uri):
+    def __init__(
+        self, rf_interpreter_server_manager, received_messages, uri: str
+    ) -> None:
         from robotframework_interactive.server.rf_interpreter_server_manager import (
             RfInterpreterServerManager,
         )

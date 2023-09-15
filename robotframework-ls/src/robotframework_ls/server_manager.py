@@ -200,7 +200,6 @@ class _ServerApi(object):
         return env
 
     def get_robotframework_api_client(self) -> Optional[IRobotFrameworkApiClient]:
-
         self._check_in_main_thread()
         workspace = self.workspace
         assert (

@@ -869,7 +869,6 @@ def _check_should_be_completions(doc, ws, **kwargs):
 
 
 def test_keyword_completions_on_keyword_arguments(workspace, libspec_manager):
-
     workspace.set_root("case1", libspec_manager=libspec_manager)
     doc = workspace.get_doc("case1.robot")
     doc = workspace.put_doc(

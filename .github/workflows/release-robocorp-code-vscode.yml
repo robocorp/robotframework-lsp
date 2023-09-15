@@ -28,18 +28,16 @@ jobs:
       with:
         python-version: 3.9
     - name: Install deps
-      run: pip install --upgrade pip fire twine wheel setuptools
+      run: pip install --upgrade pip fire poetry
     - name: Vendor robocorp_ls_core
       run: python -m dev vendor-robocorp-ls-core
     - name: Fix README references
       run: python -m dev fix-readme
     - name: Generate LICENSE.md
       run: python -m dev generate-license-file
-    - name: Build wheel
-      working-directory: ./robocorp-code/src
-      run: |
-        cp ../README.md ./README.md
-        python setup.py sdist bdist_wheel --universal
+    - name: Install locally
+      working-directory: ./robocorp-code
+      run: poetry install
     - run: npm install -g vsce@2.15.0
         
     - name: Check tag version

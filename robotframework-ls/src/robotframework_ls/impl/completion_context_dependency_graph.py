@@ -276,7 +276,6 @@ class CompletionContextDependencyGraph:
     def _collect_variable_info_from_completion_context(
         cls, curr_ctx: ICompletionContext, is_root_context: bool, memo: _Memo
     ) -> Sequence[Tuple[IVariableImportNode, Optional[IRobotDocument]]]:
-
         variable_imports_as_docs = curr_ctx.get_variable_imports_as_docs()
         new_variable_infos: List[
             Tuple[IVariableImportNode, Optional[IRobotDocument]]

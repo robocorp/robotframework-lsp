@@ -159,33 +159,28 @@ class CommunicationDropped(object):
 
 
 class IMessageMatcher(Generic[T], Protocol):
-
     event: threading.Event
     msg: T
 
 
 class IIdMessageMatcher(Generic[T], Protocol):
-
     message_id: str
     event: threading.Event
     msg: T
 
 
 class IResultMessage(TypedDict):
-
     jsonrpc: str  # Literal["2.0"] (not available on python 3.7)
     id: int
     result: Any
 
 
 class IErrorTypedDict(TypedDict):
-
     code: int
     message: str
 
 
 class IErrorMessage(TypedDict):
-
     jsonrpc: str  # Literal["2.0"] (not available on python 3.7)
     id: int
     error: IErrorTypedDict
@@ -221,7 +216,6 @@ class IRequestHandler(Protocol):
 
 
 class ILanguageServerClientBase(IRequestCancellable, Protocol):
-
     on_message: "Callback"
 
     def request_async(self, contents: Dict) -> Optional[IIdMessageMatcher]:
@@ -739,7 +733,6 @@ class IDirCache(Protocol):
 
 
 class IDocumentSelection(Protocol):
-
     doc: "IDocument"
     line: int
     col: int
@@ -901,7 +894,6 @@ class ActionResultDict(TypedDict):
 
 
 class ActionResult(Generic[T]):
-
     success: bool
     message: Optional[
         str
@@ -925,7 +917,6 @@ class ActionResult(Generic[T]):
 
 
 class RCCActionResult(ActionResult[str]):
-
     # A string-representation of the command line.
     command_line: str
 

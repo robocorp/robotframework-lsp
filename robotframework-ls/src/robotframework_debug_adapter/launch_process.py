@@ -267,7 +267,6 @@ def compute_cmd_line_and_env(
 
 
 class LaunchProcess(object):
-
     __slots__ = [
         "_valid",
         "_cmdline",

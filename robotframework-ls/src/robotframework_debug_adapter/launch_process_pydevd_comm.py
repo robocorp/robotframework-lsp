@@ -36,7 +36,6 @@ class LaunchProcessDebugAdapterPydevdComm(BaseLaunchProcessTargetComm):
         )
 
         try:
-
             # while True:
             # Only handle a single connection...
             socket, _addr = self._server_socket.accept()

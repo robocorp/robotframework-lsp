@@ -35,7 +35,6 @@ class _Collector(AbstractVariablesCollector):
         in_assign: bool,
         add_prefix: Optional[str],
     ):
-
         self.completion_items: List[CompletionItemTypedDict] = []
         self.selection = selection
         self.in_expression = in_expression
@@ -319,7 +318,6 @@ def collect_global_variables_from_document_dependencies(
 
             node_name_tok = node.get_token(Token.NAME)
             if node_name_tok is not None:
-
                 (
                     value,
                     token_errors,
@@ -486,7 +484,7 @@ def collect_local_variables(
         if current_section is None:
             stack = ()  # Note: shouldn't happen in practice.
         else:
-            stack = (stack_node,)
+            stack = (current_section,)
 
     for assign_node_info in ast_utils.iter_local_assigns(stack_node):
         completion_context.check_cancelled()

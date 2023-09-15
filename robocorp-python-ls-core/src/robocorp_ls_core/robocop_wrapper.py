@@ -30,7 +30,6 @@ def _import_robocop():
 def collect_robocop_diagnostics(
     project_root: Path, ast_model, filename: str, source: str
 ) -> List[DiagnosticsTypedDict]:
-
     _import_robocop()
 
     import robocop

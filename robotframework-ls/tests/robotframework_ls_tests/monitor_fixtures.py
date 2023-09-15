@@ -42,7 +42,6 @@ def _start_monitoring_threads():
 
         class DumpThreads(threading.Thread):
             def run(self):
-
                 time.sleep(20)
                 dump_threads()
 

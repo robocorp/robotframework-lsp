@@ -25,7 +25,6 @@ def hover_on_conda_yaml(
     pypi_cloud: IPyPiCloud,
     conda_cloud: ICondaCloud,
 ) -> Optional[HoverTypedDict]:
-
     from robocorp_ls_core.protocols import IDocumentSelection
 
     from robocorp_code.deps.analyzer import Analyzer
@@ -240,7 +239,6 @@ def _hover_handle_pip_dep(
     releases_data = sorted(package_data.iter_versions_released_after(last_year))
 
     if pip_dep.constraints:
-
         for constraint in pip_dep.constraints:
             # Check any constraint ('==', '<', '>'), etc.
             local_version = constraint[1]

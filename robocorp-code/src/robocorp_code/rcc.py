@@ -191,7 +191,6 @@ class RobotInfoEnv(object):
 
 
 class Rcc(object):
-
     # Note that this is stored in the class, not in the instance.
     # It should store the contents of conda which couldn't be resolved.
     # After being stored once here, it'll only be tried again when
@@ -545,7 +544,6 @@ class Rcc(object):
         return account is not None
 
     def get_valid_account_info(self) -> Optional[AccountInfo]:
-
         self._last_verified_account_info = None
         args = [
             "config",
@@ -587,7 +585,6 @@ class Rcc(object):
             for credential in credentials:
                 timestamp = credential.get("verified")
                 if timestamp and int(timestamp):
-
                     details = credential.get("details", {})
                     if not isinstance(details, dict):
                         email = "<Email:Unknown>"
@@ -730,7 +727,6 @@ class Rcc(object):
     def cloud_list_workspace_robots(
         self, workspace_id: str
     ) -> ActionResult[List[IRccRobotMetadata]]:
-
         ret: List[IRccRobotMetadata] = []
         args = ["cloud", "workspace"]
         args.extend(("--workspace", workspace_id))
@@ -790,7 +786,6 @@ class Rcc(object):
     def cloud_set_robot_contents(
         self, directory: str, workspace_id: str, robot_id: str
     ) -> ActionResult:
-
         if not os.path.exists(directory):
             return ActionResult(
                 False, f"Expected: {directory} to exist to upload to the Control Room."

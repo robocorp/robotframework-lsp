@@ -49,7 +49,6 @@ class _RfInterpretersManager:
     def interpreter_start(
         self, arguments, config: IConfig
     ) -> Union[IFuture[ActionResultDict], ActionResultDict]:
-
         if not arguments:
             return ActionResult(
                 False, message="Expected arguments ([{'uri': <uri>}])"
@@ -411,7 +410,6 @@ def _handle_completions(language_server_impl, rf_interpreters_manager, arguments
         return {"suggestions": []}
 
     def run():
-
         try:
             args: dict = arguments[0]
             code = args.get("code", Sentinel.SENTINEL)
@@ -487,7 +485,6 @@ def _handle_resolve_completion(
         return None
 
     def run():
-
         try:
             args: dict = arguments[0]
             completion_item = args.get("completionItem", Sentinel.SENTINEL)

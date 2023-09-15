@@ -65,7 +65,6 @@ class _DefaultConfigurationProvider(object):
 
 
 class LaunchProcess(object):
-
     __slots__ = [
         "_valid",
         "_cmdline",

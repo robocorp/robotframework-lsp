@@ -17,7 +17,6 @@ def compute_robot_launch_from_robocorp_code_launch(
     env: Optional[Dict[str, str]],
     python_exe: Optional[str],
 ) -> ActionResultDictRobotLaunch:
-
     if not name:
         return {
             "success": False,
@@ -45,7 +44,6 @@ def compute_robot_launch_from_robocorp_code_launch(
         }
 
     try:
-
         from robocorp_ls_core import yaml_wrapper
 
         with open(robot, "r") as stream:

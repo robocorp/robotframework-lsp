@@ -23,7 +23,6 @@ def list_tests(completion_context: ICompletionContext) -> List[ITestInfoTypedDic
     for node in ast_utils.iter_tests(ast):
         completion_context.check_cancelled()
         try:
-
             test_case_name_token = node.node.header.get_token(Token.TESTCASE_NAME)
             if not test_case_name_token:
                 continue
@@ -278,7 +277,6 @@ def code_lens_resolve(
         ast = completion_context.get_ast()
         for name_token, header, node in _iter_rf_interactive_items(ast):
             if name_token.lineno - 1 == code_lens_line:
-
                 code_lens["command"] = _code_lens_rf_interactive_command(
                     header, node, data["uri"]
                 )

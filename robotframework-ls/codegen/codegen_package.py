@@ -408,7 +408,6 @@ ALL_ROBOT_OPTIONS = frozenset(
             "rf_interpreter_generated_lsp_constants.py",
         ),
     ):
-
         with open(settings_py_file, "w") as stream:
             stream.write("# fmt: off\n")
             stream.write("\n".join(settings_template))
