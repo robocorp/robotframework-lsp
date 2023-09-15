@@ -30,6 +30,8 @@ jobs:
           poetry install
           poetry run python -m pip install robotframework-output-stream
           
+          cd ..
+          
           echo $PWD/robotframework-ls/src > .venv/lib/python3.9/site-packages/rf_src.pth
           echo $PWD/robocorp-code/src >> .venv/lib/python3.9/site-packages/rf_src.pth
           echo $PWD/robocorp-python-ls-core/src >> .venv/lib/python3.9/site-packages/rf_src.pth
