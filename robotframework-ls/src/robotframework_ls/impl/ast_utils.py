@@ -1084,9 +1084,10 @@ def iter_local_assigns(ast) -> Iterator[VarTokenInfo]:
     for clsname, assign_token_type in (
         ("KeywordCall", Token.ASSIGN),
         ("ForHeader", Token.VARIABLE),  # RF 4+
-        ("ForHeader", Token.ASSIGN),  # RF 6.1+
+        ("ForHeader", Token.ASSIGN),  # RF > 6.1
         ("ForLoopHeader", Token.VARIABLE),  # RF 3
-        ("ExceptHeader", Token.VARIABLE),
+        ("ExceptHeader", Token.VARIABLE),  # RF <= 6.1
+        ("ExceptHeader", Token.ASSIGN),  # RF > 6.1
         ("InlineIfHeader", Token.ASSIGN),
     ):
         for node_info in ast.iter_indexed(clsname):
