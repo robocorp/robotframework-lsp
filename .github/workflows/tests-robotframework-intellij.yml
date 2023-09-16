@@ -64,13 +64,16 @@ jobs:
       run: |
         cp ../README.md ./README.md
         python setup.py sdist bdist_wheel --universal
-    - name: Test
-      run: |
-        export DISPLAY=':99.0'
-        /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-        pwd
-        ./gradlew -v
-        ./gradlew clean test -i
+        
+# Disable tests as they're not being monitored (so, just check that we
+# can build in the ci).
+#     - name: Test
+#       run: |
+#         export DISPLAY=':99.0'
+#         /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+#         pwd
+#         ./gradlew -v
+#         ./gradlew clean test -i
     - name: Package
       run: |
         export DISPLAY=':99.0'
