@@ -11,6 +11,7 @@ from playwright.sync_api import (
     Playwright,
     sync_playwright,
 )
+from robocorp_ls_core.robotframework_log import get_logger
 
 from ._browser_engines import (
     ENGINE_TO_ARGS,
@@ -19,6 +20,8 @@ from ._browser_engines import (
     install_browser,
 )
 from ._caches import session_cache, task_cache
+
+log = get_logger(__name__)
 
 
 class _BrowserConfig:
@@ -204,6 +207,7 @@ def browser(**kwargs) -> Iterator[Browser]:
     # Note: one per session (must be tear-down).
     config = _browser_config()
     if config.install:
+        log.info("Installing browsers (config.install==True).")
         install_browser(config.browser_engine)
 
     launcher = _browser_launcher()
@@ -211,6 +215,10 @@ def browser(**kwargs) -> Iterator[Browser]:
         browser = launcher(**kwargs)
     except Error:
         if config.install is None:
+            log.exception(
+                "Unable to launch browser.\nPLAYWRIGHT_BROWSERS_PATH: %s\nInstalling browsers now.",
+                os.environ.get("PLAYWRIGHT_BROWSERS_PATH"),
+            )
             install_browser(config.browser_engine)
             browser = launcher(**kwargs)
         else:

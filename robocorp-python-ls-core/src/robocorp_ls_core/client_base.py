@@ -168,7 +168,7 @@ def wait_for_message_matchers(
 
 
 class _ReaderThread(threading.Thread):
-    def __init__(self, reader, on_received_message=None):
+    def __init__(self, reader, on_received_message=None) -> None:
         threading.Thread.__init__(self)
         self.daemon = True
         self.reader = reader
@@ -176,8 +176,8 @@ class _ReaderThread(threading.Thread):
         self._finished = False
 
         # Message matchers.
-        self._id_message_matchers = {}  # msg id-> matcher
-        self._pattern_message_matchers = {}  # id(matcher) -> matcher
+        self._id_message_matchers: dict = {}  # msg id-> matcher
+        self._pattern_message_matchers: dict = {}  # id(matcher) -> matcher
         self._request_handlers: Dict[str, List[IRequestHandler]] = {}
 
         self.on_message = Callback()

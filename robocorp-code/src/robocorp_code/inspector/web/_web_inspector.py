@@ -1,5 +1,6 @@
+import threading
 import weakref
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from playwright.sync_api import ElementHandle, Page
 from robocorp_ls_core.callbacks import Callback
@@ -58,10 +59,27 @@ class WebInspector:
     def __init__(self):
         self._page = None
         self._on_picked = Callback()
+        self._current_thread = threading.current_thread()
+
+    def _check_thread(self):
+        assert self._current_thread is threading.current_thread()
+
+    def loop(self):
+        self._check_thread()
+        page = self._page
+        if page is not None and not page.is_closed():
+            page.wait_for_timeout(1)
+
+    def close_browser(self):
+        self._check_thread()
+        page = self._page
+        if page is not None and not page.is_closed():
+            page.close()
 
     def page(self) -> Page:
+        self._check_thread()
         page = self._page
-        if page is None:
+        if page is None or page.is_closed():
             from robocorp_code.playwright import robocorp_browser
 
             page = robocorp_browser.page()
@@ -76,20 +94,32 @@ class WebInspector:
 
             page.expose_function("on_picked", on_picked)
 
+            def cancel_pick(*args, **kwargs):
+                s = weak_self()
+                if s is not None:
+                    s._on_picked(None)
+
+            page.on("framenavigated", cancel_pick)
+            page.on("close", cancel_pick)
+            page.on("crash", cancel_pick)
+
         return page
 
     def open(self, url: str) -> Page:
+        self._check_thread()
         page = self.page()
         if url:
             page.goto(url)
         return page
 
     def _query(self, selector):
+        self._check_thread()
         page = self.page()
         log.debug("Querying: %s", selector)
         return page.query_selector_all(selector)
 
     def find_matches(self, strategy, value) -> List[ElementHandle]:
+        self._check_thread()
         if strategy == "id":
             found_matches = self._query(f"#{value}")
             return found_matches
@@ -115,18 +145,24 @@ class WebInspector:
         # "tag": By.TAG_NAME,
 
     def pick_async(self, on_picked) -> None:
-        assert self.is_picker_injected(), "Unable to make pick. Picker not injected."
+        """
+        Starts the picker and calls `on_picked(locators)` afterwards.
+
+        Note that the `locators` may be None if the user makes some navigation.
+        """
+        self._check_thread()
+        assert self.inject_picker(), "Unable to make pick. Picker not injected."
 
         page = self.page()
 
         def call_and_unregister(*args, **kwargs):
-            self._on_picked.unregister(on_picked)
+            self._on_picked.unregister(call_and_unregister)
             on_picked(*args, **kwargs)
 
         self._on_picked.register(call_and_unregister)
         page.evaluate(_PICK_ASYNC_CODE)
 
-    def pick(self) -> List[Tuple[str, str]]:
+    def pick(self) -> Optional[List[Tuple[str, str]]]:
         """
         Waits for the user to pick something in the page. When the user does the
         pick (or cancels it), returns a list of tuples with `name[:<optional_strategy>], value`
@@ -138,18 +174,28 @@ class WebInspector:
                 ["xpath:position", "//div[3]/div"]
             ]
         """
-        assert self.is_picker_injected(), "Unable to make pick. Picker not injected."
+        self._check_thread()
+        assert self.inject_picker(), "Unable to make pick. Picker not injected."
 
         page = self.page()
-        locators = page.evaluate(_PICK_CODE)
+        try:
+            locators = page.evaluate(_PICK_CODE)
+        except Exception:
+            log.exception(
+                "While (sync) picking an exception happened (most likely the user changed the url or closed the browser)."
+            )
+            return None
 
         log.debug("Locators found: %s", locators)
         return locators
 
     def make_full_locators(
-        self, locators: List[Tuple[str, str]]
+        self, locators: Optional[List[Tuple[str, str]]]
     ) -> LocatorNameToLocatorTypedDict:
+        self._check_thread()
         ret: LocatorNameToLocatorTypedDict = {}
+        if not locators:
+            return ret
         for name, value in locators:
             log.debug("Making full locator for: name[%s] value[%s]", name, value)
             strategy = name.split(":", 1)[0]
@@ -166,6 +212,7 @@ class WebInspector:
         return ret
 
     def is_picker_injected(self) -> bool:
+        self._check_thread()
         page = self.page()
         selector = page.query_selector("#inspector-style")
         if selector is not None:
@@ -173,6 +220,10 @@ class WebInspector:
         return False
 
     def inject_picker(self) -> bool:
+        """
+        Ensures that the picker is injected. It's ok to call it multiple times.
+        """
+        self._check_thread()
         try:
             if self.is_picker_injected():
                 return True
