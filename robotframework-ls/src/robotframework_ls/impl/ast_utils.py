@@ -1084,6 +1084,7 @@ def iter_local_assigns(ast) -> Iterator[VarTokenInfo]:
     for clsname, assign_token_type in (
         ("KeywordCall", Token.ASSIGN),
         ("ForHeader", Token.VARIABLE),  # RF 4+
+        ("ForHeader", Token.ASSIGN),  # RF 6.1+
         ("ForLoopHeader", Token.VARIABLE),  # RF 3
         ("ExceptHeader", Token.VARIABLE),
         ("InlineIfHeader", Token.ASSIGN),

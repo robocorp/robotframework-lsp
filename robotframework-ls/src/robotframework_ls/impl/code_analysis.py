@@ -1,7 +1,7 @@
 from functools import lru_cache
 import re
 import sys
-from typing import Dict, Optional, List, Tuple
+from typing import Dict, Optional, List, Tuple, Any
 
 from robocorp_ls_core.lsp import (
     DiagnosticSeverity,
@@ -77,10 +77,10 @@ class _KeywordContainer(object):
 
 
 class _VariablesCollector(AbstractVariablesCollector):
-    def __init__(self, on_unresolved_variable_import):
+    def __init__(self, on_unresolved_variable_import) -> None:
         self._variables_collected: Dict[str, List[IVariableFound]] = {}
         self._template_variables_collected: List[Tuple[str, IVariableFound]] = []
-        self.on_unresolved_variable_import = on_unresolved_variable_import
+        self.on_unresolved_variable_import: Any = on_unresolved_variable_import
 
         self._env_variables_collected: Dict[str, IVariableFound] = {}
 
