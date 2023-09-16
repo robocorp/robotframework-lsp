@@ -8,6 +8,10 @@ try:
     from robot.api.parsing import Config
 except ImportError:  # RF 6.0
     Config, Language = None, None
+try:
+    from robot.parsing.model.blocks import ImplicitCommentSection
+except ImportError:  # RF < 6.1
+    ImplicitCommentSection = None
 
 from robotidy.disablers import skip_if_disabled, skip_section_if_disabled
 from robotidy.exceptions import InvalidParameterValueError
@@ -70,7 +74,7 @@ class Translate(Transformer):
         if Language is not None:
             self.language = Language.from_name(language)
             # reverse mapping, in core it's other_lang: en and we need en: other_lang name
-            self.settings = {value: key.title() for key, value in self.language.settings.items()}
+            self.settings = {value: key.title() for key, value in self.language.settings.items() if key}
         else:
             self.language, self.settings = None, None
         self._bdd_mapping = None
@@ -140,7 +144,10 @@ class Translate(Transformer):
         elif self.language.code != "en":
             language_header = Config.from_params(f"language: {self.language.code}")
             empty_line = EmptyLine.from_params()
-            section = CommentSection(body=[language_header, empty_line])
+            if ImplicitCommentSection:
+                section = ImplicitCommentSection(body=[language_header, empty_line])
+            else:
+                section = CommentSection(body=[language_header, empty_line])
             node.sections.insert(0, section)
         return node
 

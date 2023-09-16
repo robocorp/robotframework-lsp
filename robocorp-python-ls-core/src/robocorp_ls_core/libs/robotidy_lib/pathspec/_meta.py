@@ -50,6 +50,8 @@ __credits__ = [
 	"Avasam <https://github.com/Avasam>",
 	"yschroeder <https://github.com/yschroeder>",
 	"axesider <https://github.com/axesider>",
+	"tomruk <https://github.com/tomruk>",
+	"oprypin <https://github.com/oprypin>",
 ]
 __license__ = "MPL 2.0"
-__version__ = "0.11.1"
+__version__ = "0.11.2"

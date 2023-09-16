@@ -162,6 +162,8 @@ class RenameVariables(Transformer):
     HANDLES_SKIP = frozenset({"skip_sections"})
     MORE_THAN_2_SPACES: Pattern = re.compile(r"\s{2,}")
     CAMEL_CASE: Pattern = re.compile(r"((?<=[a-z0-9])[A-Z]|(?!^)[A-Z](?=[a-z]))")
+    EXTENDED_SYNTAX: Pattern = re.compile(r"(.+?)([^\s\w].+)", re.UNICODE)
+    DEFAULT_IGNORE_CASE = {"\\n"}
 
     def __init__(
         self,
@@ -170,6 +172,7 @@ class RenameVariables(Transformer):
         unknown_variables_case: str = "upper",
         variable_separator: str = "underscore",
         convert_camel_case: bool = True,
+        ignore_case: str = None,
         skip: Skip = None,
     ):
         super().__init__(skip)
@@ -183,6 +186,7 @@ class RenameVariables(Transformer):
         # we always convert to space, so we only need to check if we need to convert back to _
         self.replace_variable_separator = variable_separator == "underscore"
         self.convert_camel_case = convert_camel_case
+        self.ignore_case = self.get_ignored_variables_case(ignore_case)
         self.variables_scope = VariablesScope()
 
     def validate_case(self, param_name: str, case: str, allowed_case: List):
@@ -203,6 +207,12 @@ class RenameVariables(Transformer):
                 variable_separator,
                 "Allowed values are: underscore, space",
             )
+
+    def get_ignored_variables_case(self, ignore_vars):
+        if ignore_vars is None:
+            return self.DEFAULT_IGNORE_CASE
+        ignored_vars = set(ignore_vars.split(","))
+        return ignored_vars.union(self.DEFAULT_IGNORE_CASE)
 
     @skip_section_if_disabled
     def visit_Section(self, node):  # noqa
@@ -408,17 +418,26 @@ class RenameVariables(Transformer):
         return name
 
     def set_name_case(self, name: str, case: str):
+        if name in self.ignore_case:
+            return name
         if case == "upper":
             return name.upper()
         if case == "lower":
             return name.lower()
         if case == "auto":
-            if self.variables_scope.is_local(name):
-                return name.lower()
-            if self.variables_scope.is_global(name):
-                return name.upper()
-            return self.set_name_case(name, self.unknown_variables_case)
+            return self.set_case_for_local_and_global(name)
         return name
+
+    def set_case_for_local_and_global(self, name):
+        if self.variables_scope.is_local(name):
+            return name.lower()
+        if self.variables_scope.is_global(name):
+            return name.upper()
+        extended_syntax = self.EXTENDED_SYNTAX.match(name)
+        if extended_syntax is None:
+            return self.set_name_case(name, self.unknown_variables_case)
+        base_name, extended = extended_syntax.groups()
+        return self.set_case_for_local_and_global(base_name) + extended
 
     def rename(self, variable_value: str, case: str, strip_fn: str = "strip"):
         if not variable_value:
@@ -427,9 +446,10 @@ class RenameVariables(Transformer):
         variable_name, item_access = split_string_on_delimiter(variable_value)
         if self.convert_camel_case:
             variable_name = self.CAMEL_CASE.sub(r" \1", variable_name)
-        variable_name = self.set_name_case(variable_name, case)
         variable_name = variable_name.replace("_", " ")
         variable_name = self.MORE_THAN_2_SPACES.sub(" ", variable_name)
+        if variable_name == " ":  # ${ } or ${_}
+            return "_" + item_access
         # to handle cases like ${var_${variable}_} we need to only strip whitespace at start/end depending on the type
         if strip_fn == "strip":
             variable_name = variable_name.strip()
@@ -439,6 +459,7 @@ class RenameVariables(Transformer):
             variable_name = variable_name.rstrip()
         if self.replace_variable_separator:
             variable_name = variable_name.replace(" ", "_")
+        variable_name = self.set_name_case(variable_name, case)
         return variable_name + item_access
 
 

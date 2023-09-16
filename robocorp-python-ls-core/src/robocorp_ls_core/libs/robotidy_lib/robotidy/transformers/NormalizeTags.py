@@ -1,4 +1,4 @@
-from robot.api.parsing import DefaultTags, ForceTags, Tags, Token
+from robot.api.parsing import Token
 
 from robotidy.disablers import skip_section_if_disabled
 from robotidy.exceptions import InvalidParameterValueError
@@ -37,7 +37,12 @@ class NormalizeTags(Transformer):
         "titlecase": str.title,
     }
 
-    def __init__(self, case: str = "lowercase", normalize_case: bool = True, preserve_format: bool = False):
+    def __init__(
+        self,
+        case: str = "lowercase",
+        normalize_case: bool = True,
+        preserve_format: bool = False,
+    ):
         super().__init__()
         self.case = case.lower()
         self.normalize_case = normalize_case
@@ -46,7 +51,10 @@ class NormalizeTags(Transformer):
             self.case_function = self.CASE_FUNCTIONS[self.case]
         except KeyError:
             raise InvalidParameterValueError(
-                self.__class__.__name__, "case", case, "Supported cases: lowercase, uppercase, titlecase."
+                self.__class__.__name__,
+                "case",
+                case,
+                "Supported cases: lowercase, uppercase, titlecase.",
             )
 
     @skip_section_if_disabled
@@ -87,7 +95,10 @@ class NormalizeTags(Transformer):
         tags = self.remove_duplicates(tags)
         comments = node.get_tokens(Token.COMMENT)
         if indent:
-            tokens = [Token(Token.SEPARATOR, self.formatting_config.indent), setting_name]
+            tokens = [
+                Token(Token.SEPARATOR, self.formatting_config.indent),
+                setting_name,
+            ]
         else:
             tokens = [setting_name]
         for tag in tags:

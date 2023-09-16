@@ -70,11 +70,12 @@ class AlignSettingsSection(Transformer):
         Token.VARIABLES,
     }
 
-    def __init__(self, up_to_column: int = 2, argument_indent: int = 4, min_width: int = None):
+    def __init__(self, up_to_column: int = 2, argument_indent: int = 4, min_width: int = None, fixed_width: int = None):
         super().__init__()
         self.up_to_column = up_to_column - 1
         self.argument_indent = argument_indent
         self.min_width = min_width
+        self.fixed_width = fixed_width
 
     @skip_section_if_disabled
     def visit_SettingSection(self, node):  # noqa
@@ -131,8 +132,8 @@ class AlignSettingsSection(Transformer):
 
     def calc_separator(self, index, up_to, indent_arg, token, look_up):
         if index < up_to:
-            if self.min_width:
-                return max(self.min_width - len(token.value), self.formatting_config.space_count) * " "
+            if self.fixed_width:
+                return max(self.fixed_width - len(token.value), self.formatting_config.space_count) * " "
             arg_indent = self.argument_indent if indent_arg else 0
             if indent_arg and index != 0:
                 return (
@@ -160,4 +161,6 @@ class AlignSettingsSection(Transformer):
                     up_to = len(line)
                 for index, token in enumerate(line[:up_to]):
                     look_up[index] = max(look_up[index], len(token.value))
+        if self.min_width:
+            look_up = {index: max(length, self.min_width - 4) for index, length in look_up.items()}
         return {index: round_to_four(length) for index, length in look_up.items()}

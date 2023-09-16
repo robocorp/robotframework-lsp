@@ -68,7 +68,14 @@ class GitWildMatchPattern(RegexPattern):
 			raise TypeError(f"pattern:{pattern!r} is not a unicode or byte string.")
 
 		original_pattern = pattern
-		pattern = pattern.strip()
+
+		if pattern.endswith('\\ '):
+			# EDGE CASE: Spaces can be escaped with backslash.
+			# If a pattern that ends with backslash followed by a space,
+			# only strip from left.
+			pattern = pattern.lstrip()
+		else:
+			pattern = pattern.strip()
 
 		if pattern.startswith('#'):
 			# A pattern starting with a hash ('#') serves as a comment
@@ -283,13 +290,16 @@ class GitWildMatchPattern(RegexPattern):
 				# - "[]-]" matches ']' and '-'.
 				# - "[!]a-]" matches any character except ']', 'a' and '-'.
 				j = i
-				# Pass brack expression negation.
-				if j < end and pattern[j] == '!':
+        
+				# Pass bracket expression negation.
+				if j < end and (pattern[j] == '!' or pattern[j] == '^'):
 					j += 1
+          
 				# Pass first closing bracket if it is at the beginning of the
 				# expression.
 				if j < end and pattern[j] == ']':
 					j += 1
+          
 				# Find closing bracket. Stop once we reach the end or find it.
 				while j < end and pattern[j] != ']':
 					j += 1
@@ -306,16 +316,17 @@ class GitWildMatchPattern(RegexPattern):
 					expr = '['
 
 					if pattern[i] == '!':
-						# Braket expression needs to be negated.
+						# Bracket expression needs to be negated.
 						expr += '^'
 						i += 1
 					elif pattern[i] == '^':
 						# POSIX declares that the regex bracket expression negation
 						# "[^...]" is undefined in a glob pattern. Python's
 						# `fnmatch.translate()` escapes the caret ('^') as a
-						# literal. To maintain consistency with undefined behavior,
-						# I am escaping the '^' as well.
-						expr += '\\^'
+						# literal. Git supports the using a caret for negation.
+						# Maintain consistency with Git because that is the expected
+						# behavior.
+						expr += '^'
 						i += 1
 
 					# Build regex bracket expression. Escape slashes so they are

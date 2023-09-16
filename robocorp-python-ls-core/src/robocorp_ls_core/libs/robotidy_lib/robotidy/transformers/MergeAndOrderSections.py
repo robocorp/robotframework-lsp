@@ -11,6 +11,10 @@ try:
     from robot.api.parsing import Config  # from RF 6.0
 except ImportError:
     Config = None
+try:
+    from robot.parsing.model import InvalidSection  # from RF 6.1
+except ImportError:
+    InvalidSection = None
 from robotidy.transformers import Transformer
 
 
@@ -119,6 +123,8 @@ class MergeAndOrderSections(Transformer):
         for index, section in enumerate(node.sections):
             if index == last:
                 section = self.from_last_section(section)
+            if InvalidSection and isinstance(section, InvalidSection):
+                return node
             section_type = self.get_section_type(section)
             if section_type not in sections:
                 sections[section_type] = section

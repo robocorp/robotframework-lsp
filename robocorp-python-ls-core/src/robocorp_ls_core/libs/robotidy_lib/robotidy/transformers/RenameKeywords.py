@@ -93,26 +93,23 @@ class RenameKeywords(Transformer):
             new_value = self.rename_with_pattern(token.value, is_keyword_call=is_keyword_call)
         else:
             new_value = self.normalize_name(token.value, is_keyword_call=is_keyword_call)
-        if not new_value.strip():  # do not allow renames that removes keywords altogether
+        new_value = new_value.strip()
+        if not new_value:  # do not allow renaming that removes keywords altogether
             return
         token.value = new_value
 
     def normalize_name(self, value, is_keyword_call):
         var_found = False
         parts = []
-        new_name, remaining = "", ""
+        remaining = ""
         for prefix, match, remaining in VariableIterator(value, ignore_errors=True):
             var_found = True
             # rename strips whitespace, so we need to preserve it if needed
             if not prefix.strip() and parts:
                 parts.extend([" ", match])
             else:
-                leading_space = " " if prefix.startswith(" ") else ""
-                trailing_space = " " if prefix.endswith(" ") else ""
-                parts.extend([leading_space, self.rename_part(prefix, is_keyword_call), trailing_space, match])
+                parts.extend([self.rename_part(prefix, is_keyword_call), match])
         if var_found:
-            if remaining.startswith(" "):
-                parts.append(" ")
             parts.append(self.rename_part(remaining, is_keyword_call))
             return "".join(parts).strip()
         return self.rename_part(value, is_keyword_call)
@@ -127,10 +124,18 @@ class RenameKeywords(Transformer):
 
     def remove_underscores_and_capitalize(self, value: str):
         if self.remove_underscores:
-            value = re.sub("_+", " ", value)  # replace one or more _ with one space
-        value = value.strip()
+            value = value.replace("_", " ")
+            value = re.sub(r" +", " ", value)  # replace one or more spaces by one
+        words = []
+        split_words = value.split(" ")
         # capitalize first letter of every word, leave rest untouched
-        return "".join([a if a.isupper() else b for a, b in zip(value, string.capwords(value))])
+        for index, word in enumerate(split_words):
+            if not word:
+                if index in (0, len(split_words) - 1):  # leading and trailing whitespace
+                    words.append("")
+            else:
+                words.append(word[0].upper() + word[1:])
+        return " ".join(words)
 
     def rename_with_pattern(self, value: str, is_keyword_call: bool):
         lib_name = ""

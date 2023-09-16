@@ -6,8 +6,8 @@ See the deps in https://github.com/MarketSquare/robotframework-tidy/blob/main/se
 install those (removing `rich_click`, `robotframework` and `colorama`)
 
 pip install robotframework-tidy --target . --no-deps
-pip install "click==8.1" --target .
-pip install "pathspec>=0.9.0,<0.11.2" --target .
+pip install "click==8.1.*" --target .
+pip install "pathspec>=0.9.0,<0.11.3" --target .
 pip install "tomli==2.0.*" --target .
 pip install "jinja2>=3.0,<4.0" --target .
 
