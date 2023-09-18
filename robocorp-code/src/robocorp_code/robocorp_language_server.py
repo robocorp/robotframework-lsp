@@ -147,6 +147,13 @@ class RobocorpLanguageServer(PythonLanguageServer):
                 f"Env vars info: {env_vars_info}\n"
             )
 
+        try:
+            import truststore
+
+            truststore.inject_into_ssl()
+        except Exception:
+            log.exception("There was an error injecting trustore into ssl.")
+
         self._fs_observer: Optional[IFSObserver] = None
 
         self._dir_cache = DirCache(cache_dir)
