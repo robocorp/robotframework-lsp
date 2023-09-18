@@ -10,7 +10,6 @@ import os
 
 
 def _iter_import_names(completion_context):
-
     imported_libraries = completion_context.get_imported_libraries()
     lib: ILibraryImportNode
     for lib in imported_libraries:

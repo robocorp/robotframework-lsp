@@ -59,7 +59,6 @@ def complete(completion_context: ICompletionContext) -> List[dict]:
 
     current_keyword_definition = completion_context.get_current_keyword_definition()
     if current_keyword_definition is not None:
-
         keyword_found: IKeywordFound = current_keyword_definition.keyword_found
         keyword_args = keyword_found.keyword_args
         if keyword_args:

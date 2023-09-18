@@ -24,7 +24,6 @@ _progress_id_to_progress_reporter: Dict[str, "_ProgressReporter"] = {}
 
 
 class _ProgressReporter(object):
-
     _MIN_TIME = 0.25
 
     def __init__(

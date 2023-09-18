@@ -15,7 +15,6 @@ log = get_logger(__name__)
 
 
 class Section(object):
-
     # Header to the section (i.e.: *** Setting ***)
     markers: Tuple[str, ...] = ()
 
@@ -288,7 +287,6 @@ def _get_accepted_section_header_words(
     sections = _get_accepted_sections(completion_context)
     ret = []
     if robot_version_supports_language():
-
         from robot.api import Language
 
         locinfo: ILocalizationInfo = completion_context.get_ast_localization_info()

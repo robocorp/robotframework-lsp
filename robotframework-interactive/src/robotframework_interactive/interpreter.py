@@ -383,7 +383,7 @@ class RobotFrameworkInterpreter(object):
                         ret = {
                             "prefix": prefix,
                             "full_code": prefix + "\n" + code,
-                            "indent": indent,
+                            "indent": "",
                         }
                 else:
                     # There's no entry for this kind of section so far, so, we
@@ -433,8 +433,8 @@ class RobotFrameworkInterpreter(object):
                 "result": None,
             }
         finally:
-            sys.__stdout__ = original_stdout
-            sys.__stderr__ = original_stderr
+            setattr(sys, "__stdout__", original_stdout)
+            setattr(sys, "__stderr__", original_stderr)
 
     def _evaluate(self, code: str) -> ActionResultDict:
         # Compile AST

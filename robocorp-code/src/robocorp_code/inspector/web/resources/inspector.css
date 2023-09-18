@@ -1,0 +1,123 @@
+[data-inspector-highlight] {
+  outline: 2px solid #7158f1 !important;
+  outline-offset: 2px;
+}
+
+#inspector-focus {
+  position: absolute;
+  z-index: 999;
+  display: block;
+  box-shadow: 0 0 1px 1px #7158f1;
+  animation-name: inspector-focus-animation;
+  animation-duration: 0.3s;
+  animation-timing-function: linear;
+  animation-delay: 0.2s;
+  animation-iteration-count: 3;
+  pointer-events: none;
+}
+
+@keyframes inspector-focus-animation {
+  0% {
+    box-shadow: 0 0 0 0 rgba(113, 88, 241, 1);
+  }
+  50% {
+    box-shadow: 0 0 0 15px rgba(113, 88, 241, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 30px rgba(0, 0, 0, 0);
+  }
+}
+
+#inspector-frame {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 999;
+  box-shadow: inset 0 0 0 4px #7158f1;
+  cursor: crosshair;
+  pointer-events: none;
+}
+
+#inspector-frame::after {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  margin-left: -300px;
+  padding: 8px;
+  width: 600px;
+  background: #7158f1;
+
+  /* content: 'My content should be specific to operation being run'; */
+  color: white;
+  text-align: center;
+  font-size: 14px;
+  opacity: 1;
+}
+
+#inspector-frame.picker::after {
+  content: 'Click element to select it';
+}
+
+#inspector-frame.recorder::after {
+  content: 'Click to record, right-click to wait for element, ESC to stop recording';
+}
+
+#inspector-frame.recorder_in_progress::after {
+  content: 'Please wait while action is being recorded...';
+}
+
+#inspector-frame.recorder_in_progress {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 999;
+  box-shadow: inset 0 0 0 40px #7158f1;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}
+
+#inspector-frame.error::after {
+  content: 'Could not classify activity as valid action';
+  background: #ef444a;
+}
+
+#inspector-frame.error {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 999;
+  box-shadow: inset 0 0 0 8px #ef444a;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}
+
+#inspector-info-box {
+  background-color: black;
+  color: white;
+  font-size: 10px;
+  padding: 2px 4px 2px 4px;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  /* transition: 0.1s ease-out; */
+}
+
+#inspector-info-box::before {
+  content: ' ';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #7158f1;
+  display: inline-block;
+  margin: 0 10px;
+}
+
+/* Limit picking only to SVG element's root node */
+svg * {
+  pointer-events: none !important;
+}

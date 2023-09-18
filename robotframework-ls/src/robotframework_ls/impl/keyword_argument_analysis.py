@@ -463,7 +463,6 @@ class KeywordArgumentAnalysis:
     def compute_active_parameter(
         self, usage_info: UsageInfoForKeywordArgumentAnalysis, lineno: int, col: int
     ) -> int:
-
         token_to_report_argument_missing = (
             usage_info.get_token_to_report_argument_missing()
         )

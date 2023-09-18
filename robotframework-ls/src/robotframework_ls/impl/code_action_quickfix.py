@@ -276,7 +276,6 @@ def _undefined_variable_code_action_create_in_variables_section(
     completion_context: ICompletionContext,
     undefined_variable_data: ICustomDiagnosticDataUndefinedVariableTypedDict,
 ) -> CodeActionTypedDict:
-
     from robotframework_ls.impl.code_action_common import (
         create_var_in_variables_section_text_edit,
     )
@@ -298,7 +297,6 @@ def _undefined_variable_code_action_create_in_variables_section(
 def _create_keyword_in_current_file_code_action(
     completion_context: ICompletionContext, keyword_template: str, keyword_name: str
 ) -> Iterator[CodeActionTypedDict]:
-
     text_edit = _create_keyword_in_current_file_text_edit(
         completion_context, keyword_template
     )
@@ -480,7 +478,6 @@ def _matches_resource_import(
 def _create_keyword_in_another_file_code_action(
     completion_context: ICompletionContext, keyword_template: str, keyword_name: str
 ) -> Iterator[CodeActionTypedDict]:
-
     text_edit = _create_keyword_in_current_file_text_edit(
         completion_context, keyword_template
     )

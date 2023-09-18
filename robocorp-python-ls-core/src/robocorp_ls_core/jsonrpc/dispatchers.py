@@ -37,7 +37,6 @@ class MethodDispatcher(object):
 
         handler = cache.get(item)
         if handler is None:
-
             method_name = f"m_{_method_to_string(item)}"
             if not hasattr(self, method_name):
                 handler = Sentinel

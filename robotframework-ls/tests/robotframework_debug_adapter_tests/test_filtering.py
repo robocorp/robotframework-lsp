@@ -35,7 +35,6 @@ def create_filtering(include=(), exclude=()):
 def test_filtering_with_prerun_modifier_folders(
     dap_resources_dir, check_sub_init2_suite
 ):
-
     target = os.path.join(dap_resources_dir, "check_sub_init2")
     suite = check_sub_init2_suite
 

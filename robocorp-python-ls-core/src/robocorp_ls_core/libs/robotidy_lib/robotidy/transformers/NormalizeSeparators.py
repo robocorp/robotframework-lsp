@@ -85,15 +85,15 @@ class NormalizeSeparators(Transformer):
         return node
 
     def visit_If(self, node):
-        if self.is_inline:  # nested inline if is ignored
+        if self.is_inline and InlineIfHeader and isinstance(node.header, InlineIfHeader):  # nested inline if is ignored
             return node
-        self.is_inline = InlineIfHeader and isinstance(node.header, InlineIfHeader)
+        self.is_inline = self.is_inline or (InlineIfHeader and isinstance(node.header, InlineIfHeader))
         self.visit_Statement(node.header)
         self.indent += 1
         node.body = [self.visit(item) for item in node.body]
         self.indent -= 1
         if node.orelse:
-            self.visit(node.orelse)
+            self.visit_If(node.orelse)
         if node.end:
             self.visit_Statement(node.end)
         self.is_inline = False
@@ -131,6 +131,10 @@ class NormalizeSeparators(Transformer):
         else:
             return self.handle_spaces_and_flatten_lines(statement)
 
+    @staticmethod
+    def has_trailing_sep(tokens):
+        return tokens and tokens[-1].type == Token.SEPARATOR
+
     def handle_spaces_and_flatten_lines(self, statement):
         """Normalize separators and flatten multiline statements to one line."""
         add_eol, prev_sep = False, False
@@ -157,10 +161,13 @@ class NormalizeSeparators(Transformer):
                 prev_sep = False
             new_tokens.append(token)
             add_indent = False
-        if new_tokens and new_tokens[-1].type == Token.SEPARATOR:
+        if not self.is_inline and self.has_trailing_sep(new_tokens):
             new_tokens.pop()
         if comments:
-            new_tokens.extend(join_comments(comments))
+            joined_comments = join_comments(comments)
+            if self.has_trailing_sep(new_tokens):
+                joined_comments = joined_comments[1:]
+            new_tokens.extend(joined_comments)
         if add_eol:
             new_tokens.append(Token(Token.EOL))
         statement.tokens = new_tokens

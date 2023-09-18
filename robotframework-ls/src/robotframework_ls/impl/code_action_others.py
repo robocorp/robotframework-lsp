@@ -61,7 +61,6 @@ def code_action_surround_with(
     select_range: Range,
     only: Set[str],
 ) -> Iterable[CodeActionTypedDict]:
-
     from robotframework_ls.impl.robot_version import get_robot_major_version
 
     if (

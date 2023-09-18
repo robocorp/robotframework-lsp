@@ -269,7 +269,6 @@ def index_conda_info(json_file: Path, target_sqlite_file: Path):
     try:
         db_cursor = db_connection.cursor()
         try:
-
             db_cursor.execute(TABLE_PACKAGES_SQL)
 
             db_cursor.execute(TABLE_VERSIONS_SQL)
@@ -313,10 +312,12 @@ def index_conda_info(json_file: Path, target_sqlite_file: Path):
                     db_cursor.execute(
                         """INSERT INTO Packages (package_name) VALUES (?);""", (name,)
                     )
-                    package_id = package_name_to_id[name] = db_cursor.lastrowid
+                    lastrowid = db_cursor.lastrowid
+                    if lastrowid is None:
+                        continue
+                    package_id = package_name_to_id[name] = lastrowid
 
-                depends = package_info.depends
-                depends = msgspec.json.encode(depends)
+                depends = msgspec.json.encode(package_info.depends)
                 version = package_info.version
                 timestamp = package_info.timestamp  # 0 means unknown
                 build = package_info.build  # '' means unknown

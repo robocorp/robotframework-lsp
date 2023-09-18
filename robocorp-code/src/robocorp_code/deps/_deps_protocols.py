@@ -57,7 +57,6 @@ class PyPiInfoTypedDict(TypedDict):
 
 
 class IPackageData(Protocol):
-
     package_name: str
 
     def add_release(self, version_str: VersionStr, release_info: List[dict]) -> None:

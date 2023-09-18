@@ -77,11 +77,11 @@ class Token:
     error: str
     def __init__(
         self,
-        type: str = None,
-        value: str = None,
+        type: Optional[str] = None,
+        value: Optional[str] = None,
         lineno: int = -1,
         col_offset: int = -1,
-        error: str = None,
+        error: Optional[str] = None,
     ):
         pass
     @property
@@ -445,7 +445,6 @@ class Language:
         pass
 
 class Languages:
-
     languages: List[Language]
     headers: Dict[str, str]
     settigs: dict

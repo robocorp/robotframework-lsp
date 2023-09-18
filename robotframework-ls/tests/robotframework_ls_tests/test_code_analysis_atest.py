@@ -160,7 +160,6 @@ def _make_ws(tmpdir, caseroot, pythonpath):
 
 @pytest.fixture(scope="session")
 def atest_keywords_ws(tmp_path_factory):
-
     from py.path import local
 
     tmpdir = local(tmp_path_factory.mktemp("atest_keywords_tmp"))
@@ -177,7 +176,6 @@ def atest_keywords_ws(tmp_path_factory):
 
 @pytest.fixture(scope="session")
 def atest_variables_ws(tmp_path_factory):
-
     from py.path import local
 
     tmpdir = local(tmp_path_factory.mktemp("atest_variables_tmp"))

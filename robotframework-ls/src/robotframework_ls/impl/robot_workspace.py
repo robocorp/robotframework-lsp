@@ -657,7 +657,6 @@ class RobotWorkspace(Workspace):
 
 
 class RobotDocument(Document):
-
     TYPE_TEST_CASE = "test_case"
     TYPE_INIT = "init"
     TYPE_RESOURCE = "resource"

@@ -76,7 +76,6 @@ def server_manager(pm, config, dummy_language_server):
 
 
 def test_server_manager_basic(pm, server_manager) -> None:
-
     assert not server_manager._id_to_apis
 
     api_source_format = server_manager._get_others_api("")

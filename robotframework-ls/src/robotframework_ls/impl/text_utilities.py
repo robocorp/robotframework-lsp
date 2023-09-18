@@ -223,7 +223,6 @@ def build_keyword_docs_with_signature(
     docs: str,
     docs_format: str,
 ):
-
     if docs_format == "markdown":
         # Multi-line approach (it's a bit too big -- maybe as an option?)
         # if docs_format == "markdown":
@@ -259,7 +258,6 @@ def get_digest_from_string(s: str) -> str:
 def set_doc_source_and_get_range_selected(
     initial_source: str, doc: IDocument, range_char="|"
 ) -> Range:
-
     i = initial_source.find(range_char)
     j = initial_source.find(range_char, i + 1)
     if j == -1:

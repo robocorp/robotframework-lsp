@@ -19,7 +19,7 @@ class VariableFoundFromToken(object):
         variable_value,
         variable_name=None,
         variable_kind=VariableKind.VARIABLE,
-        stack: Tuple[INode, ...] = None,
+        stack: Optional[Tuple[INode, ...]] = None,
     ):
         self.completion_context = completion_context
         self.stack = stack

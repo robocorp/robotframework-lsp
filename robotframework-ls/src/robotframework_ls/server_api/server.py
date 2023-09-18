@@ -1152,7 +1152,6 @@ class RobotFrameworkServerApi(PythonLanguageServer):
     def _threaded_document_highlight(
         self, doc_uri: str, line, col, monitor: IMonitor
     ) -> Optional[List[DocumentHighlightTypedDict]]:
-
         from robotframework_ls.impl.doc_highlight import doc_highlight
 
         completion_context = self._create_completion_context(
@@ -1173,7 +1172,6 @@ class RobotFrameworkServerApi(PythonLanguageServer):
     def _threaded_code_action(
         self, doc_uri: str, params: TextDocumentCodeActionTypedDict, monitor: IMonitor
     ) -> Optional[List[CodeActionTypedDict]]:
-
         end = params["range"]["end"]
         line = end["line"]
         col = end["character"]

@@ -44,7 +44,6 @@ def test_invalid_launch_1(debugger_api: _DebuggerAPI):
 
 
 def test_invalid_launch_2(debugger_api: _DebuggerAPI):
-
     debugger_api.initialize()
 
     debugger_api.launch("invalid_file.robot", debug=False, success=False)

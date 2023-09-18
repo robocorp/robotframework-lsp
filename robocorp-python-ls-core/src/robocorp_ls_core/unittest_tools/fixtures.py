@@ -79,7 +79,6 @@ def start_language_server_tcp(
     from robocorp_ls_core.unittest_tools.monitor import dump_threads
 
     class _LanguageServerConfig(object):
-
         address = None
 
     config = _LanguageServerConfig()

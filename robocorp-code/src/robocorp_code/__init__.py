@@ -1,10 +1,9 @@
-__version__ = "1.11.0"
-from typing import Union, List
-
-version_info: List[int] = [int(x) for x in __version__.split(".")]
-
 import os.path
 import sys
+from typing import List
+
+__version__ = "1.11.0"
+version_info: List[int] = [int(x) for x in __version__.split(".")]
 
 __file__ = os.path.abspath(__file__)
 if __file__.endswith((".pyc", ".pyo")):

@@ -127,7 +127,6 @@ def _convert_to_markdown_if_needed(spec_filename, target_json) -> None:
 
 
 class _ConversionThread(threading.Thread):
-
     DISPOSE = "DISPOSE"
 
     def __init__(self):

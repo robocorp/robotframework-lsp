@@ -8,6 +8,8 @@ from robotidy.disablers import skip_if_disabled, skip_section_if_disabled
 from robotidy.exceptions import InvalidParameterValueError
 from robotidy.transformers import Transformer
 
+IGNORE_CHARS = {"(", "[", "{", "!", "?"}
+
 
 def cap_string_until_succeed(word: str):
     """
@@ -16,9 +18,12 @@ def cap_string_until_succeed(word: str):
     capitalize = True
     for char in word:
         if capitalize:
-            char = char.upper()
-            if char.isupper():
+            # chars like numbers, -, dots, commas etc. will not change case, and we should not capitalize further
+            if char == char.upper() and char not in IGNORE_CHARS:
                 capitalize = False
+            else:
+                char = char.upper()
+                capitalize = not char.isupper()
         yield char
 
 

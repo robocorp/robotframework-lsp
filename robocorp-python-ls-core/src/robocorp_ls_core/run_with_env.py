@@ -91,7 +91,6 @@ def _compute_path_for_env(temp_dir: Optional[str] = None) -> pathlib.Path:
     import tempfile
 
     if not temp_dir:
-
         temp_dir = os.path.join(tempfile.gettempdir(), "rf-ls-run")
 
     os.makedirs(temp_dir, exist_ok=True)

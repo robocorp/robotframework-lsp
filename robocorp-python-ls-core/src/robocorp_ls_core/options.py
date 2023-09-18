@@ -36,7 +36,6 @@ ENV_OPTION_LSP_DEBUG_CACHE_DEPS = "LSP_DEBUG_CACHE_DEPS"
 
 
 class BaseOptions(object):
-
     tcp: bool = False
     host: str = "127.0.0.1"
     port: int = 1456
@@ -67,6 +66,5 @@ class BaseOptions(object):
 
 
 class Setup(object):
-
     # After parsing args it's replaced with the actual setup.
     options = BaseOptions()

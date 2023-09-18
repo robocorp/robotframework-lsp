@@ -62,7 +62,6 @@ def _check_matches(patterns, paths):
     path = normcase(paths[0])
 
     if not glob.has_magic(pattern):
-
         if pattern != path:
             return False
 

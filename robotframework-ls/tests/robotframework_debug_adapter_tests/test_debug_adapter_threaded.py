@@ -143,7 +143,6 @@ def test_debug_adapter_threaded(
     reader, writer = None, None
 
     with configure_logger("robot", 3, dap_log_file):
-
         # i.e: create the server socket which will wait for the debugger connection.
         client_thread = _ClientThread()
         try:

@@ -6,6 +6,16 @@ import os
 import subprocess
 import sys
 
+try:
+    import robocorp_code
+except ImportError:
+    # Automatically add it to the path if __main__ is being executed.
+    sys.path.append(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    )
+    import robocorp_code  # @UnusedImport
+robocorp_code.import_robocorp_ls_core()
+
 
 class InstallError(RuntimeError):
     """Error encountered during browser install"""
@@ -13,42 +23,6 @@ class InstallError(RuntimeError):
 
 class RecordingError(RuntimeError):
     """Error encountered during playwright recording"""
-
-
-def browsers_path():
-    import platform
-    from pathlib import Path
-
-    if platform.system() == "Windows":
-        return Path.home() / "AppData" / "Local" / "robocorp" / "playwright"
-    else:
-        return Path.home() / ".robocorp" / "playwright"
-
-
-def install_browsers(force=False):
-    print("Installing browsers...", flush=True)
-
-    cmd = [sys.executable, "-m", "playwright", "install"]
-    if force:
-        cmd.append("--force")
-
-    env = dict(os.environ)
-    env["PLAYWRIGHT_BROWSERS_PATH"] = str(browsers_path())
-
-    print("Running playwright install...", flush=True)
-    result = subprocess.run(
-        cmd,
-        env=env,
-        # Not sure why, but (just when running in VSCode) something as:
-        # launching sys.executable actually got stuck unless a \n was written
-        # (even if stdin was closed it wasn't enough).
-        # -- note: this may be particular to my machine (fabioz), but it
-        # may also be related to VSCode + Windows 11 + Windows Defender + python
-        input=b"\n",
-    )
-    print(f"Installation process finished: {result}", flush=True)
-    if result.returncode != 0:
-        raise InstallError(f"Failed to install drivers.")
 
 
 def _stdin_write(process, input):
@@ -93,6 +67,10 @@ def run_playwright_in_thread(launched_event):
     future = Future()
 
     def in_thread():
+        from robocorp_code.playwright.robocorp_browser._browser_engines import (
+            browsers_path,
+        )
+
         full_output = []
         try:
             target_html = os.path.join(
@@ -179,6 +157,11 @@ def launch_playwright() -> None:
 
 
 def launch() -> None:
+    from robocorp_code.playwright.robocorp_browser._browser_engines import (
+        BrowserEngine,
+        install_browser,
+    )
+
     try:
         launch_playwright()
     except Exception as e:
@@ -186,7 +169,7 @@ def launch() -> None:
         # using correct representation as it seems that playwright outputs strange characters
         sys.stdout.buffer.write(f"{e}\n".encode(sys.stdout.encoding, "replace"))
         # attempt to install browsers & drivers
-        install_browsers()
+        install_browser(BrowserEngine.CHROME)
         # attempt to launch playwright again
         launch_playwright()
 

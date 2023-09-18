@@ -12,20 +12,33 @@ jobs:
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v2
-      - name: Set up Python 3.8
+      - name: Set up Python 3.9
         uses: actions/setup-python@v1
         with:
-          python-version: 3.8
-          
-      - name: Setup node 16.x
-        uses: actions/setup-node@v1
-        with:
-          node-version: 16.x
+          python-version: 3.9
 
       - name: Install pip deps
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r robocorp-code/dev_requirements.txt
+          python -m pip install --upgrade pip fire poetry
+          
+          python -m venv .venv
+          source ./.venv/bin/activate
+          
+          cd robocorp-code
+          
+          poetry config virtualenvs.prefer-active-python true
+          poetry install
+          poetry run python -m pip install robotframework-output-stream
+          
+          cd ..
+          
+          echo $PWD/robotframework-ls/src > .venv/lib/python3.9/site-packages/rf_src.pth
+          echo $PWD/robocorp-code/src >> .venv/lib/python3.9/site-packages/rf_src.pth
+          echo $PWD/robocorp-python-ls-core/src >> .venv/lib/python3.9/site-packages/rf_src.pth
+          echo $PWD/robotframework-ls/tests >> .venv/lib/python3.9/site-packages/rf_src.pth
+          echo $PWD/robocorp-code/tests >> .venv/lib/python3.9/site-packages/rf_src.pth
+          echo $PWD/robocorp-python-ls-core/tests >> .venv/lib/python3.9/site-packages/rf_src.pth
+
           
       - name: Install prettier
         run: |
@@ -45,38 +58,26 @@ jobs:
         
       - name: Black check robocorp-code
         run: |
+          echo $PWD
+          ls -la
+          source ./.venv/bin/activate
           black --check ./robocorp-code --exclude=vendored
           
       - name: Black check robotframework-ls
         run: |
+          source ./.venv/bin/activate
           black --check ./robotframework-ls --exclude=vendored --exclude=atest_v5
           
       - name: Black check robotframework-interactive
         run: |
+          source ./.venv/bin/activate
           black --check ./robotframework-interactive --exclude=vendored
           
       - name: Black check robocorp-python-ls-core
         run: |
+          source ./.venv/bin/activate
           black --check ./robocorp-python-ls-core --exclude=vendored --exclude=libs
           
-      - name: mypy create env
-        run: |
-          python -m venv .venv
-          source ./.venv/bin/activate
-          
-          python -m pip install -r robocorp-code/tests/test_requirements.txt
-          python -m pip install -r robocorp-code/dev_requirements.txt
-          python -m pip install msgspec
-          python -m pip install robotframework
-          python -m pip install robotframework-output-stream
-          
-          echo $PWD/robotframework-ls/src > .venv/lib/python3.8/site-packages/rf_src.pth
-          echo $PWD/robocorp-code/src >> .venv/lib/python3.8/site-packages/rf_src.pth
-          echo $PWD/robocorp-python-ls-core/src >> .venv/lib/python3.8/site-packages/rf_src.pth
-          echo $PWD/robotframework-ls/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
-          echo $PWD/robocorp-code/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
-          echo $PWD/robocorp-python-ls-core/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
-
       - name: mypy robocorp-code
         run: |
           source ./.venv/bin/activate

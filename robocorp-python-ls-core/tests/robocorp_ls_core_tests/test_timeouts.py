@@ -13,7 +13,6 @@ def _enable_debug_msgs():
 
 
 def test_timeout():
-
     called = []
 
     def on_timeout(arg):

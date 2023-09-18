@@ -50,7 +50,6 @@ class DebugAdapterComm(object):
         return self._initialize_request_arguments
 
     def from_client(self, protocol_message):
-
         from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import (
             READER_THREAD_STOPPED,
         )
@@ -114,7 +113,6 @@ class DebugAdapterComm(object):
         launch_response = build_response(request)
         launch_process = None
         try:
-
             self._launch_process = launch_process = LaunchProcess(
                 request, launch_response, self, self._rcc_config_location
             )

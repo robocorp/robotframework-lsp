@@ -61,7 +61,6 @@ def _internal_get_timeout(
     reason: TimeoutReason,
     override=Sentinel.USE_DEFAULT_TIMEOUT,
 ) -> int:
-
     if override is not Sentinel.USE_DEFAULT_TIMEOUT:
         return override
 

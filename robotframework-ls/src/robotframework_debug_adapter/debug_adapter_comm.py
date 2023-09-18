@@ -160,7 +160,6 @@ class DebugAdapterComm(object):
         launch_response: LaunchResponse = build_response(request)
         launch_process = None
         try:
-
             self._launch_process = launch_process = LaunchProcess(
                 request, launch_response, self
             )

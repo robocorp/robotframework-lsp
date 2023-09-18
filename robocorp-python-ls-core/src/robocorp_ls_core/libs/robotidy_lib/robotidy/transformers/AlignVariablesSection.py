@@ -44,10 +44,11 @@ class AlignVariablesSection(Transformer):
     To align all columns set ``up_to_column`` to 0.
     """
 
-    def __init__(self, up_to_column: int = 2, skip_types: str = "", min_width: int = None):
+    def __init__(self, up_to_column: int = 2, skip_types: str = "", min_width: int = None, fixed_width: int = None):
         super().__init__()
         self.up_to_column = up_to_column - 1
         self.min_width = min_width
+        self.fixed_width = fixed_width
         self.skip_types = self.parse_skip_types(skip_types)
 
     def parse_skip_types(self, skip_types):
@@ -117,8 +118,8 @@ class AlignVariablesSection(Transformer):
 
     def calc_separator(self, index, up_to, token, look_up):
         if index < up_to:
-            if self.min_width:
-                return max(self.min_width - len(token.value), self.formatting_config.space_count) * " "
+            if self.fixed_width:
+                return max(self.fixed_width - len(token.value), self.formatting_config.space_count) * " "
             return (look_up[index] - len(token.value) + 4) * " "
         else:
             return self.formatting_config.space_count * " "
@@ -130,4 +131,6 @@ class AlignVariablesSection(Transformer):
                 up_to = self.up_to_column if self.up_to_column != -1 else len(line)
                 for index, token in enumerate(line[:up_to]):
                     look_up[index] = max(look_up[index], len(token.value))
+        if self.min_width:
+            look_up = {index: max(length, self.min_width - 4) for index, length in look_up.items()}
         return {index: round_to_four(length) for index, length in look_up.items()}

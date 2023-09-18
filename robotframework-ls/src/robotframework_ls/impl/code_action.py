@@ -15,7 +15,6 @@ def code_action_all(
     only: Set[str],
     context: TextDocumentContextTypedDict,
 ) -> List[CodeActionTypedDict]:
-
     from robotframework_ls.impl.code_action_refactoring import (
         code_action_refactoring,
     )

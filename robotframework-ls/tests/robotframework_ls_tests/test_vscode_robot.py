@@ -1350,7 +1350,6 @@ Log It2
 def test_provide_evaluatable_expression_var_integrated(
     language_server_io: ILanguageServerClient, ws_root_path, data_regression
 ):
-
     from robocorp_ls_core import uris
     from robocorp_ls_core.workspace import Document
 
@@ -2045,7 +2044,6 @@ def test_rf_interactive_integrated_completions(
     language_server_io: ILanguageServerClient,
     rf_interpreter_startup: _RfInterpreterInfo,
 ):
-
     from robotframework_ls.commands import (
         ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS,
         ROBOT_INTERNAL_RFINTERACTIVE_RESOLVE_COMPLETION,
@@ -2066,7 +2064,6 @@ def test_rf_interactive_integrated_completions(
 
     for completion in completions["result"]["suggestions"]:
         if completion["label"] == "Log (BuiltIn)":
-
             assert "documentation" not in completion
             completion = language_server.execute_command(
                 ROBOT_INTERNAL_RFINTERACTIVE_RESOLVE_COMPLETION,
@@ -2103,7 +2100,6 @@ def test_rf_interactive_integrated_completions_not_duplicated(
     language_server_io: ILanguageServerClient,
     rf_interpreter_startup: _RfInterpreterInfo,
 ):
-
     from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_COMPLETIONS
     from robocorp_ls_core.lsp import Position
     from robotframework_ls.commands import ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE

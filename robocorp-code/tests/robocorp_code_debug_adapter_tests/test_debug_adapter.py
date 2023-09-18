@@ -43,7 +43,6 @@ def test_invalid_launch_1(debugger_api: _DebuggerAPI, rcc_config_location: str):
 
 
 def test_invalid_launch_2(debugger_api: _DebuggerAPI, rcc_config_location: str):
-
     debugger_api.initialize(rcc_config_location=rcc_config_location)
 
     debugger_api.launch("invalid_file.robot", "task1", debug=False, success=False)

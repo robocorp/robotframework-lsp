@@ -737,5 +737,4 @@ def _indent_lines(lines, indent="    "):
 
 
 if __name__ == "__main__":
-
     gen_debugger_protocol()

@@ -6,6 +6,5 @@ class Options(BaseOptions):
 
 
 class Setup(object):
-
     # After parsing args it's replaced with the actual setup.
     options = Options()

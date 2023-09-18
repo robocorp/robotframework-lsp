@@ -207,7 +207,6 @@ def _tokenize_changing_argument_to_type(tokenize_variables_generator, use_type):
 
 
 def _tokenize_variables(token: IRobotToken) -> Iterator[IRobotToken]:
-
     if token.type in (KEYWORD, ASSIGN):
         from robotframework_ls.impl import ast_utils
 
@@ -263,7 +262,6 @@ def _tokenize_token(
         )
 
         if not in_documentation:
-
             in_expression = is_node_with_expression_argument(node)
             if scope.keyword_usage_handler is not None:
                 tok_type = scope.keyword_usage_handler.get_token_type(use_token)

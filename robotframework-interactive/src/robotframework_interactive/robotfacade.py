@@ -75,7 +75,6 @@ class RobotFrameworkFacade(object):
         return set(EXECUTION_CONTEXTS.current.namespace._kw_store.libraries)
 
     def run_test_body(self, context, test, model):
-
         assign_token = None
         if len(model.sections) == 1:
             section = next(iter(model.sections))

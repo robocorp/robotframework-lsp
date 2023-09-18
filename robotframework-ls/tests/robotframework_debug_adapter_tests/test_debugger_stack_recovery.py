@@ -16,7 +16,6 @@ class _SuiteResult:
 
 
 def test_impl_recovery_matches_suite():
-
     from robotframework_debug_adapter.debugger_impl import _RobotDebuggerImpl
 
     impl = _RobotDebuggerImpl()

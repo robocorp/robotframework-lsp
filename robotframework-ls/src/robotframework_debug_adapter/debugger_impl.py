@@ -1391,7 +1391,6 @@ class _RobotDebuggerImpl(object):
 def _patch(
     execution_context_cls, impl, method_name, call_before_method, call_after_method
 ):
-
     original_method = getattr(execution_context_cls, method_name)
 
     @functools.wraps(original_method)

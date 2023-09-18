@@ -21,7 +21,6 @@ log = get_logger(__name__)
 
 
 class _KeywordFoundFromAst(object):
-
     __slots__ = [
         "_module_ast",
         "_keyword_node",
@@ -155,7 +154,6 @@ class _KeywordFoundFromAst(object):
 
 
 class _KeywordFoundFromLibrary(object):
-
     __slots__ = [
         "_lib_deprecated",
         "_library_doc",
@@ -496,7 +494,6 @@ def _collect_from_context(
 
             node_name_tok = node.get_token(Token.NAME)
             if node_name_tok is not None:
-
                 (
                     value,
                     token_errors,

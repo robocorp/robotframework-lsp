@@ -171,7 +171,6 @@ PASS_THRU_ELEMENTS = (
 @add_pass_thru(PASS_THRU_ELEMENTS)
 @add_pref_suff(PREF_SUFF_ELEMENTS)
 class Translator(nodes.NodeVisitor):
-
     std_indent = "    "
 
     def __init__(self, document, builder=None):
@@ -547,7 +546,6 @@ def _escape_markdown(text):
 
 
 class Writer(writers.Writer):
-
     supported = ("markdown",)
     """Formats this writer supports."""
 

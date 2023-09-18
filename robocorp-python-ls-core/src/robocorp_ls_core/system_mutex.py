@@ -104,7 +104,6 @@ def _collect_mutex_allocation_msg(mutex_name):
 
 
 if sys.platform == "win32":
-
     import os
 
     class SystemMutex(object):

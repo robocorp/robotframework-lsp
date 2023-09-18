@@ -49,7 +49,7 @@ def keyword_to_dict(keyword):
     }
 
 
-def test_libspec(libspec_manager, workspace_dir, data_regression):
+def test_libspec(libspec_manager, workspace_dir, data_regression) -> None:
     from robotframework_ls.impl.robot_specbuilder import LibraryDoc
     from robotframework_ls.impl.robot_specbuilder import KeywordDoc
     from typing import List
@@ -91,7 +91,7 @@ def method6():
     keywords: List[KeywordDoc] = library_info.keywords
     data_regression.check([keyword_to_dict(k) for k in keywords])
     assert (
-        int(library_info.specversion) <= 5
+        int(library_info.specversion) <= 6
     ), "Libspec version changed. Check parsing. "
 
 

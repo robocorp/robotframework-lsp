@@ -206,7 +206,6 @@ def find_in_path(env: dict, basename: str, check_access: bool) -> Optional[str]:
 
 
 def find_executable(env: dict, executable_basename: str) -> Optional[str]:
-
     if sys.platform == "win32" and not executable_basename.lower().endswith(".exe"):
         executable_basename += ".exe"
 

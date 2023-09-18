@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8" />
+    <title>How to Locate Web UI Element</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <style>
+    html,
+    body,
+    div,
+    h1,
+    h3,
+    p,
+    a {
+      margin: 0;
+      padding: 0;
+      border: 0;
+      outline: 0;
+      font-size: 100%;
+      vertical-align: baseline;
+      background: transparent;
+    }
+    html {
+      font-family: 'Inter', sans-serif;
+      background: #0b1025;
+      color: #f7f7f8;
+      display: flex;
+      height: 100vh;
+      align-items: center;
+      padding: 24px;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    body {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-weight: 600;
+      font-size: 2.25rem;
+      line-height: 122%;
+      margin-bottom: 3.75rem;
+    }
+    h3 {
+      font-weight: 600;
+      font-size: 18px;
+      line-height: 122%;
+      margin-bottom: 12px;
+    }
+    p {
+      font-size: 0.875rem;
+      line-height: 140%;
+      color: #aba9b8;
+    }
+    a {
+      color: #9d8cf6;
+      text-decoration: none;
+    }
+    a:hover {
+      color: #6c50fa;
+    }
+    main {
+      display: flex;
+    }
+    .step {
+      width: 33%;
+      padding-right: 2.5rem;
+    }
+    .step:last-child {
+      padding-right: 0;
+    }
+    .icon {
+      background: #1a2336;
+      width: 68px;
+      height: 68px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+    .icon svg {
+      margin: 0 auto;
+    }
+    @media screen and (max-width: 700px) {
+      main {
+        flex-direction: column;
+      }
+      .step {
+        width: 100%;
+        padding: 0;
+        margin-bottom: 3rem;
+      }
+    }
+  </style>
+  <body cz-shortcut-listen="true">
+    <h1>How to Locate Web UI Elements</h1>
+    <main>
+      <div class="step">
+        <div class="icon">
+          <svg
+            width="30"
+            height="30"
+            viewBox="0 0 30 30"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              fill-rule="evenodd"
+              clip-rule="evenodd"
+              d="M3.00004 14.9997C3.00004 8.37226 8.37262 2.99967 15 2.99967C21.6275 2.99967 27 8.37226 27 14.9997C27 21.6271 21.6275 26.9997 15 26.9997C8.37262 26.9997 3.00004 21.6271 3.00004 14.9997ZM15 0.333008C6.89986 0.333008 0.333374 6.8995 0.333374 14.9997C0.333374 23.0998 6.89986 29.6663 15 29.6663C23.1002 29.6663 29.6667 23.0998 29.6667 14.9997C29.6667 6.8995 23.1002 0.333008 15 0.333008ZM21.918 9.76799C22.0777 9.28888 21.953 8.76065 21.5959 8.40354C21.2388 8.04644 20.7105 7.92174 20.2314 8.08144L11.7514 10.9081C11.3533 11.0408 11.0409 11.3532 10.9081 11.7514L8.08148 20.2314C7.92178 20.7105 8.04648 21.2387 8.40359 21.5958C8.7607 21.9529 9.28892 22.0776 9.76803 21.9179L18.248 19.0913C18.6462 18.9586 18.9586 18.6461 19.0913 18.248L21.918 9.76799ZM11.4546 18.5448L13.2272 13.2271L18.5449 11.4545L16.7723 16.7723L11.4546 18.5448Z"
+              fill="#9D8CF7"
+            />
+          </svg>
+        </div>
+        <h3>Navigate to the target webpage</h3>
+        <p>
+          Use the address bar to go to the taget website or start with
+          <a href="https:google.com">google.com</a>
+        </p>
+      </div>
+      <div class="step">
+        <div class="icon">
+          <svg
+            width="32"
+            height="32"
+            viewBox="0 0 32 32"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              fill-rule="evenodd"
+              clip-rule="evenodd"
+              d="M1.33337 15.9997C1.33337 7.8995 7.89986 1.33301 16 1.33301C24.1002 1.33301 30.6667 7.8995 30.6667 15.9997C30.6667 24.0998 24.1002 30.6663 16 30.6663C7.89986 30.6663 1.33337 24.0998 1.33337 15.9997ZM17.3334 27.9264V23.9997C17.3334 23.2633 16.7364 22.6663 16 22.6663C15.2637 22.6663 14.6667 23.2633 14.6667 23.9997V27.9264C9.10455 27.3116 4.68814 22.8952 4.07328 17.333H8.00004C8.73642 17.333 9.33337 16.7361 9.33337 15.9997C9.33337 15.2633 8.73642 14.6663 8.00004 14.6663H4.07328C4.68814 9.10419 9.10455 4.68778 14.6667 4.07291V7.99967C14.6667 8.73605 15.2637 9.33301 16 9.33301C16.7364 9.33301 17.3334 8.73605 17.3334 7.99967V4.07291C22.8955 4.68778 27.3119 9.10419 27.9268 14.6663H24C23.2637 14.6663 22.6667 15.2633 22.6667 15.9997C22.6667 16.7361 23.2637 17.333 24 17.333H27.9268C27.3119 22.8952 22.8955 27.3116 17.3334 27.9264Z"
+              fill="#9D8CF7"
+            />
+          </svg>
+        </div>
+        <h3>Press the ‘Pick’ button in the editor</h3>
+        <p>
+          Interactive mode allows you to click on any element on the webpage to
+          get the locator strategy and value generated automatically.
+        </p>
+      </div>
+      <div class="step">
+        <div class="icon">
+          <svg
+            width="32"
+            height="32"
+            viewBox="0 0 32 32"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              fill-rule="evenodd"
+              clip-rule="evenodd"
+              d="M27.6095 7.05752C28.1302 7.57822 28.1302 8.42244 27.6095 8.94313L12.9428 23.6098C12.4221 24.1305 11.5779 24.1305 11.0572 23.6098L4.39052 16.9431C3.86983 16.4224 3.86983 15.5782 4.39052 15.0575C4.91122 14.5368 5.75544 14.5368 6.27614 15.0575L12 20.7814L25.7239 7.05752C26.2446 6.53682 27.0888 6.53682 27.6095 7.05752Z"
+              fill="#9D8CF7"
+            />
+          </svg>
+        </div>
+        <h3>Select a generated selector</h3>
+        <p>
+          Select an option from the generated selectors. Optionally tweak the
+          value manually and see the resulting matches.
+        </p>
+      </div>
+    </main>
+  </body>
+</html>

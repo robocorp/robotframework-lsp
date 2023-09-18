@@ -2,7 +2,6 @@ import traceback
 
 
 class _Callback(object):
-
     on_exception = None
 
     def __init__(self):
