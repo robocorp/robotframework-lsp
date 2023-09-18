@@ -12,10 +12,10 @@ jobs:
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v2
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v1
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: "3.10"
 
       - name: Install pip deps
         run: |
@@ -32,12 +32,12 @@ jobs:
           
           cd ..
           
-          echo $PWD/robotframework-ls/src > .venv/lib/python3.9/site-packages/rf_src.pth
-          echo $PWD/robocorp-code/src >> .venv/lib/python3.9/site-packages/rf_src.pth
-          echo $PWD/robocorp-python-ls-core/src >> .venv/lib/python3.9/site-packages/rf_src.pth
-          echo $PWD/robotframework-ls/tests >> .venv/lib/python3.9/site-packages/rf_src.pth
-          echo $PWD/robocorp-code/tests >> .venv/lib/python3.9/site-packages/rf_src.pth
-          echo $PWD/robocorp-python-ls-core/tests >> .venv/lib/python3.9/site-packages/rf_src.pth
+          echo $PWD/robotframework-ls/src > .venv/lib/python3.10/site-packages/rf_src.pth
+          echo $PWD/robocorp-code/src >> .venv/lib/python3.10/site-packages/rf_src.pth
+          echo $PWD/robocorp-python-ls-core/src >> .venv/lib/python3.10/site-packages/rf_src.pth
+          echo $PWD/robotframework-ls/tests >> .venv/lib/python3.10/site-packages/rf_src.pth
+          echo $PWD/robocorp-code/tests >> .venv/lib/python3.10/site-packages/rf_src.pth
+          echo $PWD/robocorp-python-ls-core/tests >> .venv/lib/python3.10/site-packages/rf_src.pth
 
           
       - name: Install prettier

@@ -23,27 +23,27 @@ jobs:
       fail-fast: false
       matrix:
         name: [
-          "ubuntu-py39",
-          "windows-py39",
-#           "mac-py39", mac disabled because it takes too long for runners to pick the mac job up.
+          "ubuntu-py310",
+          "windows-py310",
+#           "mac-py310", mac disabled because it takes too long for runners to pick the mac job up.
         ]
         
         include:
-          - name: "ubuntu-py39"
-            python: "3.9"
+          - name: "ubuntu-py310"
+            python: "3.10"
             os: ubuntu-latest
-          - name: "windows-py39"
-            python: "3.9"
+          - name: "windows-py310"
+            python: "3.10"
             os: windows-latest
-#           - name: "mac-py39"
-#             python: "3.9"
+#           - name: "mac-py310"
+#             python: "3.10"
 #             os: mac-latest
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python }}
     - name: Upgrade pip

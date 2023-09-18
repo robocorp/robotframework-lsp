@@ -6,7 +6,6 @@ tasks:
 
 artifactsDir: output
 
-condaConfigFile: conda.yaml
 environmentConfigs:
   - conda_vscode_windows_amd64.yaml
   - conda_vscode_darwin_amd64.yaml
