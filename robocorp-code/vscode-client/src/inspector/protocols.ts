@@ -25,6 +25,7 @@ export type IWebPickerCommands =
     | { type: "validate"; locator: Locator };
 
 export interface IRequestMessage {
+    id: number;
     type: IMessageType.REQUEST;
     app: IAppsType;
     command: IManagerCommands | IWebPickerCommands;
@@ -34,12 +35,14 @@ export type IManagerData = { type: "locators"; data: LocatorsMap };
 export type IWebPickerData = { type: "locator"; data: Locator };
 
 export interface IResponseMessage {
+    id: number;
     type: IMessageType.RESPONSE;
     app: IAppsType;
     data?: IManagerData | IWebPickerData;
 }
 
 export interface IEventMessage {
+    id: number;
     type: IMessageType.EVENT;
     event: { type: "locatorsUpdate"; data: LocatorsMap };
 }

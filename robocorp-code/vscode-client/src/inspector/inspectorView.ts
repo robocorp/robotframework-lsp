@@ -10,14 +10,15 @@ import * as vscode from "vscode";
 import { getExtensionRelativeFile, verifyFileExists } from "../files";
 import { logError } from "../channel";
 import { getSelectedRobot } from "../viewsCommon";
-import { LocatorsMap } from "./types";
-import { IMessage, IMessageType } from "./protocols";
+import { LocatorType, LocatorsMap } from "./types";
+import { IMessage, IMessageType, IResponseMessage } from "./protocols";
+import { sleep } from "../time";
 
 export async function showInspectorUI(context: vscode.ExtensionContext) {
     const panel = vscode.window.createWebviewPanel(
         "robocorpCodeInspector",
         "Robocorp Inspector",
-        vscode.ViewColumn.One,
+        vscode.ViewColumn.Beside,
         {
             enableScripts: true,
             retainContextWhenHidden: true,
@@ -45,6 +46,18 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
             switch (message.type) {
                 case IMessageType.REQUEST:
                     logError(`incoming.request: ${JSON.stringify(message)}`, undefined, "");
+                    const response: IResponseMessage = {
+                        id: message.id,
+                        app: message.app,
+                        type: "response" as IMessageType.RESPONSE,
+                        data: {
+                            type: "locator",
+                            data: { type: "browser" as LocatorType.Browser, strategy: "css", value: "class" },
+                        },
+                    };
+                    logError(`responding.in.3.seconds.with: ${JSON.stringify(response)}`, undefined, "");
+                    await sleep(3000);
+                    panel.webview.postMessage(response);
                     return;
                 case IMessageType.RESPONSE:
                     logError(`incoming.response: ${JSON.stringify(message)}`, undefined, "");
