@@ -79,6 +79,8 @@
         "onCommand:robocorp.sendMetric",
         "onCommand:robocorp.submitIssue.internal",
         "onCommand:robocorp.submitIssue",
+        "onCommand:robocorp.inspector.internal",
+        "onCommand:robocorp.inspector",
         "onCommand:robocorp.errorFeedback.internal",
         "onCommand:robocorp.feedback.internal",
         "onCommand:robocorp.configuration.diagnostics.internal",
@@ -540,6 +542,16 @@
             {
                 "command": "robocorp.submitIssue",
                 "title": "Submit issue to Robocorp",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.inspector.internal",
+                "title": "Inspector Manager (internal)",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.inspector",
+                "title": "Open Robocorp Inspector",
                 "category": "Robocorp"
             },
             {
@@ -1023,6 +1035,10 @@
                 },
                 {
                     "command": "robocorp.submitIssue.internal",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.inspector.internal",
                     "when": "false"
                 },
                 {

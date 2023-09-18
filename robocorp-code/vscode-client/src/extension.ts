@@ -139,6 +139,7 @@ import {
     ROBOCORP_RUN_ROBOCORPS_PYTHON_TASK,
     ROBOCORP_DEBUG_ROBOCORPS_PYTHON_TASK,
     ROBOCORP_OPEN_PLAYWRIGHT_RECORDER,
+    ROBOCORP_INSPECTOR,
 } from "./robocorpCommands";
 import { installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
@@ -156,6 +157,7 @@ import { registerLinkProviders } from "./robo/linkProvider";
 import { runRobocorpTasks } from "./robo/runRobocorpTasks";
 import { RobotOutputViewProvider } from "./output/outView";
 import { setupDebugSessionOutViewIntegration } from "./output/outViewRunIntegration";
+import { showInspectorUI } from "./inspector/inspectorView";
 
 interface InterpreterInfo {
     pythonExe: string;
@@ -627,6 +629,10 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
     // report startup errors.
     C.registerWithoutStub(ROBOCORP_SUBMIT_ISSUE, async () => {
         await showSubmitIssueUI(context);
+    });
+
+    C.registerWithoutStub(ROBOCORP_INSPECTOR, async () => {
+        await showInspectorUI(context);
     });
 
     // i.e.: allow other extensions to also use our submit issue api.
