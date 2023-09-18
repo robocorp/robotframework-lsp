@@ -75,7 +75,7 @@ class Dev(object):
                 stream.write(new_contents)
 
         update_version(version, os.path.join(".", "package.json"))
-        update_version(version, os.path.join(".", "src", "setup.py"))
+        update_version(version, os.path.join(".", "pyproject.toml"))
         update_version(
             version, os.path.join(".", "src", "robocorp_code", "__init__.py")
         )
