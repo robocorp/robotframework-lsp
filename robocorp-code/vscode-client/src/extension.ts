@@ -592,7 +592,7 @@ async function clearEnvsLocked(progress: vscode.Progress<{ message?: string; inc
     return { "okToRestartRFLS": okToRestartRFLS };
 }
 
-let langServer: LanguageClient;
+export let langServer: LanguageClient;
 let C: CommandRegistry;
 export let globalCachedPythonInfo: InterpreterInfo;
 const langServerMutex: Mutex = new Mutex();

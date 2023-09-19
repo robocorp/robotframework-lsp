@@ -5,13 +5,14 @@ import threading
 from functools import partial
 from typing import Optional
 
-from robocorp_code.inspector.client import InspectorApiClient
 from robocorp_ls_core.basic import (
     is_process_alive,
     kill_process_and_subprocesses,
     log_and_silence_errors,
 )
 from robocorp_ls_core.robotframework_log import get_logger
+
+from robocorp_code.inspector.client import InspectorApiClient
 
 log = get_logger(__name__)
 
@@ -121,6 +122,7 @@ class InspectorServerManager(object):
                     if method in (
                         "$/customProgress",
                         "window/showMessage",
+                        "$/webPick",
                     ):
                         robocorp_code_language_server: Optional[
                             RobocorpLanguageServer

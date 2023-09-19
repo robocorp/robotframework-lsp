@@ -13,3 +13,4 @@ dependencies:
           - --use-feature=truststore
           - robocorp-inspector==0.10.2 # https://github.com/robocorp/inspector/blob/master/CHANGELOG.md
           - robotframework==5.0.1 # https://github.com/robotframework/robotframework/blob/master/doc/releasenotes/rf-5.0.1.rst
+          - playwright==1.37.0

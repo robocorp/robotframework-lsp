@@ -151,14 +151,18 @@ class _AsyncPickCommand(_BaseCommand):
     # this needs to be small.
     loop_timeout = 1 / 15
 
-    def __init__(self, endpoint: IEndPoint):
+    def __init__(self, endpoint: IEndPoint, url_if_new: str = ""):
         super().__init__()
         self.endpoint = endpoint
+        self.url_if_new = url_if_new
 
     def __call__(self, web_inspector_thread: _WebInspectorThread):
         web_inspector = web_inspector_thread.web_inspector
         if not web_inspector:
             return
+
+        if self.url_if_new:
+            web_inspector.open_if_new(self.url_if_new)
 
         def on_pick(locators: Optional[List[Tuple[str, str]]]):
             web_inspector_thread.queue.put(
@@ -175,7 +179,7 @@ class _MakeFullLocatorsCommand(_BaseCommand):
         self.locators = locators
 
     def _send_pick(self, locators: LocatorNameToLocatorTypedDict):
-        self.endpoint.notify("pick", locators)
+        self.endpoint.notify("$/webPick", locators)
 
     def __call__(self, web_inspector_thread: _WebInspectorThread):
         web_inspector = web_inspector_thread.web_inspector
@@ -226,8 +230,8 @@ class InspectorApi(PythonLanguageServer):
     def m_open_browser(self, url: str, wait: bool = False) -> None:
         self._enqueue(_OpenUrlCommand(url), wait)
 
-    def m_start_pick(self, wait: bool = False) -> None:
-        self._enqueue(_AsyncPickCommand(self._endpoint), wait)
+    def m_start_pick(self, url_if_new: str = "", wait: bool = False) -> None:
+        self._enqueue(_AsyncPickCommand(self._endpoint, url_if_new), wait)
 
     def m_close_browser(self, wait: bool = False) -> None:
         self._enqueue(_CloseBrowserCommand(), wait)

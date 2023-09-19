@@ -20,6 +20,7 @@ from robocorp_ls_core.watchdog_wrapper import IFSObserver
 
 from robocorp_code import commands
 from robocorp_code.deps._deps_protocols import ICondaCloud, IPyPiCloud
+from robocorp_code.inspector.inspector_language_server import InspectorLanguageServer
 from robocorp_code.protocols import (
     ActionResultDict,
     ActionResultDictLocalRobotMetadata,
@@ -80,7 +81,7 @@ class ListWorkspaceCachedInfoDict(TypedDict):
 command_dispatcher = _CommandDispatcher()
 
 
-class RobocorpLanguageServer(PythonLanguageServer):
+class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
     # V2: save the account info along to validate user.
     # V3: Add organizationName
     CLOUD_LIST_WORKSPACE_CACHE_KEY = "CLOUD_LIST_WORKSPACE_CACHE_V3"
@@ -219,6 +220,8 @@ class RobocorpLanguageServer(PythonLanguageServer):
             plugin_manager=self._pm,
             lsp_messages=self._lsp_messages,
         )
+
+        InspectorLanguageServer.__init__(self)
 
     @property
     def _conda_cloud(self) -> ICondaCloud:  # Create it on demand
