@@ -8,11 +8,14 @@ import { readFileSync } from "fs";
 import * as vscode from "vscode";
 
 import { getExtensionRelativeFile, verifyFileExists } from "../files";
-import { logError } from "../channel";
+import { OUTPUT_CHANNEL, logError } from "../channel";
 import { getSelectedRobot } from "../viewsCommon";
 import { LocatorType, LocatorsMap } from "./types";
-import { IMessage, IMessageType, IResponseMessage } from "./protocols";
+import { IApps, IMessage, IMessageType, IResponseMessage } from "./protocols";
 import { sleep } from "../time";
+import { langServer } from "../extension";
+import { ActionResult, LocalRobotMetadataInfo } from "../protocols";
+import { ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL } from "../robocorpCommands";
 
 export async function showInspectorUI(context: vscode.ExtensionContext) {
     const panel = vscode.window.createWebviewPanel(
@@ -26,47 +29,84 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
     );
 
     const robot = getSelectedRobot();
+    let directory = undefined;
+    let locatorJson = undefined;
     if (robot) {
-        let locatorJson = path.join(robot.robot.directory, "locators.json");
-        if (verifyFileExists(locatorJson, false)) {
-            vscode.workspace.openTextDocument(vscode.Uri.file(locatorJson)).then((document) => {
-                let text = document.getText();
-                panel.webview.html = getWebviewContent(JSON.parse(text) as LocatorsMap);
-            });
-        } else {
-            logError("locators.json.not.found", undefined, "");
-        }
+        directory = robot.robot.directory;
     } else {
-        logError("robot.not.found", undefined, "");
+        let actionResult: ActionResult<LocalRobotMetadataInfo[]> = await vscode.commands.executeCommand(
+            ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL
+        );
+        if (actionResult.success) {
+            if (actionResult.result.length === 1) {
+                directory = actionResult.result[0].directory;
+            }
+        }
     }
+    if (directory) {
+        locatorJson = path.join(directory, "locators.json");
+    }
+
+    let locatorsMap = {};
+    if (locatorJson) {
+        if (verifyFileExists(locatorJson, false)) {
+            let doc = await vscode.workspace.openTextDocument(vscode.Uri.file(locatorJson));
+            locatorsMap = JSON.parse(doc.getText()) as LocatorsMap;
+        }
+    }
+    panel.webview.html = getWebviewContent(locatorsMap);
+
+    context.subscriptions.push(
+        langServer.onNotification("$/webPick", () => {
+            OUTPUT_CHANNEL.appendLine(`WebPick ${arguments}`);
+            // panel.webview.postMessage(webPickEvent);
+        })
+    );
+
+    panel.onDidDispose(() => {
+        langServer.sendRequest("webInspectorCloseBrowser");
+    });
 
     panel.webview.onDidReceiveMessage(
         async (message: IMessage) => {
-            logError(`incoming.message: ${JSON.stringify(message)}`, undefined, "");
+            OUTPUT_CHANNEL.appendLine(`incoming.message: ${JSON.stringify(message)}`);
             switch (message.type) {
                 case IMessageType.REQUEST:
-                    logError(`incoming.request: ${JSON.stringify(message)}`, undefined, "");
-                    const response: IResponseMessage = {
-                        id: message.id,
-                        app: message.app,
-                        type: "response" as IMessageType.RESPONSE,
-                        data: {
-                            type: "locator",
-                            data: { type: "browser" as LocatorType.Browser, strategy: "css", value: "class" },
-                        },
-                    };
-                    logError(`responding.in.3.seconds.with: ${JSON.stringify(response)}`, undefined, "");
-                    await sleep(3000);
-                    panel.webview.postMessage(response);
+                    const command = message.command;
+                    if (message.app === IApps.WEB_PICKER) {
+                        if (command["type"] === "openBrowser") {
+                            const pickResponse = await langServer.sendRequest("webInspectorOpenBrowser");
+                            OUTPUT_CHANNEL.appendLine(`response: ${JSON.stringify(pickResponse)}`);
+                        } else if (command["type"] === "pick") {
+                            const pickResponse = await langServer.sendRequest("webInspectorPick");
+                            OUTPUT_CHANNEL.appendLine(`response: ${JSON.stringify(pickResponse)}`);
+                        }
+                        const response: IResponseMessage = {
+                            id: message.id,
+                            app: message.app,
+                            type: "response" as IMessageType.RESPONSE,
+                        };
+                        panel.webview.postMessage(response);
+                    }
+                    // OUTPUT_CHANNEL.appendLine(`request: ${JSON.stringify(message)}`);
+                    // const response: IResponseMessage = {
+                    //     id: message.id,
+                    //     app: message.app,
+                    //     type: "response" as IMessageType.RESPONSE,
+                    //     data: {
+                    //         type: "locator",
+                    //         data: { type: "browser" as LocatorType.Browser, strategy: "css", value: "class" },
+                    //     },
+                    // };
+                    // OUTPUT_CHANNEL.appendLine(`responding.in.3.seconds.with: ${JSON.stringify(response)}`);
+                    // await sleep(3000);
+                    // panel.webview.postMessage(response);
                     return;
                 case IMessageType.RESPONSE:
-                    logError(`incoming.response: ${JSON.stringify(message)}`, undefined, "");
                     return;
                 case IMessageType.EVENT:
-                    logError(`incoming.event: ${JSON.stringify(message)}`, undefined, "");
                     return;
                 default:
-                    logError(`unhandled.message: ${JSON.stringify(message)}`, undefined, "");
                     return;
             }
         },

@@ -37,7 +37,7 @@ _PICK_CODE = """
 _PICK_ASYNC_CODE = """
 ()=>{
     var callback = (picked)=>{
-        console.log('Picked', picked);
+        // console.log('Picked', picked);
         on_picked(picked);
     }
     
@@ -68,7 +68,13 @@ class WebInspector:
         self._check_thread()
         page = self._page
         if page is not None and not page.is_closed():
-            page.wait_for_timeout(1)
+            try:
+                for _i in range(2):
+                    page.wait_for_timeout(1)  # Just wait for a millisecond.
+            except Exception:
+                # If the page is closed while we're looping we may get an exception
+                # (don't let it out).
+                self._page = None
 
     def close_browser(self):
         self._check_thread()
@@ -78,6 +84,9 @@ class WebInspector:
 
     def page(self) -> Page:
         self._check_thread()
+
+        self.loop()
+
         page = self._page
         if page is None or page.is_closed():
             from robocorp_code.playwright import robocorp_browser
@@ -99,18 +108,38 @@ class WebInspector:
                 if s is not None:
                     s._on_picked(None)
 
+            def mark_closed(*args, **kwargs):
+                s = weak_self()
+                if s is not None:
+                    s._page = None
+
             page.on("framenavigated", cancel_pick)
             page.on("close", cancel_pick)
             page.on("crash", cancel_pick)
+
+            page.on("close", mark_closed)
+            page.on("crash", mark_closed)
 
         return page
 
     def open(self, url: str) -> Page:
         self._check_thread()
+        self.loop()
+
         page = self.page()
         if url:
             page.goto(url)
+
         return page
+
+    def open_if_new(self, url_if_new):
+        self._check_thread()
+
+        self.loop()
+
+        page = self._page
+        if page is None or page.is_closed():
+            self.open(url_if_new)
 
     def _query(self, selector):
         self._check_thread()

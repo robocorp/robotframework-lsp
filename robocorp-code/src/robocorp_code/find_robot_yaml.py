@@ -25,10 +25,15 @@ def find_robot_yaml_path_from_path(path: Path, stat) -> Optional[Path]:
         else:
             path = path.parent
 
-    for _i in range(3):
+    for _i in range(10):
         robot_yaml = path / "robot.yaml"
         if robot_yaml.is_file():
             return robot_yaml
-        path = path.parent
+        parent = path.parent
+        if not parent:
+            return None
+        if parent == path:
+            return None
+        path = parent
 
     return robot_yaml
