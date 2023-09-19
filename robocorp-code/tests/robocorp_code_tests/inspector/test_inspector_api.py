@@ -1,9 +1,17 @@
+import weakref
+
 import pytest
 
 
 class _DummyLanguageServer:
+    def __init__(self):
+        self.forwarded_messages = []
+
     def dispose(self):
         pass
+
+    def forward_msg(self, msg):
+        self.forwarded_messages.append(msg)
 
 
 @pytest.fixture
@@ -20,7 +28,7 @@ def inspector_server_manager(dummy_language_server, log_file):
 
     Setup.options.verbose = 3
     Setup.options.log_file = log_file
-    manager = InspectorServerManager(dummy_language_server)
+    manager = InspectorServerManager(weakref.ref(dummy_language_server))
     yield manager
     try:
         manager.shutdown()
@@ -101,7 +109,9 @@ def test_inspector_api_echo(inspector_server_manager):
     ]
 
 
-def test_inspector_api_usage(inspector_server_manager, datadir, data_regression):
+def test_inspector_api_usage(
+    inspector_server_manager, datadir, data_regression, dummy_language_server
+):
     """
     This simulates the API to be used to pick an element.
     """
@@ -138,7 +148,7 @@ def test_inspector_api_usage(inspector_server_manager, datadir, data_regression)
         assert message_matcher.msg["result"] is None
 
         pick_message_matcher = inspector_api_client.obtain_pattern_message_matcher(
-            {"method": "pick"}
+            {"method": "$/webPick"}
         )
 
         message_matcher = inspector_api_client.send_async_message(
@@ -148,6 +158,8 @@ def test_inspector_api_usage(inspector_server_manager, datadir, data_regression)
         assert message_matcher.msg["result"] is None
 
         assert pick_message_matcher.event.wait(10)
+        assert len(dummy_language_server.forwarded_messages) == 1
+        del dummy_language_server.forwarded_messages[:]
         data_regression.check(pick_message_matcher.msg, basename="div1Pick")
 
         message_matcher = inspector_api_client.send_async_message(
