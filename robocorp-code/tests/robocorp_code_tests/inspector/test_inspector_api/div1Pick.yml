@@ -1,5 +1,5 @@
 jsonrpc: '2.0'
-method: pick
+method: $/webPick
 params:
   css:
     matches: 1
