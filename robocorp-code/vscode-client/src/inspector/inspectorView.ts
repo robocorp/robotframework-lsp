@@ -8,11 +8,10 @@ import { readFileSync } from "fs";
 import * as vscode from "vscode";
 
 import { getExtensionRelativeFile, verifyFileExists } from "../files";
-import { OUTPUT_CHANNEL, logError } from "../channel";
+import { OUTPUT_CHANNEL } from "../channel";
 import { getSelectedRobot } from "../viewsCommon";
-import { LocatorType, LocatorsMap } from "./types";
+import { LocatorsMap } from "./types";
 import { IApps, IMessage, IMessageType, IResponseMessage } from "./protocols";
-import { sleep } from "../time";
 import { langServer } from "../extension";
 import { ActionResult, LocalRobotMetadataInfo } from "../protocols";
 import { ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL } from "../robocorpCommands";

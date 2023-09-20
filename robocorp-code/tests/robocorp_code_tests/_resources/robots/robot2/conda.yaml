@@ -1,0 +1,8 @@
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.8
+  - pip=20.1
+  - pip:
+    - robotframework
