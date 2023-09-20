@@ -164,10 +164,10 @@ class _AsyncPickCommand(_BaseCommand):
         if self.url_if_new:
             web_inspector.open_if_new(self.url_if_new)
 
+        endpoint = self.endpoint
+
         def on_pick(locators: Optional[List[Tuple[str, str]]]):
-            web_inspector_thread.queue.put(
-                _MakeFullLocatorsCommand(self.endpoint, locators)
-            )
+            web_inspector_thread.queue.put(_MakeFullLocatorsCommand(endpoint, locators))
 
         web_inspector.pick_async(on_pick)
 

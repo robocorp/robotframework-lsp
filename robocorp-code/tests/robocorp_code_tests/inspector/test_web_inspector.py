@@ -16,14 +16,13 @@ def web_inspector(datadir):
     url = uris.from_fs_path(str(datadir / "page_to_test.html"))
     web_inspector.open(url)
     assert not web_inspector.is_picker_injected()
-    web_inspector.inject_picker()
+    web_inspector.inject_picker("test")
     assert web_inspector.is_picker_injected()
     yield web_inspector
+    web_inspector.close_browser()
 
 
 def test_web_inspector(web_inspector, data_regression, datadir):
-    import threading
-
     from robocorp_ls_core import uris
 
     data_regression.check(locators_for(web_inspector, "#div1"), basename="div1")
@@ -41,9 +40,18 @@ def test_web_inspector(web_inspector, data_regression, datadir):
     web_inspector.open(url)
     data_regression.check(locators_for(web_inspector, "#withImg"), basename="withImg")
 
+
+def test_web_inspector_change_urls(web_inspector, data_regression, datadir):
+    import threading
+
+    from robocorp_ls_core import uris
+
+    url = uris.from_fs_path(str(datadir / "page_to_test.html"))
+    web_inspector.open(url)
+
     # ===========================================================================
     # Check what happens if the url is changed during the (async) pick.
-    # -> Changing url makes it pick 'None'
+    # -> The picker should be reinjected
     # ===========================================================================
     event = threading.Event()
     found = []
@@ -52,31 +60,35 @@ def test_web_inspector(web_inspector, data_regression, datadir):
         found.append(locators)
         event.set()
 
-    web_inspector.pick_async(on_picked)
+    assert web_inspector.pick_async(on_picked)
 
     url = uris.from_fs_path(str(datadir / "page_to_test2.html"))
     web_inspector.open(url)
 
-    assert event.wait(10)
-    assert found == [None]
+    assert web_inspector.picking
+
+    assert not event.wait(1)
+    assert found == []
+
+    # Actually do one pick which should work (even after changing the url).
+    web_inspector.page().click("#withImg")
+
+    assert event.wait(2), "Pick did not happen in the expected timeout."
+    assert found
+    locators = found[0]
+    assert locators
+    data_regression.check(
+        web_inspector.make_full_locators(locators), basename="withImg"
+    )
+    del found[:]
 
     # ===========================================================================
     # Check what happens if the browser is closed during the (async) pick.
     # -> Closing makes it pick 'None'
     # ===========================================================================
-    event = threading.Event()
-    found = []
+    web_inspector.close_browser()
 
-    web_inspector.pick_async(on_picked)
-
-    url = uris.from_fs_path(str(datadir / "page_to_test2.html"))
-    web_inspector.open(url)
-
-    assert event.wait(10)
-    assert found == [None]
-
-    url = uris.from_fs_path(str(datadir / "page_to_test.html"))
-    web_inspector.open(url)
+    assert found == []
 
     # Note: `web_inspector.pick()` not tested because it's synchronous and
     # playwright is not multi-threaded (we could in theory do a javascript
@@ -98,10 +110,13 @@ def locators_for(web_inspector, html_id):
         found.append(locators)
         event.set()
 
-    web_inspector.pick_async(on_picked)
-    web_inspector.page().click(html_id)
-    assert event.wait(2), "Pick did not happen in the expected timeout."
-    assert found
-    locators = found[0]
-    assert locators
-    return web_inspector.make_full_locators(locators)
+    assert web_inspector.pick_async(on_picked)
+    try:
+        web_inspector.page().click(html_id)
+        assert event.wait(2), "Pick did not happen in the expected timeout."
+        assert found
+        locators = found[0]
+        assert locators
+        return web_inspector.make_full_locators(locators)
+    finally:
+        web_inspector.stop_pick_async()

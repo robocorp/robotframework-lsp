@@ -590,7 +590,7 @@ const reportedErrorCodes = new Set();
  * @param errorCode The error code to be shown.
  */
 export async function feedbackAnyError(errorType: string, errorCode: string) {
-    if(!errorCode){
+    if (!errorCode) {
         return;
     }
     // Make sure that only one error is reported per error code.

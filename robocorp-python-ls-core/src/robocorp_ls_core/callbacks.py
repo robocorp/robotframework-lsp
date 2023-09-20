@@ -29,6 +29,12 @@ class Callback(object):
             except:
                 log.exception("Error in callback.")
 
+    def __len__(self):
+        return len(self._callbacks)
+
+    def clear(self):
+        self._callbacks = []
+
 
 class CallbackWithReturn(Callback):
     """

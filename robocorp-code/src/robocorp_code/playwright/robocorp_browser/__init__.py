@@ -208,7 +208,7 @@ def screenshot(
     Returns:
         The bytes from the screenshot.
     """
-    import base64
+    # import base64
 
     if element is None:
         from . import _browser_context

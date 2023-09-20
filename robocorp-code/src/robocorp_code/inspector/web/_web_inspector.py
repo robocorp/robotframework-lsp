@@ -1,8 +1,11 @@
 import threading
+import time
 import weakref
 from typing import List, Optional, Tuple
 
-from playwright.sync_api import ElementHandle, Page
+from playwright.sync_api import ElementHandle
+from playwright.sync_api import Error as PlaywrightError
+from playwright.sync_api import Page
 from robocorp_ls_core.callbacks import Callback
 from robocorp_ls_core.protocols import TypedDict
 from robocorp_ls_core.robotframework_log import get_logger
@@ -18,14 +21,15 @@ def _load_resource(name):
 
 
 # Regular mode (will block until a pick is done).
-_PICK_CODE = """
+_SYNC_SINGLE_PICK_CODE = """
 ()=>{
     var promise = new Promise((resolve, reject) => {
         var callback = (picked)=>{
             // console.log('Picked', picked);
             resolve(picked);
         }
-        Inspector.startPicker(callback);
+        var singlePick = true;
+        Inspector.startPicker(callback, singlePick);
     });
     
     return promise;
@@ -34,14 +38,22 @@ _PICK_CODE = """
 
 # Async mode (will start a pick and when the pick is
 # done an event will be sent).
-_PICK_ASYNC_CODE = """
+# It'll keep picking until cancelled.
+_ASYNC_MULTI_PICK_CODE = """
 ()=>{
     var callback = (picked)=>{
         // console.log('Picked', picked);
         on_picked(picked);
     }
     
-    Inspector.startPicker(callback);
+    var singlePick = false;
+    Inspector.startPicker(callback, singlePick);
+}
+"""
+
+_ASYNC_CANCEL_PICK_CODE = """
+()=>{
+    Inspector.cancelPick();
 }
 """
 
@@ -56,25 +68,51 @@ LocatorNameToLocatorTypedDict = dict
 
 
 class WebInspector:
-    def __init__(self):
-        self._page = None
+    def __init__(self) -> None:
+        self._page: Optional[Page] = None
         self._on_picked = Callback()
         self._current_thread = threading.current_thread()
+        self._picking = False
+        self._looping = False
+        self._last_picker_check: int = 0
+
+    @property
+    def picking(self):
+        return self._picking
 
     def _check_thread(self):
         assert self._current_thread is threading.current_thread()
 
     def loop(self):
         self._check_thread()
-        page = self._page
-        if page is not None and not page.is_closed():
-            try:
-                for _i in range(2):
-                    page.wait_for_timeout(1)  # Just wait for a millisecond.
-            except Exception:
-                # If the page is closed while we're looping we may get an exception
-                # (don't let it out).
-                self._page = None
+
+        if self._looping:
+            return
+        self._looping = True
+        try:
+            page = self._page
+            if page is not None and not page.is_closed():
+                try:
+                    for _i in range(2):
+                        page.wait_for_timeout(1)  # Just wait for a millisecond.
+
+                        if self._picking:
+                            curtime = time.monotonic()
+                            if curtime - self._last_picker_check > 0.1:
+                                # Check at most once / 100 millis.
+
+                                self._last_picker_check = curtime
+                                # If picking is on we re-enable it if it's not currently
+                                # enabled.
+                                if not self.is_picker_injected(page):
+                                    if self.inject_picker("loop", page):
+                                        page.evaluate(_ASYNC_MULTI_PICK_CODE)
+                except PlaywrightError:
+                    # If the page is closed while we're looping we may get an exception
+                    # (don't let it out).
+                    self._page = None
+        finally:
+            self._looping = False
 
     def close_browser(self):
         self._check_thread()
@@ -82,7 +120,7 @@ class WebInspector:
         if page is not None and not page.is_closed():
             page.close()
 
-    def page(self) -> Page:
+    def page(self) -> Optional[Page]:
         self._check_thread()
 
         self.loop()
@@ -101,32 +139,40 @@ class WebInspector:
                 if s is not None:
                     s._on_picked(*args, **kwargs)
 
-            page.expose_function("on_picked", on_picked)
-
-            def cancel_pick(*args, **kwargs):
-                s = weak_self()
-                if s is not None:
-                    s._on_picked(None)
+            try:
+                page.expose_function("on_picked", on_picked)
+            except PlaywrightError:
+                self._page = None
+                return None
 
             def mark_closed(*args, **kwargs):
                 s = weak_self()
                 if s is not None:
                     s._page = None
 
-            page.on("framenavigated", cancel_pick)
-            page.on("close", cancel_pick)
-            page.on("crash", cancel_pick)
-
             page.on("close", mark_closed)
             page.on("crash", mark_closed)
 
         return page
 
-    def open(self, url: str) -> Page:
+    def start_log_console(self):
+        """
+        Can be used to show all the console messages being received from the browser.
+        """
+        page = self.page()
+
+        def dbg(*args):
+            log.debug(*[str(x) for x in args])
+
+        page.on("console", dbg)
+
+    def open(self, url: str) -> Optional[Page]:
         self._check_thread()
         self.loop()
 
         page = self.page()
+        if page is None:
+            return None
         if url:
             page.goto(url)
 
@@ -173,23 +219,43 @@ class WebInspector:
         # "class": By.CLASS_NAME,
         # "tag": By.TAG_NAME,
 
-    def pick_async(self, on_picked) -> None:
+    def pick_async(self, on_picked) -> bool:
         """
         Starts the picker and calls `on_picked(locators)` afterwards.
 
-        Note that the `locators` may be None if the user makes some navigation.
+        Returns:
+            True if the given function was registered as the picker function
+            and False otherwise.
+
+        Note: the `locators` may be None if the user makes some navigation.
+
+        Note: if already picking this will not do anything (only one picker
+              callback can be registered at a time).
         """
         self._check_thread()
-        assert self.inject_picker(), "Unable to make pick. Picker not injected."
+        self._picking = True
+        assert self.inject_picker(
+            "pick_async"
+        ), "Unable to make pick. Picker not injected."
 
         page = self.page()
+        if page is None:
+            return False
 
-        def call_and_unregister(*args, **kwargs):
-            self._on_picked.unregister(call_and_unregister)
-            on_picked(*args, **kwargs)
+        if len(self._on_picked) == 0:
+            self._on_picked.register(on_picked)
+            page.evaluate(_ASYNC_MULTI_PICK_CODE)
+            return True
+        return False
 
-        self._on_picked.register(call_and_unregister)
-        page.evaluate(_PICK_ASYNC_CODE)
+    def stop_pick_async(self):
+        self._picking = False
+        self._check_thread()
+
+        self._on_picked.clear()
+
+        page = self.page()
+        page.evaluate(_ASYNC_CANCEL_PICK_CODE)
 
     def pick(self) -> Optional[List[Tuple[str, str]]]:
         """
@@ -204,11 +270,15 @@ class WebInspector:
             ]
         """
         self._check_thread()
-        assert self.inject_picker(), "Unable to make pick. Picker not injected."
+        assert self.inject_picker(
+            "pick (sync)"
+        ), "Unable to make pick. Picker not injected."
 
         page = self.page()
+        if page is None:
+            return None
         try:
-            locators = page.evaluate(_PICK_CODE)
+            locators = page.evaluate(_SYNC_SINGLE_PICK_CODE)
         except Exception:
             log.exception(
                 "While (sync) picking an exception happened (most likely the user changed the url or closed the browser)."
@@ -240,25 +310,31 @@ class WebInspector:
 
         return ret
 
-    def is_picker_injected(self) -> bool:
+    def is_picker_injected(self, page=None) -> bool:
         self._check_thread()
-        page = self.page()
+        if page is None:
+            page = self.page()
+            if page is None:
+                return False
         selector = page.query_selector("#inspector-style")
         if selector is not None:
             return True
         return False
 
-    def inject_picker(self) -> bool:
+    def inject_picker(self, reason: str, page=None) -> bool:
         """
         Ensures that the picker is injected. It's ok to call it multiple times.
         """
         self._check_thread()
         try:
-            if self.is_picker_injected():
+            if self.is_picker_injected(page):
                 return True
-            page = self.page()
+            if page is None:
+                page = self.page()
+                if page is None:
+                    return False
 
-            log.debug("Picker was not injected (injecting now).")
+            log.debug(f"Picker was not injected (injecting now. Reason: {reason}).")
             page.evaluate(_load_resource("inspector.js"))
 
             style_contents = _load_resource("inspector.css")
@@ -268,6 +344,8 @@ class WebInspector:
                 "style.appendChild(content);"
             )
             log.debug("Picker code / style injected!")
+            self.loop()
+
             return True
         except Exception:
             log.exception("Error injecting picker.")
