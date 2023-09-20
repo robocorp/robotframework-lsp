@@ -870,6 +870,9 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
 
         return dict(success=True, message=None, result=ret)
 
+    def m_list_robots(self) -> ActionResultDictLocalRobotMetadata:
+        return self._local_list_robots()
+
     def _validate_directory(self, directory) -> Optional[str]:
         if not os.path.exists(directory):
             return f"Expected: {directory} to exist."

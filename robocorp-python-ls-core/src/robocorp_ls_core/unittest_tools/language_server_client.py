@@ -505,6 +505,17 @@ class LanguageServerClient(LanguageServerClientBase):
             }
         )
 
+    @implements(ILanguageServerClient.request_sync)
+    def request_sync(self, method, **params):
+        return self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": method,
+                "params": params,
+            }
+        )
+
     def __typecheckself__(self) -> None:
         from robocorp_ls_core.protocols import check_implements
 

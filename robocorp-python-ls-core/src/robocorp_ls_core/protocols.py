@@ -246,6 +246,8 @@ class ILanguageServerClientBase(IRequestCancellable, Protocol):
     ) -> Union[IResultMessage, IErrorMessage]:
         """
         :param contents:
+            {"jsonrpc": "2.0", "id": msg_id, "method": method_name, "params": params}
+
         :param timeout:
         :return:
             The returned message if everything goes ok.
@@ -254,6 +256,23 @@ class ILanguageServerClientBase(IRequestCancellable, Protocol):
         :raises:
             TimeoutError if the timeout was given and no answer was given at the available time
             (including if the communication was dropped).
+        """
+
+    def request_sync(self, method, **params):
+        """
+        This API is is a bit simpler than the `request` as it builds the message
+        internally.
+
+        It's the same thing as:
+
+            return self.request(
+                {
+                    "jsonrpc": "2.0",
+                    "id": self.next_id(),
+                    "method": method,
+                    "params": params,
+                }
+            )
         """
 
     def obtain_pattern_message_matcher(
