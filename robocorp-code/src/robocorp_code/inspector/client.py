@@ -109,6 +109,9 @@ class InspectorApiClient(LanguageServerClientBase):
     def open_browser(self, url=None, wait=True):
         return self.send_sync_message("openBrowser", dict(url=url, wait=wait))
 
+    def click(self, locator, wait=True):
+        return self.send_sync_message("click", dict(locator=locator, wait=wait))
+
     def start_pick(self, wait=True):
         return self.send_sync_message("startPick", dict(wait=wait))
 
