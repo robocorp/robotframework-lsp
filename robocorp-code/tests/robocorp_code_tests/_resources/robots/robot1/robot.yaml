@@ -1,0 +1,9 @@
+tasks:
+  Task name:
+    command: 
+      - python
+      - some_script.py
+
+artifactsDir: output
+
+condaConfigFile: conda.yaml

@@ -3,18 +3,18 @@ import os.path
 import sys
 import time
 import typing
-from typing import List
+from typing import Dict, List
 
 import pytest
+from robocorp_code_tests.fixtures import RccPatch
+from robocorp_code_tests.protocols import IRobocorpLanguageServerClient
+from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
+
 from robocorp_code.protocols import (
     ActionResult,
     LocalRobotMetadataInfoDict,
     WorkspaceInfoDict,
 )
-from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
-
-from robocorp_code_tests.fixtures import RccPatch
-from robocorp_code_tests.protocols import IRobocorpLanguageServerClient
 
 log = logging.getLogger(__name__)
 
@@ -700,10 +700,9 @@ def test_hover_image_integration(
 ):
     import base64
 
+    from robocorp_code_tests.fixtures import IMAGE_IN_BASE64
     from robocorp_ls_core import uris
     from robocorp_ls_core.workspace import Document
-
-    from robocorp_code_tests.fixtures import IMAGE_IN_BASE64
 
     locators_json = tmpdir.join("locators.json")
     locators_json.write_text("", "utf-8")
@@ -957,13 +956,14 @@ def test_profile_import(
     datadir,
     disable_rcc_diagnostics,
 ):
+    from robocorp_ls_core import uris
+
     from robocorp_code.commands import (
         ROBOCORP_GET_PY_PI_BASE_URLS_INTERNAL,
         ROBOCORP_PROFILE_IMPORT_INTERNAL,
         ROBOCORP_PROFILE_LIST_INTERNAL,
         ROBOCORP_PROFILE_SWITCH_INTERNAL,
     )
-    from robocorp_ls_core import uris
 
     result = language_server_initialized.execute_command(
         ROBOCORP_GET_PY_PI_BASE_URLS_INTERNAL,
@@ -1059,3 +1059,62 @@ condaConfigFile: conda.yaml
     assert message_matcher.event.wait(TIMEOUT)
     diag = message_matcher.msg["params"]["diagnostics"]
     data_regression.check(sort_diagnostics(diag))
+
+
+class LSAutoApiClient:
+    def __init__(self, ls_client):
+        from robocorp_code_tests.robocode_language_server_client import (
+            RobocorpLanguageServerClient,
+        )
+
+        self.ls_client: RobocorpLanguageServerClient = ls_client
+
+    def underscore_to_camelcase(self, name):
+        words = name.split("_")
+        camelcase_name = words[0] + "".join(word.capitalize() for word in words[1:])
+        return camelcase_name
+
+    def __getattr__(self, attr: str):
+        if attr.startswith("m_"):
+            attr = attr[2:]
+            method_name = self.underscore_to_camelcase(attr)
+
+            def method(**kwargs):
+                ret = self.ls_client.request_sync(method_name, **kwargs)
+                result = ret["result"]
+                if isinstance(result, dict):
+                    # Deal with ActionResultDict.
+                    success = result.get("success")
+                    if success is not None:
+                        assert success
+
+                    return result["result"]
+
+                return result
+
+            return method
+        raise AttributeError(attr)
+
+
+def test_inspector_integrated(language_server_initialized, ws_root_path, cases) -> None:
+    """
+    This test should be a reference spanning all the APIs that are available
+    for the inspector webview to use.
+    """
+    from robocorp_code_tests.robocode_language_server_client import (
+        RobocorpLanguageServerClient,
+    )
+
+    cases.copy_to("robots", ws_root_path)
+    ls_client: RobocorpLanguageServerClient = language_server_initialized
+
+    api_client = LSAutoApiClient(ls_client)
+    listed_robots = api_client.m_list_robots()
+    assert len(listed_robots) == 2
+
+    name_to_info: Dict[str, LocalRobotMetadataInfoDict] = {}
+    for robot in listed_robots:
+        name_to_info[robot["name"]] = robot
+
+    api_client.m_web_inspector_open_browser()
+    api_client.m_web_inspector_close_browser()
