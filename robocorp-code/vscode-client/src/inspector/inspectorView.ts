@@ -77,7 +77,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
                             const pickResponse = await langServer.sendRequest("webInspectorOpenBrowser");
                             OUTPUT_CHANNEL.appendLine(`response: ${JSON.stringify(pickResponse)}`);
                         } else if (command["type"] === "pick") {
-                            const pickResponse = await langServer.sendRequest("webInspectorPick");
+                            const pickResponse = await langServer.sendRequest("webInspectorStartPick");
                             OUTPUT_CHANNEL.appendLine(`response: ${JSON.stringify(pickResponse)}`);
                         }
                         const response: IResponseMessage = {

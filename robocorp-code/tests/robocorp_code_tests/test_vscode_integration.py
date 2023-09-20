@@ -3,6 +3,7 @@ import os.path
 import sys
 import time
 import typing
+from pathlib import Path
 from typing import Dict, List
 
 import pytest
@@ -1104,11 +1105,14 @@ def test_inspector_integrated(language_server_initialized, ws_root_path, cases) 
     from robocorp_code_tests.robocode_language_server_client import (
         RobocorpLanguageServerClient,
     )
+    from robocorp_ls_core import uris
 
     cases.copy_to("robots", ws_root_path)
     ls_client: RobocorpLanguageServerClient = language_server_initialized
 
     api_client = LSAutoApiClient(ls_client)
+
+    # List robots and load the locators.json.
     listed_robots = api_client.m_list_robots()
     assert len(listed_robots) == 2
 
@@ -1116,5 +1120,27 @@ def test_inspector_integrated(language_server_initialized, ws_root_path, cases) 
     for robot in listed_robots:
         name_to_info[robot["name"]] = robot
 
-    api_client.m_web_inspector_open_browser()
+    robot2_directory = name_to_info["robot2"]["directory"]
+    assert api_client.m_load_robot_locator_contents(directory=robot2_directory) == {}
+
+    existing = api_client.m_load_robot_locator_contents(
+        directory=name_to_info["robot1"]["directory"]
+    )
+    assert len(existing) == 3
+
+    # Create a locator from a browser pick on robot 2 (which has no
+    # locators).
+    api_client.m_web_inspector_open_browser(
+        url=uris.from_fs_path(str(Path(robot2_directory) / "page_to_test.html"))
+    )
+
+    api_client.m_web_inspector_start_pick()
+
+    pick_message_matcher = ls_client.obtain_pattern_message_matcher(
+        {"method": "$/webPick"}
+    )
+    api_client.m_web_inspector_click(locator="#div1")
+    pick_message_matcher.event.wait(10)
+    assert pick_message_matcher.msg
+
     api_client.m_web_inspector_close_browser()

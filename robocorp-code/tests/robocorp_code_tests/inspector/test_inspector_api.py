@@ -199,7 +199,9 @@ def test_inspector_api_usage(
         inspector_api_client.close_browser()
 
 
-def _manual_test_inspector_repl(inspector_server_manager, datadir, dummy_language_server):
+def _manual_test_inspector_repl(
+    inspector_server_manager, datadir, dummy_language_server
+):
     from robocorp_ls_core import uris
 
     inspector_api_client = inspector_server_manager.get_inspector_api_client()
