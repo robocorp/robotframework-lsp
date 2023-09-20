@@ -83,7 +83,7 @@ class InspectorApiClient(LanguageServerClientBase):
         return {"jsonrpc": "2.0", "id": msg_id, "method": method_name, "params": params}
 
     def send_sync_message(
-        self, method_name, params
+        self, method_name, params: dict
     ) -> Optional[Union[IResultMessage, IErrorMessage]]:
         self._check_process_alive()
         return self.request(self._build_msg(method_name, params))
@@ -105,3 +105,12 @@ class InspectorApiClient(LanguageServerClientBase):
                 "params": dict(id=message_id),
             }
         )
+
+    def open_browser(self, url=None, wait=True):
+        return self.send_sync_message("openBrowser", dict(url=url, wait=wait))
+
+    def start_pick(self, wait=True):
+        return self.send_sync_message("startPick", dict(wait=wait))
+
+    def close_browser(self, wait=True):
+        return self.send_sync_message("closeBrowser", dict(wait=wait))
