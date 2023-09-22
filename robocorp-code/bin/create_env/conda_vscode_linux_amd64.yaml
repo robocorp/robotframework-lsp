@@ -8,7 +8,7 @@ dependencies:
     - pip=23.2.1 # https://pip.pypa.io/en/stable/news/
     - pyyaml=6.0.1
     - msgspec=0.18.2
-    - truststore=0.8.0 # https://github.com/sethmlarson/truststore/blob/main/CHANGELOG.md
+    - robocorp-truststore=0.8.0 # https://github.com/sethmlarson/truststore/blob/main/CHANGELOG.md
     - pyside2=5.15.4 # https://wiki.qt.io/Qt_for_Python
     - qtpy=2.3.0 # https://github.com/spyder-ide/qtpy/blob/master/CHANGELOG.md
     - pip:
