@@ -131,7 +131,7 @@ async function downloadRcc(
             throw new Error("Currently only Linux amd64 is supported.");
         }
     }
-    const RCC_VERSION = "v16.2.2";
+    const RCC_VERSION = "v16.5.0";
     const prefix = "https://downloads.robocorp.com/rcc/releases/" + RCC_VERSION;
     const url: string = prefix + relativePath;
     return await download(url, progress, token, location);
@@ -139,9 +139,9 @@ async function downloadRcc(
 
 // Note: python tests scan this file and get these contants, so, if the format
 // changes the (failing) test also needs to change.
-const BASENAME_PREBUILT_WIN_AMD64 = "d7d7ffb2111b07ec_windows_amd64.zip";
-const BASENAME_PREBUILT_DARWIN = "e9afe9a9859c06d0_darwin_amd64.zip";
-const BASENAME_PREBUILT_LINUX_AMD64 = "e17d580628cd7e79_linux_amd64.zip";
+const BASENAME_PREBUILT_WIN_AMD64 = "efdae8e85e764c4d_windows_amd64.zip";
+const BASENAME_PREBUILT_DARWIN = "6c7e9a9e6406d7a7_darwin_amd64.zip";
+const BASENAME_PREBUILT_LINUX_AMD64 = "1da952572a743207_linux_amd64.zip";
 
 function getBaseAsZipBasename() {
     let basename: string;
