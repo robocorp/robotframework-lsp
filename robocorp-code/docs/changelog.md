@@ -1,3 +1,13 @@
+New in 1.12.0 (2023-09-28)
+-----------------------------
+
+- RCC upgraded to to `v16.5.0`.
+- `robocorp-trustore` is now used (so, SSL should use certificates from the machine).
+- `ROBO TASKS OUTPUT` updated:
+    - It's now possible to click icon to show details (so, items without a message are also clickable)
+    - The copy to clipboard button for variables no longer hides variable content.
+
+
 New in 1.11.0 (2023-09-07)
 -----------------------------
 
