@@ -3,6 +3,8 @@ import time
 import weakref
 from typing import List, Optional, Tuple
 
+from retry import retry
+
 from playwright.sync_api import ElementHandle
 from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import Page
@@ -28,10 +30,9 @@ _SYNC_SINGLE_PICK_CODE = """
             // console.log('Picked', picked);
             resolve(picked);
         }
-        var singlePick = true;
-        Inspector.startPicker(callback, singlePick);
+        Inspector.startPicker(callback);
     });
-    
+
     return promise;
 }
 """
@@ -45,9 +46,9 @@ _ASYNC_MULTI_PICK_CODE = """
         // console.log('Picked', picked);
         on_picked(picked);
     }
-    
-    var singlePick = false;
-    Inspector.startPicker(callback, singlePick);
+
+    var nonStopRun = true;
+    Inspector.startPicker(callback, true);
 }
 """
 
@@ -126,20 +127,26 @@ class WebInspector:
         self.loop()
 
         page = self._page
+        log.debug("Page is: {page}")
         if page is None or page.is_closed():
             from robocorp_code.playwright import robocorp_browser
 
+            log.debug(f"Page is None or Closed. Creating a new one...")
             page = robocorp_browser.page()
             self._page = page
 
             weak_self = weakref.ref(self)
 
             def on_picked(*args, **kwargs):
+                log.debug(f"Picked item: {kwargs}")
                 s = weak_self()
                 if s is not None:
                     s._on_picked(*args, **kwargs)
+                else:
+                    log.debug(f"Inspector instance was lost...")
 
             try:
+                log.debug(f"Exposing function on_picked on page...")
                 page.expose_function("on_picked", on_picked)
             except PlaywrightError:
                 self._page = None
@@ -153,6 +160,7 @@ class WebInspector:
             page.on("close", mark_closed)
             page.on("crash", mark_closed)
 
+        log.debug(f"Returning page: {page}")
         return page
 
     def start_log_console(self):
@@ -229,13 +237,12 @@ class WebInspector:
 
         Note: the `locators` may be None if the user makes some navigation.
 
-        Note: if already picking this will not do anything (only one picker
-              callback can be registered at a time).
+        Note: if already picking this will not do anything (only one picker callback can be registered at a time).
         """
         self._check_thread()
         self._picking = True
         assert self.inject_picker(
-            "pick_async"
+            "pick (async)"
         ), "Unable to make pick. Picker not injected."
 
         page = self.page()
@@ -321,6 +328,7 @@ class WebInspector:
             return True
         return False
 
+    @retry(IOError, tries=5, delay=1, backoff=2, max_delay=4)
     def inject_picker(self, reason: str, page=None) -> bool:
         """
         Ensures that the picker is injected. It's ok to call it multiple times.
@@ -332,7 +340,7 @@ class WebInspector:
             if page is None:
                 page = self.page()
                 if page is None:
-                    return False
+                    raise IOError("Page is NONE")
 
             log.debug(f"Picker was not injected (injecting now. Reason: {reason}).")
             page.evaluate(_load_resource("inspector.js"))
@@ -349,4 +357,4 @@ class WebInspector:
             return True
         except Exception:
             log.exception("Error injecting picker.")
-            return False
+            raise IOError("Error injecting picker.")

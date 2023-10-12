@@ -20,8 +20,9 @@ export type IAppsType = IApps.LOCATOR_MANAGER | IApps.WEB_PICKER;
 
 export type IManagerCommands = { type: "delete"; name: string } | { type: "rename"; name: string };
 export type IWebPickerCommands =
-    | { type: "openBrowser" }
-    | { type: "pick" }
+    | { type: "startPicking" }
+    | { type: "stopPicking" }
+    | { type: "delete"; ids: string[] }
     | { type: "save"; locator: Locator }
     | { type: "validate"; locator: Locator };
 
