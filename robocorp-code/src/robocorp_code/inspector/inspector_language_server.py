@@ -16,14 +16,6 @@ class InspectorLanguageServer:
         self._inspector_server_manager = InspectorServerManager(weakref.ref(self))
 
     # webInspectorCloseBrowser -> m_web_inspector_close_browser
-
-    # webInspectorStartPicking
-    def m_web_inspector_start_picking(self, **params):
-
-        # send locator from picking to webview
-        pass
-
-
     def m_web_inspector_close_browser(self, **params):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         inspector_api_client.send_sync_message("closeBrowser", {})
@@ -94,3 +86,7 @@ class InspectorLanguageServer:
         inspector_api_client.send_sync_message(
             "startPick", {"url_if_new": url, "wait": True}
         )
+
+    def m_web_inspector_stop_pick(self, **params):
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        inspector_api_client.send_sync_message("stopPick", {"wait": True})

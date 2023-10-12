@@ -56,8 +56,8 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
     panel.webview.html = getWebviewContent(locatorsMap);
 
     context.subscriptions.push(
-        langServer.onNotification("$/webPick", () => {
-            OUTPUT_CHANNEL.appendLine(`WebPick ${arguments}`);
+        langServer.onNotification("$/webPick", (values) => {
+            OUTPUT_CHANNEL.appendLine(`> Receiving:picked.element: ${JSON.stringify(values)}`);
             // panel.webview.postMessage(webPickEvent);
         })
     );
@@ -73,19 +73,24 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
                 case IMessageType.REQUEST:
                     const command = message.command;
                     if (message.app === IApps.WEB_PICKER) {
-                        if (command["type"] === "openBrowser") {
-                            const pickResponse = await langServer.sendRequest("webInspectorOpenBrowser");
-                            OUTPUT_CHANNEL.appendLine(`response: ${JSON.stringify(pickResponse)}`);
-                        } else if (command["type"] === "pick") {
+                        if (command["type"] === "startPicking") {
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: Open Browser`);
+                            const openBrowserResponse = await langServer.sendRequest("webInspectorOpenBrowser");
+                            OUTPUT_CHANNEL.appendLine(`openBrowserResponse: ${JSON.stringify(openBrowserResponse)}`);
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: Start Picker`);
                             const pickResponse = await langServer.sendRequest("webInspectorStartPick");
-                            OUTPUT_CHANNEL.appendLine(`response: ${JSON.stringify(pickResponse)}`);
+                            OUTPUT_CHANNEL.appendLine(`pickResponse: ${JSON.stringify(pickResponse)}`);
                         }
-                        const response: IResponseMessage = {
-                            id: message.id,
-                            app: message.app,
-                            type: "response" as IMessageType.RESPONSE,
-                        };
-                        panel.webview.postMessage(response);
+                        if (command["type"] === "stopPicking") {
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: Stop Picker`);
+                            await langServer.sendRequest("webInspectorStopPick");
+                        }
+                        // const response: IResponseMessage = {
+                        //     id: message.id,
+                        //     app: message.app,
+                        //     type: "response" as IMessageType.RESPONSE,
+                        // };
+                        // panel.webview.postMessage(response);
                     }
                     // OUTPUT_CHANNEL.appendLine(`request: ${JSON.stringify(message)}`);
                     // const response: IResponseMessage = {

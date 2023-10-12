@@ -190,6 +190,22 @@ class _MakeFullLocatorsCommand(_BaseCommand):
         self._send_pick(full_locators)
 
 
+class _AsyncStopCommand(_BaseCommand):
+    # The async pick is only done when playwright is in the loop, so,
+    # this needs to be small.
+    loop_timeout = 1 / 15
+
+    def __init__(self):
+        super().__init__()
+
+    def __call__(self, web_inspector_thread: _WebInspectorThread):
+        web_inspector = web_inspector_thread.web_inspector
+        if not web_inspector:
+            return
+
+        web_inspector.stop_pick_async()
+
+
 class InspectorApi(PythonLanguageServer):
     """
     This is a custom server. It uses the same message-format used in the language
@@ -232,6 +248,9 @@ class InspectorApi(PythonLanguageServer):
 
     def m_start_pick(self, url_if_new: str = "", wait: bool = False) -> None:
         self._enqueue(_AsyncPickCommand(self._endpoint, url_if_new), wait)
+
+    def m_stop_pick(self, wait: bool = False) -> None:
+        self._enqueue(_AsyncStopCommand(), wait)
 
     def m_close_browser(self, wait: bool = False) -> None:
         self._enqueue(_CloseBrowserCommand(), wait)

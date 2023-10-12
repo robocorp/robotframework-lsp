@@ -1,2 +1,995 @@
-/*! For license information please see inspector.js.LICENSE.txt */
-(()=>{"use strict";var e={526:(e,t,n)=>{var i;let r,o;function a(e,t){if(e.nodeType!==Node.ELEMENT_NODE)throw new Error("Can't generate CSS selector for non-element node type.");if("html"===e.tagName.toLowerCase())return"html";const n={root:document.body,idName:e=>!0,className:e=>!0,tagName:e=>!0,attr:(e,t)=>!1,seedMinLength:1,optimizedMinLength:2,threshold:1e3,maxNumberOfTries:1e4};r=Object.assign(Object.assign({},n),t),o=function(e,t){return e.nodeType===Node.DOCUMENT_NODE?e:e===t.root?e.ownerDocument:e}(r.root,n);let a=l(e,i.All,(()=>l(e,i.Two,(()=>l(e,i.One)))));if(a){const t=P(N(a,e));return t.length>0&&(a=t[0]),c(a)}throw new Error("Selector was not found.")}function l(e,t,n){let o=null,a=[],l=e,c=0;for(;l&&l!==r.root.parentElement;){let e=E(h(l))||E(...f(l))||E(...g(l))||E(m(l))||[{name:"*",penalty:3}];const s=v(l);if(t===i.All)s&&(e=e.concat(e.filter(b).map((e=>p(e,s)))));else if(t===i.Two)e=e.slice(0,1),s&&(e=e.concat(e.filter(b).map((e=>p(e,s)))));else if(t===i.One){const[t]=e=e.slice(0,1);s&&b(t)&&(e=[p(t,s)])}for(let t of e)t.level=c;if(a.push(e),a.length>=r.seedMinLength&&(o=u(a,n),o))break;l=l.parentElement,c++}return o||(o=u(a,n)),o}function u(e,t){const n=P(k(e));if(n.length>r.threshold)return t?t():null;for(let e of n)if(d(e))return e;return null}function c(e){let t=e[0],n=t.name;for(let i=1;i<e.length;i++){const r=e[i].level||0;n=t.level===r-1?`${e[i].name} > ${n}`:`${e[i].name} ${n}`,t=e[i]}return n}function s(e){return e.map((e=>e.penalty)).reduce(((e,t)=>e+t),0)}function d(e){switch(o.querySelectorAll(c(e)).length){case 0:throw new Error(`Can't select any node with this selector: ${c(e)}`);case 1:return!0;default:return!1}}function h(e){const t=e.getAttribute("id");return t&&r.idName(t)?{name:"#"+T(t,{isIdentifier:!0}),penalty:0}:null}function f(e){const t=Array.from(e.attributes).filter((e=>r.attr(e.name,e.value)));return t.map((e=>({name:"["+T(e.name,{isIdentifier:!0})+'="'+T(e.value)+'"]',penalty:.5})))}function g(e){return Array.from(e.classList).filter(r.className).map((e=>({name:"."+T(e,{isIdentifier:!0}),penalty:1})))}function m(e){const t=e.tagName.toLowerCase();return r.tagName(t)?{name:t,penalty:2}:null}function v(e){const t=e.parentNode;if(!t)return null;let n=t.firstChild;if(!n)return null;let i=0;for(;n&&(n.nodeType===Node.ELEMENT_NODE&&i++,n!==e);)n=n.nextSibling;return i}function p(e,t){return{name:e.name+`:nth-child(${t})`,penalty:e.penalty+1}}function b(e){return"html"!==e.name&&!e.name.startsWith("#")}function E(...e){const t=e.filter(y);return t.length>0?t:null}function y(e){return null!=e}function*k(e,t=[]){if(e.length>0)for(let n of e[0])yield*k(e.slice(1,e.length),t.concat(n));else yield t}function P(e){return Array.from(e).sort(((e,t)=>s(e)-s(t)))}function*N(e,t,n={counter:0,visited:new Map}){if(e.length>2&&e.length>r.optimizedMinLength)for(let i=1;i<e.length-1;i++){if(n.counter>r.maxNumberOfTries)return;n.counter+=1;const o=[...e];o.splice(i,1);const a=c(o);if(n.visited.has(a))return;d(o)&&w(o,t)&&(yield o,n.visited.set(a,!0),yield*N(o,t,n))}}function w(e,t){return o.querySelector(c(e))===t}n.d(t,{I:()=>S}),function(e){e[e.All=0]="All",e[e.Two=1]="Two",e[e.One=2]="One"}(i||(i={}));const x=/[ -,\.\/:-@\[-\^`\{-~]/,_=/[ -,\.\/:-@\[\]\^`\{-~]/,L=/(^|\\+)?(\\[A-F0-9]{1,6})\x20(?![a-fA-F0-9\x20])/g,C={escapeEverything:!1,isIdentifier:!1,quotes:"single",wrap:!1};function T(e,t={}){const n=Object.assign(Object.assign({},C),t);"single"!=n.quotes&&"double"!=n.quotes&&(n.quotes="single");const i="double"==n.quotes?'"':"'",r=n.isIdentifier,o=e.charAt(0);let a="",l=0;const u=e.length;for(;l<u;){const t=e.charAt(l++);let o,c=t.charCodeAt(0);if(c<32||c>126){if(c>=55296&&c<=56319&&l<u){const t=e.charCodeAt(l++);56320==(64512&t)?c=((1023&c)<<10)+(1023&t)+65536:l--}o="\\"+c.toString(16).toUpperCase()+" "}else o=n.escapeEverything?x.test(t)?"\\"+t:"\\"+c.toString(16).toUpperCase()+" ":/[\t\n\f\r\x0B]/.test(t)?"\\"+c.toString(16).toUpperCase()+" ":"\\"==t||!r&&('"'==t&&i==t||"'"==t&&i==t)||r&&_.test(t)?"\\"+t:t;a+=o}return r&&(/^-[-\d]/.test(a)?a="\\-"+a.slice(1):/\d/.test(o)&&(a="\\3"+o+" "+a.slice(1))),a=a.replace(L,(function(e,t,n){return t&&t.length%2?e:(t||"")+n})),!r&&n.wrap?i+a+i:a}var A=n(895),X=function(e){return e.nodeType==window.Node.ELEMENT_NODE},I=function(e){return"A"==e.nodeName},Z=function(e){return"LABEL"==e.nodeName},S=function(e){var t=this;this.build=function(e){A.bZ.debug("Building for Element:",e);var n=[["css:attributes",t.buildCssDataAttr],["id",t.buildId],["link",t.buildLinkText],["name",t.buildName],["css",t.buildCssFinder],["xpath:link-text",t.buildXPathLink],["xpath:image",t.buildXPathImg],["xpath:attributes",t.buildXPathAttr],["xpath:relative-id",t.buildXPathIdRelative],["xpath:href",t.buildXPathHref],["xpath:position",t.buildXPathPosition],["xpath:inner-text",t.buildXPathInnerText],["xpath:input-label",t.buildXPathInputLabel]],i=[];return n.forEach((function(t){var n=t[0],r=t[1];try{var o=r(e);o&&("string"==typeof o?i.push([n,o]):o.forEach((function(e){return i.push([n,e])})))}catch(e){A.bZ.error("Failed to build '".concat(n,"': ").concat(e))}})),i},this.logValidation=function(e,t){return e?A.bZ.debug("Selector validation PASSED for:",t):A.bZ.debug("Selector validation FAILED for:",t),e},this.validateId=function(e){return null!==document.getElementById(e)},this.validateName=function(e){return null!==document.getElementsByName(e)},this.validateXPath=function(e){return null!==document.evaluate(e,document,null,XPathResult.ANY_TYPE,null)},this.validateCSS=function(e){return null!==document.querySelector(e)},this.getSelectorAsObject=function(e){return{strategy:e[0].split(":",1)[0],value:e[1]}},this.getElementByXPath=function(e){return document.evaluate(e,document,null,XPathResult.FIRST_ORDERED_NODE_TYPE,null).singleNodeValue},this.getXPathFromParent=function(e){var n="/"+e.nodeName.toLowerCase(),i=t.getNodeNumber(e);return i>0&&(n+="["+(i+1)+"]"),n},this.getNodeNumber=function(e){for(var t,n=(null===(t=e.parentNode)||void 0===t?void 0:t.childNodes)||[],i=0,r=0;r<n.length;r++){var o=n[r];if(o.nodeName==e.nodeName){if(o==e)return i;i++}}return 0},this.getUniqueXPath=function(e,n){if(n!=t.getElementByXPath(e))for(var i=0,r=n.ownerDocument.evaluate(e,n.ownerDocument,null,XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,null).snapshotLength;i<r;i++){var o="("+e+")["+(i+1)+"]";if(n==t.getElementByXPath(o))return o}return e},this.getXPathValue=function(e){if(e.indexOf("'")<0)return"'"+e+"'";if(e.indexOf('"')<0)return'"'+e+'"';for(var t="concat(",n="",i=!1;!i;){var r=e.indexOf("'"),o=e.indexOf('"');if(r<0){t+="'"+e+"'",i=!0;break}if(o<0){t+='"'+e+'"',i=!0;break}o<r?(t+="'"+(n=e.substring(0,r))+"'",e=e.substring(n.length)):(t+='"'+(n=e.substring(0,o))+'"',e=e.substring(n.length)),t+=","}return t+")"},this.buildCssDataAttr=function(e){for(var t=["data-test","data-test-id"],n=0;n<t.length;n++){var i=t[n],r=e.getAttribute(i);if(r)return"css=*["+i+'="'+r+'"]'}return null},this.buildId=function(e){return e.hasAttribute("id")&&t.logValidation(t.validateId(e.id),"id:"+e.id)?e.id:null},this.buildLinkText=function(e){if(!I(e))return null;var t=e.textContent||"";return t.match(/^\s*$/)?null:t.replace(/\xA0/g," ").replace(/^\s*(.*?)\s*$/,"$1")},this.buildName=function(e){if(e.hasAttribute("name")){var n=e.getAttribute("name");if(n&&t.logValidation(t.validateName(n),"name:"+n))return n}return null},this.buildCssFinder=function(e){var n=a(e);return n&&t.logValidation(t.validateCSS(n),"css:"+n)?n:null},this.buildXPathLink=function(e){if(!I(e))return null;var n=e.textContent||"";if(n.match(/^\s*$/))return null;var i="//a[contains(text(),'"+n.replace(/^\s+/,"").replace(/\s+$/,"")+"')]",r=t.getUniqueXPath(i,e);return r&&t.logValidation(t.validateXPath(r),"xpath:"+r)?r:null},this.buildXPathImg=function(e){if("IMG"!=e.nodeName)return null;var n="";if(e.alt)n="//img[@alt="+t.getXPathValue(e.alt)+"]";else if(e.title)n="//img[@title="+t.getXPathValue(e.title)+"]";else{if(!e.src)return null;n="//img[contains(@src,"+t.getXPathValue(e.src)+")]"}var i=t.getUniqueXPath(n,e);return i&&t.logValidation(t.validateXPath(i),"xpath:"+i)?i:null},this.buildXPathAttr=function(e){var n=["id","name","value","type","action","onclick"],i=function(n,i,r){for(var o="//"+n+"[",a=0;a<i.length;a++){a>0&&(o+=" and ");var l=i[a];o+="@"+l+"="+t.getXPathValue(r[l])}return o+="]",t.getUniqueXPath(o,e)};if(!e.attributes)return null;for(var r={},o=e.attributes,a=0;a<o.length;a++){var l=o[a];r[l.name]=l.value}var u=[];for(a=0;a<n.length;a++){var c=n[a];if(r[c]){u.push(c);var s=i(e.nodeName.toLowerCase(),u,r);if(e==t.getElementByXPath(s)&&s&&t.logValidation(t.validateXPath(s),"xpath:"+s))return s}}return null},this.buildXPathIdRelative=function(e){for(var n="",i=e;i;){var r=i.parentNode;if(!r)return null;if(n=t.getXPathFromParent(i)+n,X(r)&&r.getAttribute("id")){var o="//"+r.nodeName.toLowerCase()+"[@id="+t.getXPathValue(r.getAttribute("id")||"")+"]"+n,a=t.getUniqueXPath(o,e);if(a&&t.logValidation(t.validateXPath(a),"xpath:"+a))return a}i=r}return null},this.buildXPathHref=function(e){if(!e.hasAttribute("href"))return null;var n,i=e.getAttribute("href")||"";if(!i)return null;n=i.search(/^http?:\/\//)>=0?"//a[@href="+t.getXPathValue(i)+"]":"//a[contains(@href, "+t.getXPathValue(i)+")]";var r=t.getUniqueXPath(n,e);return r&&t.logValidation(t.validateXPath(r),"xpath:"+r)?r:null},this.buildXPathPosition=function(e){for(var n="",i=e;i;){var r=i.parentNode,o="/"+(n=r?t.getXPathFromParent(i)+n:"/"+i.nodeName.toLowerCase()+n);if(e==t.getElementByXPath(o)&&o&&t.logValidation(t.validateXPath(o),"xpath:"+o))return o;i=r}return null},this.buildXPathInnerText=function(e){if(!(e instanceof HTMLElement&&e.innerText))return null;var n="//"+e.nodeName.toLowerCase()+"[contains(.,"+t.getXPathValue(e.innerText)+")]",i=t.getUniqueXPath(n,e);return i&&t.logValidation(t.validateXPath(i),"xpath:"+i)?n:null},this.buildXPathInputLabel=function(e){if("INPUT"!=e.nodeName)return null;for(var n,i=document.getElementsByTagName("LABEL"),r={},o=0;o<i.length;o++){var a=i[o];Z(a)&&a.htmlFor&&document.getElementById(a.htmlFor)&&(r[a.htmlFor]=a)}if(e.id&&Object.prototype.hasOwnProperty.call(e,"id"))n=r[e.id];else{var l=e.parentNode;if(!l)return null;var u=[],c=l.childNodes;for(o=0;o<c.length;o++){var s=c[o];Z(s)&&u.push(s)}if(1!==u.length)return null;n=u[0]}var d="//label[contains(.,"+t.getXPathValue(n.innerText)+")]/../input",h=t.getUniqueXPath(d,e);return h&&t.logValidation(t.validateXPath(h),"xpath:"+h)?h:null},this.window=e}},895:(e,t,n)=>{n.d(t,{bZ:()=>a,gw:()=>l,C5:()=>u,B9:()=>c});var i=n(526),r=n(308),o=function(e,t){var n=this;this.setApp=function(e){n.app=e},this.setOnPick=function(e){n.onPick=e},this.setBuilder=function(e){n.builder=e},this.addInfoBox=function(){var e=document.createElement("div");e.id="inspector-info-box",n.infoBox=e,document.body.appendChild(n.infoBox)},this._showPick=function(e,t){var i=e.target;i!==t&&(n._removeHighlights(),i instanceof Element&&("recorder"===n.app?(0,r.g6)(e,n.builder,{type:"verify",value:void 0})&&n._addHighlight(i):n._addHighlight(i),t=i))},this._showDivInfo=function(e){e.target instanceof HTMLElement&&n.infoBox&&n.builder&&(n.infoBox.textContent="No element to target",n.infoBox.style.left=e.pageX-8+"px",n.infoBox.style.top=e.pageY-20+"px")},this._addHighlight=function(e){a.debug("Add highlight: ",e),e.setAttribute("data-inspector-highlight","")},this._removeHighlights=function(){a.debug("Removing highlight...");for(var e=document.querySelectorAll("[data-inspector-highlight]"),t=0;t<e.length;t++)e[t].removeAttribute("data-inspector-highlight")},this._pickElement=function(e){var t;a.debug("Picking Element:",e),e.preventDefault(),e.stopPropagation();var i=e.target;if(i instanceof HTMLElement||i instanceof SVGElement)try{var r=null===(t=n.builder)||void 0===t?void 0:t.build(i);a.debug("Built locators:",r),"function"==typeof n.onPick?(a.debug("Calling callback:",n.onPick),n.onPick(r)):a.error("The onPick function is not set")}catch(e){a.error(e)}finally{n.singlePick&&n._removeAll()}},this._cancelPick=function(e){var t=e||window.event;"Escape"!==t.key&&27!==t.keyCode||(a.debug("Canceling Pick:",e),n._removeAll(),"function"==typeof n.onPick&&n.onPick())},this._removeAll=function(){a.debug("Removing all...");var e=document.getElementById("inspector-frame");e&&document.body.removeChild(e);var t=document.getElementById("inspector-info-box");t&&document.body.removeChild(t),document.removeEventListener("mousemove",n._showPick,!0),document.removeEventListener("click",n._pickElement,!0),document.removeEventListener("keydown",n._cancelPick,!0),n._removeHighlights()},this.builder=e,this.app=t||"picker",this.singlePick=!0},a={info:console.log,debug:console.debug,error:console.error},l=function(e){return new Promise((function(t){return setTimeout(t,e)}))},u=function(e){a.debug("Focusing on element:",e),e.scrollIntoView({behavior:"smooth",block:"center",inline:"nearest"});var t=document.createElement("div"),n=document.documentElement.getBoundingClientRect(),i=e.getBoundingClientRect();t.id="inspector-focus",t.style.left=i.left-n.left+"px",t.style.top=i.top-n.top+"px",t.style.width=i.width+"px",t.style.height=i.height+"px",document.body.appendChild(t),setTimeout((function(){document.body.removeChild(t)}),500)},c=function(){a.debug("Setting error state...");var e=document.getElementById("inspector-frame")||document.createElement("div");e.className="error",setTimeout((function(){a.debug("Resetting error state..."),e.className="recorder"}),1250)};window.Inspector=new function(){var e=this;this.startPicker=function(t,n){void 0===n&&(n=!0),a.debug("Starting picker..."),e.onPick=t,e.picker.setOnPick(e.onPick),e.picker.singlePick=n,e.picker._removeHighlights();var i=document.getElementById("inspector-frame")||document.createElement("div");i.id="inspector-frame",i.className="picker",document.body.appendChild(i),document.addEventListener("mousemove",e.picker._showPick,!0),document.addEventListener("click",e.picker._pickElement,!0),document.addEventListener("keydown",e.picker._cancelPick,!0)},this.highlightElements=function(t){a.debug("Highlighting elements:",t);for(var n=0;n<t.length;n++)e.picker._addHighlight(t[n])},this.describeElements=function(e){a.debug("Describing elements:",e);for(var t=[],n=0;n<e.length;n++){var i=e[n].cloneNode(!1).outerHTML;t.push(i)}return t},this.removeHighlights=function(){a.debug("Removing highlights"),e.picker._removeHighlights()},this.cancelPick=function(){a.debug("Cancelling pick and removing highlights"),e.picker._removeAll()},this.focusElement=function(e){return u(e)},this.recordEvent=function(t){return a.debug("Recording event..."),e.recorder.recordEvent(t)},this.stopRecording=function(){a.debug("Stopping recording..."),window.InspectorStop=!0,e.recorder.stop()},this.builder=new i.I(window),this.picker=new o(this.builder),this.recorder=new r.KN(this.builder,this.picker),this.currentPick=void 0,this.onPick=void 0;var t=document.getElementById("inspector-style")||document.createElement("style");t.id="inspector-style",t.type="text/css",document.head.appendChild(t)}},308:(e,t,n)=>{n.d(t,{KN:()=>v,g6:()=>d});var i=function(){return i=Object.assign||function(e){for(var t,n=1,i=arguments.length;n<i;n++)for(var r in t=arguments[n])Object.prototype.hasOwnProperty.call(t,r)&&(e[r]=t[r]);return e},i.apply(this,arguments)};function r(e,t,n,i){return new(n||(n=Promise))((function(r,o){function a(e){try{u(i.next(e))}catch(e){o(e)}}function l(e){try{u(i.throw(e))}catch(e){o(e)}}function u(e){var t;e.done?r(e.value):(t=e.value,t instanceof n?t:new n((function(e){e(t)}))).then(a,l)}u((i=i.apply(e,t||[])).next())}))}function o(e,t){var n,i,r,o,a={label:0,sent:function(){if(1&r[0])throw r[1];return r[1]},trys:[],ops:[]};return o={next:l(0),throw:l(1),return:l(2)},"function"==typeof Symbol&&(o[Symbol.iterator]=function(){return this}),o;function l(l){return function(u){return function(l){if(n)throw new TypeError("Generator is already executing.");for(;o&&(o=0,l[0]&&(a=0)),a;)try{if(n=1,i&&(r=2&l[0]?i.return:l[0]?i.throw||((r=i.return)&&r.call(i),0):i.next)&&!(r=r.call(i,l[1])).done)return r;switch(i=0,r&&(l=[2&l[0],r.value]),l[0]){case 0:case 1:r=l;break;case 4:return a.label++,{value:l[1],done:!1};case 5:a.label++,i=l[1],l=[0];continue;case 7:l=a.ops.pop(),a.trys.pop();continue;default:if(!((r=(r=a.trys).length>0&&r[r.length-1])||6!==l[0]&&2!==l[0])){a=0;continue}if(3===l[0]&&(!r||l[1]>r[0]&&l[1]<r[3])){a.label=l[1];break}if(6===l[0]&&a.label<r[1]){a.label=r[1],r=l;break}if(r&&a.label<r[2]){a.label=r[2],a.ops.push(l);break}r[2]&&a.ops.pop(),a.trys.pop();continue}l=t.call(e,a)}catch(e){l=[6,e],i=0}finally{n=r=0}if(5&l[0])throw l[1];return{value:l[0]?l[1]:void 0,done:!0}}([l,u])}}}Object.create,Object.create,"function"==typeof SuppressedError&&SuppressedError;var a=n(895),l=["name","title","id","for","href","class"],u=function(e){return e.nodeType===Node.ELEMENT_NODE},c=function(e){return["text","file","select"].includes(e)},s=function(e){var t=e.tagName.toLowerCase();if(a.bZ.debug("Classify tag:",t),"input"===t){var n=e;switch(a.bZ.debug("Element from input:",n),n.type){case"password":case"email":case"tel":case"url":case"number":case"search":case"text":case"time":case"date":case"datetime-local":case"week":case"month":case"color":return{type:"text",value:n.value};case"radio":return{type:"radio",value:n.value};case"checkbox":return{type:"checkbox",value:n.checked};case"file":return{type:"file",value:n.value};case"submit":case"image":case"range":case"reset":return{type:n.type,value:void 0}}}else{if("textarea"===t)return n=e,a.bZ.debug("Element from textarea:",n),{type:"text",value:n.value};if("select"===t)return n=e,a.bZ.debug("Element from select:",n),{type:"select",value:n.value};if("a"===t)return n=e,a.bZ.debug("Element from a:",n),{type:"a",value:n.href};if("button"===t)return n=e,a.bZ.debug("Element from button:",n),{type:"button",value:n.value};if("function"==typeof e.onclick||"function"==typeof e.onmousedown)return a.bZ.debug("Element from unknown element with onClick function:",e),{type:"reset",value:void 0}}a.bZ.debug("ERROR - Element could not be classified")},d=function(e,t,n){try{a.bZ.debug("Classifying event:",e);var i=e.target;if(!(i instanceof HTMLElement||i instanceof SVGElement))return void a.bZ.debug("Element not HTMLElement:",i);var r,o=t.build(i).map((function(e){return t.getSelectorAsObject(e)}));return a.bZ.debug("Selectors (mapped) from builder:",o),0===o.length?void a.bZ.debug("Skipping committing due to no selectors"):(r=g.parseNode(i,o,l,n),a.bZ.debug("Element attributes:",r),r?"text"===r.type&&""===r.value?(a.bZ.debug("Skipping saving empty text event"),{selectors:[],node:void 0,skipError:!0}):{selectors:o,node:r}:void a.bZ.debug("Skipping committing due to no relevant attributes"))}catch(e){return void a.bZ.debug("Could not classify event due to error",e)}},h={_getIndex:function(e){var t=!1,n=0,i=0;if(!e.parentNode)return 0;for(var r=e.parentNode.childNodes,o=0;o<r.length;o++){r[o]===e&&(t=!0);var a=r[o];u(a)&&a.tagName===e.tagName&&(n+=1,i=t?i:i+1)}return n>1?i+1:0},_buildAttributes:function(e,t){return t.map((function(t){var n,i;return(i="className"===t?e.className.length>0?e.className.split(" "):null:"index"===t?1:e.getAttribute(t))?((n={})["".concat(t)]=i,n):null})).filter((function(e){return e}))},build:function(e,t,n){var i;if(!e)return n;if(!e.parentNode)return n;if(e.nodeType===Node.DOCUMENT_NODE)return n;var r=this._buildAttributes(e,t);return n.push(((i={})["".concat(e.tagName.toLowerCase())]=r,i)),this.build(e.parentNode,t,n)}},f={build:function(e,t,n){var i=this,r=e[0],o=Object.keys(r)[0],a=r[o].reduce((function(e,t){return""===e?i._getSubpath(e,t,o):e}),""),l="/".concat(a);if(!t)return l;if(this._found(["@id","@for"],l))return l;if(this._found(["@name"],l)&&this._found(["select"],n))return l;var u=this._getIndex(l,t),c=u.count,s=u.index;return c>1&&s>1?"xpath=(".concat(l,")[").concat(s,"]"):l},_found:function(e,t){return e.some((function(e){return t.includes(e)}))},_getIndex:function(e,t){for(var n,i=1,r=1,o=document.evaluate(".".concat(e),document.body,null,XPathResult.ORDERED_NODE_ITERATOR_TYPE,null);n=o.iterateNext();)n===t&&(i=r),r+=1;return{count:r,index:i}},_getSubpath:function(e,t,n){return null!=t.for?"/".concat(n,'[@for="').concat(t.for,'"]'):null!=t.class&&"number"!=typeof t.class&&t.class.length>0?"/".concat(n,'[@class="').concat(t.class,'"]'):null!=t.title?"/".concat(n,'[@title="').concat(t.title,'"]'):null!=t.href?"/".concat(n,'[@href="').concat(t.href,'"]'):null!=t.name?"/".concat(n,'[@name="').concat(t.name,'"]'):null!=t.id?"/".concat(n,'[@id="').concat(t.id,'"]'):null!=t.index?"/".concat(n):""}},g={parseNode:function(e,t,n,r){if(void 0!==e){var o=r||s(e);void 0===o&&e.parentElement&&(o=s(e.parentElement),e=e.parentElement);var a=h.build(e,n,[]),l=m();return void 0!==o?i(i({},o),{selectors:t,time:l,path:f.build(a,e,o.type||"default")}):void 0}}},m=function(){return(new Date).getTime()},v=function(e,t){var n,l=this;this.recordEvent=function(e){l._removeListeners(),l.actionsList=[];var t=document.getElementById("inspector-frame");l.lock.isLocked||t||((t=document.createElement("div")).id="inspector-frame",t.className="recorder",document.body.appendChild(t)),l.callback=e,l._addListeners()},this.stop=function(){l.callback&&l.callback({actionType:"stop",actions:void 0,url:document.URL}),l.picker._removeAll(),l._removeListeners()},this._addListeners=function(){document.addEventListener("mousemove",l.picker._showPick,!0),document.addEventListener("click",l._handleClick,!0),document.addEventListener("change",l._handleChange,!0),document.addEventListener("keydown",l._handleKeyboardEvent,!0),document.addEventListener("contextmenu",l._handleContextMenu,!0),document.addEventListener("input",l._handleInputChange,!0)},this._removeListeners=function(){document.removeEventListener("mousemove",l.picker._showPick,!0),document.removeEventListener("change",l._handleChange,!0),document.removeEventListener("click",l._handleClick,!0),document.removeEventListener("keydown",l._handleKeyboardEvent,!0),document.removeEventListener("contextmenu",l._handleContextMenu,!0),document.removeEventListener("input",l._handleInputChange,!0)},this._handleInputChange=function(e){a.bZ.debug("INPUT EVENT:",e),l.inputEvent=e},this._handleContextMenu=function(e){var t=e.target;if(t instanceof HTMLElement||t instanceof SVGElement)try{e.preventDefault();var n=d(e,l.builder,{type:"verify",value:void 0});if(void 0===n||void 0===n.node)return void((null==n?void 0:n.skipError)||(0,a.B9)());var r=i(i({},n.node),{trigger:"click"});a.bZ.debug("Appending wait action:",r),l.actionsList.push(r),a.bZ.debug("Event list:",l.actionsList),(0,a.C5)(t),a.bZ.debug("Passing click event through callback -> WAITING..."),l._sendEvents()}catch(e){a.bZ.debug("Skipping committing wait due to error",e),(0,a.B9)()}},this._handleChange=function(e){a.bZ.debug("CHANGE EVENT:",e);var t=e.target;if(t instanceof HTMLElement||t instanceof SVGElement){var n=d(e,l.builder);if(void 0!==n&&void 0!==n.node){a.bZ.debug("Is recording in progress:",l.lock.isLocked),l.lock.acquire();try{if(a.bZ.debug("Is handled by change?:",c(n.node.type)),c(n.node.type)){var u=document.getElementById("inspector-frame")||document.createElement("div");u.className="recorder_in_progress",a.bZ.debug("Preventing propagation..."),e.preventDefault(),e.stopPropagation();var s=i(i({},n.node),{trigger:"change"});a.bZ.debug("Appending change action",s),l.actionsList.push(s),a.bZ.debug("Event list:",l.actionsList),a.bZ.debug("Passing change event through callback"),l._sendEvents(),r(l,void 0,void 0,(function(){var e=this;return o(this,(function(t){switch(t.label){case 0:return[4,(0,a.gw)(750).then((function(){u.className="recorder",e.lock.release()}))];case 1:return[2,t.sent()]}}))}))}else a.bZ.debug("Skipping committing change - will be handled by onClick handler")}catch(e){a.bZ.debug("Skipping committing change due to error",e),(0,a.B9)()}l.inputEvent=void 0,l.lock.release()}else(null==n?void 0:n.skipError)||(0,a.B9)()}},this._handleClick=function(e){return r(l,void 0,void 0,(function(){var t,n,l,u,s,h=this;return o(this,(function(f){if(a.bZ.info("CLICK EVENT:",e),t=e.target,this.inputEvent&&!this.lock.isLocked&&this._handleChange(this.inputEvent),!(t instanceof HTMLElement||t instanceof SVGElement))return[2];if(-1===e.detail)return a.bZ.debug("Dummy click. Exiting..."),[2];if(void 0===(n=d(e,this.builder))||void 0===n.node)return(null==n?void 0:n.skipError)||(0,a.B9)(),[2];a.bZ.debug("Is recording in progress:",this.lock.isLocked),this.lock.acquire();try{a.bZ.debug("Is handled by change?:",c(n.node.type)),c(n.node.type)?(a.bZ.debug("Skipping committing click - will be handled by onChange handler"),this.lock.release()):((l=document.getElementById("inspector-frame")||document.createElement("div")).className="recorder_in_progress",a.bZ.debug("Preventing propagation..."),e.preventDefault(),e.stopPropagation(),u=i(i({},n.node),{trigger:"click"}),a.bZ.debug("Appending click action:",u),this.actionsList.push(u),a.bZ.debug("Event list:",this.actionsList),a.bZ.debug("Passing click event through callback -> RECORDING..."),this._sendEvents(),s=function(){return r(h,void 0,void 0,(function(){var e=this;return o(this,(function(n){switch(n.label){case 0:return[4,(0,a.gw)(750).then((function(){a.bZ.debug("Pushing dummy event..."),l.className="recorder",t.dispatchEvent(new MouseEvent("click",{bubbles:!0,cancelable:!0,view:window,detail:-1})),e.lock.release()}))];case 1:return[2,n.sent()]}}))}))},s())}catch(e){a.bZ.debug("Skipping committing click due to error",e),(0,a.B9)()}return[2]}))}))},this._handleKeyboardEvent=function(e){var t=e||window.event;"Escape"!==t.key&&27!==t.keyCode||l.stop(),"Tab"!==t.key&&9!==t.keyCode||!l.inputEvent||l._handleChange(l.inputEvent)},this._sendEvents=function(e){l.callback?(l.callback({actionType:"event",actions:l.actionsList,url:document.URL}),a.bZ.debug("Successfully invoked callback:",{actionType:"event",action:l.actionsList,url:document.URL}),e&&(l.actionsList=[])):a.bZ.debug("No callback function defined")},this.builder=e,this.picker=t,this.picker.setApp("recorder"),this.actionsList=[],this.lock={isLocked:n=!1,acquire:function(){return r(void 0,void 0,void 0,(function(){var e,t;return o(this,(function(i){switch(i.label){case 0:a.bZ.debug("Acquiring lock..."),e=!1,t=0,i.label=1;case 1:return t<200?[4,(0,a.gw)(10).then((function(){!0===n&&(e=!0)}))]:[3,4];case 2:if(i.sent(),e)return[3,4];i.label=3;case 3:return t++,[3,1];case 4:if(!e)throw Error("Timeout while acquiring lock");return n=!0,[2]}}))}))},release:function(){return r(void 0,void 0,void 0,(function(){return o(this,(function(e){return a.bZ.debug("Releasing lock..."),n=!1,[2]}))}))}},this.inputEvent=void 0;var u=document.getElementById("inspector-style")||document.createElement("style");u.id="inspector-style",u.type="text/css",document.head.appendChild(u)}}},t={};function n(i){var r=t[i];if(void 0!==r)return r.exports;var o=t[i]={exports:{}};return e[i](o,o.exports,n),o.exports}n.d=(e,t)=>{for(var i in t)n.o(t,i)&&!n.o(e,i)&&Object.defineProperty(e,i,{enumerable:!0,get:t[i]})},n.o=(e,t)=>Object.prototype.hasOwnProperty.call(e,t),n(895)})();
+"use strict";
+var U = Object.defineProperty,
+    F = Object.defineProperties;
+var G = Object.getOwnPropertyDescriptors;
+var I = Object.getOwnPropertySymbols;
+var Y = Object.prototype.hasOwnProperty,
+    j = Object.prototype.propertyIsEnumerable;
+var X = (i, r, e) => (r in i ? U(i, r, { enumerable: !0, configurable: !0, writable: !0, value: e }) : (i[r] = e)),
+    p = (i, r) => {
+        for (var e in r || (r = {})) Y.call(r, e) && X(i, e, r[e]);
+        if (I) for (var e of I(r)) j.call(r, e) && X(i, e, r[e]);
+        return i;
+    },
+    y = (i, r) => F(i, G(r));
+var b = (i, r, e) =>
+    new Promise((n, t) => {
+        var s = (c) => {
+                try {
+                    a(e.next(c));
+                } catch (u) {
+                    t(u);
+                }
+            },
+            o = (c) => {
+                try {
+                    a(e.throw(c));
+                } catch (u) {
+                    t(u);
+                }
+            },
+            a = (c) => (c.done ? n(c.value) : Promise.resolve(c.value).then(s, o));
+        a((e = e.apply(i, r)).next());
+    });
+let h, S;
+function z(i, r) {
+    if (i.nodeType !== Node.ELEMENT_NODE) throw new Error("Can't generate CSS selector for non-element node type.");
+    if (i.tagName.toLowerCase() === "html") return "html";
+    const e = {
+        root: document.body,
+        idName: (t) => !0,
+        className: (t) => !0,
+        tagName: (t) => !0,
+        attr: (t, s) => !1,
+        seedMinLength: 1,
+        optimizedMinLength: 2,
+        threshold: 1e3,
+        maxNumberOfTries: 1e4,
+    };
+    (h = p(p({}, e), r)), (S = K(h.root, e));
+    let n = k(i, "all", () => k(i, "two", () => k(i, "one", () => k(i, "none"))));
+    if (n) {
+        const t = V(M(n, i));
+        return t.length > 0 && (n = t[0]), L(n);
+    } else throw new Error("Selector was not found.");
+}
+function K(i, r) {
+    return i.nodeType === Node.DOCUMENT_NODE ? i : i === r.root ? i.ownerDocument : i;
+}
+function k(i, r, e) {
+    let n = null,
+        t = [],
+        s = i,
+        o = 0;
+    for (; s; ) {
+        let a = N(W(s)) || N(...J(s)) || N(...Q(s)) || N(Z(s)) || [R()];
+        const c = ee(s);
+        if (r == "all") c && (a = a.concat(a.filter(w).map((u) => P(u, c))));
+        else if (r == "two") (a = a.slice(0, 1)), c && (a = a.concat(a.filter(w).map((u) => P(u, c))));
+        else if (r == "one") {
+            const [u] = (a = a.slice(0, 1));
+            c && w(u) && (a = [P(u, c)]);
+        } else r == "none" && ((a = [R()]), c && (a = [P(a[0], c)]));
+        for (let u of a) u.level = o;
+        if ((t.push(a), t.length >= h.seedMinLength && ((n = T(t, e)), n))) break;
+        (s = s.parentElement), o++;
+    }
+    return n || (n = T(t, e)), !n && e ? e() : n;
+}
+function T(i, r) {
+    const e = V(O(i));
+    if (e.length > h.threshold) return r ? r() : null;
+    for (let n of e) if (D(n)) return n;
+    return null;
+}
+function L(i) {
+    let r = i[0],
+        e = r.name;
+    for (let n = 1; n < i.length; n++) {
+        const t = i[n].level || 0;
+        r.level === t - 1 ? (e = `${i[n].name} > ${e}`) : (e = `${i[n].name} ${e}`), (r = i[n]);
+    }
+    return e;
+}
+function A(i) {
+    return i.map((r) => r.penalty).reduce((r, e) => r + e, 0);
+}
+function D(i) {
+    const r = L(i);
+    switch (S.querySelectorAll(r).length) {
+        case 0:
+            throw new Error(`Can't select any node with this selector: ${r}`);
+        case 1:
+            return !0;
+        default:
+            return !1;
+    }
+}
+function W(i) {
+    const r = i.getAttribute("id");
+    return r && h.idName(r) ? { name: "#" + CSS.escape(r), penalty: 0 } : null;
+}
+function J(i) {
+    return Array.from(i.attributes)
+        .filter((e) => h.attr(e.name, e.value))
+        .map((e) => ({ name: `[${CSS.escape(e.name)}="${CSS.escape(e.value)}"]`, penalty: 0.5 }));
+}
+function Q(i) {
+    return Array.from(i.classList)
+        .filter(h.className)
+        .map((e) => ({ name: "." + CSS.escape(e), penalty: 1 }));
+}
+function Z(i) {
+    const r = i.tagName.toLowerCase();
+    return h.tagName(r) ? { name: r, penalty: 2 } : null;
+}
+function R() {
+    return { name: "*", penalty: 3 };
+}
+function ee(i) {
+    const r = i.parentNode;
+    if (!r) return null;
+    let e = r.firstChild;
+    if (!e) return null;
+    let n = 0;
+    for (; e && (e.nodeType === Node.ELEMENT_NODE && n++, e !== i); ) e = e.nextSibling;
+    return n;
+}
+function P(i, r) {
+    return { name: i.name + `:nth-child(${r})`, penalty: i.penalty + 1 };
+}
+function w(i) {
+    return i.name !== "html" && !i.name.startsWith("#");
+}
+function N(...i) {
+    const r = i.filter(te);
+    return r.length > 0 ? r : null;
+}
+function te(i) {
+    return i != null;
+}
+function* O(i, r = []) {
+    if (i.length > 0) for (let e of i[0]) yield* O(i.slice(1, i.length), r.concat(e));
+    else yield r;
+}
+function V(i) {
+    return [...i].sort((r, e) => A(r) - A(e));
+}
+function* M(i, r, e = { counter: 0, visited: new Map() }) {
+    if (i.length > 2 && i.length > h.optimizedMinLength)
+        for (let n = 1; n < i.length - 1; n++) {
+            if (e.counter > h.maxNumberOfTries) return;
+            e.counter += 1;
+            const t = [...i];
+            t.splice(n, 1);
+            const s = L(t);
+            if (e.visited.has(s)) return;
+            D(t) && ne(t, r) && (yield t, e.visited.set(s, !0), yield* M(t, r, e));
+        }
+}
+function ne(i, r) {
+    return S.querySelector(L(i)) === r;
+}
+const ie = ["name", "title", "id", "for", "href", "class"],
+    l = { info: console.log, debug: console.debug, error: console.error },
+    re = () => new Date().getTime(),
+    se = (i) => i.nodeType === Node.ELEMENT_NODE,
+    C = (i) => ["text", "file", "select"].includes(i),
+    B = (i) => {
+        const r = i.tagName.toLowerCase();
+        if ((l.debug("[elementClassifier] Classify tag:", r), r === "input")) {
+            const e = i;
+            switch ((l.debug("[elementClassifier] Element from input:", e), e.type)) {
+                case "password":
+                    return { type: "text", value: e.value };
+                case "radio":
+                    return { type: "radio", value: e.value };
+                case "checkbox":
+                    return { type: "checkbox", value: e.checked };
+                case "file":
+                    return { type: "file", value: e.value };
+                case "email":
+                case "tel":
+                case "url":
+                case "number":
+                case "search":
+                case "text":
+                case "time":
+                case "date":
+                case "datetime-local":
+                case "week":
+                case "month":
+                case "color":
+                    return { type: "text", value: e.value };
+                case "submit":
+                case "image":
+                case "range":
+                case "reset":
+                    return { type: e.type, value: void 0 };
+            }
+        } else if (r === "textarea") {
+            const e = i;
+            return l.debug("[elementClassifier] Element from textarea:", e), { type: "text", value: e.value };
+        } else if (r === "select") {
+            const e = i;
+            return l.debug("[elementClassifier] Element from select:", e), { type: "select", value: e.value };
+        } else if (r === "a") {
+            const e = i;
+            return l.debug("[classifyRawElement] Element from a:", e), { type: "a", value: e.href };
+        } else if (r === "button") {
+            const e = i;
+            return l.debug("[elementClassifier] Element from button:", e), { type: "button", value: e.value };
+        } else if (typeof i.onclick == "function" || typeof i.onmousedown == "function") {
+            l.debug("[elementClassifier] Element from unknown element with onClick function:", i); //! TODO: This might need replacement with a better object
+            return { type: "reset", value: void 0 };
+        }
+        l.debug("[elementClassifier] ERROR - Element could not be classified");
+    },
+    oe = {
+        parseNode(i, r, e, n) {
+            if (
+                (l.debug("Parsing Node:", i, "selectors:", r, "attributesArray:", e, "forceClassified:", n),
+                i !== void 0)
+            ) {
+                l.debug("[scanner.parseNode] Creating hash...");
+                let t = n || B(i);
+                t === void 0 && i.parentElement && ((t = B(i.parentElement)), (i = i.parentElement)),
+                    l.debug("[scanner.parseNode] Hash:", t);
+                const s = le.build(i, e, []);
+                l.debug("[scanner.parseNode] Tree:", s);
+                const o = re();
+                if (t !== void 0) {
+                    const a = ae.build(s, i, t.type || "default");
+                    l.debug("[scanner.parseNode] Built path:", a);
+                    const c = y(p({}, t), { selectors: r, time: o, path: a });
+                    return l.debug("[scanner.parseNode] Parsed Node:", c), c;
+                }
+                l.error("[scanner.parseNode] Parsing failed. No Hash!");
+                return;
+            }
+            l.error("[scanner.parseNode] Parsing failed. No Node!");
+        },
+    },
+    x = (i, r, e) => {
+        try {
+            l.debug("[classifyEvent] Classifying event:", i);
+            const n = i.target;
+            if (!(n instanceof HTMLElement || n instanceof SVGElement)) {
+                l.debug("Element not HTMLElement:", n);
+                return;
+            }
+            const t = r.build(n).map((o) => r.getSelectorAsObject(o));
+            if ((l.debug("[classifyEvent] Selectors (mapped) from builder:", t), t.length === 0)) {
+                l.debug("[classifyEvent] Skipping committing due to no selectors");
+                return;
+            }
+            const s = oe.parseNode(n, t, ie, e);
+            if ((l.debug("[classifyEvent] Element attributes:", s), !s)) {
+                l.debug("[classifyEvent] Skipping committing due to no relevant attributes");
+                return;
+            }
+            return s.type === "text" && s.value === ""
+                ? (l.debug("[classifyEvent] Skipping saving empty text event"),
+                  { selectors: [], node: void 0, skipError: !0 })
+                : { selectors: t, node: s };
+        } catch (n) {
+            l.error("[classifyEvent] Could not classify event due to error:", n);
+            return;
+        }
+    },
+    le = {
+        _getIndex(i) {
+            let r = !1,
+                e = 0,
+                n = 0;
+            if (!i.parentNode) return 0;
+            const t = i.parentNode.childNodes;
+            for (let s = 0; s < t.length; s++) {
+                t[s] === i && (r = !0);
+                const o = t[s];
+                se(o) && o.tagName === i.tagName && ((e += 1), (n = r ? n : n + 1));
+            }
+            return e > 1 ? n + 1 : 0;
+        },
+        _buildAttributes(i, r) {
+            return r
+                .map((n) => {
+                    let t;
+                    return (
+                        n === "className"
+                            ? (t = i.className.length > 0 ? i.className.split(" ") : null)
+                            : n === "index"
+                            ? (t = 1)
+                            : (t = i.getAttribute(n)),
+                        t ? { [`${n}`]: t } : null
+                    );
+                })
+                .filter((n) => n);
+        },
+        build(i, r, e) {
+            if (
+                (l.debug("[builder.build] Building for element:", i, "with attributes:", r, "and pathList:", e),
+                !i || !i.parentNode || i.nodeType === Node.DOCUMENT_NODE)
+            )
+                return e;
+            const n = this._buildAttributes(i, r);
+            return e.push({ [`${i.tagName.toLowerCase()}`]: n }), this.build(i.parentNode, r, e);
+        },
+    },
+    ae = {
+        build(i, r, e) {
+            const n = i[0],
+                t = Object.keys(n)[0],
+                s = n[t].reduce((u, d) => (u === "" ? this._getSubpath(u, d, t) : u), ""),
+                o = `/${s}`;
+            if (
+                (l.debug("[locator.build] Building for Item:", n, "tag:", t, "p:", s, "path:", o),
+                !r ||
+                    this._found(["@id", "@for"], o) ||
+                    (this._found(["@name"], o) && this._found(["select"], e)) ||
+                    o === "/")
+            )
+                return o;
+            const { count: a, index: c } = this._getIndex(o, r);
+            return a > 1 && c > 1 ? `xpath=(${o})[${c}]` : o;
+        },
+        _found(i, r) {
+            return i.some((e) => r.includes(e));
+        },
+        _getIndex(i, r) {
+            let e = 1,
+                n = 1,
+                t;
+            const s = document.evaluate(`.${i}`, document.body, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
+            for (; t === s.iterateNext(); ) t === r && (e = n), (n += 1);
+            return { count: n, index: e };
+        },
+        _getSubpath(i, r, e) {
+            return r.for != null
+                ? `/${e}[@for="${r.for}"]`
+                : r.class != null && typeof r.class != "number" && r.class.length > 0
+                ? `/${e}[@class="${r.class}"]`
+                : r.title != null
+                ? `/${e}[@title="${r.title}"]`
+                : r.href != null
+                ? `/${e}[@href="${r.href}"]`
+                : r.name != null
+                ? `/${e}[@name="${r.name}"]`
+                : r.id != null
+                ? `/${e}[@id="${r.id}"]`
+                : r.index != null
+                ? `/${e}`
+                : "";
+        },
+    },
+    m = {
+        isElement: (i) => i.nodeType === window.Node.ELEMENT_NODE,
+        isImage: (i) => i.nodeName.toUpperCase() === "IMG",
+        isLink: (i) => i.nodeName.toUpperCase() === "A",
+        isInput: (i) => i.nodeName.toUpperCase() === "INPUT",
+        isLabel: (i) => i.nodeName.toUpperCase() === "LABEL",
+    };
+class ce {
+    constructor(r) {
+        (this.build = (e) => {
+            l.debug("[builder] Building for Element:", e);
+            const n = [
+                    ["css:attributes", this.buildCssDataAttr],
+                    ["id", this.buildId],
+                    ["link", this.buildLinkText],
+                    ["name", this.buildName],
+                    ["css", this.buildCssFinder],
+                    ["xpath:link-text", this.buildXPathLink],
+                    ["xpath:image", this.buildXPathImg],
+                    ["xpath:attributes", this.buildXPathAttr],
+                    ["xpath:relative-id", this.buildXPathIdRelative],
+                    ["xpath:href", this.buildXPathHref],
+                    ["xpath:position", this.buildXPathPosition],
+                    ["xpath:inner-text", this.buildXPathInnerText],
+                    ["xpath:input-label", this.buildXPathInputLabel],
+                ],
+                t = [];
+            return (
+                n.forEach(([s, o]) => {
+                    try {
+                        const a = o(e);
+                        a && (typeof a == "string" ? t.push([s, a]) : a.forEach((c) => t.push([s, c])));
+                    } catch (a) {
+                        l.error(`[builder] Failed to build '${s}': ${a}`);
+                    }
+                }),
+                t
+            );
+        }),
+            (this.logValidation = (e, n) => (
+                e
+                    ? l.debug("[builder] Selector validation PASSED for:", n)
+                    : l.debug("[builder] Selector validation FAILED for:", n),
+                e
+            )),
+            (this.validateId = (e) => document.getElementById(e) !== null),
+            (this.validateName = (e) => document.getElementsByName(e) !== null),
+            (this.validateXPath = (e) => document.evaluate(e, document, null, XPathResult.ANY_TYPE, null) !== null),
+            (this.validateCSS = (e) => document.querySelector(e) !== null),
+            (this.getSelectorAsObject = (e) => ({ strategy: e[0].split(":", 1)[0], value: e[1] })),
+            (this.getElementByXPath = (e) =>
+                document.evaluate(e, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue),
+            (this.getXPathFromParent = (e) => {
+                let n = "/" + e.nodeName.toLowerCase();
+                const t = this.getNodeNumber(e);
+                return t > 0 && (n += "[" + (t + 1) + "]"), n;
+            }),
+            (this.getNodeNumber = (e) => {
+                var s;
+                const n = ((s = e.parentNode) == null ? void 0 : s.childNodes) || [];
+                let t = 0;
+                for (let o = 0; o < n.length; o++) {
+                    const a = n[o];
+                    if (a.nodeName === e.nodeName) {
+                        if (a === e) return t;
+                        t++;
+                    }
+                }
+                return 0;
+            }),
+            (this.getUniqueXPath = (e, n) => {
+                if (n !== this.getElementByXPath(e)) {
+                    const t = n.ownerDocument.evaluate(
+                        e,
+                        n.ownerDocument,
+                        null,
+                        XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
+                        null
+                    );
+                    for (let s = 0, o = t.snapshotLength; s < o; s++) {
+                        const a = "(" + e + ")[" + (s + 1) + "]";
+                        if (n === this.getElementByXPath(a)) return a;
+                    }
+                }
+                return e;
+            }),
+            (this.getXPathValue = (e) => {
+                if (e.indexOf("'") < 0) return "'" + e + "'";
+                if (e.indexOf('"') < 0) return '"' + e + '"';
+                {
+                    let n = "concat(",
+                        t = "",
+                        s = !1;
+                    for (; !s; ) {
+                        const o = e.indexOf("'"),
+                            a = e.indexOf('"');
+                        if (o < 0) {
+                            (n += "'" + e + "'"), (s = !0);
+                            break;
+                        } else if (a < 0) {
+                            (n += '"' + e + '"'), (s = !0);
+                            break;
+                        } else
+                            a < o
+                                ? ((t = e.substring(0, o)), (n += "'" + t + "'"), (e = e.substring(t.length)))
+                                : ((t = e.substring(0, a)), (n += '"' + t + '"'), (e = e.substring(t.length)));
+                        n += ",";
+                    }
+                    return (n += ")"), n;
+                }
+            }),
+            (this.buildCssDataAttr = (e) => {
+                const n = ["data-test", "data-test-id"];
+                for (let t = 0; t < n.length; t++) {
+                    const s = n[t],
+                        o = e.getAttribute(s);
+                    if (o) return "css=*[" + s + '="' + o + '"]';
+                }
+                return null;
+            }),
+            (this.buildId = (e) =>
+                e.hasAttribute("id") && this.logValidation(this.validateId(e.id), "id:" + e.id) ? e.id : null),
+            (this.buildLinkText = (e) => {
+                if (!m.isLink(e)) return null;
+                const n = e.textContent || "";
+                return n.match(/^\s*$/) ? null : n.replace(/\xA0/g, " ").replace(/^\s*(.*?)\s*$/, "$1");
+            }),
+            (this.buildName = (e) => {
+                if (e.hasAttribute("name")) {
+                    const n = e.getAttribute("name");
+                    if (n && this.logValidation(this.validateName(n), "name:" + n)) return n;
+                }
+                return null;
+            }),
+            (this.buildCssFinder = (e) => {
+                const n = z(e);
+                return n && this.logValidation(this.validateCSS(n), "css:" + n) ? n : null;
+            }),
+            (this.buildXPathLink = (e) => {
+                if (!m.isLink(e)) return null;
+                const n = e.textContent || "";
+                if (n.match(/^\s*$/)) return null;
+                const s = "//a[contains(text(),'" + n.replace(/^\s+/, "").replace(/\s+$/, "") + "')]",
+                    o = this.getUniqueXPath(s, e);
+                return o && this.logValidation(this.validateXPath(o), "xpath:" + o) ? o : null;
+            }),
+            (this.buildXPathImg = (e) => {
+                if (!m.isImage(e)) return null;
+                let n = "";
+                if (e.alt) n = "//img[@alt=" + this.getXPathValue(e.alt) + "]";
+                else if (e.title) n = "//img[@title=" + this.getXPathValue(e.title) + "]";
+                else if (e.src) n = "//img[contains(@src," + this.getXPathValue(e.src) + ")]";
+                else return null;
+                const t = this.getUniqueXPath(n, e);
+                return t && this.logValidation(this.validateXPath(t), "xpath:" + t) ? t : null;
+            }),
+            (this.buildXPathAttr = (e) => {
+                const n = ["id", "name", "value", "type", "action", "onclick"],
+                    t = (c, u, d) => {
+                        let g = "//" + c + "[";
+                        for (let f = 0; f < u.length; f++) {
+                            f > 0 && (g += " and ");
+                            const E = u[f],
+                                q = this.getXPathValue(d[E]);
+                            g += "@" + E + "=" + q;
+                        }
+                        return (g += "]"), this.getUniqueXPath(g, e);
+                    };
+                if (!e.attributes) return null;
+                const s = {},
+                    o = e.attributes;
+                for (let c = 0; c < o.length; c++) {
+                    const u = o[c];
+                    s[u.name] = u.value;
+                }
+                const a = [];
+                for (let c = 0; c < n.length; c++) {
+                    const u = n[c];
+                    if (!s[u]) continue;
+                    a.push(u);
+                    const d = t(e.nodeName.toLowerCase(), a, s);
+                    if (e === this.getElementByXPath(d) && d && this.logValidation(this.validateXPath(d), "xpath:" + d))
+                        return d;
+                }
+                return null;
+            }),
+            (this.buildXPathIdRelative = (e) => {
+                let n = "",
+                    t = e;
+                for (; t; ) {
+                    const s = t.parentNode;
+                    if (!s) return null;
+                    if (((n = this.getXPathFromParent(t) + n), m.isElement(s) && s.getAttribute("id"))) {
+                        const o = s.nodeName.toLowerCase(),
+                            a = this.getXPathValue(s.getAttribute("id") || ""),
+                            c = "//" + o + "[@id=" + a + "]" + n,
+                            u = this.getUniqueXPath(c, e);
+                        if (u && this.logValidation(this.validateXPath(u), "xpath:" + u)) return u;
+                    }
+                    t = s;
+                }
+                return null;
+            }),
+            (this.buildXPathHref = (e) => {
+                if (!e.hasAttribute("href")) return null;
+                const n = e.getAttribute("href") || "";
+                if (!n) return null;
+                let t;
+                n.search(/^http?:\/\//) >= 0
+                    ? (t = "//a[@href=" + this.getXPathValue(n) + "]")
+                    : (t = "//a[contains(@href, " + this.getXPathValue(n) + ")]");
+                const s = this.getUniqueXPath(t, e);
+                return s && this.logValidation(this.validateXPath(s), "xpath:" + s) ? s : null;
+            }),
+            (this.buildXPathPosition = (e) => {
+                let n = "",
+                    t = e;
+                for (; t; ) {
+                    const s = t.parentNode;
+                    s ? (n = this.getXPathFromParent(t) + n) : (n = "/" + t.nodeName.toLowerCase() + n);
+                    const o = "/" + n;
+                    if (e === this.getElementByXPath(o) && o && this.logValidation(this.validateXPath(o), "xpath:" + o))
+                        return o;
+                    t = s;
+                }
+                return null;
+            }),
+            (this.buildXPathInnerText = (e) => {
+                if (!(e instanceof HTMLElement) || !e.innerText) return null;
+                const n = e.nodeName.toLowerCase(),
+                    t = this.getXPathValue(e.innerText),
+                    s = "//" + n + "[contains(.," + t + ")]",
+                    o = this.getUniqueXPath(s, e);
+                return o && this.logValidation(this.validateXPath(o), "xpath:" + o) ? s : null;
+            }),
+            (this.buildXPathInputLabel = (e) => {
+                if (!m.isInput(e)) return null;
+                const n = document.getElementsByTagName("LABEL"),
+                    t = {};
+                for (let u = 0; u < n.length; u++) {
+                    const d = n[u];
+                    m.isLabel(d) && d.htmlFor && document.getElementById(d.htmlFor) && (t[d.htmlFor] = d);
+                }
+                let s;
+                if (e.id && Object.prototype.hasOwnProperty.call(e, "id")) s = t[e.id];
+                else {
+                    const u = e.parentNode;
+                    if (!u) return null;
+                    const d = [],
+                        g = u.childNodes;
+                    for (let f = 0; f < g.length; f++) {
+                        const E = g[f];
+                        m.isLabel(E) && d.push(E);
+                    }
+                    if (d.length !== 1) return null;
+                    s = d[0];
+                }
+                const a = "//label[contains(.," + this.getXPathValue(s.innerText) + ")]/../input",
+                    c = this.getUniqueXPath(a, e);
+                return c && this.logValidation(this.validateXPath(c), "xpath:" + c) ? c : null;
+            }),
+            (this.window = r);
+    }
+}
+class ue {
+    constructor(r, e, n) {
+        (this.setApp = (t) => {
+            this.app = t;
+        }),
+            (this.setOnPick = (t) => {
+                this.onPick = t;
+            }),
+            (this.setBuilder = (t) => {
+                this.builder = t;
+            }),
+            (this.setNonStopRun = (t) => {
+                this.nonStopRun = t;
+            }),
+            (this.addInfoBox = () => {
+                const t = document.createElement("div");
+                (t.id = "inspector-info-box"), (this.infoBox = t), document.body.appendChild(this.infoBox);
+            }),
+            (this._showPick = (t, s) => {
+                const o = t.target;
+                o !== s &&
+                    (this._removeHighlights(),
+                    o instanceof Element &&
+                        (this.app === "recorder"
+                            ? x(t, this.builder, { type: "verify", value: void 0 }) && this._addHighlight(o)
+                            : this._addHighlight(o),
+                        (s = o)));
+            }),
+            (this._showDivInfo = (t) => {
+                t.target instanceof HTMLElement &&
+                    this.infoBox &&
+                    this.builder &&
+                    ((this.infoBox.textContent = "No element to target"),
+                    (this.infoBox.style.left = t.pageX - 8 + "px"),
+                    (this.infoBox.style.top = t.pageY - 20 + "px"));
+            }),
+            (this._addHighlight = (t) => {
+                l.debug("[picker] Adding highlight to: ", t), t.setAttribute("data-inspector-highlight", "");
+            }),
+            (this._removeHighlights = () => {
+                l.debug("[picker] Removing highlight...");
+                const t = document.querySelectorAll("[data-inspector-highlight]");
+                for (let s = 0; s < t.length; s++) t[s].removeAttribute("data-inspector-highlight");
+            }),
+            (this._pickElement = (t) => {
+                var o;
+                l.debug("[picker] Picking Element:", t), t.preventDefault(), t.stopPropagation();
+                const s = t.target;
+                if (s instanceof HTMLElement || s instanceof SVGElement)
+                    try {
+                        const a = (o = this.builder) == null ? void 0 : o.build(s);
+                        l.debug("[picker] Built locators:", a),
+                            typeof this.onPick == "function"
+                                ? (l.debug("[picker] Calling callback:", this.onPick), this.onPick(a))
+                                : l.error("[picker] The onPick function is not set");
+                    } catch (a) {
+                        l.error(a);
+                    } finally {
+                        this.nonStopRun || this._removeAll();
+                    }
+            }),
+            (this._cancelPick = (t) => {
+                l.debug("[picker] Canceling Pick:", t);
+                const s = t || window.event;
+                (s.key === "Escape" || s.keyCode === 27) &&
+                    (this._removeAll(), typeof this.onPick == "function" && this.onPick());
+            }),
+            (this._removeAll = () => {
+                l.debug("[picker] Removing all...");
+                const t = document.getElementById("inspector-frame");
+                t && document.body.removeChild(t);
+                const s = document.getElementById("inspector-info-box");
+                s && document.body.removeChild(s),
+                    document.removeEventListener("mousemove", this._showPick, !0),
+                    document.removeEventListener("click", this._pickElement, !0),
+                    document.removeEventListener("keydown", this._cancelPick, !0),
+                    this._removeHighlights();
+            }),
+            (this.builder = r),
+            (this.app = e || "picker"),
+            (this.nonStopRun = n);
+    }
+}
+const $ = 750,
+    de = () => {
+        let i = !1;
+        return {
+            isLocked: i,
+            acquire: () =>
+                b(exports, null, function* () {
+                    l.debug("Acquiring lock...");
+                    let n = !1;
+                    for (
+                        let t = 0;
+                        t < 200 &&
+                        (yield _(10).then(() => {
+                            i === !0 && (n = !0);
+                        }),
+                        !n);
+                        t++
+                    );
+                    if (!n) throw Error("Timeout while acquiring lock");
+                    i = !0;
+                }),
+            release: () =>
+                b(exports, null, function* () {
+                    l.debug("Releasing lock..."), (i = !1);
+                }),
+        };
+    };
+class he {
+    constructor(r, e) {
+        (this.recordEvent = (t) => {
+            this._removeListeners(), (this.actionsList = []);
+            let s = document.getElementById("inspector-frame");
+            !this.lock.isLocked &&
+                !s &&
+                ((s = document.createElement("div")),
+                (s.id = "inspector-frame"),
+                (s.className = "recorder"),
+                document.body.appendChild(s)),
+                (this.callback = t),
+                this._addListeners();
+        }),
+            (this.stop = () => {
+                this.callback && this.callback({ actionType: "stop", actions: void 0, url: document.URL }),
+                    this.picker._removeAll(),
+                    this._removeListeners();
+            }),
+            (this._addListeners = () => {
+                document.addEventListener("mousemove", this.picker._showPick, !0),
+                    document.addEventListener("click", this._handleClick, !0),
+                    document.addEventListener("change", this._handleChange, !0),
+                    document.addEventListener("keydown", this._handleKeyboardEvent, !0),
+                    document.addEventListener("contextmenu", this._handleContextMenu, !0),
+                    document.addEventListener("input", this._handleInputChange, !0);
+            }),
+            (this._removeListeners = () => {
+                document.removeEventListener("mousemove", this.picker._showPick, !0),
+                    document.removeEventListener("change", this._handleChange, !0),
+                    document.removeEventListener("click", this._handleClick, !0),
+                    document.removeEventListener("keydown", this._handleKeyboardEvent, !0),
+                    document.removeEventListener("contextmenu", this._handleContextMenu, !0),
+                    document.removeEventListener("input", this._handleInputChange, !0);
+            }),
+            (this._handleInputChange = (t) => {
+                l.debug("[recorder] Input Change Event:", t), (this.inputEvent = t);
+            }),
+            (this._handleContextMenu = (t) => {
+                const s = t.target;
+                if (s instanceof HTMLElement || s instanceof SVGElement)
+                    try {
+                        t.preventDefault();
+                        const o = x(t, this.builder, { type: "verify", value: void 0 });
+                        if (o === void 0 || o.node === void 0) {
+                            (o != null && o.skipError) || v();
+                            return;
+                        }
+                        const a = y(p({}, o.node), { trigger: "click" });
+                        l.debug("[recorder] Appending wait action:", a),
+                            this.actionsList.push(a),
+                            l.debug("[recorder] Event list:", this.actionsList),
+                            H(s),
+                            l.debug("[recorder] Passing click event through callback -> WAITING..."),
+                            this._sendEvents();
+                    } catch (o) {
+                        l.debug("[recorder] Skipping committing wait due to error", o), v();
+                    }
+            }),
+            (this._handleChange = (t) => {
+                l.debug("[recorder] Change Event:", t);
+                const s = t.target;
+                if (!(s instanceof HTMLElement || s instanceof SVGElement)) return;
+                const o = x(t, this.builder);
+                if (o === void 0 || o.node === void 0) {
+                    (o != null && o.skipError) || v();
+                    return;
+                }
+                l.debug("[recorder] Is recording in progress:", this.lock.isLocked), this.lock.acquire();
+                try {
+                    if ((l.debug("[recorder] Is handled by change?:", C(o.node.type)), C(o.node.type))) {
+                        const a = document.getElementById("inspector-frame") || document.createElement("div");
+                        (a.className = "recorder_in_progress"),
+                            l.debug("[recorder] Preventing propagation..."),
+                            t.preventDefault(),
+                            t.stopPropagation();
+                        const c = y(p({}, o.node), { trigger: "change" });
+                        l.debug("[recorder] Appending change action", c),
+                            this.actionsList.push(c),
+                            l.debug("[recorder] Event list:", this.actionsList),
+                            l.debug("[recorder] Passing change event through callback"),
+                            this._sendEvents(),
+                            (() =>
+                                b(this, null, function* () {
+                                    return yield _($).then(() => {
+                                        (a.className = "recorder"), this.lock.release();
+                                    });
+                                }))();
+                    } else l.debug("[recorder] Skipping committing change - will be handled by onClick handler");
+                } catch (a) {
+                    l.debug("[recorder] Skipping committing change due to error", a), v();
+                }
+                (this.inputEvent = void 0), this.lock.release();
+            }),
+            (this._handleClick = (t) =>
+                b(this, null, function* () {
+                    l.info("[recorder] Click Event:", t);
+                    const s = t.target;
+                    if (
+                        (this.inputEvent && !this.lock.isLocked && this._handleChange(this.inputEvent),
+                        !(s instanceof HTMLElement || s instanceof SVGElement))
+                    )
+                        return;
+                    if (t.detail === -1) {
+                        l.debug("[recorder] Dummy click. Exiting...");
+                        return;
+                    }
+                    const o = x(t, this.builder);
+                    if (o === void 0 || o.node === void 0) {
+                        (o != null && o.skipError) || v();
+                        return;
+                    }
+                    l.debug("[recorder] Is recording in progress:", this.lock.isLocked), this.lock.acquire();
+                    try {
+                        if ((l.debug("[recorder] Is handled by change?:", C(o.node.type)), C(o.node.type)))
+                            l.debug("[recorder] Skipping committing click - will be handled by onChange handler"),
+                                this.lock.release();
+                        else {
+                            const a = document.getElementById("inspector-frame") || document.createElement("div");
+                            (a.className = "recorder_in_progress"),
+                                l.debug("[recorder] Preventing propagation..."),
+                                t.preventDefault(),
+                                t.stopPropagation();
+                            const c = y(p({}, o.node), { trigger: "click" });
+                            l.debug("[recorder] Appending click action:", c),
+                                this.actionsList.push(c),
+                                l.debug("[recorder] Event list:", this.actionsList),
+                                l.debug("[recorder] Passing click event through callback -> RECORDING..."),
+                                this._sendEvents(),
+                                (() =>
+                                    b(this, null, function* () {
+                                        return yield _($).then(() => {
+                                            l.debug("[recorder] Pushing dummy event..."),
+                                                (a.className = "recorder"),
+                                                s.dispatchEvent(
+                                                    new MouseEvent("click", {
+                                                        bubbles: !0,
+                                                        cancelable: !0,
+                                                        view: window,
+                                                        detail: -1,
+                                                    })
+                                                ),
+                                                this.lock.release();
+                                        });
+                                    }))();
+                        }
+                    } catch (a) {
+                        l.debug("[recorder] Skipping committing click due to error", a), v();
+                    }
+                })),
+            (this._handleKeyboardEvent = (t) => {
+                const s = t || window.event;
+                (s.key === "Escape" || s.keyCode === 27) && this.stop(),
+                    (s.key === "Tab" || s.keyCode === 9) && this.inputEvent && this._handleChange(this.inputEvent);
+            }),
+            (this._sendEvents = (t) => {
+                this.callback
+                    ? (this.callback({ actionType: "event", actions: this.actionsList, url: document.URL }),
+                      l.debug("[recorder] Successfully invoked callback:", {
+                          actionType: "event",
+                          action: this.actionsList,
+                          url: document.URL,
+                      }),
+                      t && (this.actionsList = []))
+                    : l.debug("[recorder] No callback function defined");
+            }),
+            (this.builder = r),
+            (this.picker = e),
+            this.picker.setApp("recorder"),
+            (this.actionsList = []),
+            (this.lock = de()),
+            (this.inputEvent = void 0);
+        const n = document.getElementById("inspector-style") || document.createElement("style");
+        (n.id = "inspector-style"), (n.type = "text/css"), document.head.appendChild(n);
+    }
+}
+const _ = (i) =>
+        new Promise((r) => {
+            setTimeout(r, i);
+        }),
+    H = (i) => {
+        l.debug("Focusing on element:", i),
+            i.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+        const r = document.createElement("div"),
+            e = document.documentElement.getBoundingClientRect(),
+            n = i.getBoundingClientRect();
+        (r.id = "inspector-focus"),
+            (r.style.left = `${n.left - e.left}px`),
+            (r.style.top = `${n.top - e.top}px`),
+            (r.style.width = `${n.width}px`),
+            (r.style.height = `${n.height}px`),
+            document.body.appendChild(r),
+            setTimeout(() => {
+                document.body.removeChild(r);
+            }, 500);
+    },
+    v = () => {
+        l.debug("Setting error state...");
+        const i = document.getElementById("inspector-frame") || document.createElement("div");
+        (i.className = "error"),
+            setTimeout(() => {
+                l.debug("Resetting error state..."), (i.className = "recorder");
+            }, 1250);
+    };
+class ge {
+    constructor() {
+        (this.startPicker = (e, n) => {
+            l.debug("[inspector] Starting picker..."),
+                (this.onPickCallback = e),
+                l.debug("[inspector] Will User Pick Non-Stop?", n),
+                (this.nonStopRun = n),
+                this.picker.setNonStopRun(n),
+                this.picker.setOnPick(this.onPickCallback),
+                this.picker._removeHighlights();
+            const t = document.getElementById("inspector-frame") || document.createElement("div");
+            (t.id = "inspector-frame"),
+                (t.className = "picker"),
+                document.body.appendChild(t),
+                document.addEventListener("mousemove", this.picker._showPick, !0),
+                document.addEventListener("click", this.picker._pickElement, !0),
+                document.addEventListener("keydown", this.picker._cancelPick, !0);
+        }),
+            (this.highlightElements = (e) => {
+                l.debug("[inspector] Highlighting elements:", e);
+                for (let n = 0; n < e.length; n++) this.picker._addHighlight(e[n]);
+            }),
+            (this.describeElements = (e) => {
+                l.debug("[inspector] Describing elements:", e);
+                const n = [];
+                for (let t = 0; t < e.length; t++) {
+                    const s = e[t].cloneNode(!1).outerHTML;
+                    n.push(s);
+                }
+                return n;
+            }),
+            (this.removeHighlights = () => {
+                l.debug("[inspector] Removing highlights"), this.picker._removeHighlights();
+            }),
+            (this.cancelPick = () => {
+                l.debug("[inspector] Cancelling pick and removing highlights"), this.picker._removeAll();
+            }),
+            (this.focusElement = (e) => H(e)),
+            (this.recordEvent = (e) => (l.debug("[inspector] Recording event..."), this.recorder.recordEvent(e))),
+            (this.stopRecording = () => {
+                l.debug("[inspector] Stopping recording..."), (window.InspectorStop = !0), this.recorder.stop();
+            }),
+            (this.builder = new ce(window)),
+            (this.picker = new ue(this.builder)),
+            (this.recorder = new he(this.builder, this.picker)),
+            (this.nonStopRun = !1),
+            (this.currentPick = void 0),
+            (this.onPickCallback = void 0);
+        const r = document.getElementById("inspector-style") || document.createElement("style");
+        (r.id = "inspector-style"), (r.type = "text/css"), document.head.appendChild(r);
+    }
+}
+window.Inspector = new ge();
