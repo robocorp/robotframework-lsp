@@ -61,11 +61,11 @@
 }
 
 #inspector-frame.picker::after {
-    content: "Click element to select it";
+    content: "Click element to automate it | Press Shift+ESC to pause picking";
 }
 
 #inspector-frame.recorder::after {
-    content: "Click to record, right-click to wait for element, ESC to stop recording";
+    content: "Click to record | Right-Click to wait for element | Press ESC to stop recording";
 }
 
 #inspector-frame.recorder_in_progress::after {
@@ -78,7 +78,23 @@
     right: 0;
     bottom: 0;
     left: 0;
-    z-index: 999;
+    z-index: 999 !important;
+    box-shadow: inset 0 0 0 40px #7158f1;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+}
+
+#inspector-frame.picker_in_progress::after {
+    content: "Please wait while locator is being created...";
+}
+
+#inspector-frame.picker_in_progress {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 999 !important;
     box-shadow: inset 0 0 0 40px #7158f1;
     cursor: not-allowed !important;
     pointer-events: none !important;
@@ -95,8 +111,26 @@
     right: 0;
     bottom: 0;
     left: 0;
-    z-index: 999;
+    z-index: 999 !important;
     box-shadow: inset 0 0 0 8px #ef444a;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+}
+
+#inspector-frame.paused::after {
+    content: "Inspector paused! Press Shift+ESC to unpause.";
+    background: #f0dc20;
+    color: black;
+}
+
+#inspector-frame.paused {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 999 !important;
+    box-shadow: inset 0 0 0 0px #f0dc20;
     cursor: not-allowed !important;
     pointer-events: none !important;
 }
@@ -107,6 +141,7 @@
     font-size: 10px;
     padding: 2px 4px 2px 4px;
     position: absolute;
+    z-index: 999 !important;
     transform: translate(-50%, -50%);
     /* transition: 0.1s ease-out; */
 }
@@ -119,6 +154,7 @@
     background: #7158f1;
     display: inline-block;
     margin: 0 10px;
+    z-index: 999 !important;
 }
 
 /* Limit picking only to SVG element's root node */
