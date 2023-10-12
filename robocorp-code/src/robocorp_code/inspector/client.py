@@ -115,5 +115,8 @@ class InspectorApiClient(LanguageServerClientBase):
     def start_pick(self, wait=True):
         return self.send_sync_message("startPick", dict(wait=wait))
 
+    def stop_pick(self, wait=True):
+        return self.send_sync_message("stopPick", dict(wait=wait))
+
     def close_browser(self, wait=True):
         return self.send_sync_message("closeBrowser", dict(wait=wait))
