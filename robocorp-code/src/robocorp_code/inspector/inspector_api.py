@@ -1,6 +1,6 @@
 import threading
 from queue import Queue
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.protocols import IConfig, IEndPoint
@@ -166,17 +166,17 @@ class _AsyncPickCommand(_BaseCommand):
 
         endpoint = self.endpoint
 
-        def on_pick(locators: Optional[List[Tuple[str, str]]]):
-            web_inspector_thread.queue.put(_MakeFullLocatorsCommand(endpoint, locators))
+        def on_pick(locator: Dict):
+            web_inspector_thread.queue.put(_MakeFullLocatorsCommand(endpoint, locator))
 
         web_inspector.pick_async(on_pick)
 
 
 class _MakeFullLocatorsCommand(_BaseCommand):
-    def __init__(self, endpoint: IEndPoint, locators):
+    def __init__(self, endpoint: IEndPoint, locator):
         super().__init__()
         self.endpoint = endpoint
-        self.locators = locators
+        self.locator = locator
 
     def _send_pick(self, locators: LocatorNameToLocatorTypedDict):
         self.endpoint.notify("$/webPick", locators)
@@ -186,8 +186,8 @@ class _MakeFullLocatorsCommand(_BaseCommand):
         if not web_inspector:
             return
 
-        full_locators = web_inspector.make_full_locators(self.locators)
-        self._send_pick(full_locators)
+        # full_locators = web_inspector.make_full_locators(self.locator)
+        self._send_pick(self.locator)
 
 
 class _AsyncStopCommand(_BaseCommand):
