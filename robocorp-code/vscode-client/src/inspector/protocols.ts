@@ -16,6 +16,10 @@ export enum IApps {
     WEB_PICKER = "webPicker",
 }
 
+// =====================================
+// REQUESTS
+// =====================================
+
 export type IAppsType = IApps.LOCATOR_MANAGER | IApps.WEB_PICKER;
 
 export type IManagerCommands = { type: "delete"; name: string } | { type: "rename"; name: string };
@@ -32,6 +36,10 @@ export interface IRequestMessage {
     app: IAppsType;
     command: IManagerCommands | IWebPickerCommands;
 }
+
+// =====================================
+// RESPONSE
+// =====================================
 
 export type IManagerData = { type: "locators"; data: LocatorsMap };
 export type IWebPickerData = { type: "locator"; data: Locator };

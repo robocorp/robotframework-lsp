@@ -10,7 +10,7 @@ import * as vscode from "vscode";
 import { getExtensionRelativeFile, verifyFileExists } from "../files";
 import { OUTPUT_CHANNEL } from "../channel";
 import { getSelectedRobot } from "../viewsCommon";
-import { LocatorsMap } from "./types";
+import { BrowserLocator, LocatorsMap } from "./types";
 import { IApps, IMessage, IMessageType, IResponseMessage } from "./protocols";
 import { langServer } from "../extension";
 import { ActionResult, LocalRobotMetadataInfo } from "../protocols";
@@ -57,8 +57,17 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         langServer.onNotification("$/webPick", (values) => {
-            OUTPUT_CHANNEL.appendLine(`> Receiving:picked.element: ${JSON.stringify(values)}`);
-            // panel.webview.postMessage(webPickEvent);
+            const pickedLocator: BrowserLocator = JSON.stringify(values) as unknown as BrowserLocator;
+            OUTPUT_CHANNEL.appendLine(`> Receiving:picked.element: ${pickedLocator}`);
+            const response: IResponseMessage = {
+                type: IMessageType.RESPONSE,
+                app: IApps.WEB_PICKER,
+                data: {
+                    type: "locator",
+                    data: pickedLocator,
+                },
+            };
+            panel.webview.postMessage(response);
         })
     );
 
