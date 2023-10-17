@@ -1,7 +1,8 @@
 [data-inspector-highlight] {
-    outline: 1px dashed rgba(113, 88, 241, 0.5) !important;
+    outline: 1px dashed rgba(113, 88, 241, 0.3) !important;
     outline-offset: 2px !important;
-    box-shadow: 0px 0px 0px 2000px rgba(113, 88, 241, 0.5) inset !important;
+    box-shadow: 0px 0px 0px 2000px rgba(113, 88, 241, 0.3) inset !important;
+    cursor: pointer !important;
 }
 
 #inspector-focus {
@@ -118,7 +119,7 @@
 }
 
 #inspector-frame.paused::after {
-    content: "Inspector paused! Press Shift+ESC to unpause.";
+    content: "Inspector paused | Press Shift+ESC to start picking";
     background: #f0dc20;
     color: black;
 }
