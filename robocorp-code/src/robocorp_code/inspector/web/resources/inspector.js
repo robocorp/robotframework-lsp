@@ -7432,22 +7432,24 @@ class Ll {
                     var B;
                     u.debug("[picker] Picking Element:", n), n.preventDefault(), n.stopPropagation();
                     const s = n.target;
-                    if (s instanceof HTMLElement || s instanceof SVGElement)
+                    if (s instanceof HTMLElement || s instanceof SVGElement) {
+                        $.pickerSetSavingState(!0);
                         try {
-                            this._removeHighlights(), $.pickerSetSavingState(!0);
+                            this._removeHighlights();
                             const i = yield (B = this.builder) == null ? void 0 : B.buildLocator(s);
                             u.debug("[picker] Built locator:", i),
                                 typeof this.onPick == "function"
                                     ? (u.debug("[picker] Calling callback:", this.onPick), this.onPick(i))
-                                    : u.error("[picker] The onPick function is not set"),
-                                setTimeout(() => {
-                                    $.pickerSetSavingState();
-                                }, 1500);
+                                    : u.error("[picker] The onPick function is not set");
                         } catch (i) {
                             u.error(i);
                         } finally {
-                            this.nonStopRun || this._removeAll();
+                            setTimeout(() => {
+                                $.pickerSetSavingState();
+                            }, 1500),
+                                this.nonStopRun || this._removeAll();
                         }
+                    }
                 })),
             (this._checkCombination = (n) => {
                 u.debug("[picker] Canceling Pick:", n);
