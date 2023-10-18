@@ -48,13 +48,14 @@ export interface IResponseMessage {
     id: number;
     type: IMessageType.RESPONSE;
     app: IAppsType;
+    status: "success" | "failure";
+    message?: string;
     data?: IManagerData | IWebPickerData;
 }
 
 export interface IEventMessage {
     id: number;
     type: IMessageType.EVENT;
-    event: { type: "locatorsUpdate"; data: LocatorsMap };
+    event: { type: "locatorsUpdate"; status: "success" | "failure"; message?: string; data: LocatorsMap };
 }
-
 export type IMessage = IRequestMessage | IResponseMessage | IEventMessage;
