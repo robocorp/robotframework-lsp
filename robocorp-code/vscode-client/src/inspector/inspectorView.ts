@@ -58,10 +58,12 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         langServer.onNotification("$/webPick", (values) => {
             const pickedLocator: BrowserLocator = JSON.stringify(values) as unknown as BrowserLocator;
-            OUTPUT_CHANNEL.appendLine(`> Receiving:picked.element: ${pickedLocator}`);
+            OUTPUT_CHANNEL.appendLine(`> Receiving: picked.element: ${pickedLocator}`);
             const response: IResponseMessage = {
+                id: Date.now(),
                 type: IMessageType.RESPONSE,
                 app: IApps.WEB_PICKER,
+                status: "success",
                 data: {
                     type: "locator",
                     data: pickedLocator,
@@ -93,6 +95,20 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
                         if (command["type"] === "stopPicking") {
                             OUTPUT_CHANNEL.appendLine(`> Requesting: Stop Picker`);
                             await langServer.sendRequest("webInspectorStopPick");
+                        }
+                        if (command["type"] === "save") {
+                            OUTPUT_CHANNEL.appendLine(
+                                `> Requesting: Saving Locator: ${JSON.stringify(command["locator"])}`
+                            );
+                            const response: IResponseMessage = await langServer.sendRequest("webInspectorSaveLocator", {
+                                directory: directory,
+                                message: message,
+                            });
+
+                            OUTPUT_CHANNEL.appendLine(
+                                `> Requesting: Response from saving locator: ${JSON.stringify(response)}`
+                            );
+                            panel.webview.postMessage(response);
                         }
                         // const response: IResponseMessage = {
                         //     id: message.id,

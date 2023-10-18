@@ -178,8 +178,8 @@ class _MakeFullLocatorsCommand(_BaseCommand):
         self.endpoint = endpoint
         self.locator = locator
 
-    def _send_pick(self, locators: LocatorNameToLocatorTypedDict):
-        self.endpoint.notify("$/webPick", locators)
+    def _send_pick(self, locator: LocatorNameToLocatorTypedDict):
+        self.endpoint.notify("$/webPick", locator)
 
     def __call__(self, web_inspector_thread: _WebInspectorThread):
         web_inspector = web_inspector_thread.web_inspector
