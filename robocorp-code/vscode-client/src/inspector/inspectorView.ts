@@ -53,7 +53,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
             locatorsMap = JSON.parse(doc.getText()) as LocatorsMap;
         }
     }
-    panel.webview.html = getWebviewContent(locatorsMap);
+    panel.webview.html = getWebviewContent(directory, locatorsMap);
 
     context.subscriptions.push(
         langServer.onNotification("$/webPick", (values) => {
@@ -133,8 +133,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
     );
 }
 
-function getWebviewContent(jsonData: LocatorsMap): string {
-    const jsonDataStr = JSON.stringify(jsonData, null, 4);
+function getWebviewContent(directory: string, jsonData: LocatorsMap): string {
     const templateFile = getExtensionRelativeFile("../../vscode-client/templates/inspector.html", true);
     const data = readFileSync(templateFile, "utf8");
 
@@ -143,6 +142,7 @@ function getWebviewContent(jsonData: LocatorsMap): string {
     const end = "</script>";
     const endI = data.indexOf(end, startI);
 
+    const jsonDataStr = JSON.stringify({ location: directory, data: jsonData }, null, 4);
     const ret: string = data.substring(0, startI) + jsonDataStr + data.substring(endI);
     return ret;
 }
