@@ -16,20 +16,20 @@ export enum IApps {
     WEB_PICKER = "webPicker",
 }
 
+export type IAppsType = IApps.LOCATOR_MANAGER | IApps.WEB_PICKER;
 // =====================================
 // REQUESTS
 // =====================================
-
-export type IAppsType = IApps.LOCATOR_MANAGER | IApps.WEB_PICKER;
-
-export type IManagerCommands = { type: "delete"; name: string } | { type: "rename"; name: string };
+export type IManagerCommands = { type: "getLocators" } | { type: "delete"; name: string };
 export type IWebPickerCommands =
+    | { type: "getLocators" }
     | { type: "startPicking" }
     | { type: "stopPicking" }
     | { type: "delete"; ids: string[] }
     | { type: "save"; locator: Locator }
     | { type: "validate"; locator: Locator };
 
+// IResponseMessage - should be sent with an expectation of Response
 export interface IRequestMessage {
     id: number;
     type: IMessageType.REQUEST;
@@ -38,24 +38,28 @@ export interface IRequestMessage {
 }
 
 // =====================================
-// RESPONSE
+// RESPONSES
 // =====================================
-
-export type IManagerData = { type: "locators"; data: LocatorsMap };
-export type IWebPickerData = { type: "locator"; data: Locator };
-
+// IResponseMessage - should respond to a Request
 export interface IResponseMessage {
     id: number;
     type: IMessageType.RESPONSE;
     app: IAppsType;
     status: "success" | "failure";
     message?: string;
-    data?: IManagerData | IWebPickerData;
+    data?: Locator | LocatorsMap;
+    dataType?: "locator" | "locatorsMap";
 }
 
+// IResponseMessage - should be equidistant from Requests or Responses
 export interface IEventMessage {
     id: number;
     type: IMessageType.EVENT;
-    event: { type: "locatorsUpdate"; status: "success" | "failure"; message?: string; data: LocatorsMap };
+    event: {
+        type: "pickedLocator";
+        status: "success" | "failure";
+        message?: string;
+        data: Locator;
+    };
 }
 export type IMessage = IRequestMessage | IResponseMessage | IEventMessage;

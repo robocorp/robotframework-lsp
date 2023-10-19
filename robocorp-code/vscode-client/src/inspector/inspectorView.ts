@@ -11,7 +11,7 @@ import { getExtensionRelativeFile, verifyFileExists } from "../files";
 import { OUTPUT_CHANNEL } from "../channel";
 import { getSelectedRobot } from "../viewsCommon";
 import { BrowserLocator, LocatorsMap } from "./types";
-import { IApps, IMessage, IMessageType, IResponseMessage } from "./protocols";
+import { IApps, IEventMessage, IMessage, IMessageType, IResponseMessage } from "./protocols";
 import { langServer } from "../extension";
 import { ActionResult, LocalRobotMetadataInfo } from "../protocols";
 import { ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL } from "../robocorpCommands";
@@ -59,16 +59,16 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
         langServer.onNotification("$/webPick", (values) => {
             const pickedLocator: BrowserLocator = JSON.stringify(values) as unknown as BrowserLocator;
             OUTPUT_CHANNEL.appendLine(`> Receiving: picked.element: ${pickedLocator}`);
-            const response: IResponseMessage = {
+            const response: IEventMessage = {
                 id: Date.now(),
-                type: IMessageType.RESPONSE,
-                app: IApps.WEB_PICKER,
-                status: "success",
-                data: {
-                    type: "locator",
+                type: IMessageType.EVENT,
+                event: {
+                    type: "pickedLocator",
+                    status: "success",
                     data: pickedLocator,
                 },
             };
+            // this is an event - postMessage will update the useLocator hook
             panel.webview.postMessage(response);
         })
     );
@@ -83,14 +83,22 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
             switch (message.type) {
                 case IMessageType.REQUEST:
                     const command = message.command;
+                    if (command["type"] === "getLocators") {
+                        OUTPUT_CHANNEL.appendLine(`> Requesting: Get Locators`);
+                        const response: IResponseMessage = await langServer.sendRequest("loadRobotLocatorContents", {
+                            message: message,
+                            directory: directory,
+                        });
+                        OUTPUT_CHANNEL.appendLine(`> Requesting: Locators JSON: ${JSON.stringify(response)}`);
+                        // this is a response - postMessage will update the broker hook
+                        panel.webview.postMessage(response);
+                    }
                     if (message.app === IApps.WEB_PICKER) {
                         if (command["type"] === "startPicking") {
                             OUTPUT_CHANNEL.appendLine(`> Requesting: Open Browser`);
-                            const openBrowserResponse = await langServer.sendRequest("webInspectorOpenBrowser");
-                            OUTPUT_CHANNEL.appendLine(`openBrowserResponse: ${JSON.stringify(openBrowserResponse)}`);
+                            await langServer.sendRequest("webInspectorOpenBrowser");
                             OUTPUT_CHANNEL.appendLine(`> Requesting: Start Picker`);
-                            const pickResponse = await langServer.sendRequest("webInspectorStartPick");
-                            OUTPUT_CHANNEL.appendLine(`pickResponse: ${JSON.stringify(pickResponse)}`);
+                            await langServer.sendRequest("webInspectorStartPick");
                         }
                         if (command["type"] === "stopPicking") {
                             OUTPUT_CHANNEL.appendLine(`> Requesting: Stop Picker`);
@@ -101,35 +109,16 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
                                 `> Requesting: Saving Locator: ${JSON.stringify(command["locator"])}`
                             );
                             const response: IResponseMessage = await langServer.sendRequest("webInspectorSaveLocator", {
-                                directory: directory,
                                 message: message,
+                                directory: directory,
                             });
-
                             OUTPUT_CHANNEL.appendLine(
                                 `> Requesting: Response from saving locator: ${JSON.stringify(response)}`
                             );
+                            // this is a response - postMessage will update the broker hook
                             panel.webview.postMessage(response);
                         }
-                        // const response: IResponseMessage = {
-                        //     id: message.id,
-                        //     app: message.app,
-                        //     type: "response" as IMessageType.RESPONSE,
-                        // };
-                        // panel.webview.postMessage(response);
                     }
-                    // OUTPUT_CHANNEL.appendLine(`request: ${JSON.stringify(message)}`);
-                    // const response: IResponseMessage = {
-                    //     id: message.id,
-                    //     app: message.app,
-                    //     type: "response" as IMessageType.RESPONSE,
-                    //     data: {
-                    //         type: "locator",
-                    //         data: { type: "browser" as LocatorType.Browser, strategy: "css", value: "class" },
-                    //     },
-                    // };
-                    // OUTPUT_CHANNEL.appendLine(`responding.in.3.seconds.with: ${JSON.stringify(response)}`);
-                    // await sleep(3000);
-                    // panel.webview.postMessage(response);
                     return;
                 case IMessageType.RESPONSE:
                     return;
