@@ -21,9 +21,8 @@ class InspectorLanguageServer:
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         inspector_api_client.send_sync_message("closeBrowser", {})
 
-    def m_load_robot_locator_contents(self, directory: str) -> dict:
+    def m_load_robot_locator_contents(self, message: dict, directory: str) -> dict:
         import json
-        import time
 
         locators_json = self.get_locators_json_path(directory)
         try:
@@ -32,52 +31,48 @@ class InspectorLanguageServer:
                     contents = json.load(stream)
                     if isinstance(contents, dict):
                         ret = {
-                            "id": time.time(),
-                            "type": "event",
-                            "event": {
-                                "type": "locatorsUpdate",
-                                "status": "success",
-                                "message": None,
-                                "data": contents,
-                            },
+                            "id": message["id"],
+                            "type": "response",
+                            "app": message["app"],
+                            "status": "success",
+                            "message": None,
+                            "data": contents,
+                            "dataType": "locatorsMap",
                         }
                         return ret
                     else:
                         ret = {
-                            "id": time.time(),
-                            "type": "event",
-                            "event": {
-                                "type": "locatorsUpdate",
-                                "status": "failure",
-                                "message": f"Expected locators.json to contain a dict. Found: {type(contents)}",
-                                "data": {},
-                            },
+                            "id": message["id"],
+                            "type": "response",
+                            "app": message["app"],
+                            "status": "failure",
+                            "message": f"Expected locators.json to contain a dict. Found: {type(contents)}",
+                            "data": {},
+                            "dataType": "locatorsMap",
                         }
                         return ret
             else:
                 # It does not exist. That's Ok (not really an error).
                 ret = {
-                    "id": time.time(),
-                    "type": "event",
-                    "event": {
-                        "type": "locatorsUpdate",
-                        "status": "success",
-                        "message": None,
-                        "data": {},
-                    },
+                    "id": message["id"],
+                    "type": "response",
+                    "app": message["app"],
+                    "status": "success",
+                    "message": None,
+                    "data": {},
+                    "dataType": "locatorsMap",
                 }
                 return ret
         except Exception as e:
             log.exception("Error loading locators.")
             ret = {
-                "id": time.time(),
-                "type": "event",
-                "event": {
-                    "type": "locatorsUpdate",
-                    "status": "failure",
-                    "message": None,
-                    "data": {},
-                },
+                "id": message["id"],
+                "type": "response",
+                "app": message["app"],
+                "status": "failure",
+                "message": None,
+                "data": {},
+                "dataType": "locatorsMap",
             }
             return ret
 
@@ -111,15 +106,21 @@ class InspectorLanguageServer:
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         inspector_api_client.send_sync_message("stopPick", {"wait": True})
 
-    def m_web_inspector_save_locator(self, directory: str, message: dict):
+    def m_web_inspector_save_locator(
+        self,
+        message: dict,
+        directory: str,
+    ):
         import json
 
         log.info(f"Received params: [dir]:{directory} [message]:{message}")
         locator = message["command"]["locator"]
-        locators_event = self.m_load_robot_locator_contents(directory=directory)
+        locators_event = self.m_load_robot_locator_contents(
+            message=message, directory=directory
+        )
         log.info(f"Locators result: {locators_event}")
-        if locators_event["event"]["status"] == "success" and "name" in locator:
-            locators = locators_event["event"]["data"]
+        if locators_event["status"] == "success" and "name" in locator:
+            locators = locators_event["data"]
             new_name = locator["name"]
             log.info(f"New Locator name: {new_name}")
             if new_name:
@@ -139,11 +140,11 @@ class InspectorLanguageServer:
                     "status": "success",
                     "message": None,
                 }
-        log.info(f"Name doesn't exist or couldn't find the locators!")
+        log.info(f"Name doesn't exist or couldn't find the locator!")
         return {
             "id": message["id"],
             "app": message["app"],
             "type": "response",
             "status": "failure",
-            "message": "Name doesn't exist or couldn't find the locators!",
+            "message": "Name doesn't exist or couldn't find the locator!",
         }
