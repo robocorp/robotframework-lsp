@@ -113,6 +113,9 @@ class _ClickLocatorCommand(_BaseCommand):
         web_inspector = web_inspector_thread.web_inspector
         if not web_inspector:
             return
+        page = web_inspector.page()
+        if not page:
+            return
 
         web_inspector.page().click(self.locator)
 

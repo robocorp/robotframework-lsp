@@ -14,12 +14,13 @@ class InspectorLanguageServer:
 
         self._inspector_server_manager = InspectorServerManager(weakref.ref(self))
 
-    def get_locators_json_path(self, directory: str) -> str:
+    def get_locators_json_path(self, directory: str) -> Path:
         return Path(directory) / "locators.json"
 
     def m_web_inspector_close_browser(self, **params) -> dict:
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         inspector_api_client.send_sync_message("closeBrowser", {})
+        return
 
     def m_load_robot_locator_contents(self, message: dict, directory: str) -> dict:
         import json
