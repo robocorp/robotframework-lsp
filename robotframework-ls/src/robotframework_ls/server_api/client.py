@@ -24,7 +24,9 @@ class SubprocessDiedError(Exception):
 
 
 class RobotFrameworkApiClient(LanguageServerClientBase):
-    def __init__(self, writer, reader, server_process, on_received_message=None):
+    def __init__(
+        self, writer, reader, server_process, on_received_message=None
+    ) -> None:
         LanguageServerClientBase.__init__(
             self, writer, reader, on_received_message=on_received_message
         )
@@ -98,6 +100,7 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
 
             version = msg.get("result", "N/A")
             self._version = version
+            return version
 
         return self._version
 
@@ -447,6 +450,20 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
                 "jsonrpc": "2.0",
                 "method": "$/cancelRequest",
                 "params": dict(id=message_id),
+            }
+        )
+
+    def request_sync(self, method, **params):
+        """
+        This API is is a bit simpler than the `request` as it builds the message
+        internally.
+        """
+        return self.request(
+            {
+                "jsonrpc": "2.0",
+                "id": self.next_id(),
+                "method": method,
+                "params": params,
             }
         )
 
