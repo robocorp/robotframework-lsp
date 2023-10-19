@@ -191,6 +191,11 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Specifies whether the 'Run Task' and 'Debug Task' code lenses should be shown."
+                },
+                "robocorp.experimental.inspector": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "This is a setting to enable the inspector which is currently in experimental (pre-alpha) mode."
                 }
             }
         },
@@ -551,7 +556,7 @@
             },
             {
                 "command": "robocorp.inspector",
-                "title": "Open Robocorp Inspector",
+                "title": "Open Robocorp Inspector (Experimental)",
                 "category": "Robocorp"
             },
             {
@@ -1040,6 +1045,10 @@
                 {
                     "command": "robocorp.inspector.internal",
                     "when": "false"
+                },
+                {
+                    "command": "robocorp.inspector",
+                    "when": "config.robocorp.experimental.inspector == true"
                 },
                 {
                     "command": "robocorp.errorFeedback.internal",

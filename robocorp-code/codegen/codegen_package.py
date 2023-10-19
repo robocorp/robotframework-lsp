@@ -1,14 +1,14 @@
 import os.path
 
+import views
 from commands import (
+    COMMANDS,
     get_activation_events_for_json,
     get_commands_for_json,
     get_keybindings_for_json,
-    COMMANDS,
 )
 from convert import convert_case_to_constant
-from settings import get_settings_for_json, SETTINGS
-import views
+from settings import SETTINGS, get_settings_for_json
 
 
 def get_menus():
@@ -17,8 +17,10 @@ def get_menus():
     for command in COMMANDS:
         if not command.add_to_package_json:
             continue
-        if command.hide_from_command_palette:
-            commands_palette_entry.append({"command": command.name, "when": "false"})
+        if command.when_clause:
+            commands_palette_entry.append(
+                {"command": command.name, "when": command.when_clause}
+            )
     if commands_palette_entry:
         ret["commandPalette"] = commands_palette_entry
     return ret

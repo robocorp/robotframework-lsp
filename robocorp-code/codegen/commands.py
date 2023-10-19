@@ -13,6 +13,7 @@ class Command(object):
         enablement=None,
         hide_from_command_palette=False,
         constant="",
+        when_clause=None,
     ):
         """
         :param add_to_package_json:
@@ -31,7 +32,15 @@ class Command(object):
         self.server_handled = server_handled
         self.icon = icon
         self.enablement = enablement
-        self.hide_from_command_palette = hide_from_command_palette
+
+        if hide_from_command_palette:
+            assert (
+                not when_clause
+            ), "hide_from_command_palette and when_clause may not be both specified."
+            when_clause = "false"
+
+        self.when_clause = when_clause
+
         if not constant:
             constant = convert_case_to_constant(name)
         self.constant = constant
@@ -461,7 +470,12 @@ COMMANDS = [
         server_handled=False,
         hide_from_command_palette=True,
     ),
-    Command("robocorp.inspector", "Open Robocorp Inspector", server_handled=False),
+    Command(
+        "robocorp.inspector",
+        "Open Robocorp Inspector (Experimental)",
+        server_handled=False,
+        when_clause="config.robocorp.experimental.inspector == true",
+    ),
     Command(
         "robocorp.errorFeedback.internal",
         "Error feedback (internal)",

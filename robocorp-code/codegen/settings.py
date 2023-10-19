@@ -110,6 +110,12 @@ SETTINGS = [
         "Specifies whether the 'Run Task' and 'Debug Task' code lenses should be shown.",
         setting_type="boolean",
     ),
+    Setting(
+        "robocorp.experimental.inspector",
+        False,
+        "This is a setting to enable the inspector which is currently in experimental (pre-alpha) mode.",
+        setting_type="boolean",
+    ),
 ]
 
 

@@ -16,6 +16,11 @@ import { langServer } from "../extension";
 import { ActionResult, LocalRobotMetadataInfo } from "../protocols";
 import { ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL } from "../robocorpCommands";
 
+let globalI = 0;
+let nextId = () => {
+    return globalI++;
+};
+
 export async function showInspectorUI(context: vscode.ExtensionContext) {
     const panel = vscode.window.createWebviewPanel(
         "robocorpCodeInspector",
@@ -60,6 +65,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
             const pickedLocator: BrowserLocator = JSON.stringify(values) as unknown as BrowserLocator;
             OUTPUT_CHANNEL.appendLine(`> Receiving:picked.element: ${pickedLocator}`);
             const response: IResponseMessage = {
+                id: nextId(),
                 type: IMessageType.RESPONSE,
                 app: IApps.WEB_PICKER,
                 data: {
