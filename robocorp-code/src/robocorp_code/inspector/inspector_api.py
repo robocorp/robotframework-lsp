@@ -117,7 +117,7 @@ class _ClickLocatorCommand(_BaseCommand):
         if not page:
             return
 
-        web_inspector.page().click(self.locator)
+        page.click(self.locator)
 
 
 class _BrowserConfigureCommand(_BaseCommand):

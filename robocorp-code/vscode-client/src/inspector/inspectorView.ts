@@ -119,6 +119,21 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
                             panel.webview.postMessage(response);
                         }
                     }
+                    if (message.app === IApps.LOCATORS_MANAGER) {
+                        if (command["type"] === "delete") {
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: Delete Locators: ${command["ids"]}`);
+                            const response: IResponseMessage = await langServer.sendRequest(
+                                "webInspectorDeleteLocators",
+                                {
+                                    message: message,
+                                    directory: directory,
+                                    ids: command["ids"],
+                                }
+                            );
+                            // this is a response - postMessage will update the broker hook
+                            panel.webview.postMessage(response);
+                        }
+                    }
                     return;
                 case IMessageType.RESPONSE:
                     return;

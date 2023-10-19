@@ -12,15 +12,15 @@ export enum IMessageType {
 }
 
 export enum IApps {
-    LOCATOR_MANAGER = "locatorManager",
+    LOCATORS_MANAGER = "locatorsManager",
     WEB_PICKER = "webPicker",
 }
 
-export type IAppsType = IApps.LOCATOR_MANAGER | IApps.WEB_PICKER;
+export type IAppsType = IApps.LOCATORS_MANAGER | IApps.WEB_PICKER;
 // =====================================
 // REQUESTS
 // =====================================
-export type IManagerCommands = { type: "getLocators" } | { type: "delete"; name: string };
+export type IManagerCommands = { type: "getLocators" } | { type: "delete"; ids: string[] };
 export type IWebPickerCommands =
     | { type: "getLocators" }
     | { type: "startPicking" }
