@@ -17,7 +17,7 @@ class InspectorLanguageServer:
     def get_locators_json_path(self, directory: str) -> Path:
         return Path(directory) / "locators.json"
 
-    def m_web_inspector_close_browser(self, **params) -> dict:
+    def m_web_inspector_close_browser(self, **params) -> None:
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         inspector_api_client.send_sync_message("closeBrowser", {})
         return
@@ -122,18 +122,17 @@ class InspectorLanguageServer:
         log.info(f"Locators result: {locators_event}")
         if locators_event["status"] == "success" and "name" in locator:
             locators = locators_event["data"]
-            new_name = locator["name"]
-            log.info(f"New Locator name: {new_name}")
-            if new_name:
-                log.info(f"The internal locators: {locators}")
+            log.info(f"The internal locators: {locators}")
 
+            new_name = locator["name"]
+            if new_name:
                 locators[new_name] = locator
                 log.info(f"Will update locator: {new_name}")
 
                 locators_json = self.get_locators_json_path(directory)
                 with locators_json.open("w") as file:
                     file.write(json.dumps(locators, indent=4))
-                log.info(f"Saved locators into file!")
+                log.info(f"Saved new locators into file!")
                 return {
                     "id": message["id"],
                     "app": message["app"],
@@ -149,3 +148,36 @@ class InspectorLanguageServer:
             "status": "failure",
             "message": "Name doesn't exist or couldn't find the locator!",
         }
+
+    def m_web_inspector_delete_locators(
+        self,
+        message: dict,
+        directory: str,
+        ids: list[str],
+    ):
+        import json
+
+        log.info(f"Received params: [dir]:{directory} [message]:{message} [ids]:{ids}")
+        locators_event = self.m_load_robot_locator_contents(
+            message=message, directory=directory
+        )
+        log.info(f"Locators result: {locators_event}")
+        if locators_event["status"] == "success" and len(ids) > 0:
+            locators = locators_event["data"]
+            for id in ids:
+                if id in locators:
+                    del locators[id]
+            log.info(f"New locators JSON: {locators}")
+
+            locators_json = self.get_locators_json_path(directory)
+            with locators_json.open("w") as file:
+                file.write(json.dumps(locators, indent=4))
+            log.info(f"Saved new locators into file!")
+            return {
+                "id": message["id"],
+                "app": message["app"],
+                "type": "response",
+                "status": "success",
+                "message": None,
+            }
+        log.info(f"Name doesn't exist or couldn't find the locator!")
