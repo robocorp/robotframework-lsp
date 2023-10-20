@@ -157,6 +157,9 @@ def test_inspector_api_usage(
     """
     This simulates the API to be used to pick an element.
     """
+    from robocorp_code_tests.fixtures import fix_locator
+    from robocorp_ls_core.basic import wait_for_condition
+
     from robocorp_code.playwright import robocorp_browser
 
     # Make sure that the engine is installed before we start (as the tests are
@@ -192,9 +195,11 @@ def test_inspector_api_usage(
         assert message_matcher.msg["result"] is None
 
         assert pick_message_matcher.event.wait(10), f"No pick received (loop: {i})"
-        assert len(dummy_language_server.forwarded_messages) == 1
+        wait_for_condition(lambda: len(dummy_language_server.forwarded_messages) >= 3)
         del dummy_language_server.forwarded_messages[:]
-        data_regression.check(pick_message_matcher.msg, basename="div1Pick")
+        msg = pick_message_matcher.msg
+        locator = msg["params"]
+        data_regression.check(fix_locator(locator), basename="div1Pick")
 
         inspector_api_client.close_browser()
 

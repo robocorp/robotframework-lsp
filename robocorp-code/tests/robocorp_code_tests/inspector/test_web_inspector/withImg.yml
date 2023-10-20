@@ -1,20 +1,25 @@
-css:
-  matches: 1
-  strategy: css
-  value: '#withImg'
-id:
-  matches: 1
+alternatives:
+- matches: 1
   strategy: id
   value: withImg
-xpath:attributes:
-  matches: 1
-  strategy: xpath
-  value: //img[@id='withImg']
-xpath:image:
-  matches: 1
-  strategy: xpath
+- matches: 1
+  strategy: css
+  value: '#withImg'
+- matches: 1
+  strategy: xpath:image
   value: //img[@alt='imgAlt']
-xpath:position:
-  matches: 1
-  strategy: xpath
+- matches: 1
+  strategy: xpath:attributes
+  value: //img[@id='withImg']
+- matches: 1
+  strategy: xpath:position
   value: //img
+element:
+  modifier: null
+  tag: IMG
+  type: null
+screenshot: data:image/png;base64,iV ... <clipped>
+source: page_to_test.html
+strategy: id
+type: browser
+value: withImg

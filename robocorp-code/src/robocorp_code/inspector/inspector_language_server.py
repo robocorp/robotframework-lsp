@@ -1,6 +1,7 @@
 import weakref
 from pathlib import Path
 
+from robocorp_ls_core.protocols import ActionResultDict
 from robocorp_ls_core.robotframework_log import get_logger
 
 log = get_logger(__name__)
@@ -20,60 +21,56 @@ class InspectorLanguageServer:
     def m_web_inspector_close_browser(self, **params) -> None:
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         inspector_api_client.send_sync_message("closeBrowser", {})
-        return
 
-    def m_load_robot_locator_contents(self, message: dict, directory: str) -> dict:
+    def m_load_robot_locator_contents(self, directory: str) -> ActionResultDict:
         import json
+
+        ret: ActionResultDict
 
         locators_json = self.get_locators_json_path(directory)
         try:
             if locators_json.exists():
                 with locators_json.open("rb") as stream:
-                    contents = json.load(stream)
-                    if isinstance(contents, dict):
+                    file_contents = stream.read()
+                    if not file_contents.strip():
+                        # Ok, an empty file is valid.
                         ret = {
-                            "id": message["id"],
-                            "type": "response",
-                            "app": message["app"],
-                            "status": "success",
+                            "success": True,
                             "message": None,
-                            "data": contents,
-                            "dataType": "locatorsMap",
+                            "result": {},
                         }
                         return ret
-                    else:
-                        ret = {
-                            "id": message["id"],
-                            "type": "response",
-                            "app": message["app"],
-                            "status": "failure",
-                            "message": f"Expected locators.json to contain a dict. Found: {type(contents)}",
-                            "data": {},
-                            "dataType": "locatorsMap",
-                        }
-                        return ret
+
+                contents = json.loads(file_contents)
+
+                if isinstance(contents, dict):
+                    ret = {
+                        "success": True,
+                        "message": None,
+                        "result": contents,
+                    }
+                    return ret
+                else:
+                    ret = {
+                        "success": False,
+                        "message": f"Expected locators.json to contain a dict. Found: {type(contents)}",
+                        "result": {},
+                    }
+                    return ret
             else:
                 # It does not exist. That's Ok (not really an error).
                 ret = {
-                    "id": message["id"],
-                    "type": "response",
-                    "app": message["app"],
-                    "status": "success",
+                    "success": True,
                     "message": None,
-                    "data": {},
-                    "dataType": "locatorsMap",
+                    "result": {},
                 }
                 return ret
         except Exception as e:
             log.exception("Error loading locators.")
             ret = {
-                "id": message["id"],
-                "type": "response",
-                "app": message["app"],
-                "status": "failure",
-                "message": None,
-                "data": {},
-                "dataType": "locatorsMap",
+                "success": False,
+                "message": f"There was an error loading locators. Error: {e}.",
+                "result": {},
             }
             return ret
 
@@ -109,75 +106,115 @@ class InspectorLanguageServer:
 
     def m_web_inspector_save_locator(
         self,
-        message: dict,
+        locator: dict,
         directory: str,
-    ):
+    ) -> ActionResultDict:
         import json
 
-        log.info(f"Received params: [dir]:{directory} [message]:{message}")
-        locator = message["command"]["locator"]
-        locators_event = self.m_load_robot_locator_contents(
-            message=message, directory=directory
+        ret: ActionResultDict
+
+        if not locator:
+            ret = {
+                "success": False,
+                "message": f"Error: no locator information passed.",
+                "result": None,
+            }
+            return ret
+
+        name = str(locator.get("name", "")).strip()
+        if not name:
+            ret = {
+                "success": False,
+                "message": f"Error: the locator passed {locator} does not have a name (or the name is invalid).",
+                "result": None,
+            }
+            return ret
+        # Use the stripped version.
+        locator["name"] = name
+
+        loaded_locators_action_result = self.m_load_robot_locator_contents(
+            directory=directory
         )
-        log.info(f"Locators result: {locators_event}")
-        if locators_event["status"] == "success" and "name" in locator:
-            locators = locators_event["data"]
-            log.info(f"The internal locators: {locators}")
 
-            new_name = locator["name"]
-            if new_name:
-                locators[new_name] = locator
-                log.info(f"Will update locator: {new_name}")
+        if not loaded_locators_action_result["success"]:
+            # TODO: We should have a way of forcing this to override even if
+            # the current version is not correct.
+            ret = {
+                "success": False,
+                "message": f'The locator was not saved because there was an issue loading the existing locators: {loaded_locators_action_result["message"]}',
+                "result": None,
+            }
+            return ret
+        locators = loaded_locators_action_result["result"]
 
-                locators_json = self.get_locators_json_path(directory)
-                with locators_json.open("w") as file:
-                    file.write(json.dumps(locators, indent=4))
-                log.info(f"Saved new locators into file!")
-                return {
-                    "id": message["id"],
-                    "app": message["app"],
-                    "type": "response",
-                    "status": "success",
-                    "message": None,
-                }
-        log.info(f"Name doesn't exist or couldn't find the locator!")
-        return {
-            "id": message["id"],
-            "app": message["app"],
-            "type": "response",
-            "status": "failure",
-            "message": "Name doesn't exist or couldn't find the locator!",
+        locators[name] = locator
+
+        locators_json = self.get_locators_json_path(directory)
+        try:
+            with locators_json.open("w") as file:
+                file.write(json.dumps(locators, indent=4))
+        except Exception as e:
+            log.exception("Error saving locators")
+            ret = {
+                "success": False,
+                "message": f"Error happened while saving locator: {e}.",
+                "result": None,
+            }
+            return ret
+        ret = {
+            "success": True,
+            "message": "",
+            "result": None,
         }
+        return ret
 
     def m_web_inspector_delete_locators(
         self,
-        message: dict,
         directory: str,
         ids: list[str],
-    ):
+    ) -> ActionResultDict:
+        ret: ActionResultDict
+
+        if not ids:
+            ret = {
+                "success": False,
+                "message": f"Error: no ids specified for deleting.",
+                "result": None,
+            }
+            return ret
+
         import json
 
-        log.info(f"Received params: [dir]:{directory} [message]:{message} [ids]:{ids}")
-        locators_event = self.m_load_robot_locator_contents(
-            message=message, directory=directory
+        loaded_locators_action_result = self.m_load_robot_locator_contents(
+            directory=directory
         )
-        log.info(f"Locators result: {locators_event}")
-        if locators_event["status"] == "success" and len(ids) > 0:
-            locators = locators_event["data"]
-            for id in ids:
-                if id in locators:
-                    del locators[id]
-            log.info(f"New locators JSON: {locators}")
+        if not loaded_locators_action_result["success"]:
+            ret = {
+                "success": False,
+                "message": f'The locators were not deleted because there was an issue loading the existing locators: {loaded_locators_action_result["message"]}',
+                "result": None,
+            }
+            return ret
 
-            locators_json = self.get_locators_json_path(directory)
+        locators = loaded_locators_action_result["result"]
+        for locator_id in ids:
+            locators.pop(locator_id, None)
+
+        locators_json = self.get_locators_json_path(directory)
+        try:
             with locators_json.open("w") as file:
                 file.write(json.dumps(locators, indent=4))
-            log.info(f"Saved new locators into file!")
-            return {
-                "id": message["id"],
-                "app": message["app"],
-                "type": "response",
-                "status": "success",
-                "message": None,
+        except Exception as e:
+            log.exception("Error saving locators")
+            ret = {
+                "success": False,
+                "message": f"Error happened while deleting locators: {e}.",
+                "result": None,
             }
-        log.info(f"Name doesn't exist or couldn't find the locator!")
+            return ret
+        ret = {
+            "success": True,
+            "message": "",
+            "result": None,
+        }
+        return ret

@@ -1,6 +1,6 @@
 import threading
 from queue import Queue
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.protocols import IConfig, IEndPoint
@@ -8,7 +8,7 @@ from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.robotframework_log import get_logger
 
 from robocorp_code.inspector.web._web_inspector import (
-    LocatorNameToLocatorTypedDict,
+    PickedLocatorTypedDict,
     WebInspector,
 )
 
@@ -32,8 +32,9 @@ class _WebInspectorThread(threading.Thread):
     pick.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, endpoint: IEndPoint) -> None:
         threading.Thread.__init__(self)
+        self._endpoint = endpoint
         self.daemon = True
         self.queue: "Queue[_BaseCommand]" = Queue()
         self._finish = False
@@ -47,7 +48,7 @@ class _WebInspectorThread(threading.Thread):
         self._finish = True
 
     def run(self) -> None:
-        self._web_inspector = WebInspector()
+        self._web_inspector = WebInspector(self._endpoint)
 
         loop_timeout: float = _DEFAULT_LOOP_TIMEOUT
         item: Optional[_BaseCommand]
@@ -113,7 +114,7 @@ class _ClickLocatorCommand(_BaseCommand):
         web_inspector = web_inspector_thread.web_inspector
         if not web_inspector:
             return
-        page = web_inspector.page()
+        page = web_inspector.page(False)
         if not page:
             return
 
@@ -169,28 +170,10 @@ class _AsyncPickCommand(_BaseCommand):
 
         endpoint = self.endpoint
 
-        def on_pick(locator: Dict):
-            web_inspector_thread.queue.put(_MakeFullLocatorsCommand(endpoint, locator))
+        def on_pick(locator: PickedLocatorTypedDict):
+            endpoint.notify("$/webPick", locator)
 
         web_inspector.pick_async(on_pick)
-
-
-class _MakeFullLocatorsCommand(_BaseCommand):
-    def __init__(self, endpoint: IEndPoint, locator):
-        super().__init__()
-        self.endpoint = endpoint
-        self.locator = locator
-
-    def _send_pick(self, locator: LocatorNameToLocatorTypedDict):
-        self.endpoint.notify("$/webPick", locator)
-
-    def __call__(self, web_inspector_thread: _WebInspectorThread):
-        web_inspector = web_inspector_thread.web_inspector
-        if not web_inspector:
-            return
-
-        # full_locators = web_inspector.make_full_locators(self.locator)
-        self._send_pick(self.locator)
 
 
 class _AsyncStopCommand(_BaseCommand):
@@ -222,7 +205,7 @@ class InspectorApi(PythonLanguageServer):
         write_to,
     ):
         PythonLanguageServer.__init__(self, read_from, write_to)
-        self._web_inspector_thread = _WebInspectorThread()
+        self._web_inspector_thread = _WebInspectorThread(self._endpoint)
         self._web_inspector_thread.start()
 
     def _create_config(self) -> IConfig:

@@ -1,24 +1,28 @@
-css:
-  matches: 1
-  strategy: css
-  value: '#withName'
-id:
-  matches: 1
+alternatives:
+- matches: 1
   strategy: id
   value: withName
-name:
-  matches: 1
+- matches: 1
   strategy: name
   value: divName
-xpath:attributes:
-  matches: 1
-  strategy: xpath
+- matches: 1
+  strategy: css
+  value: '#withName'
+- matches: 1
+  strategy: xpath:attributes
   value: //div[@id='withName']
-xpath:inner-text:
-  matches: 1
-  strategy: xpath
-  value: //div[contains(.,'Div Name')]
-xpath:position:
-  matches: 1
-  strategy: xpath
+- matches: 1
+  strategy: xpath:position
   value: //div[4]
+- matches: 1
+  strategy: xpath:inner-text
+  value: //div[contains(.,'Div Name')]
+element:
+  modifier: null
+  tag: DIV
+  type: null
+screenshot: data:image/png;base64,iV ... <clipped>
+source: page_to_test.html
+strategy: id
+type: browser
+value: withName
