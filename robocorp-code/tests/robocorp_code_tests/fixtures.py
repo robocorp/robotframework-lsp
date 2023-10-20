@@ -1,15 +1,19 @@
 import os
 import sys
+import typing
 from pathlib import Path
 from typing import Any
 
 import pytest
-from robocorp_code.protocols import ActionResult, IRcc
+from robocorp_code_tests.protocols import IRobocorpLanguageServerClient
 from robocorp_ls_core.protocols import IConfigProvider
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
 
-from robocorp_code_tests.protocols import IRobocorpLanguageServerClient
+from robocorp_code.protocols import ActionResult, IRcc
+
+if typing.TYPE_CHECKING:
+    from robocorp_code.inspector.web._web_inspector import PickedLocatorTypedDict
 
 log = get_logger(__name__)
 
@@ -117,6 +121,7 @@ def cached_conda_cloud():
 @pytest.fixture(scope="session", autouse=True)
 def patch_conda_forge_cloud_setup(cached_conda_cloud):
     from pytest import MonkeyPatch
+
     from robocorp_code.robocorp_language_server import RobocorpLanguageServer
 
     def _create_conda_cloud(self, _cache_dir: str):
@@ -151,8 +156,9 @@ def config_provider(
     rcc_config_location: str,
     robocorp_home: str,
 ):
-    from robocorp_code.robocorp_config import RobocorpConfig
     from robocorp_ls_core.ep_providers import DefaultConfigurationProvider
+
+    from robocorp_code.robocorp_config import RobocorpConfig
 
     config = RobocorpConfig()
 
@@ -406,13 +412,13 @@ def language_server_initialized(
 def patch_pypi_cloud(monkeypatch):
     import datetime
 
-    from robocorp_code import hover
-    from robocorp_code.deps.pypi_cloud import PyPiCloud
-
     from robocorp_code_tests.deps.cloud_mock_data import (
         JQ_PYPI_MOCK_DATA,
         RPAFRAMEWORK_PYPI_MOCK_DATA,
     )
+
+    from robocorp_code import hover
+    from robocorp_code.deps.pypi_cloud import PyPiCloud
 
     def _get_json_from_cloud(self, url):
         if url == "https://pypi.org/pypi/rpaframework/json":
@@ -438,10 +444,10 @@ def patch_pypi_cloud(monkeypatch):
 def patch_pypi_cloud_no_releases_12_months(monkeypatch):
     import datetime
 
+    from robocorp_code_tests.deps.cloud_mock_data import RPAFRAMEWORK_PYPI_MOCK_DATA
+
     from robocorp_code import hover
     from robocorp_code.deps.pypi_cloud import PyPiCloud
-
-    from robocorp_code_tests.deps.cloud_mock_data import RPAFRAMEWORK_PYPI_MOCK_DATA
 
     def _get_json_from_cloud(self, url):
         if url == "https://pypi.org/pypi/rpaframework/json":
@@ -459,3 +465,22 @@ def patch_pypi_cloud_no_releases_12_months(monkeypatch):
         "FORCE_DATETIME_NOW",
         datetime.datetime(2025, 8, 10),
     )
+
+
+def fix_locator(locator: "PickedLocatorTypedDict") -> "PickedLocatorTypedDict":
+    """
+    Utility to convert a locator into a format that's suitable to be
+    written to disk and compared an other runs.
+    """
+    import os.path
+
+    locator["source"] = os.path.basename(locator["source"]).replace(
+        "page_to_test2.html", "page_to_test.html"
+    )
+    locator["screenshot"] = locator["screenshot"][:24] + " ... <clipped>"
+    element = locator["element"]
+    modifier = element.get("modifier")
+    if modifier and modifier.startswith("file://"):
+        modifier = modifier[:7]
+        element["modifier"] = modifier
+    return locator

@@ -1,4 +1,12 @@
+from typing import List
+
 import pytest
+from robocorp_code_tests.fixtures import fix_locator
+
+from robocorp_code.inspector.web._web_inspector import (
+    PickedLocatorTypedDict,
+    WebInspector,
+)
 
 
 @pytest.fixture
@@ -6,7 +14,6 @@ def web_inspector(datadir):
     from robocorp_ls_core import uris
 
     from robocorp_code.inspector.web import WEB_RECORDING_GUIDE_PATH, WEB_RESOURCES_DIR
-    from robocorp_code.inspector.web._web_inspector import WebInspector
 
     web_inspector = WebInspector()
 
@@ -22,29 +29,33 @@ def web_inspector(datadir):
     web_inspector.close_browser()
 
 
-def test_web_inspector(web_inspector, data_regression, datadir):
+@pytest.mark.parametrize("element_id", ["div1", "alink", "withName", "withImg"])
+def test_web_inspector(
+    web_inspector: WebInspector, data_regression, datadir, element_id
+):
     from robocorp_ls_core import uris
 
-    data_regression.check(locators_for(web_inspector, "#div1"), basename="div1")
-
-    data_regression.check(locators_for(web_inspector, "#alink"), basename="alink")
-
-    data_regression.check(locators_for(web_inspector, "#withName"), basename="withName")
-
-    data_regression.check(locators_for(web_inspector, "#withImg"), basename="withImg")
+    data_regression.check(
+        locators_for(web_inspector, f"#{element_id}"), basename=element_id
+    )
 
     # Check that after a pick it's ok to close and then do a new pick.
-    web_inspector.page().close()
+    page = web_inspector.page(False)
+    assert page
+    page.close()
 
     url = uris.from_fs_path(str(datadir / "page_to_test.html"))
     web_inspector.open(url)
     data_regression.check(locators_for(web_inspector, "#withImg"), basename="withImg")
 
 
-def test_web_inspector_change_urls(web_inspector, data_regression, datadir):
+def test_web_inspector_change_urls(
+    web_inspector: WebInspector, data_regression, datadir
+) -> None:
     import threading
 
     from robocorp_ls_core import uris
+    from robocorp_ls_core.basic import wait_for_condition
 
     url = uris.from_fs_path(str(datadir / "page_to_test.html"))
     web_inspector.open(url)
@@ -54,10 +65,10 @@ def test_web_inspector_change_urls(web_inspector, data_regression, datadir):
     # -> The picker should be reinjected
     # ===========================================================================
     event = threading.Event()
-    found = []
+    found: List[PickedLocatorTypedDict] = []
 
-    def on_picked(locators):
-        found.append(locators)
+    def on_picked(locator: PickedLocatorTypedDict):
+        found.append(locator)
         event.set()
 
     assert web_inspector.pick_async(on_picked)
@@ -71,15 +82,21 @@ def test_web_inspector_change_urls(web_inspector, data_regression, datadir):
     assert found == []
 
     # Actually do one pick which should work (even after changing the url).
-    web_inspector.page().click("#withImg")
+    page = web_inspector.page(False)
+    assert page is not None
+    page.click("#withImg")
 
-    assert event.wait(2), "Pick did not happen in the expected timeout."
-    assert found
-    locators = found[0]
-    assert locators
-    data_regression.check(
-        web_inspector.make_full_locators(locators), basename="withImg"
+    def check_clicked():
+        web_inspector.loop()
+        return event.is_set()
+
+    wait_for_condition(
+        check_clicked, msg="Pick did not happen in the expected timeout."
     )
+
+    assert found
+    locator: PickedLocatorTypedDict = fix_locator(found[0])
+    data_regression.check(locator, basename="withImg")
     del found[:]
 
     # ===========================================================================
@@ -99,24 +116,35 @@ def test_web_inspector_change_urls(web_inspector, data_regression, datadir):
     # web_inspector.pick()
 
 
-def locators_for(web_inspector, html_id):
+def locators_for(web_inspector: WebInspector, html_id) -> PickedLocatorTypedDict:
     import threading
+
+    from robocorp_ls_core.basic import wait_for_condition
 
     event = threading.Event()
 
     found = []
 
-    def on_picked(locators):
-        found.append(locators)
+    def on_picked(locator: PickedLocatorTypedDict):
+        found.append(locator)
         event.set()
 
     assert web_inspector.pick_async(on_picked)
     try:
-        web_inspector.page().click(html_id)
-        assert event.wait(2), "Pick did not happen in the expected timeout."
+        page = web_inspector.page(False)
+        assert page
+        page.click(html_id)
+
+        def check_clicked():
+            web_inspector.loop()
+            return event.is_set()
+
+        wait_for_condition(
+            check_clicked, msg="Pick did not happen in the expected timeout."
+        )
         assert found
-        locators = found[0]
-        assert locators
-        return web_inspector.make_full_locators(locators)
+        locator = found[0]
+        assert locator
+        return fix_locator(locator)
     finally:
         web_inspector.stop_pick_async()

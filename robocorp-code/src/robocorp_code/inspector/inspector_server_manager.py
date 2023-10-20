@@ -123,6 +123,7 @@ class InspectorServerManager(object):
                         "$/customProgress",
                         "window/showMessage",
                         "$/webPick",
+                        "$/webInspectorState",
                     ):
                         robocorp_code_language_server: Optional[
                             RobocorpLanguageServer

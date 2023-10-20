@@ -1,20 +1,28 @@
-css:
-  matches: 1
-  strategy: css
-  value: '#div1'
-css:attributes:
-  matches: 1
-  strategy: css
-  value: css=*[data-test="data1"]
-id:
-  matches: 1
+alternatives:
+- matches: 1
   strategy: id
   value: div1
-xpath:attributes:
-  matches: 1
-  strategy: xpath
+- matches: 1
+  strategy: css
+  value: '#div1'
+- matches: 1
+  strategy: css:attributes
+  value: css=*[data-test="data1"]
+- matches: 1
+  strategy: xpath:attributes
   value: //div[@id='div1']
-xpath:inner-text:
-  matches: 1
-  strategy: xpath
+- matches: 1
+  strategy: xpath:position
+  value: //div
+- matches: 1
+  strategy: xpath:inner-text
   value: //div[contains(.,'div1')]
+element:
+  modifier: null
+  tag: DIV
+  type: null
+screenshot: data:image/png;base64,iV ... <clipped>
+source: page_to_test.html
+strategy: id
+type: browser
+value: div1

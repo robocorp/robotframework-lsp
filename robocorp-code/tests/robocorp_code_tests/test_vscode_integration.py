@@ -9,8 +9,15 @@ from typing import Dict, List
 import pytest
 from robocorp_code_tests.fixtures import RccPatch
 from robocorp_code_tests.protocols import IRobocorpLanguageServerClient
+from robocorp_ls_core.basic import wait_for_condition
+from robocorp_ls_core.callbacks import Callback
 from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
 
+from robocorp_code.inspector.web._web_inspector import (
+    STATE_BROWSER_CLOSED,
+    STATE_BROWSER_NOT_PICKING,
+    STATE_BROWSER_OPENED,
+)
 from robocorp_code.protocols import (
     ActionResult,
     LocalRobotMetadataInfoDict,
@@ -936,6 +943,7 @@ dependencies:
     message_matcher = language_server.obtain_pattern_message_matcher(
         {"method": "textDocument/publishDiagnostics"}
     )
+    assert message_matcher
     language_server.open_doc(robot_yaml_uri, 1, robot_yaml_text)
 
     assert message_matcher.event.wait(TIMEOUT)
@@ -1055,6 +1063,7 @@ condaConfigFile: conda.yaml
     message_matcher = language_server.obtain_pattern_message_matcher(
         {"method": "textDocument/publishDiagnostics"}
     )
+    assert message_matcher
     language_server.open_doc(conda_yaml_uri, 1, conda_yaml_text)
 
     assert message_matcher.event.wait(TIMEOUT)
@@ -1063,7 +1072,7 @@ condaConfigFile: conda.yaml
 
 
 class LSAutoApiClient:
-    def __init__(self, ls_client):
+    def __init__(self, ls_client) -> None:
         from robocorp_code_tests.robocode_language_server_client import (
             RobocorpLanguageServerClient,
         )
@@ -1144,3 +1153,59 @@ def test_inspector_integrated(language_server_initialized, ws_root_path, cases) 
     assert pick_message_matcher.msg
 
     api_client.m_web_inspector_close_browser()
+
+
+def test_inspector_integrated_quirks(
+    language_server_initialized, ws_root_path, cases
+) -> None:
+    from robocorp_code_tests.robocode_language_server_client import (
+        RobocorpLanguageServerClient,
+    )
+
+    from robocorp_code.inspector.web._web_inspector import STATE_BROWSER_PICKING
+
+    cases.copy_to("robots", ws_root_path)
+
+    ls_client: RobocorpLanguageServerClient = language_server_initialized
+
+    api_client = LSAutoApiClient(ls_client)
+
+    pick_message_matcher = ls_client.obtain_pattern_message_matcher(
+        {"method": "$/webInspectorState"}, remove_on_match=False
+    )
+    assert pick_message_matcher
+    pick_message_matcher.on_message = Callback()
+    messages: list = []
+    pick_message_matcher.on_message.register(messages.append)
+
+    api_client.m_web_inspector_start_pick()
+
+    def check_messages(expected_state: str):
+        for msg in messages:
+            if msg["params"].get("state") == expected_state:
+                return True
+        return False
+
+    wait_for_condition(lambda: check_messages(STATE_BROWSER_OPENED))
+    wait_for_condition(lambda: check_messages(STATE_BROWSER_PICKING))
+    del messages[:]
+
+    api_client.m_web_inspector_stop_pick()
+    wait_for_condition(lambda: check_messages(STATE_BROWSER_NOT_PICKING))
+    del messages[:]
+
+    api_client.m_web_inspector_start_pick()
+    wait_for_condition(lambda: check_messages(STATE_BROWSER_PICKING))
+    del messages[:]
+
+    api_client.m_web_inspector_close_browser()
+    wait_for_condition(lambda: check_messages(STATE_BROWSER_CLOSED))
+    del messages[:]
+
+    api_client.m_web_inspector_start_pick()
+    wait_for_condition(lambda: check_messages(STATE_BROWSER_OPENED))
+    wait_for_condition(lambda: check_messages(STATE_BROWSER_PICKING))
+    del messages[:]
+
+    api_client.m_web_inspector_close_browser()
+    wait_for_condition(lambda: check_messages(STATE_BROWSER_CLOSED))

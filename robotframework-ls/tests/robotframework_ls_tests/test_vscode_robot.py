@@ -1693,6 +1693,7 @@ User can call builtin 2
         message_matcher = language_server.obtain_pattern_message_matcher(
             {"method": "textDocument/publishDiagnostics"}
         )
+        assert message_matcher
 
         language_server.open_doc(uri1, 1, text=None)
         assert message_matcher.event.wait(TIMEOUT)
@@ -1702,6 +1703,7 @@ User can call builtin 2
         message_matcher = language_server.obtain_pattern_message_matcher(
             {"method": "textDocument/publishDiagnostics"}
         )
+        assert message_matcher
 
         language_server.open_doc(uri2, 1, text=None)
         assert message_matcher.event.wait(TIMEOUT)
@@ -1785,6 +1787,7 @@ def test_rf_interactive_integrated_basic(
     message_matcher = language_server.obtain_pattern_message_matcher(
         {"method": "interpreter/output"}
     )
+    assert message_matcher
     eval2 = language_server.execute_command(
         ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE,
         [
@@ -1882,6 +1885,7 @@ def check_input():
     message_matcher = language_server.obtain_pattern_message_matcher(
         {"method": "interpreter/output"}
     )
+    assert message_matcher
     language_server.execute_command(
         ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE,
         [{"interpreter_id": 0, "code": "*** Settings ***\nLibrary    ./my_lib.py"}],
@@ -1923,6 +1927,7 @@ Test
     message_matcher = language_server.obtain_pattern_message_matcher(
         {"method": "interpreter/output"}
     )
+    assert message_matcher
 
     language_server.execute_command(
         ROBOT_INTERNAL_RFINTERACTIVE_EVALUATE,
@@ -2003,6 +2008,7 @@ def test_rf_interactive_integrated_hook_robocorp_update_env(
                 {"method": "interpreter/output"}
             )
         )
+        assert message_matcher_interpreter_output
 
         def run_in_thread():
             language_server.execute_command(
