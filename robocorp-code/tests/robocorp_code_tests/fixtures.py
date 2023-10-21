@@ -484,3 +484,14 @@ def fix_locator(locator: "PickedLocatorTypedDict") -> "PickedLocatorTypedDict":
         modifier = modifier[:7]
         element["modifier"] = modifier
     return locator
+
+
+@pytest.fixture(scope="session")
+def browser_preinstalled():
+    from robocorp_code.playwright import robocorp_browser
+
+    # Make sure that the engine is installed before we start (as the tests are
+    # async, it's possible that things would take longer if it's not installed
+    # which'd make the test failed due to the timeout).
+    assert robocorp_browser.page() is not None
+    robocorp_browser.page().close()

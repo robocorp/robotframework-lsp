@@ -1106,7 +1106,9 @@ class LSAutoApiClient:
         raise AttributeError(attr)
 
 
-def test_inspector_integrated(language_server_initialized, ws_root_path, cases) -> None:
+def test_inspector_integrated(
+    language_server_initialized, ws_root_path, cases, browser_preinstalled
+) -> None:
     """
     This test should be a reference spanning all the APIs that are available
     for the inspector webview to use.
@@ -1155,8 +1157,8 @@ def test_inspector_integrated(language_server_initialized, ws_root_path, cases) 
     api_client.m_web_inspector_close_browser()
 
 
-def test_inspector_integrated_quirks(
-    language_server_initialized, ws_root_path, cases
+def test_inspector_integrated_state(
+    language_server_initialized, ws_root_path, cases, browser_preinstalled
 ) -> None:
     from robocorp_code_tests.robocode_language_server_client import (
         RobocorpLanguageServerClient,
