@@ -1,3 +1,12 @@
+NEXT
+-----------------------------
+
+- New inspector (work in progress):
+    - Requires the `robocorp.experimental.inspector` setting to be `true`.
+    - Sneak peek by using the `Robocorp: Open Inspector (Experimental)` action.
+- RCC upgraded to to `v17.4.1`.
+
+
 New in 1.12.0 (2023-09-28)
 -----------------------------
 
