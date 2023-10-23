@@ -68,6 +68,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
                     data: pickedLocator,
                 },
             };
+            // this is an event - postMessage will update the useLocator hook
             panel.webview.postMessage(response);
         })
     );

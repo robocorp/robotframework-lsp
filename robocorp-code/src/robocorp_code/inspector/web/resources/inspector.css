@@ -62,7 +62,7 @@
 }
 
 #inspector-frame.picker::after {
-  content: 'Click element to automate it | Press Shift+ESC to pause picking';
+  content: 'Click element to automate it | Press (Win+Shift+Esc) to pause picking';
 }
 
 #inspector-frame.recorder::after {
@@ -119,7 +119,7 @@
 }
 
 #inspector-frame.paused::after {
-  content: 'Inspector paused | Press Shift+ESC to start picking';
+  content: 'Inspector paused | Press (Win+Shift+Esc) to start picking';
   background: #f0dc20;
   color: black;
 }
