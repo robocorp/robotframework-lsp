@@ -403,3 +403,4 @@ class WebInspector:
             return True
         except Exception:
             log.exception("Error injecting picker.")
+            return False
