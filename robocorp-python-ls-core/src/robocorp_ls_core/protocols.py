@@ -12,7 +12,6 @@ from typing import (
     Type,
     Iterable,
     Tuple,
-    Sequence,
 )
 from typing import TypeVar
 import typing
@@ -277,7 +276,7 @@ class ILanguageServerClientBase(IRequestCancellable, Protocol):
 
     def obtain_pattern_message_matcher(
         self, message_pattern: Dict[str, str], remove_on_match: bool = True
-    ) -> IMessageMatcher:
+    ) -> Optional[IMessageMatcher]:
         """
         Can be used as:
 

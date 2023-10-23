@@ -18,14 +18,17 @@ log = get_logger(__name__)
 
 
 class _MessageMatcher(object):
-    def __init__(self, remove_on_match=True):
+    def __init__(self, remove_on_match: bool = True) -> None:
         self.event = threading.Event()
         self.msg = None
         self.remove_on_match = remove_on_match
+        self.on_message: Optional[Callback] = None
 
     def notify(self, msg):
         # msg can be None if the communication was finished in the meanwhile.
         self.msg = msg
+        if self.on_message is not None:
+            self.on_message(msg)
         self.event.set()
 
 
@@ -259,7 +262,7 @@ class _ReaderThread(threading.Thread):
 
     def obtain_pattern_message_matcher(
         self, message_pattern: Dict[str, Any], remove_on_match: bool = True
-    ):
+    ) -> Optional[_PatternMessageMatcher]:
         """
         :param message_pattern:
             Obtains a matcher which will be notified when the given message pattern is

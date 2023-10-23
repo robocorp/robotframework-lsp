@@ -40,7 +40,9 @@ def inspector_server_manager(dummy_language_server, log_file):
         manager.exit()
 
 
-def test_inspector_api_integrated(inspector_server_manager, datadir):
+def test_inspector_api_integrated(
+    inspector_server_manager, datadir, browser_preinstalled
+):
     """
     This test actually creates a server manager which will launch the inspector
     API in a different process and interact with it as needed.
@@ -69,7 +71,7 @@ def test_inspector_api_integrated(inspector_server_manager, datadir):
     inspector_api_client.send_sync_message("openBrowser", {"url": url})
 
 
-def test_inspector_api_raw(datadir):
+def test_inspector_api_raw(datadir, browser_preinstalled):
     """
     This test uses the inspector API directly in the current process.
     """
@@ -114,21 +116,17 @@ def test_inspector_api_echo(inspector_server_manager):
 
 
 def test_inspector_url_changing(
-    inspector_server_manager, datadir, data_regression, dummy_language_server
+    inspector_server_manager,
+    datadir,
+    data_regression,
+    dummy_language_server,
+    browser_preinstalled,
 ):
     """
     When entering pick mode, it should keep on the same mode even if the url
     changes.
     """
     from robocorp_ls_core import uris
-
-    from robocorp_code.playwright import robocorp_browser
-
-    # Make sure that the engine is installed before we start (as the tests are
-    # async, it's possible that things would take longer if it's not installed
-    # which'd make the test failed due to the timeout).
-    assert robocorp_browser.page() is not None
-    robocorp_browser.page().close()
 
     inspector_api_client = inspector_server_manager.get_inspector_api_client()
     assert inspector_api_client
@@ -152,20 +150,18 @@ def test_inspector_url_changing(
 
 
 def test_inspector_api_usage(
-    inspector_server_manager, datadir, data_regression, dummy_language_server
+    inspector_server_manager,
+    datadir,
+    data_regression,
+    dummy_language_server,
+    browser_preinstalled,
 ):
     """
     This simulates the API to be used to pick an element.
     """
-    from robocorp_code.playwright import robocorp_browser
-
-    # Make sure that the engine is installed before we start (as the tests are
-    # async, it's possible that things would take longer if it's not installed
-    # which'd make the test failed due to the timeout).
-    assert robocorp_browser.page() is not None
-    robocorp_browser.page().close()
-
+    from robocorp_code_tests.fixtures import fix_locator
     from robocorp_ls_core import uris
+    from robocorp_ls_core.basic import wait_for_condition
 
     inspector_api_client = inspector_server_manager.get_inspector_api_client()
 
@@ -192,9 +188,11 @@ def test_inspector_api_usage(
         assert message_matcher.msg["result"] is None
 
         assert pick_message_matcher.event.wait(10), f"No pick received (loop: {i})"
-        assert len(dummy_language_server.forwarded_messages) == 1
+        wait_for_condition(lambda: len(dummy_language_server.forwarded_messages) >= 3)
         del dummy_language_server.forwarded_messages[:]
-        data_regression.check(pick_message_matcher.msg, basename="div1Pick")
+        msg = pick_message_matcher.msg
+        locator = msg["params"]
+        data_regression.check(fix_locator(locator), basename="div1Pick")
 
         inspector_api_client.close_browser()
 

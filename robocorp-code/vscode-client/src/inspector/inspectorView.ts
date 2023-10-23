@@ -8,10 +8,10 @@ import { readFileSync } from "fs";
 import * as vscode from "vscode";
 
 import { getExtensionRelativeFile, verifyFileExists } from "../files";
-import { OUTPUT_CHANNEL } from "../channel";
+import { OUTPUT_CHANNEL, buildErrorStr, logError } from "../channel";
 import { getSelectedRobot } from "../viewsCommon";
 import { BrowserLocator, LocatorsMap } from "./types";
-import { IApps, IEventMessage, IMessage, IMessageType, IResponseMessage } from "./protocols";
+import { IApps, IEventMessage, IMessage, IMessageType, IRequestMessage, IResponseMessage } from "./protocols";
 import { langServer } from "../extension";
 import { ActionResult, LocalRobotMetadataInfo } from "../protocols";
 import { ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL } from "../robocorpCommands";
@@ -73,9 +73,44 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
         })
     );
 
+    context.subscriptions.push(
+        langServer.onNotification("$/webInspectorState", (state) => {
+            OUTPUT_CHANNEL.appendLine(`> Receiving: webInspectorState: ${JSON.stringify(state)}`);
+        })
+    );
+
     panel.onDidDispose(() => {
-        langServer.sendRequest("webInspectorCloseBrowser", {});
+        sendRequest("webInspectorCloseBrowser", {});
     });
+
+    const buildProtocolResponseFromActionResponse = (
+        message: IRequestMessage,
+        actionResult: ActionResult<any>
+    ): IResponseMessage => {
+        const response: IResponseMessage = {
+            id: message.id,
+            app: message.app,
+            type: "response" as IMessageType.RESPONSE,
+            status: actionResult.success ? "success" : "failure",
+            message: actionResult.message,
+        };
+        return response;
+    };
+
+    const sendRequest = async (requestName: string, args?: object): Promise<ActionResult<any>> => {
+        try {
+            if (args !== undefined) {
+                return await langServer.sendRequest(requestName, args);
+            } else {
+                return await langServer.sendRequest(requestName);
+            }
+        } catch (error) {
+            logError("Error on request: " + requestName, error, "INSPECTOR_VIEW_REQUEST_ERROR");
+            // We always need a response even if an exception happens (so, build an ActionResult
+            // from it).
+            return { message: buildErrorStr(error), success: false, result: undefined };
+        }
+    };
 
     panel.webview.onDidReceiveMessage(
         async (message: IMessage) => {
@@ -84,54 +119,38 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
                 case IMessageType.REQUEST:
                     const command = message.command;
                     if (command["type"] === "getLocators") {
-                        OUTPUT_CHANNEL.appendLine(`> Requesting: Get Locators`);
-                        const response: IResponseMessage = await langServer.sendRequest("loadRobotLocatorContents", {
-                            message: message,
+                        const actionResult: ActionResult<LocatorsMap> = await sendRequest("loadRobotLocatorContents", {
                             directory: directory,
                         });
-                        OUTPUT_CHANNEL.appendLine(`> Requesting: Locators JSON: ${JSON.stringify(response)}`);
-                        // this is a response - postMessage will update the broker hook
+                        const response: IResponseMessage = buildProtocolResponseFromActionResponse(
+                            message,
+                            actionResult
+                        );
+                        response.data = actionResult.result;
+                        response.dataType = "locatorsMap";
                         panel.webview.postMessage(response);
-                    }
-                    if (message.app === IApps.WEB_PICKER) {
+                    } else if (message.app === IApps.WEB_PICKER) {
                         if (command["type"] === "startPicking") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Open Browser`);
-                            await langServer.sendRequest("webInspectorOpenBrowser");
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Start Picker`);
-                            await langServer.sendRequest("webInspectorStartPick");
-                        }
-                        if (command["type"] === "stopPicking") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Stop Picker`);
-                            await langServer.sendRequest("webInspectorStopPick");
-                        }
-                        if (command["type"] === "save") {
-                            OUTPUT_CHANNEL.appendLine(
-                                `> Requesting: Saving Locator: ${JSON.stringify(command["locator"])}`
-                            );
-                            const response: IResponseMessage = await langServer.sendRequest("webInspectorSaveLocator", {
-                                message: message,
+                            await sendRequest("webInspectorStartPick");
+                        } else if (command["type"] === "stopPicking") {
+                            await sendRequest("webInspectorStopPick");
+                        } else if (command["type"] === "save") {
+                            const locator = message["command"]["locator"];
+                            const actionResult: ActionResult<any> = await sendRequest("webInspectorSaveLocator", {
+                                locator: locator,
                                 directory: directory,
                             });
-                            OUTPUT_CHANNEL.appendLine(
-                                `> Requesting: Response from saving locator: ${JSON.stringify(response)}`
-                            );
-                            // this is a response - postMessage will update the broker hook
-                            panel.webview.postMessage(response);
+
+                            panel.webview.postMessage(buildProtocolResponseFromActionResponse(message, actionResult));
                         }
-                    }
-                    if (message.app === IApps.LOCATORS_MANAGER) {
+                    } else if (message.app === IApps.LOCATORS_MANAGER) {
                         if (command["type"] === "delete") {
                             OUTPUT_CHANNEL.appendLine(`> Requesting: Delete Locators: ${command["ids"]}`);
-                            const response: IResponseMessage = await langServer.sendRequest(
-                                "webInspectorDeleteLocators",
-                                {
-                                    message: message,
-                                    directory: directory,
-                                    ids: command["ids"],
-                                }
-                            );
-                            // this is a response - postMessage will update the broker hook
-                            panel.webview.postMessage(response);
+                            const actionResult: ActionResult<any> = await sendRequest("webInspectorDeleteLocators", {
+                                directory: directory,
+                                ids: command["ids"],
+                            });
+                            panel.webview.postMessage(buildProtocolResponseFromActionResponse(message, actionResult));
                         }
                     }
                     return;

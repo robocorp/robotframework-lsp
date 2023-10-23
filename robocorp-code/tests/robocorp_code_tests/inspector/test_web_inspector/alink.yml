@@ -1,32 +1,34 @@
-css:
-  matches: 1
-  strategy: css
-  value: '#alink'
-id:
-  matches: 1
+alternatives:
+- matches: 1
   strategy: id
   value: alink
-link:
-  matches: 1
+- matches: 1
   strategy: link
   value: Link "to Something
-xpath:attributes:
-  matches: 1
-  strategy: xpath
-  value: //a[@id='alink']
-xpath:href:
-  matches: 1
-  strategy: xpath
-  value: //a[contains(@href, './something')]
-xpath:inner-text:
-  matches: 1
-  strategy: xpath
-  value: //a[contains(.,'Link "to Something')]
-xpath:link-text:
-  matches: 1
-  strategy: xpath
+- matches: 1
+  strategy: css
+  value: '#alink'
+- matches: 1
+  strategy: xpath:link-text
   value: //a[contains(text(),'Link "to Something')]
-xpath:position:
-  matches: 1
-  strategy: xpath
+- matches: 1
+  strategy: xpath:attributes
+  value: //a[@id='alink']
+- matches: 1
+  strategy: xpath:href
+  value: //a[contains(@href, './something')]
+- matches: 1
+  strategy: xpath:position
   value: //a
+- matches: 1
+  strategy: xpath:inner-text
+  value: //a[contains(.,'Link "to Something')]
+element:
+  modifier: file://
+  tag: A
+  type: a
+screenshot: data:image/png;base64,iV ... <clipped>
+source: page_to_test.html
+strategy: id
+type: browser
+value: alink
