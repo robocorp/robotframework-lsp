@@ -141,7 +141,6 @@ class WebInspector:
         self.loop()
 
         page = self._page
-        log.debug("Page is: {page}")
         if page is None or page.is_closed():
             if not auto_create:
                 return None
@@ -187,7 +186,6 @@ class WebInspector:
                 log.exception()
                 return None
 
-        log.debug(f"Returning page: {page}")
         return page
 
     def start_log_console(self):
