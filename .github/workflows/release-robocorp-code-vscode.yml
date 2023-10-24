@@ -85,7 +85,7 @@ jobs:
       env:
         OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
         
-    # Deal with Darwin --------------
+    # Deal with Darwin x64 --------------
     - name: Download rcc for darwin
       run: python -m dev download-rcc darwin
       
@@ -103,5 +103,26 @@ jobs:
         
     - name: Publish darwin to open vsx marketplace 
       run: npx ovsx publish robocorp-code-darwin-x64.vsix -p $OPEN_VSX_TOKEN
+      env:
+        OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
+        
+    # Deal with Darwin arm64 --------------
+    - name: Download rcc for darwin
+      run: python -m dev download-rcc darwin
+      
+    - run: vsce package --target darwin-arm64 -o robocorp-code-darwin-arm64.vsix
+
+    - uses: actions/upload-artifact@v1
+      with:
+        name: robocorp-code-darwin-arm64.vsix
+        path: ./robocorp-code/robocorp-code-darwin-arm64.vsix
+    
+    - name: Publish pre-release to vscode marketplace
+      run: vsce publish --packagePath ./robocorp-code-darwin-arm64.vsix -p $VSCE_TOKEN
+      env:
+        VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+        
+    - name: Publish darwin to open vsx marketplace 
+      run: npx ovsx publish robocorp-code-darwin-arm64.vsix -p $OPEN_VSX_TOKEN
       env:
         OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
