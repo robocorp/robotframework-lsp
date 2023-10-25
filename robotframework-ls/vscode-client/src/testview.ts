@@ -39,13 +39,15 @@ export interface ITestInfoFromUri {
     testInfo: ITestInfoFromSymbolsCache[];
 }
 
-const controller = vscode.tests.createTestController("robotframework-lsp.testController", "Robot Framework");
+const controller = vscode.workspace.getConfiguration("robot.testView").get<boolean>("enabled")
+    ? vscode.tests.createTestController("robotframework-lsp.testController", "Robot Framework")
+    : undefined;
 
-const runProfile = controller.createRunProfile("Run", vscode.TestRunProfileKind.Run, (request, token) => {
+const runProfile = controller?.createRunProfile("Run", vscode.TestRunProfileKind.Run, (request, token) => {
     runHandler(false, request, token);
 });
 
-const debugProfile = controller.createRunProfile("Debug", vscode.TestRunProfileKind.Debug, (request, token) => {
+const debugProfile = controller?.createRunProfile("Debug", vscode.TestRunProfileKind.Debug, (request, token) => {
     runHandler(true, request, token);
 });
 
@@ -67,6 +69,7 @@ export const DEBUG_PROFILE = debugProfile;
 // };
 
 export async function clearTestItems() {
+    if (!controller) return;
     controller.items.replace([]);
     testItemIdToTestItem.clear();
 }
