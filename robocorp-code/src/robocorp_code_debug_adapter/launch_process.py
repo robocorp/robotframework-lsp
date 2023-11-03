@@ -15,15 +15,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from functools import partial
-from robocorp_ls_core.robotframework_log import get_logger
 import itertools
 import os.path
 import threading
-from robocorp_ls_core.protocols import IConfig
-from typing import Optional, List, Callable
-from pathlib import Path
 import traceback
+from functools import partial
+from pathlib import Path
+from typing import Callable, List, Optional
+
+from robocorp_ls_core.protocols import IConfig
+from robocorp_ls_core.robotframework_log import get_logger
 
 log = get_logger(__name__)
 
@@ -43,8 +44,9 @@ def _read_stream(stream, on_line, category):
 
 def _notify_on_exited_pid(on_exit, pid):
     try:
-        from robocorp_ls_core.basic import is_process_alive
         import time
+
+        from robocorp_ls_core.basic import is_process_alive
 
         log.debug("Waiting for pid to exit (_notify_on_exited_pid).")
 
@@ -96,21 +98,25 @@ class LaunchProcess(object):
         :param LaunchResponse launch_response:
         """
         import weakref
-        from robocorp_ls_core.basic import as_str
-        from robocorp_code_debug_adapter.constants import VALID_TERMINAL_OPTIONS
-        from robocorp_code_debug_adapter.constants import (
-            TERMINAL_NONE,
-            TERMINAL_INTEGRATED,
-        )
-        from robocorp_ls_core.robotframework_log import get_log_level
-        from robocorp_code.rcc import Rcc
-        from robocorp_ls_core.config import Config
+
         from robocorp_ls_core import yaml_wrapper
+        from robocorp_ls_core.basic import as_str
+        from robocorp_ls_core.config import Config
+        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+            OutputEvent,
+            OutputEventBody,
+        )
         from robocorp_ls_core.protocols import ActionResult
-        from robocorp_code.protocols import IRobotYamlEnvInfo
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import OutputEvent
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import OutputEventBody
+        from robocorp_ls_core.robotframework_log import get_log_level
+
         from robocorp_code.plugins.resolve_interpreter import get_conda_config_path
+        from robocorp_code.protocols import IRobotYamlEnvInfo
+        from robocorp_code.rcc import Rcc
+        from robocorp_code_debug_adapter.constants import (
+            TERMINAL_INTEGRATED,
+            TERMINAL_NONE,
+            VALID_TERMINAL_OPTIONS,
+        )
 
         self._weak_debug_adapter_comm = weakref.ref(debug_adapter_comm)
         self._valid = True
@@ -394,8 +400,6 @@ class LaunchProcess(object):
             self._sent_terminated.set()
             from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
                 TerminatedEvent,
-            )
-            from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
                 TerminatedEventBody,
             )
 
@@ -414,21 +418,22 @@ class LaunchProcess(object):
                     log.exception("Error on exit callback.")
 
     def launch(self):
+        import tempfile
+
+        from robocorp_ls_core import run_and_save_pid, run_with_env
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+            OutputEvent,
+            OutputEventBody,
             RunInTerminalRequest,
-        )
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
             RunInTerminalRequestArguments,
         )
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import OutputEvent
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import OutputEventBody
-        from robocorp_code_debug_adapter.constants import TERMINAL_NONE
         from robocorp_ls_core.robotframework_log import get_log_level
-        from robocorp_code_debug_adapter.constants import TERMINAL_EXTERNAL
-        from robocorp_code_debug_adapter.constants import TERMINAL_INTEGRATED
-        from robocorp_ls_core import run_with_env
-        from robocorp_ls_core import run_and_save_pid
-        import tempfile
+
+        from robocorp_code_debug_adapter.constants import (
+            TERMINAL_EXTERNAL,
+            TERMINAL_INTEGRATED,
+            TERMINAL_NONE,
+        )
 
         # Note: using a weak-reference so that callbacks don't keep it alive
         weak_debug_adapter_comm = self._weak_debug_adapter_comm

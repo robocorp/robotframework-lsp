@@ -162,6 +162,7 @@ ignoreFiles:
 
 def test_compute_launch_01(tmpdir):
     import os
+
     from robocorp_code import compute_launch
 
     robot_yaml = tmpdir.join("robot.yaml")
@@ -216,6 +217,7 @@ ignoreFiles:
 
 def test_compute_launch_02(tmpdir):
     import os
+
     from robocorp_code import compute_launch
 
     robot_yaml = tmpdir.join("robot.yaml")
@@ -312,6 +314,7 @@ ignoreFiles:
 
 def test_compute_launch_04(tmpdir):
     import os
+
     from robocorp_code import compute_launch
 
     robot_yaml = tmpdir.join("robot.yaml")

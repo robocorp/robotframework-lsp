@@ -1106,7 +1106,7 @@ class LSAutoApiClient:
         raise AttributeError(attr)
 
 
-def test_inspector_integrated(
+def test_web_inspector_integrated(
     language_server_initialized, ws_root_path, cases, browser_preinstalled
 ) -> None:
     """
@@ -1157,7 +1157,7 @@ def test_inspector_integrated(
     api_client.m_web_inspector_close_browser()
 
 
-def test_inspector_integrated_state(
+def test_web_inspector_integrated_state(
     language_server_initialized, ws_root_path, cases, browser_preinstalled
 ) -> None:
     from robocorp_code_tests.robocode_language_server_client import (
@@ -1211,3 +1211,57 @@ def test_inspector_integrated_state(
 
     api_client.m_web_inspector_close_browser()
     wait_for_condition(lambda: check_messages(STATE_BROWSER_CLOSED))
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only test.")
+def test_windows_inspector_integrated(
+    language_server_initialized, ws_root_path, cases, tk_process
+) -> None:
+    """
+    This test should be a reference spanning all the APIs that are available
+    for the inspector webview to use.
+    """
+    from robocorp_code_tests.robocode_language_server_client import (
+        RobocorpLanguageServerClient,
+    )
+
+    cases.copy_to("robots", ws_root_path)
+    ls_client: RobocorpLanguageServerClient = language_server_initialized
+
+    api_client = LSAutoApiClient(ls_client)
+
+    result = api_client.m_windows_inspector_set_window_locator(
+        locator='name:"name is not there"'
+    )
+    assert not result["success"]
+
+    result = api_client.m_windows_inspector_set_window_locator(
+        locator='name:"Tkinter Elements Showcase"'
+    )
+    assert result["success"]
+
+    pick_message_matcher = ls_client.obtain_pattern_message_matcher(
+        {"method": "$/windowsPick"}
+    )
+
+    # When we set the window locator the mouse will be moved to the
+    # window. This means that just starting the picking now will have
+    # the cursor at the proper location.
+    result = api_client.m_windows_inspector_start_pick()
+    assert result["success"]
+    pick_message_matcher.event.wait(10)
+    assert pick_message_matcher.msg
+
+    result = api_client.m_windows_inspector_stop_pick()
+    assert result["success"]
+
+    result = api_client.m_windows_inspector_start_highlight(locator="control:Button")
+    assert result["success"]
+    assert len(result["result"]["matched_paths"]) > 4
+
+    result = api_client.m_windows_inspector_collect_tree(locator="control:Button")
+    assert result["success"]
+    assert len(result["result"]["matched_paths"]) > 4
+
+    result = api_client.m_windows_inspector_stop_highlight()
+    assert result["success"]

@@ -1,6 +1,7 @@
-import sys
-import pytest
 import subprocess
+import sys
+
+import pytest
 
 
 @pytest.mark.parametrize("check_timeout", [True, False])

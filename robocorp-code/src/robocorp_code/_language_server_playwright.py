@@ -1,13 +1,14 @@
-from robocorp_code import commands
+import errno
+import os
+from functools import partial
+from typing import Dict, Union
+
+from robocorp_ls_core import uris
 from robocorp_ls_core.command_dispatcher import _SubCommandDispatcher
 from robocorp_ls_core.robotframework_log import get_logger
 
+from robocorp_code import commands
 from robocorp_code.protocols import ActionResultDict
-from functools import partial
-from typing import Union, Dict
-import os
-from robocorp_ls_core import uris
-import errno
 
 log = get_logger(__name__)
 
@@ -18,9 +19,10 @@ class _Playwright(object):
     def __init__(
         self, base_command_dispatcher, feedback, plugin_manager, lsp_messages
     ) -> None:
-        from robocorp_code._language_server_feedback import _Feedback
-        from robocorp_ls_core.pluginmanager import PluginManager
         from robocorp_ls_core.lsp import LSPMessages
+        from robocorp_ls_core.pluginmanager import PluginManager
+
+        from robocorp_code._language_server_feedback import _Feedback
 
         self._feedback: _Feedback = feedback
         self._pm: PluginManager = plugin_manager
@@ -52,8 +54,10 @@ class _Playwright(object):
         )
 
     def _threaded_playwright_recorder(self, target_robot_uri: str) -> ActionResultDict:
-        from robocorp_ls_core.ep_resolve_interpreter import EPResolveInterpreter
-        from robocorp_ls_core.ep_resolve_interpreter import IInterpreterInfo
+        from robocorp_ls_core.ep_resolve_interpreter import (
+            EPResolveInterpreter,
+            IInterpreterInfo,
+        )
 
         try:
             for ep in self._pm.get_implementations(EPResolveInterpreter):
@@ -116,9 +120,10 @@ class _Playwright(object):
     def _launch_playwright_recorder(
         self, python_exe: str, environ: Dict[str, str], cwd: str
     ) -> None:
+        import subprocess
         import sys
         import threading
-        import subprocess
+
         from robocorp_ls_core.basic import build_subprocess_kwargs
 
         cmd = [

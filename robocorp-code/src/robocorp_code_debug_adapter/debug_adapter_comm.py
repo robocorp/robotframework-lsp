@@ -15,9 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import json
-from robocorp_ls_core.debug_adapter_core.dap import dap_base_schema as base_schema
-from robocorp_ls_core.robotframework_log import get_logger, get_log_level
 from typing import Optional
+
+from robocorp_ls_core.debug_adapter_core.dap import dap_base_schema as base_schema
+from robocorp_ls_core.robotframework_log import get_log_level, get_logger
 
 log = get_logger(__name__)
 
@@ -107,6 +108,7 @@ class DebugAdapterComm(object):
             build_response,
         )
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import InitializedEvent
+
         from robocorp_code_debug_adapter.launch_process import LaunchProcess
 
         # : :type launch_response: LaunchResponse
@@ -185,10 +187,10 @@ class DebugAdapterComm(object):
         """
         :param SetBreakpointsRequest request:
         """
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import SourceBreakpoint
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import Breakpoint
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+            Breakpoint,
             SetBreakpointsResponseBody,
+            SourceBreakpoint,
         )
 
         # Just acknowledge that no breakpoints are valid (we don't really debug,
@@ -213,8 +215,8 @@ class DebugAdapterComm(object):
         )
 
     def on_threads_request(self, request):
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import Thread
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+            Thread,
             ThreadsResponseBody,
         )
 

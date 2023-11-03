@@ -1,8 +1,8 @@
 import sys
 
 from robocorp_ls_core.protocols import ILanguageServerClient
-from robocorp_code.protocols import ListWorkspacesActionResultDict, ActionResultDict
 
+from robocorp_code.protocols import ActionResultDict, ListWorkspacesActionResultDict
 
 # Hack so that we don't break the runtime on versions prior to Python 3.8.
 if sys.version_info[:2] < (3, 8):

@@ -19,8 +19,8 @@ from typing import (
 )
 
 import _ctypes
-from _ctypes import COMError
 
+from ._com_error import COMError
 from ._control_element import ControlElement
 from ._errors import ElementNotFound
 from ._window_element import WindowElement
@@ -189,7 +189,10 @@ class _TkHandler:
 
     @property
     def _default_root(self):
-        return self._roots[0]
+        try:
+            return self._roots[0]
+        except IndexError:
+            return None
 
     def loop(self, on_loop_poll_callback: Optional[Callable[[], Any]]):
         assert self._current_thread == threading.current_thread()
@@ -201,11 +204,17 @@ class _TkHandler:
             def check_action():
                 # Keep calling itself
                 on_loop_poll_callback()
-                self._default_root.after(poll_5_times_per_second, check_action)
+                default_root = self._default_root
+                if default_root is not None:
+                    default_root.after(poll_5_times_per_second, check_action)
 
-            self._default_root.after(poll_5_times_per_second, check_action)
+            default_root = self._default_root
+            if default_root is not None:
+                default_root.after(poll_5_times_per_second, check_action)
 
-        self._default_root.mainloop()
+        default_root = self._default_root
+        if default_root is not None:
+            default_root.mainloop()
 
     def quit(self):
         assert self._current_thread == threading.current_thread()
@@ -631,7 +640,7 @@ class _PickerThread(threading.Thread):
             else:
                 print(f"Unable to find child index for: {control}", file=sys.stderr)
                 return
-        except _ctypes.COMError:
+        except COMError:
             pass  # Ignore, if the user is out of bounds it'll be raised.
         else:
             if not parent_path:

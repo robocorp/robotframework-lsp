@@ -3,10 +3,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, List, Optional, Union
 
-from robocorp_code import commands
 from robocorp_ls_core.command_dispatcher import _SubCommandDispatcher
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.subprocess_wrapper import LaunchActionResultDict
+
+from robocorp_code import commands
 
 pre_run_scripts_command_dispatcher = _SubCommandDispatcher("_pre_run_scripts")
 
@@ -27,8 +28,9 @@ class _PreRunScripts:
         )
 
     def _get_pre_run_scripts(self, robot) -> Optional[_PreRunScriptsInfo]:
-        from robocorp_code.find_robot_yaml import find_robot_yaml_path_from_path
         from robocorp_ls_core import yaml_wrapper
+
+        from robocorp_code.find_robot_yaml import find_robot_yaml_path_from_path
 
         path = Path(robot)
         try:
@@ -68,7 +70,6 @@ class _PreRunScripts:
         import platform
 
         # See docs: https://github.com/robocorp/rcc/blob/master/docs/recipes.md#what-are-prerunscripts
-
         # If script names contains some of "amd64", "arm64", "darwin", "windows"
         # and/or "linux" words (like script_for_amd64_linux.sh) then other
         # architectures and operating systems will skip those scripts, and only
@@ -120,8 +121,9 @@ class _PreRunScripts:
     def _run_pre_run_scripts_internal(
         self, params: dict
     ) -> Optional[LaunchActionResultDict]:
-        import shlex
         import os
+        import shlex
+
         from robocorp_ls_core.subprocess_wrapper import launch
 
         pre_run_scripts = self._get_pre_run_scripts(params["robot"])

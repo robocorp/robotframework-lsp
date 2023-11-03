@@ -35,6 +35,10 @@ msgspec = "^0.18"
 pyyaml = "^6"
 robocorp-inspector = "0.10.2"
 playwright = "<2"
+pillow = "^9.0"
+pywin32 = { version = ">=300,<304", platform = "win32", python = "!=3.8.1" }
+psutil = "^5.9.0"
+comtypes = "^1.1"
 
 [tool.poetry.group.dev.dependencies]
 robocorp-python-ls-core = {path = "../robocorp-python-ls-core/", develop = true}
@@ -52,7 +56,6 @@ isort = { version = "^5.12.0", python = "^3.8" }
 invoke = "^2.0"
 tomlkit = "^0.11.8"
 semver = "^3.0.0"
-psutil = "*"
 requests = "*"
 truststore = "0.8.0"
 
@@ -69,12 +72,17 @@ types-mock = "*"
 types-PyYAML = "*"
 robocorp-log-pytest = "*"
 types-docutils = "*"
+types-Pillow = "^9.0"
+types-pywin32 = "304.0.0.6"
 
 [tool.mypy]
 mypy_path = "src:tests"
 
 [tool.isort]
 profile = "black"
+
+[tool.black]
+exclude = "vendored"
 
 [tool.ruff]
 ignore = [

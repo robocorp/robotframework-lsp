@@ -1,7 +1,8 @@
-from robocorp_ls_core.constants import NULL
-from pathlib import Path
-import sys
 import os
+import sys
+from pathlib import Path
+
+from robocorp_ls_core.constants import NULL
 
 
 def get_env():

@@ -17,10 +17,9 @@
 # limitations under the License.
 """
 
+import os.path
 import threading
 import traceback
-import os.path
-
 
 __file__ = os.path.abspath(__file__)
 if __file__.endswith((".pyc", ".pyo")):
@@ -46,13 +45,13 @@ def main():
         import sys
 
         try:
-            import robocorp_code_debug_adapter
             import robocorp_code
+            import robocorp_code_debug_adapter
         except ImportError:
             # Automatically add it to the path if __main__ is being executed.
             sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            import robocorp_code_debug_adapter  # @UnusedImport
             import robocorp_code
+            import robocorp_code_debug_adapter  # @UnusedImport
 
         robocorp_code.import_robocorp_ls_core()
 
@@ -60,26 +59,24 @@ def main():
             STOP_WRITER_THREAD,
         )
         from robocorp_ls_core.robotframework_log import (
-            get_logger,
             configure_logger,
+            get_logger,
             log_args_and_python,
         )
 
-        from robocorp_code_debug_adapter.constants import LOG_FILENAME
-        from robocorp_code_debug_adapter.constants import LOG_LEVEL
+        from robocorp_code_debug_adapter.constants import LOG_FILENAME, LOG_LEVEL
 
         configure_logger("dap", LOG_LEVEL, LOG_FILENAME)
         log = get_logger("robocorp_code_debug_adapter.__main__")
         log_args_and_python(log, sys.argv, robocorp_code)
 
+        from queue import Queue
+
         from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import (
             reader_thread,
-        )
-        from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import (
             writer_thread,
         )
 
-        from queue import Queue
         from robocorp_code_debug_adapter.debug_adapter_comm import DebugAdapterComm
 
         to_client_queue = Queue()

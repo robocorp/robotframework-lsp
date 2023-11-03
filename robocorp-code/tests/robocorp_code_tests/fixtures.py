@@ -1,8 +1,9 @@
 import os
+import subprocess
 import sys
 import typing
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 import pytest
 from robocorp_code_tests.protocols import IRobocorpLanguageServerClient
@@ -495,3 +496,34 @@ def browser_preinstalled():
     # which'd make the test failed due to the timeout).
     assert robocorp_browser.page() is not None
     robocorp_browser.page().close()
+
+
+@pytest.fixture
+def tk_process(datadir) -> Iterator[subprocess.Popen]:
+    """
+    Note: kills existing tk processes prior to starting.
+    """
+    from robocorp_ls_core.basic import kill_process_and_subprocesses
+
+    from robocorp_code.inspector.windows.robocorp_windows import (
+        find_window,
+        find_windows,
+    )
+
+    # Ensure no tk processes when we start...
+    windows_found = list(
+        x for x in find_windows() if x.name == "Tkinter Elements Showcase"
+    )
+    for w in windows_found:
+        kill_process_and_subprocesses(w.ui_automation_control.ProcessId)
+
+    f = Path(__file__).absolute().parent / "snippet_tk.py"
+    assert f.exists()
+    popen = subprocess.Popen([sys.executable, str(f)])
+
+    # i.e.: wait for it to be visible
+    find_window('name:"Tkinter Elements Showcase"', timeout=20)
+
+    yield popen
+    if popen.poll() is None:
+        kill_process_and_subprocesses(popen.pid)

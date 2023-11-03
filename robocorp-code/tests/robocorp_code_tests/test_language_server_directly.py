@@ -1,5 +1,4 @@
 import pytest
-
 from robocorp_code_tests.fixtures import RccPatch
 
 
@@ -10,9 +9,10 @@ def test_cloud_list_workspaces_cache_invalidate(
     ci_endpoint: str,
     rcc_config_location: str,
 ):
+    from robocorp_ls_core.constants import NULL
+
     from robocorp_code.rcc import AccountInfo
     from robocorp_code.robocorp_language_server import RobocorpLanguageServer
-    from robocorp_ls_core.constants import NULL
 
     rcc_patch.apply()
 

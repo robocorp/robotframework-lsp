@@ -78,8 +78,9 @@ def _test_check_manual():
 
 
 def test_conda_cloud(datadir):
-    from robocorp_code.deps.conda_cloud import CondaCloud, State
     from robocorp_ls_core.basic import wait_for_condition
+
+    from robocorp_code.deps.conda_cloud import CondaCloud, State
 
     cache_dir = datadir / "cache"
     conda_cloud = CondaCloud(cache_dir, reindex_if_old=True)

@@ -7,11 +7,12 @@ Also, the required version must be checked in the client (in case imports or API
 change in `robocorp_ls_core` we need a compatible version both on robotframework-ls
 as well as robocorp-code).
 """
+import itertools
 import os.path
 import sys
-import itertools
-from robocorp_ls_core.protocols import RCCActionResult
+
 from robocorp_ls_core.progress_report import get_current_progress_reporter
+from robocorp_ls_core.protocols import RCCActionResult
 
 try:
     from robocorp_code.rcc import Rcc  # noqa
@@ -24,26 +25,23 @@ except:
 
     from robocorp_code.rcc import Rcc  # noqa
 
-
-from typing import Optional, Dict, List, Tuple
-from collections import namedtuple
 import time
+import weakref
+from collections import namedtuple
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
+from robocorp_ls_core import uris
 from robocorp_ls_core.basic import implements
-from robocorp_ls_core.pluginmanager import PluginManager
-
-
 from robocorp_ls_core.ep_resolve_interpreter import (
+    DefaultInterpreterInfo,
     EPResolveInterpreter,
     IInterpreterInfo,
-    DefaultInterpreterInfo,
 )
-from robocorp_ls_core import uris
+from robocorp_ls_core.pluginmanager import PluginManager
 from robocorp_ls_core.robotframework_log import get_logger
-from pathlib import Path
-import weakref
-from robocorp_code.protocols import IRobotYamlEnvInfo
 
+from robocorp_code.protocols import IRobotYamlEnvInfo
 
 log = get_logger(__name__)
 
@@ -83,8 +81,9 @@ class _CachedFileInfo(object):
     def yaml_contents(self) -> dict:
         yaml_contents = self._yaml_contents
         if yaml_contents is None:
-            from robocorp_ls_core import yaml_wrapper
             from io import StringIO
+
+            from robocorp_ls_core import yaml_wrapper
 
             s = StringIO(self.contents)
             yaml_contents = self._yaml_contents = yaml_wrapper.load(s)
@@ -102,10 +101,13 @@ class _CachedInterpreterInfo(object):
         env_json_path_file_info: Optional[_CachedFileInfo],
         pm: PluginManager,
     ):
-        from robocorp_ls_core.ep_providers import EPConfigurationProvider
-        from robocorp_ls_core.ep_providers import EPEndPointProvider
-        from robocorp_ls_core.protocols import IEndPoint
+        from robocorp_ls_core.ep_providers import (
+            EPConfigurationProvider,
+            EPEndPointProvider,
+        )
         from robocorp_ls_core.lsp import LSPMessages
+        from robocorp_ls_core.protocols import IEndPoint
+
         from robocorp_code.commands import ROBOCORP_SHOW_INTERPRETER_ENV_ERROR
 
         self._mtime: _CachedInterpreterMTime = self._obtain_mtime(
@@ -331,9 +333,8 @@ class _CacheInfo(object):
                     _touch_temp(interpreter_info.info)
                     return interpreter_info.info
 
-        from robocorp_ls_core.progress_report import progress_context
-
         from robocorp_ls_core.ep_providers import EPEndPointProvider
+        from robocorp_ls_core.progress_report import progress_context
 
         endpoint = pm[EPEndPointProvider].endpoint
 

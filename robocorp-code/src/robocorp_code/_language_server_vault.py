@@ -1,9 +1,11 @@
-from robocorp_ls_core.protocols import IEndPoint, ActionResultDict, ActionResult
-from robocorp_ls_core.robotframework_log import get_logger
-from robocorp_code import commands
-from robocorp_ls_core.command_dispatcher import _SubCommandDispatcher
-from robocorp_code.protocols import IRcc
 from typing import Optional
+
+from robocorp_ls_core.command_dispatcher import _SubCommandDispatcher
+from robocorp_ls_core.protocols import ActionResult, ActionResultDict, IEndPoint
+from robocorp_ls_core.robotframework_log import get_logger
+
+from robocorp_code import commands
+from robocorp_code.protocols import IRcc
 
 log = get_logger(__name__)
 

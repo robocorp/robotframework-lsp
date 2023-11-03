@@ -1,6 +1,8 @@
 def test_command_dispatch():
-    from robocorp_ls_core.command_dispatcher import _CommandDispatcher
-    from robocorp_ls_core.command_dispatcher import _SubCommandDispatcher
+    from robocorp_ls_core.command_dispatcher import (
+        _CommandDispatcher,
+        _SubCommandDispatcher,
+    )
 
     command_dispatcher = _CommandDispatcher()
 

@@ -15,18 +15,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from robocorp_ls_core.unittest_tools.fixtures import TIMEOUT
-from robocorp_ls_core.subprocess_wrapper import subprocess
-
+import os
 import queue
+import sys
 import threading
+from typing import Iterable, Optional
 
 import pytest  # type: ignore
-import sys
-import os
-from typing import Optional, Iterable
 from robocorp_ls_core.options import DEFAULT_TIMEOUT
-
+from robocorp_ls_core.subprocess_wrapper import subprocess
+from robocorp_ls_core.unittest_tools.fixtures import TIMEOUT
 
 __file__ = os.path.abspath(__file__)
 if __file__.endswith((".pyc", ".pyo")):
@@ -72,8 +70,9 @@ def dap_process_stderr_file(dap_logs_dir):
 
 @pytest.fixture
 def dap_process(dap_log_file, dap_process_stderr_file):
-    from robocorp_code_debug_adapter import __main__
     from robocorp_ls_core.basic import kill_process_and_subprocesses
+
+    from robocorp_code_debug_adapter import __main__
 
     env = os.environ.copy()
     env["ROBOCORP_CODE_DAP_LOG_LEVEL"] = "3"
@@ -169,11 +168,9 @@ class _DebuggerAPI(object):
         return ret
 
     def initialize(self, rcc_config_location):
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import InitializeRequest
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+            InitializeRequest,
             InitializeRequestArguments,
-        )
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
             InitializeResponse,
         )
 
@@ -204,8 +201,6 @@ class _DebuggerAPI(object):
     def configuration_done(self):
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
             ConfigurationDoneRequest,
-        )
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
             ConfigurationDoneResponse,
         )
 
@@ -228,13 +223,13 @@ class _DebuggerAPI(object):
                 ["--variable", "my_var:22"]
             )
         """
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import LaunchRequest
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+            InitializedEvent,
+            LaunchRequest,
             LaunchRequestArguments,
+            LaunchResponse,
+            Response,
         )
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import LaunchResponse
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import InitializedEvent
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import Response
 
         launch_args = LaunchRequestArguments(
             __sessionId="some_id",
@@ -268,16 +263,13 @@ class _DebuggerAPI(object):
 
     def set_breakpoints(self, target, lines):
         import os.path
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
-            SetBreakpointsRequest,
-        )
+
         from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
             SetBreakpointsArguments,
-        )
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import Source
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import SourceBreakpoint
-        from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+            SetBreakpointsRequest,
             SetBreakpointsResponse,
+            Source,
+            SourceBreakpoint,
         )
 
         if isinstance(lines, int):
@@ -343,8 +335,10 @@ def debugger_api_core(dap_resources_dir):
 
 @pytest.fixture
 def debugger_api(dap_process, dap_resources_dir):
-    from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import writer_thread
-    from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import reader_thread
+    from robocorp_ls_core.debug_adapter_core.debug_adapter_threads import (
+        reader_thread,
+        writer_thread,
+    )
 
     write_to = dap_process.stdin
     read_from = dap_process.stdout

@@ -1,9 +1,9 @@
 import os
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
-from robocorp_code.protocols import ActionResultDictRobotLaunch
 from robocorp_ls_core.robotframework_log import get_logger
 
+from robocorp_code.protocols import ActionResultDictRobotLaunch
 
 log = get_logger(__name__)
 

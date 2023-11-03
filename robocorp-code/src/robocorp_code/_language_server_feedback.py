@@ -1,4 +1,5 @@
 from functools import partial
+
 from robocorp_code.protocols import IRcc
 
 

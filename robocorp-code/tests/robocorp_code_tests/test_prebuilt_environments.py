@@ -1,8 +1,9 @@
 import sys
 from pathlib import Path
 
-from robocorp_code.protocols import IRcc
 from robocorp_ls_core.robotframework_log import get_logger
+
+from robocorp_code.protocols import IRcc
 
 log = get_logger(__name__)
 
@@ -12,6 +13,7 @@ def test_prebuilt_environments(rcc: IRcc, tmpdir):
     import io
 
     import requests
+
     import robocorp_code
 
     robocorp_code_root = Path(robocorp_code.__file__).parent.parent.parent

@@ -37,16 +37,17 @@ Each request for a space name creates a structure in the disk such as:
 """
 
 
-from robocorp_code.protocols import IRcc
+from pathlib import Path
+from typing import Iterable, List, Optional
+
 from robocorp_ls_core.robotframework_log import get_logger
 
-from pathlib import Path
-from typing import List, Optional, Iterable
+from robocorp_code.protocols import IRcc
 from robocorp_code.rcc_space_info import (
-    RCCSpaceInfo,
     CurrentSpaceStatus,
-    write_text,
+    RCCSpaceInfo,
     SpaceState,
+    write_text,
 )
 
 log = get_logger(__name__)

@@ -1,5 +1,7 @@
 import weakref
+from functools import partial
 from pathlib import Path
+from typing import Literal
 
 from robocorp_ls_core.protocols import ActionResultDict
 from robocorp_ls_core.robotframework_log import get_logger
@@ -218,3 +220,75 @@ class InspectorLanguageServer:
             "result": None,
         }
         return ret
+
+    def m_windows_inspector_set_window_locator(self, locator: str):
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        # Not blocking (return callback to run in thread).
+        return partial(
+            inspector_api_client.send_sync_message,
+            "windowsSetWindowLocator",
+            {"locator": locator},
+        )
+
+    def m_windows_inspector_start_pick(self):
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        # Not blocking (return callback to run in thread).
+        return partial(
+            inspector_api_client.send_sync_message,
+            "windowsStartPick",
+            {},
+        )
+
+    def m_windows_inspector_stop_pick(self):
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        # Not blocking (return callback to run in thread).
+        return partial(
+            inspector_api_client.send_sync_message,
+            "windowsStopPick",
+            {},
+        )
+
+    def m_windows_inspector_start_highlight(
+        self,
+        locator: str,
+        search_depth: int = 8,
+        search_strategy: Literal["siblings", "all"] = "all",
+    ):
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        # Not blocking (return callback to run in thread).
+        return partial(
+            inspector_api_client.send_sync_message,
+            "windowsStartHighlight",
+            dict(
+                locator=locator,
+                search_depth=search_depth,
+                search_strategy=search_strategy,
+            ),
+        )
+
+    def m_windows_inspector_collect_tree(
+        self,
+        locator: str,
+        search_depth: int = 8,
+        search_strategy: Literal["siblings", "all"] = "all",
+    ):
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        # Not blocking (return callback to run in thread).
+        return partial(
+            inspector_api_client.send_sync_message,
+            "windowsCollectTree",
+            dict(
+                locator=locator,
+                search_depth=search_depth,
+                search_strategy=search_strategy,
+            ),
+        )
+
+    def m_windows_inspector_stop_highlight(self):
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        # Not blocking (return callback to run in thread).
+        return partial(
+            inspector_api_client.send_sync_message,
+            "windowsStopHighlight",
+            {},
+        )

@@ -12,17 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from robocorp_code_debug_adapter_tests.fixtures import _DebuggerAPI
 import pytest
+from robocorp_code_debug_adapter_tests.fixtures import _DebuggerAPI
+
 from robocorp_code.rcc import Rcc
 
 
 def test_invalid_launch_1(debugger_api: _DebuggerAPI, rcc_config_location: str):
-    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import LaunchRequest
     from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+        LaunchRequest,
         LaunchRequestArguments,
+        Response,
     )
-    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import Response
 
     debugger_api.initialize(rcc_config_location=rcc_config_location)
 
@@ -53,8 +54,10 @@ def test_simple_launch(debugger_api: _DebuggerAPI, rcc: Rcc, rcc_config_location
     This is an integrated test of the debug adapter. It communicates with it as if it was
     VSCode.
     """
-    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
-    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import OutputEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+        OutputEvent,
+        TerminatedEvent,
+    )
 
     rcc.check_conda_installed()
 
@@ -86,8 +89,10 @@ def test_work_item_variables_not_overridden(
         - RPA_OUTPUT_WORKITEM_PATH
         - RPA_WORKITEMS_ADAPTER
     """
-    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
-    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import OutputEvent
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+        OutputEvent,
+        TerminatedEvent,
+    )
 
     rcc.check_conda_installed()
 
@@ -148,10 +153,13 @@ def not_supported_test_launch_in_external_terminal(
     effort to do so seems low, which means we can only run without a terminal for
     now so that we have an easy way of tracking the RCC process pid).
     """
-    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import TerminatedEvent
-    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import RunInTerminalRequest
     import os
+
     from robocorp_ls_core.basic import as_str
+    from robocorp_ls_core.debug_adapter_core.dap.dap_schema import (
+        RunInTerminalRequest,
+        TerminatedEvent,
+    )
     from robocorp_ls_core.subprocess_wrapper import subprocess
 
     debugger_api.initialize(rcc_config_location=rcc_config_location)

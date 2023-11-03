@@ -3,13 +3,14 @@ import typing
 import weakref
 from typing import Dict, Iterator, List, Optional, Sequence, Union
 
+from robocorp_ls_core.robotframework_log import get_logger
+
 from robocorp_code.deps._deps_protocols import (
     PyPiInfoTypedDict,
     ReleaseData,
     Versions,
     VersionStr,
 )
-from robocorp_ls_core.robotframework_log import get_logger
 
 log = get_logger(__name__)
 

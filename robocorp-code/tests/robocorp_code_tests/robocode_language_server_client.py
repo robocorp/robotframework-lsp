@@ -1,12 +1,13 @@
+from robocorp_code_tests.protocols import IRobocorpLanguageServerClient
+from robocorp_ls_core.basic import implements
 from robocorp_ls_core.unittest_tools.language_server_client import LanguageServerClient
+
 from robocorp_code.protocols import (
+    ActionResultDict,
     ListWorkspacesActionResultDict,
     UploadNewRobotParamsDict,
     UploadRobotParamsDict,
-    ActionResultDict,
 )
-from robocorp_ls_core.basic import implements
-from robocorp_code_tests.protocols import IRobocorpLanguageServerClient
 
 
 class RobocorpLanguageServerClient(LanguageServerClient):

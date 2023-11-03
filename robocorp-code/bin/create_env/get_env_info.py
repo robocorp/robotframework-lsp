@@ -1,7 +1,7 @@
 if __name__ == "__main__":
-    import sys
     import json
     import os
+    import sys
 
     try:
         import robot

@@ -22,17 +22,16 @@ import itertools
 import os
 import shutil
 import sys
+import threading
 import uuid
 import warnings
-from functools import partial
-from typing import Iterable, Iterator, TypeVar, Optional
-
-from pathlib import Path, PurePath
 import weakref
-import threading
+from functools import partial
+from pathlib import Path, PurePath
+from queue import Queue  # noqa
+from typing import Iterable, Iterator, Optional, TypeVar
 
 from robocorp_ls_core.protocols import ITimeoutHandle  # noqa
-from queue import Queue  # noqa
 from robocorp_ls_core.robotframework_log import get_logger
 
 __all__ = ["Path", "PurePath"]
@@ -172,8 +171,7 @@ def parse_num(maybe_num) -> int:
 
 def make_numbered_dir(root: Path, prefix: str) -> Path:
     """create a directory with an increased number as suffix for the given prefix"""
-    from robocorp_ls_core.system_mutex import generate_mutex_name
-    from robocorp_ls_core.system_mutex import timed_acquire_mutex
+    from robocorp_ls_core.system_mutex import generate_mutex_name, timed_acquire_mutex
 
     with timed_acquire_mutex(generate_mutex_name(f"generate_numbered{root}")):
         max_existing = max(map(parse_num, find_suffixes(root, prefix)), default=-1)

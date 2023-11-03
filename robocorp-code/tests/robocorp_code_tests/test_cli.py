@@ -19,6 +19,7 @@ def test_cli_help(main_module):
 
 def test_cli_version(main_module):
     import sys
+
     from robocorp_code import __version__
 
     output = call([sys.executable, main_module.__file__, "--version"])

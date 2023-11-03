@@ -1,15 +1,15 @@
-from dataclasses import dataclass
 import enum
-from pathlib import Path
-import time
-
-from robocorp_ls_core.robotframework_log import get_logger
-from typing import Optional, ContextManager
 import os
-from robocorp_code.protocols import IRCCSpaceInfo
-from robocorp_ls_core.protocols import check_implements
+import time
+from dataclasses import dataclass
 from functools import lru_cache
+from pathlib import Path
+from typing import ContextManager, Optional
 
+from robocorp_ls_core.protocols import check_implements
+from robocorp_ls_core.robotframework_log import get_logger
+
+from robocorp_code.protocols import IRCCSpaceInfo
 
 log = get_logger(__name__)
 
@@ -137,8 +137,8 @@ class RCCSpaceInfo:
         return has_timeout_elapsed
 
     def pretty(self):
-        from dataclasses import fields
         import textwrap
+        from dataclasses import fields
 
         ret = ["RCCSpaceInfo:"]
         for field in fields(self):

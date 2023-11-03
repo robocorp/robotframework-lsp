@@ -1,8 +1,9 @@
-from robocorp_ls_core.protocols import IEndPoint, ActionResultDict
-from robocorp_ls_core.robotframework_log import get_logger
-from robocorp_code import commands
 from robocorp_ls_core.command_dispatcher import _SubCommandDispatcher
-from robocorp_code.protocols import IRcc, CloudLoginParamsDict
+from robocorp_ls_core.protocols import ActionResultDict, IEndPoint
+from robocorp_ls_core.robotframework_log import get_logger
+
+from robocorp_code import commands
+from robocorp_code.protocols import CloudLoginParamsDict, IRcc
 
 log = get_logger(__name__)
 login_command_dispatcher = _SubCommandDispatcher("_login")
@@ -19,6 +20,7 @@ class _Login(object):
         clear_caches_on_login_change,
     ):
         from robocorp_ls_core.cache import DirCache
+
         from robocorp_code._language_server_feedback import _Feedback
 
         self._dir_cache: DirCache = dir_cache
