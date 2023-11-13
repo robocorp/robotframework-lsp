@@ -405,6 +405,17 @@ class _WindowsCollectTree(_WindowsBaseCommand):
         return {"success": True, "message": None, "result": result}
 
 
+class _WindowsList(_WindowsBaseCommand):
+    def __call__(
+        self, windows_inspector_thread: _WindowsInspectorThread
+    ) -> ActionResultDict:
+        if not windows_inspector_thread.windows_inspector:
+            raise RuntimeError("windows_inspector not initialized.")
+        result = windows_inspector_thread.windows_inspector.list_windows()
+
+        return {"success": True, "message": None, "result": result}
+
+
 class _WindowsStopHighlight(_WindowsBaseCommand):
     def __call__(
         self, windows_inspector_thread: _WindowsInspectorThread
@@ -534,6 +545,11 @@ class InspectorApi(PythonLanguageServer):
         return self._enqueue_windows(
             _WindowsCollectTree(locator, search_depth, search_strategy)
         )
+
+    def m_windows_list_windows(
+        self,
+    ) -> ActionResultDict:
+        return self._enqueue_windows(_WindowsList())
 
     def m_windows_stop_highlight(self) -> ActionResultDict:
         return self._enqueue_windows(_WindowsStopHighlight())
