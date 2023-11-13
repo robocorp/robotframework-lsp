@@ -1247,6 +1247,11 @@ def test_windows_inspector_integrated(
     )
     assert not result["success"]
 
+    result = api_client.m_windows_inspector_list_windows()
+    assert result["success"]
+    windows = [x for x in result["result"] if x["name"] == "Tkinter Elements Showcase"]
+    assert len(windows) == 1
+
     result = api_client.m_windows_inspector_set_window_locator(
         locator='name:"Tkinter Elements Showcase"'
     )
