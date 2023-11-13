@@ -451,6 +451,49 @@ class InspectorApi(PythonLanguageServer):
         self._enqueue_web(_WebShutdownCommand(), wait=False)
         PythonLanguageServer.m_shutdown(self, **_kwargs)
 
+    def m_windows_parse_locator(self, locator: str) -> ActionResultDict:
+        from typing import List
+
+        from robocorp_code.inspector.windows.robocorp_windows._errors import (
+            InvalidLocatorError,
+        )
+        from robocorp_code.inspector.windows.robocorp_windows._match_ast import (
+            OrSearchParams,
+            SearchParams,
+            _build_locator_match,
+        )
+
+        try:
+            locator_match = _build_locator_match(locator)
+            only_ors: List[OrSearchParams] = []
+            for params in locator_match.flattened:
+                if isinstance(params, OrSearchParams):
+                    only_ors.append(params)
+                else:
+                    if not isinstance(params, SearchParams):
+                        raise InvalidLocatorError(
+                            "Unable to flatten the or/and conditions as expected in the "
+                            "locator.\nPlease report this as an error to robocorp-code."
+                            f"\nLocator: {locator}"
+                        )
+                    if params.empty():
+                        raise InvalidLocatorError(
+                            "Unable to flatten the or/and conditions as expected in the "
+                            "locator.\nPlease report this as an error to robocorp-code."
+                            f"\nLocator: {locator}"
+                        )
+                    only_ors.append(OrSearchParams(params))
+
+            # It worked (although it may still have warnings to the user).
+            return {
+                "success": True,
+                "message": "\n".join(locator_match.warnings),
+                "result": None,
+            }
+        except Exception as e:
+            # It failed
+            return {"success": False, "message": str(e), "result": None}
+
     def m_windows_set_window_locator(self, locator: str) -> ActionResultDict:
         return self._enqueue_windows(_WindowsSetWindowLocator(locator))
 

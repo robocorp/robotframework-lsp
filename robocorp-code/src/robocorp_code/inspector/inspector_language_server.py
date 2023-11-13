@@ -221,6 +221,15 @@ class InspectorLanguageServer:
         }
         return ret
 
+    def m_windows_inspector_parse_locator(self, locator: str):
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        # Not blocking (return callback to run in thread).
+        return partial(
+            inspector_api_client.send_sync_message,
+            "windowsParseLocator",
+            {"locator": locator},
+        )
+
     def m_windows_inspector_set_window_locator(self, locator: str):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         # Not blocking (return callback to run in thread).

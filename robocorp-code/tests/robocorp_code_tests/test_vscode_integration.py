@@ -1230,6 +1230,18 @@ def test_windows_inspector_integrated(
 
     api_client = LSAutoApiClient(ls_client)
 
+    result = api_client.m_windows_inspector_parse_locator(locator="")
+    assert not result["success"]
+    assert result["message"]
+
+    result = api_client.m_windows_inspector_parse_locator(locator="foo bar")
+    assert result["success"]
+    assert "No locator strategy found in: 'foo'" in result["message"]
+
+    result = api_client.m_windows_inspector_parse_locator(locator="foo:bar")
+    assert result["success"]
+    assert "No locator strategy found in: 'foo:bar'" in result["message"]
+
     result = api_client.m_windows_inspector_set_window_locator(
         locator='name:"name is not there"'
     )
