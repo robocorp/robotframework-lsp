@@ -10,7 +10,7 @@ import * as vscode from "vscode";
 import { getExtensionRelativeFile, verifyFileExists } from "../files";
 import { OUTPUT_CHANNEL, buildErrorStr, logError } from "../channel";
 import { getSelectedRobot } from "../viewsCommon";
-import { BrowserLocator, LocatorsMap } from "./types";
+import { BrowserLocator, LocatorsMap, WindowsLocator } from "./types";
 import { IApps, IEventMessage, IMessage, IMessageType, IRequestMessage, IResponseMessage } from "./protocols";
 import { langServer } from "../extension";
 import { ActionResult, LocalRobotMetadataInfo } from "../protocols";
@@ -55,6 +55,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
     }
     panel.webview.html = getWebviewContent(directory, locatorsMap);
 
+    // Web Inspector - Create listeners for BE (Python) messages
     context.subscriptions.push(
         langServer.onNotification("$/webPick", (values) => {
             const pickedLocator: BrowserLocator = JSON.stringify(values) as unknown as BrowserLocator;
@@ -72,10 +73,27 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
             panel.webview.postMessage(response);
         })
     );
-
     context.subscriptions.push(
         langServer.onNotification("$/webInspectorState", (state) => {
             OUTPUT_CHANNEL.appendLine(`> Receiving: webInspectorState: ${JSON.stringify(state)}`);
+        })
+    );
+    // Windows Inspector - Create listeners for BE (Python) messages
+    context.subscriptions.push(
+        langServer.onNotification("$/windowsPick", (values) => {
+            const pickedLocator: WindowsLocator = JSON.stringify(values) as unknown as WindowsLocator;
+            OUTPUT_CHANNEL.appendLine(`> Receiving: picked.element: ${pickedLocator}`);
+            const response: IEventMessage = {
+                id: Date.now(),
+                type: IMessageType.EVENT,
+                event: {
+                    type: "pickedLocator",
+                    status: "success",
+                    data: pickedLocator,
+                },
+            };
+            // this is an event - postMessage will update the useLocator hook
+            panel.webview.postMessage(response);
         })
     );
 
@@ -129,7 +147,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
                         response.data = actionResult.result;
                         response.dataType = "locatorsMap";
                         panel.webview.postMessage(response);
-                    } else if (message.app === IApps.WEB_PICKER) {
+                    } else if (message.app === IApps.WEB_RECORDER) {
                         if (command["type"] === "startPicking") {
                             await sendRequest("webInspectorStartPick");
                         } else if (command["type"] === "stopPicking") {
@@ -151,6 +169,12 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
                                 ids: command["ids"],
                             });
                             panel.webview.postMessage(buildProtocolResponseFromActionResponse(message, actionResult));
+                        }
+                    } else if (message.app === IApps.WINDOWS_RECORDER) {
+                        if (command["type"] === "startPicking") {
+                            await sendRequest("windowsInspectorStartPick");
+                        } else if (command["type"] === "stopPicking") {
+                            await sendRequest("windowsInspectorStopPick");
                         }
                     }
                     return;

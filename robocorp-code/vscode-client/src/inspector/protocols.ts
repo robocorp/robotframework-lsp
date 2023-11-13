@@ -13,15 +13,17 @@ export enum IMessageType {
 
 export enum IApps {
     LOCATORS_MANAGER = "locatorsManager",
-    WEB_PICKER = "webPicker",
+    WEB_RECORDER = "webRecorder",
+    WINDOWS_RECORDER = "windowsRecorder",
 }
 
-export type IAppsType = IApps.LOCATORS_MANAGER | IApps.WEB_PICKER;
+export type IAppsType = IApps.LOCATORS_MANAGER | IApps.WEB_RECORDER | IApps.WINDOWS_RECORDER;
+
 // =====================================
 // REQUESTS
 // =====================================
 export type IManagerCommands = { type: "getLocators" } | { type: "delete"; ids: string[] };
-export type IWebPickerCommands =
+export type IWebRecorderCommands =
     | { type: "getLocators" }
     | { type: "startPicking" }
     | { type: "stopPicking" }
@@ -29,12 +31,14 @@ export type IWebPickerCommands =
     | { type: "save"; locator: Locator }
     | { type: "validate"; locator: Locator };
 
+export type IWindowsRecorderCommands = { type: "startPicking" } | { type: "stopPicking" };
+
 // IResponseMessage - should be sent with an expectation of Response
 export interface IRequestMessage {
     id: number;
     type: IMessageType.REQUEST;
     app: IAppsType;
-    command: IManagerCommands | IWebPickerCommands;
+    command: IManagerCommands | IWebRecorderCommands | IWindowsRecorderCommands;
 }
 
 // =====================================
