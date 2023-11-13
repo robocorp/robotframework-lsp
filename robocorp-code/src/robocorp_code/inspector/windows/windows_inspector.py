@@ -13,6 +13,9 @@ from typing import (
 )
 
 from robocorp_ls_core.callbacks import Callback
+from robocorp_ls_core.robotframework_log import get_logger
+
+log = get_logger(__name__)
 
 if typing.TYPE_CHECKING:
     from robocorp_code.inspector.windows.robocorp_windows import (
@@ -235,6 +238,8 @@ class WindowsInspector:
         Raises:
             ElementNotFound if the window matching the given locator wasn't found.
         """
+
+        log.info("Win - Starting pick...")
         if self._element_inspector is None:
             return
 
@@ -246,6 +251,8 @@ class WindowsInspector:
         """
         Stops picking.
         """
+
+        log.info("Win - Stopping pick...")
         if self._state == _State.picking:
             if self._element_inspector is not None:
                 self._element_inspector.stop_picking()

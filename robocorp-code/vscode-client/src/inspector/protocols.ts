@@ -31,7 +31,15 @@ export type IWebRecorderCommands =
     | { type: "save"; locator: Locator }
     | { type: "validate"; locator: Locator };
 
-export type IWindowsRecorderCommands = { type: "startPicking" } | { type: "stopPicking" };
+export type IWindowsRecorderCommands =
+    | { type: "getLocators" }
+    | { type: "getAppWindows" }
+    | { type: "setSelectedApp"; handle: string }
+    | { type: "startPicking" }
+    | { type: "stopPicking" }
+    | { type: "delete"; ids: string[] }
+    | { type: "save"; locator: Locator }
+    | { type: "validate"; locator: Locator };
 
 // IResponseMessage - should be sent with an expectation of Response
 export interface IRequestMessage {
@@ -44,6 +52,9 @@ export interface IRequestMessage {
 // =====================================
 // RESPONSES
 // =====================================
+export type ResponseDataType = "locator" | "locatorsMap" | "winApps";
+export type WindowsApplicationsResponse = { executable: string; name: string; handle: string }[];
+
 // IResponseMessage - should respond to a Request
 export interface IResponseMessage {
     id: number;
@@ -51,8 +62,8 @@ export interface IResponseMessage {
     app: IAppsType;
     status: "success" | "failure";
     message?: string;
-    data?: Locator | LocatorsMap;
-    dataType?: "locator" | "locatorsMap";
+    data?: Locator | LocatorsMap | WindowsApplicationsResponse;
+    dataType?: ResponseDataType;
 }
 
 // IResponseMessage - should be equidistant from Requests or Responses

@@ -233,6 +233,7 @@ class InspectorLanguageServer:
     def m_windows_inspector_set_window_locator(self, locator: str):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         # Not blocking (return callback to run in thread).
+        log.info("LS-Win-Set-Window-Locator", locator)
         return partial(
             inspector_api_client.send_sync_message,
             "windowsSetWindowLocator",
@@ -251,6 +252,7 @@ class InspectorLanguageServer:
     def m_windows_inspector_start_pick(self):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         # Not blocking (return callback to run in thread).
+        log.info("LS-Win-StartPick")
         return partial(
             inspector_api_client.send_sync_message,
             "windowsStartPick",
@@ -260,6 +262,7 @@ class InspectorLanguageServer:
     def m_windows_inspector_stop_pick(self):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         # Not blocking (return callback to run in thread).
+        log.info("LS-Win-StopPick")
         return partial(
             inspector_api_client.send_sync_message,
             "windowsStopPick",

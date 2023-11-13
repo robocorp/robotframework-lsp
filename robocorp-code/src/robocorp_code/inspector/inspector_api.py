@@ -413,6 +413,8 @@ class _WindowsList(_WindowsBaseCommand):
             raise RuntimeError("windows_inspector not initialized.")
         result = windows_inspector_thread.windows_inspector.list_windows()
 
+        log.info("Win - API - WindowsList - result:", result)
+
         return {"success": True, "message": None, "result": result}
 
 
@@ -521,9 +523,11 @@ class InspectorApi(PythonLanguageServer):
         return self._enqueue_windows(_WindowsSetWindowLocator(locator))
 
     def m_windows_start_pick(self) -> ActionResultDict:
+        log.info("Win - API - Starting pick...")
         return self._enqueue_windows(_WindowsStartPick())
 
     def m_windows_stop_pick(self) -> ActionResultDict:
+        log.info("Win - API - Stopping pick...")
         return self._enqueue_windows(_WindowsStopPick())
 
     def m_windows_start_highlight(
@@ -549,6 +553,7 @@ class InspectorApi(PythonLanguageServer):
     def m_windows_list_windows(
         self,
     ) -> ActionResultDict:
+        log.info("Win - API - Getting Windows List...")
         return self._enqueue_windows(_WindowsList())
 
     def m_windows_stop_highlight(self) -> ActionResultDict:

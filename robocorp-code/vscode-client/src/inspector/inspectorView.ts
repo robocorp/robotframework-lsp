@@ -11,7 +11,15 @@ import { getExtensionRelativeFile, verifyFileExists } from "../files";
 import { OUTPUT_CHANNEL, buildErrorStr, logError } from "../channel";
 import { getSelectedRobot } from "../viewsCommon";
 import { BrowserLocator, LocatorsMap, WindowsLocator } from "./types";
-import { IApps, IEventMessage, IMessage, IMessageType, IRequestMessage, IResponseMessage } from "./protocols";
+import {
+    IApps,
+    IEventMessage,
+    IMessage,
+    IMessageType,
+    IRequestMessage,
+    IResponseMessage,
+    ResponseDataType,
+} from "./protocols";
 import { langServer } from "../extension";
 import { ActionResult, LocalRobotMetadataInfo } from "../protocols";
 import { ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL } from "../robocorpCommands";
@@ -103,7 +111,8 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
 
     const buildProtocolResponseFromActionResponse = (
         message: IRequestMessage,
-        actionResult: ActionResult<any>
+        actionResult: ActionResult<any>,
+        dataType?: ResponseDataType
     ): IResponseMessage => {
         const response: IResponseMessage = {
             id: message.id,
@@ -111,6 +120,8 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
             type: "response" as IMessageType.RESPONSE,
             status: actionResult.success ? "success" : "failure",
             message: actionResult.message,
+            data: actionResult.result,
+            dataType: dataType,
         };
         return response;
     };
@@ -175,6 +186,20 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
                             await sendRequest("windowsInspectorStartPick");
                         } else if (command["type"] === "stopPicking") {
                             await sendRequest("windowsInspectorStopPick");
+                        } else if (command["type"] === "getAppWindows") {
+                            const actionResult: ActionResult<any> = await sendRequest("windowsInspectorListWindows");
+                            panel.webview.postMessage(
+                                buildProtocolResponseFromActionResponse(message, actionResult.result, "winApps")
+                            );
+                        } else if (command["type"] === "setSelectedApp") {
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: Set Selected App: ${JSON.stringify(command)}`);
+                            const actionResult: ActionResult<any> = await sendRequest(
+                                "windowsInspectorSetWindowLocator",
+                                { locator: `handle:${command["handle"]}` }
+                            );
+                            panel.webview.postMessage(
+                                buildProtocolResponseFromActionResponse(message, actionResult.result)
+                            );
                         }
                     }
                     return;
