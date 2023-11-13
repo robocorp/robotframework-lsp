@@ -13,6 +13,9 @@ from typing import (
 )
 
 from robocorp_ls_core.callbacks import Callback
+from robocorp_ls_core.robotframework_log import get_logger
+
+log = get_logger(__name__)
 
 if typing.TYPE_CHECKING:
     from robocorp_code.inspector.windows.robocorp_windows import (
@@ -235,6 +238,8 @@ class WindowsInspector:
         Raises:
             ElementNotFound if the window matching the given locator wasn't found.
         """
+
+        log.info("Win - Starting pick...")
         if self._element_inspector is None:
             return
 
@@ -246,6 +251,8 @@ class WindowsInspector:
         """
         Stops picking.
         """
+
+        log.info("Win - Stopping pick...")
         if self._state == _State.picking:
             if self._element_inspector is not None:
                 self._element_inspector.stop_picking()
@@ -278,6 +285,7 @@ class WindowsInspector:
             timeout=0,
             search_strategy=search_strategy,
         )
+        self._state = _State.highlighting
 
         parent = self._element_inspector.control_element
         return to_matches_and_hierarchy(parent, matched_controls)
@@ -287,9 +295,13 @@ class WindowsInspector:
         Stops highlighting matches.
         """
         if self._state == _State.highlighting:
+            log.info("Win-WinInsp-StopHighlight:stopping...")
             if self._element_inspector is not None:
                 self._element_inspector.stop_highlight()
             self._state = _State.default
+        else:
+            log.info("Win-WinInsp-StopHighlight:nothing done (state=%s is not highlight)", self._state)
+            
 
     def list_windows(self) -> List[WindowLocatorInfoTypedDict]:
         from robocorp_code.inspector.windows import robocorp_windows
@@ -307,6 +319,8 @@ class WindowsInspector:
             raise RuntimeError(
                 "Unable to collect tree because `set_window_locator` was not previously used to set the window of interest."
             )
+
+        log.info("Win-WinInsp-CollectTree: locator: %s, search_depth: %s, search_strategy: %s", locator, search_depth, search_strategy)
 
         matched_controls: List[
             "ControlElement"

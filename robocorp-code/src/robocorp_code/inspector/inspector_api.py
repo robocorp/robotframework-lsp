@@ -413,6 +413,8 @@ class _WindowsList(_WindowsBaseCommand):
             raise RuntimeError("windows_inspector not initialized.")
         result = windows_inspector_thread.windows_inspector.list_windows()
 
+        log.info("Win - API - WindowsList - result:", result)
+
         return {"success": True, "message": None, "result": result}
 
 
@@ -422,6 +424,7 @@ class _WindowsStopHighlight(_WindowsBaseCommand):
     ) -> ActionResultDict:
         if not windows_inspector_thread.windows_inspector:
             raise RuntimeError("windows_inspector not initialized.")
+        log.info("Win - API - _WindowsStopHighlight - stopping highlight...")
         windows_inspector_thread.windows_inspector.stop_highlight()
 
         return {"success": True, "message": None, "result": None}
@@ -521,9 +524,11 @@ class InspectorApi(PythonLanguageServer):
         return self._enqueue_windows(_WindowsSetWindowLocator(locator))
 
     def m_windows_start_pick(self) -> ActionResultDict:
+        log.info("Win - API - Starting pick...")
         return self._enqueue_windows(_WindowsStartPick())
 
     def m_windows_stop_pick(self) -> ActionResultDict:
+        log.info("Win - API - Stopping pick...")
         return self._enqueue_windows(_WindowsStopPick())
 
     def m_windows_start_highlight(
@@ -542,6 +547,7 @@ class InspectorApi(PythonLanguageServer):
         search_depth: int = 8,
         search_strategy: Literal["siblings", "all"] = "all",
     ) -> ActionResultDict:
+        log.info("Win - API - Collecting Tree. locator: %s, search_depth: %s, search_strategy: %s", locator, search_depth, search_strategy)
         return self._enqueue_windows(
             _WindowsCollectTree(locator, search_depth, search_strategy)
         )

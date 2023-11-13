@@ -9,6 +9,22 @@ export declare enum LocatorType {
     Image = "image",
 }
 
+export type StrategyType = {
+    strategy: string;
+    value: string;
+    matches?: number;
+};
+
+export type ElementType = {
+    tag: string;
+    type?: string;
+    modifier?: string | boolean | number;
+};
+
+/**
+ * @interface LOCATORS
+ */
+
 /**
  *
  * @export
@@ -38,13 +54,31 @@ export interface BrowserLocator {
      * @type {string}
      * @memberof BrowserLocator
      */
+    source?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof BrowserLocator
+     */
     screenshot?: string;
     /**
      *
      * @type {string}
      * @memberof BrowserLocator
      */
-    source?: string;
+    name?: string;
+    /**
+     *
+     * @type {StrategyType[]}
+     * @memberof BrowserLocator
+     */
+    alternatives?: StrategyType[];
+    /**
+     *
+     * @type {ElementType}
+     * @memberof BrowserLocator
+     */
+    element?: ElementType;
 }
 /**
  *
@@ -82,6 +116,18 @@ export interface WindowsLocator {
      * @memberof WindowsLocator
      */
     screenshot?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof WindowsLocator
+     */
+    name?: string;
+    /**
+     *
+     * @type {ElementType}
+     * @memberof BrowserLocator
+     */
+    element?: ElementType;
 }
 /**
  *
@@ -119,9 +165,28 @@ export interface ImageLocator {
      * @memberof ImageLocator
      */
     screenshot?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof WindowsLocator
+     */
+    name?: string;
+    /**
+     *
+     * @type {ElementType}
+     * @memberof BrowserLocator
+     */
+    element?: ElementType;
 }
 
 export declare type Locator = BrowserLocator | WindowsLocator | ImageLocator;
 export declare type LocatorsMap = {
     [name: string]: Locator;
 };
+export declare type LocatorsMapWindows = {
+    [name: string]: WindowsLocator;
+};
+// LocatorsArray = [ name, Locator ][]
+export declare type LocatorsArray = [string, Locator][];
+export declare type LocatorsArrayWindows = [string, WindowsLocator][];
+export declare type LocatorsArrayWeb = [string, BrowserLocator][];
