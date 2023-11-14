@@ -120,8 +120,13 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
             type: "response" as IMessageType.RESPONSE,
             status: actionResult.success ? "success" : "failure",
             message: actionResult.message,
-            data: actionResult.result,
-            dataType: dataType,
+            data:
+                dataType && actionResult.result
+                    ? {
+                          type: dataType,
+                          value: actionResult.result,
+                      }
+                    : undefined,
         };
         return response;
     };
@@ -155,9 +160,8 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
                             message,
                             actionResult
                         );
-                        response.data = actionResult.result;
-                        response.dataType = "locatorsMap";
-                        panel.webview.postMessage(response);
+                        response.data.type = "locatorsMap";
+                        response.data.value = actionResult.result;
                     } else if (message.app === IApps.WEB_RECORDER) {
                         if (command["type"] === "startPicking") {
                             await sendRequest("webInspectorStartPick");
@@ -199,6 +203,17 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
                             );
                             panel.webview.postMessage(
                                 buildProtocolResponseFromActionResponse(message, actionResult.result)
+                            );
+                        } else if (command["type"] === "collectAppTree") {
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: collectAppTree: ${JSON.stringify(command)}`);
+                            const actionResult: ActionResult<any> = await sendRequest("windowsInspectorCollectTree", {
+                                locator: command["locator"],
+                                search_depth: command["depth"] || 8,
+                                search_strategy: command["strategy"] || "all",
+                            });
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: result: ${JSON.stringify(actionResult)}`);
+                            panel.webview.postMessage(
+                                buildProtocolResponseFromActionResponse(message, actionResult.result, "winAppTree")
                             );
                         }
                     }

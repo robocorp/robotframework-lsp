@@ -546,6 +546,9 @@ class InspectorApi(PythonLanguageServer):
         search_depth: int = 8,
         search_strategy: Literal["siblings", "all"] = "all",
     ) -> ActionResultDict:
+        log.info("Win - API - Collecting Tree 4:locator:", locator)
+        log.info("Win - API - Collecting Tree 4:search_depth:", search_depth)
+        log.info("Win - API - Collecting Tree 4:search_strategy:", search_strategy)
         return self._enqueue_windows(
             _WindowsCollectTree(locator, search_depth, search_strategy)
         )
@@ -553,7 +556,6 @@ class InspectorApi(PythonLanguageServer):
     def m_windows_list_windows(
         self,
     ) -> ActionResultDict:
-        log.info("Win - API - Getting Windows List...")
         return self._enqueue_windows(_WindowsList())
 
     def m_windows_stop_highlight(self) -> ActionResultDict:

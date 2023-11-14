@@ -34,6 +34,7 @@ export type IWebRecorderCommands =
 export type IWindowsRecorderCommands =
     | { type: "getLocators" }
     | { type: "getAppWindows" }
+    | { type: "collectAppTree"; locator: string; depth?: number; strategy?: "all" | "siblings" }
     | { type: "setSelectedApp"; handle: string }
     | { type: "startPicking" }
     | { type: "stopPicking" }
@@ -52,8 +53,32 @@ export interface IRequestMessage {
 // =====================================
 // RESPONSES
 // =====================================
-export type ResponseDataType = "locator" | "locatorsMap" | "winApps";
-export type WindowsApplicationsResponse = { executable: string; name: string; handle: string }[];
+export type ResponseDataType = "locator" | "locatorsMap" | "winApps" | "winAppTree";
+export type WindowsAppDetails = { executable: string; name: string; handle: string };
+export type WindowsAppsResponse = WindowsAppDetails[];
+export type WindowsAppElement = {
+    control: string;
+    class: string;
+    name: string;
+    automation_id: string;
+    handle: number;
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
+    width: number;
+    height: number;
+    xcenter: number;
+    ycenter: number;
+    depth: number;
+    child_pos: number;
+    path: string;
+};
+export type WindowsAppTree = WindowsAppElement[];
+export type WindowsAppTreeResponse = {
+    matched_paths: string[];
+    hierarchy: WindowsAppTree;
+};
 
 // IResponseMessage - should respond to a Request
 export interface IResponseMessage {
@@ -62,10 +87,21 @@ export interface IResponseMessage {
     app: IAppsType;
     status: "success" | "failure";
     message?: string;
-    data?: Locator | LocatorsMap | WindowsApplicationsResponse;
-    dataType?: ResponseDataType;
+    data?:
+        | {
+              type: "locator";
+              value: Locator;
+          }
+        | {
+              type: "locatorsMap";
+              value: LocatorsMap;
+          }
+        | { type: "winApps"; value: WindowsAppsResponse }
+        | {
+              type: "winAppTree";
+              value: WindowsAppTreeResponse;
+          };
 }
-
 // IResponseMessage - should be equidistant from Requests or Responses
 export interface IEventMessage {
     id: number;

@@ -315,6 +315,10 @@ class WindowsInspector:
                 "Unable to collect tree because `set_window_locator` was not previously used to set the window of interest."
             )
 
+        log.info("Win-WinInsp-CollectTree:locator", locator)
+        log.info("Win-WinInsp-CollectTree:search_depth", search_depth)
+        log.info("Win-WinInsp-CollectTree:search_strategy", search_strategy)
+
         matched_controls: List[
             "ControlElement"
         ] = self._element_inspector.control_element.find_many(
