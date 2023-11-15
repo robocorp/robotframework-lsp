@@ -36,6 +36,7 @@ export type IWindowsRecorderCommands =
     | { type: "getAppWindows" }
     | { type: "collectAppTree"; locator: string; depth?: number; strategy?: "all" | "siblings" }
     | { type: "setSelectedApp"; handle: string }
+    | { type: "validateLocatorSyntax"; locator: string }
     | { type: "startPicking" }
     | { type: "stopPicking" }
     | { type: "delete"; ids: string[] }

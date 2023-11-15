@@ -215,6 +215,17 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
                             panel.webview.postMessage(
                                 buildProtocolResponseFromActionResponse(message, actionResult.result, "winAppTree")
                             );
+                        } else if (command["type"] === "validateLocatorSyntax") {
+                            OUTPUT_CHANNEL.appendLine(
+                                `> Requesting: validateLocatorSyntax: ${JSON.stringify(command)}`
+                            );
+                            const actionResult: ActionResult<any> = await sendRequest("windowsInspectorParseLocator", {
+                                locator: command["locator"],
+                            });
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: result: ${JSON.stringify(actionResult)}`);
+                            panel.webview.postMessage(
+                                buildProtocolResponseFromActionResponse(message, actionResult.result, "locator")
+                            );
                         }
                     }
                     return;
