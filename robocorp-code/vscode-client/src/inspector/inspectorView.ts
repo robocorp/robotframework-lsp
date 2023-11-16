@@ -167,21 +167,20 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
                             await sendRequest("webInspectorStartPick");
                         } else if (command["type"] === "stopPicking") {
                             await sendRequest("webInspectorStopPick");
-                        } else if (command["type"] === "save") {
-                            const locator = message["command"]["locator"];
-                            const actionResult: ActionResult<any> = await sendRequest("webInspectorSaveLocator", {
-                                locator: locator,
-                                directory: directory,
-                            });
-
-                            panel.webview.postMessage(buildProtocolResponseFromActionResponse(message, actionResult));
                         }
                     } else if (message.app === IApps.LOCATORS_MANAGER) {
                         if (command["type"] === "delete") {
                             OUTPUT_CHANNEL.appendLine(`> Requesting: Delete Locators: ${command["ids"]}`);
-                            const actionResult: ActionResult<any> = await sendRequest("webInspectorDeleteLocators", {
+                            const actionResult: ActionResult<any> = await sendRequest("managerDeleteLocators", {
                                 directory: directory,
                                 ids: command["ids"],
+                            });
+                            panel.webview.postMessage(buildProtocolResponseFromActionResponse(message, actionResult));
+                        } else if (command["type"] === "save") {
+                            const locator = message["command"]["locator"];
+                            const actionResult: ActionResult<any> = await sendRequest("managerSaveLocator", {
+                                locator: locator,
+                                directory: directory,
                             });
                             panel.webview.postMessage(buildProtocolResponseFromActionResponse(message, actionResult));
                         }

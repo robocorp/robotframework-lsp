@@ -20,6 +20,121 @@ class InspectorLanguageServer:
     def get_locators_json_path(self, directory: str) -> Path:
         return Path(directory) / "locators.json"
 
+    def m_manager_save_locator(
+        self,
+        locator: dict,
+        directory: str,
+    ) -> ActionResultDict:
+        import json
+
+        ret: ActionResultDict
+
+        if not locator:
+            ret = {
+                "success": False,
+                "message": f"Error: no locator information passed.",
+                "result": None,
+            }
+            return ret
+
+        name = str(locator.get("name", "")).strip()
+        if not name:
+            ret = {
+                "success": False,
+                "message": f"Error: the locator passed {locator} does not have a name (or the name is invalid).",
+                "result": None,
+            }
+            return ret
+        # Use the stripped version.
+        locator["name"] = name
+
+        loaded_locators_action_result = self.m_load_robot_locator_contents(
+            directory=directory
+        )
+
+        if not loaded_locators_action_result["success"]:
+            # TODO: We should have a way of forcing this to override even if
+            # the current version is not correct.
+            ret = {
+                "success": False,
+                "message": f'The locator was not saved because there was an issue loading the existing locators: {loaded_locators_action_result["message"]}',
+                "result": None,
+            }
+            return ret
+        locators = loaded_locators_action_result["result"]
+
+        locators[name] = locator
+
+        locators_json = self.get_locators_json_path(directory)
+        try:
+            with locators_json.open("w") as file:
+                file.write(json.dumps(locators, indent=4))
+        except Exception as e:
+            log.exception("Error saving locators")
+            ret = {
+                "success": False,
+                "message": f"Error happened while saving locator: {e}.",
+                "result": None,
+            }
+            return ret
+        ret = {
+            "success": True,
+            "message": "",
+            "result": None,
+        }
+        return ret
+
+    def m_manager_delete_locators(
+        self,
+        directory: str,
+        ids: list[str],
+    ) -> ActionResultDict:
+        ret: ActionResultDict
+
+        if not ids:
+            ret = {
+                "success": False,
+                "message": f"Error: no ids specified for deleting.",
+                "result": None,
+            }
+            return ret
+
+        import json
+
+        loaded_locators_action_result = self.m_load_robot_locator_contents(
+            directory=directory
+        )
+        if not loaded_locators_action_result["success"]:
+            ret = {
+                "success": False,
+                "message": f'The locators were not deleted because there was an issue loading the existing locators: {loaded_locators_action_result["message"]}',
+                "result": None,
+            }
+            return ret
+
+        locators = loaded_locators_action_result["result"]
+        for locator_id in ids:
+            locators.pop(locator_id, None)
+
+        locators_json = self.get_locators_json_path(directory)
+        try:
+            with locators_json.open("w") as file:
+                file.write(json.dumps(locators, indent=4))
+        except Exception as e:
+            log.exception("Error saving locators")
+            ret = {
+                "success": False,
+                "message": f"Error happened while deleting locators: {e}.",
+                "result": None,
+            }
+            return ret
+        ret = {
+            "success": True,
+            "message": "",
+            "result": None,
+        }
+        return ret
+
     def m_web_inspector_close_browser(self, **params) -> None:
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         inspector_api_client.send_sync_message("closeBrowser", {})
@@ -105,121 +220,6 @@ class InspectorLanguageServer:
     def m_web_inspector_stop_pick(self, **params):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         inspector_api_client.send_sync_message("stopPick", {"wait": True})
-
-    def m_web_inspector_save_locator(
-        self,
-        locator: dict,
-        directory: str,
-    ) -> ActionResultDict:
-        import json
-
-        ret: ActionResultDict
-
-        if not locator:
-            ret = {
-                "success": False,
-                "message": f"Error: no locator information passed.",
-                "result": None,
-            }
-            return ret
-
-        name = str(locator.get("name", "")).strip()
-        if not name:
-            ret = {
-                "success": False,
-                "message": f"Error: the locator passed {locator} does not have a name (or the name is invalid).",
-                "result": None,
-            }
-            return ret
-        # Use the stripped version.
-        locator["name"] = name
-
-        loaded_locators_action_result = self.m_load_robot_locator_contents(
-            directory=directory
-        )
-
-        if not loaded_locators_action_result["success"]:
-            # TODO: We should have a way of forcing this to override even if
-            # the current version is not correct.
-            ret = {
-                "success": False,
-                "message": f'The locator was not saved because there was an issue loading the existing locators: {loaded_locators_action_result["message"]}',
-                "result": None,
-            }
-            return ret
-        locators = loaded_locators_action_result["result"]
-
-        locators[name] = locator
-
-        locators_json = self.get_locators_json_path(directory)
-        try:
-            with locators_json.open("w") as file:
-                file.write(json.dumps(locators, indent=4))
-        except Exception as e:
-            log.exception("Error saving locators")
-            ret = {
-                "success": False,
-                "message": f"Error happened while saving locator: {e}.",
-                "result": None,
-            }
-            return ret
-        ret = {
-            "success": True,
-            "message": "",
-            "result": None,
-        }
-        return ret
-
-    def m_web_inspector_delete_locators(
-        self,
-        directory: str,
-        ids: list[str],
-    ) -> ActionResultDict:
-        ret: ActionResultDict
-
-        if not ids:
-            ret = {
-                "success": False,
-                "message": f"Error: no ids specified for deleting.",
-                "result": None,
-            }
-            return ret
-
-        import json
-
-        loaded_locators_action_result = self.m_load_robot_locator_contents(
-            directory=directory
-        )
-        if not loaded_locators_action_result["success"]:
-            ret = {
-                "success": False,
-                "message": f'The locators were not deleted because there was an issue loading the existing locators: {loaded_locators_action_result["message"]}',
-                "result": None,
-            }
-            return ret
-
-        locators = loaded_locators_action_result["result"]
-        for locator_id in ids:
-            locators.pop(locator_id, None)
-
-        locators_json = self.get_locators_json_path(directory)
-        try:
-            with locators_json.open("w") as file:
-                file.write(json.dumps(locators, indent=4))
-        except Exception as e:
-            log.exception("Error saving locators")
-            ret = {
-                "success": False,
-                "message": f"Error happened while deleting locators: {e}.",
-                "result": None,
-            }
-            return ret
-        ret = {
-            "success": True,
-            "message": "",
-            "result": None,
-        }
-        return ret
 
     def m_windows_inspector_parse_locator(self, locator: str):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()

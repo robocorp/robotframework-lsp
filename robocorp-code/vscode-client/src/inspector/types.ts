@@ -9,6 +9,18 @@ export declare enum LocatorType {
     Image = "image",
 }
 
+export type StrategyType = {
+    strategy: string;
+    value: string;
+    matches?: number;
+};
+
+export type ElementType = {
+    tag: string;
+    type?: string;
+    modifier?: string | boolean | number;
+};
+
 /**
  *
  * @export
@@ -45,6 +57,24 @@ export interface BrowserLocator {
      * @memberof BrowserLocator
      */
     source?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof BrowserLocator
+     */
+    name?: string;
+    /**
+     *
+     * @type {StrategyType[]}
+     * @memberof BrowserLocator
+     */
+    alternatives?: StrategyType[];
+    /**
+     *
+     * @type {ElementType}
+     * @memberof BrowserLocator
+     */
+    element?: ElementType;
 }
 /**
  *
