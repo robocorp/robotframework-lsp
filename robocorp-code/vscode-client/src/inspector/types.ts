@@ -22,6 +22,10 @@ export type ElementType = {
 };
 
 /**
+ * @interface LOCATORS
+ */
+
+/**
  *
  * @export
  * @interface BrowserLocator
@@ -50,13 +54,13 @@ export interface BrowserLocator {
      * @type {string}
      * @memberof BrowserLocator
      */
-    screenshot?: string;
+    source?: string;
     /**
      *
      * @type {string}
      * @memberof BrowserLocator
      */
-    source?: string;
+    screenshot?: string;
     /**
      *
      * @type {string}
@@ -112,6 +116,18 @@ export interface WindowsLocator {
      * @memberof WindowsLocator
      */
     screenshot?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof WindowsLocator
+     */
+    name?: string;
+    /**
+     *
+     * @type {ElementType}
+     * @memberof BrowserLocator
+     */
+    element?: ElementType;
 }
 /**
  *
@@ -149,9 +165,28 @@ export interface ImageLocator {
      * @memberof ImageLocator
      */
     screenshot?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof WindowsLocator
+     */
+    name?: string;
+    /**
+     *
+     * @type {ElementType}
+     * @memberof BrowserLocator
+     */
+    element?: ElementType;
 }
 
 export declare type Locator = BrowserLocator | WindowsLocator | ImageLocator;
 export declare type LocatorsMap = {
     [name: string]: Locator;
 };
+export declare type LocatorsMapWindows = {
+    [name: string]: WindowsLocator;
+};
+// LocatorsArray = [ name, Locator ][]
+export declare type LocatorsArray = [string, Locator][];
+export declare type LocatorsArrayWindows = [string, WindowsLocator][];
+export declare type LocatorsArrayWeb = [string, BrowserLocator][];
