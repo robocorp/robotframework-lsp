@@ -39,8 +39,8 @@ export type IWindowsRecorderCommands =
     | { type: "validateLocatorSyntax"; locator: string }
     | { type: "startPicking" }
     | { type: "stopPicking" }
-    | { type: "delete"; ids: string[] }
-    | { type: "save"; locator: Locator }
+    | { type: "startHighlighting"; locator: string; depth?: number; strategy?: "all" | "siblings" }
+    | { type: "stopHighlighting" }
     | { type: "validate"; locator: Locator };
 
 // IResponseMessage - should be sent with an expectation of Response

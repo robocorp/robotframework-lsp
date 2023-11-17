@@ -225,6 +225,26 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
                             panel.webview.postMessage(
                                 buildProtocolResponseFromActionResponse(message, actionResult.result, "locator")
                             );
+                        } else if (command["type"] === "startHighlighting") {
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: startHighlighting: ${JSON.stringify(command)}`);
+                            const actionResult: ActionResult<any> = await sendRequest(
+                                "windowsInspectorStartHighlight",
+                                {
+                                    locator: command["locator"],
+                                    search_depth: command["depth"] || 8,
+                                    search_strategy: command["strategy"] || "all",
+                                }
+                            );
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: result: ${JSON.stringify(actionResult)}`);
+                            panel.webview.postMessage(
+                                buildProtocolResponseFromActionResponse(message, actionResult.result, "locator")
+                            );
+                        } else if (command["type"] === "stopHighlighting") {
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: stopHighlighting: ${JSON.stringify(command)}`);
+                            const actionResult: ActionResult<any> = await sendRequest("windowsInspectorStopHighlight");
+                            panel.webview.postMessage(
+                                buildProtocolResponseFromActionResponse(message, actionResult.result, "locator")
+                            );
                         }
                     }
                     return;
