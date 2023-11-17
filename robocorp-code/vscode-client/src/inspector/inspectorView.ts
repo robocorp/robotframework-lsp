@@ -10,7 +10,7 @@ import * as vscode from "vscode";
 import { getExtensionRelativeFile, verifyFileExists } from "../files";
 import { OUTPUT_CHANNEL, buildErrorStr, logError } from "../channel";
 import { getSelectedRobot } from "../viewsCommon";
-import { BrowserLocator, LocatorsMap, WindowsLocator } from "./types";
+import { BrowserLocator, LocatorsMap } from "./types";
 import {
     IApps,
     IEventMessage,
