@@ -242,6 +242,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
                         } else if (command["type"] === "stopHighlighting") {
                             OUTPUT_CHANNEL.appendLine(`> Requesting: stopHighlighting: ${JSON.stringify(command)}`);
                             const actionResult: ActionResult<any> = await sendRequest("windowsInspectorStopHighlight");
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: result: ${JSON.stringify(actionResult)}`);
                             panel.webview.postMessage(
                                 buildProtocolResponseFromActionResponse(message, actionResult.result, "locator")
                             );

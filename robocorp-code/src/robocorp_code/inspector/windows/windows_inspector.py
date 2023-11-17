@@ -293,10 +293,11 @@ class WindowsInspector:
         """
         Stops highlighting matches.
         """
-        if self._state == _State.highlighting:
-            if self._element_inspector is not None:
-                self._element_inspector.stop_highlight()
-            self._state = _State.default
+        log.info("Win-WinInsp-StopHighlight:state", self._state)
+        if self._element_inspector is not None:
+            log.info("Win-WinInsp-StopHighlight:stopping...")
+            self._element_inspector.stop_highlight()
+        self._state = _State.default
 
     def list_windows(self) -> List[WindowLocatorInfoTypedDict]:
         from robocorp_code.inspector.windows import robocorp_windows

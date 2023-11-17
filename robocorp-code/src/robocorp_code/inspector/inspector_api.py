@@ -424,6 +424,7 @@ class _WindowsStopHighlight(_WindowsBaseCommand):
     ) -> ActionResultDict:
         if not windows_inspector_thread.windows_inspector:
             raise RuntimeError("windows_inspector not initialized.")
+        log.info("Win - API - _WindowsStopHighlight - stopping highlight...")
         windows_inspector_thread.windows_inspector.stop_highlight()
 
         return {"success": True, "message": None, "result": None}
