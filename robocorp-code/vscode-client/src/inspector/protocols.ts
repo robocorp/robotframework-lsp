@@ -107,11 +107,18 @@ export interface IResponseMessage {
 export interface IEventMessage {
     id: number;
     type: IMessageType.EVENT;
-    event: {
-        type: "pickedLocator";
-        status: "success" | "failure";
-        message?: string;
-        data: Locator;
-    };
+    event:
+        | {
+              type: "pickedLocator";
+              status: "success" | "failure";
+              message?: string;
+              data: Locator;
+          }
+        | {
+              type: "pickedWinLocator";
+              status: "success" | "failure";
+              message?: string;
+              data: WindowsAppTree;
+          };
 }
 export type IMessage = IRequestMessage | IResponseMessage | IEventMessage;

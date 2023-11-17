@@ -19,6 +19,7 @@ import {
     IRequestMessage,
     IResponseMessage,
     ResponseDataType,
+    WindowsAppTree,
 } from "./protocols";
 import { langServer } from "../extension";
 import { ActionResult, LocalRobotMetadataInfo } from "../protocols";
@@ -89,13 +90,14 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
     // Windows Inspector - Create listeners for BE (Python) messages
     context.subscriptions.push(
         langServer.onNotification("$/windowsPick", (values) => {
-            const pickedLocator: WindowsLocator = JSON.stringify(values) as unknown as WindowsLocator;
+            OUTPUT_CHANNEL.appendLine(`> Receiving: picked.values: ${values}`);
+            const pickedLocator: WindowsAppTree = JSON.stringify(values) as unknown as WindowsAppTree;
             OUTPUT_CHANNEL.appendLine(`> Receiving: picked.element: ${pickedLocator}`);
             const response: IEventMessage = {
                 id: Date.now(),
                 type: IMessageType.EVENT,
                 event: {
-                    type: "pickedLocator",
+                    type: "pickedWinLocator",
                     status: "success",
                     data: pickedLocator,
                 },
@@ -153,19 +155,20 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
                 case IMessageType.REQUEST:
                     const command = message.command;
                     if (command["type"] === "getLocators") {
+                        OUTPUT_CHANNEL.appendLine(`> Requesting: Get Locators: ${command}`);
                         const actionResult: ActionResult<LocatorsMap> = await sendRequest("loadRobotLocatorContents", {
                             directory: directory,
                         });
-                        const response: IResponseMessage = buildProtocolResponseFromActionResponse(
-                            message,
-                            actionResult
+                        OUTPUT_CHANNEL.appendLine(`> Requesting: Response: ${JSON.stringify(actionResult)}`);
+                        panel.webview.postMessage(
+                            buildProtocolResponseFromActionResponse(message, actionResult, "locatorsMap")
                         );
-                        response.data.type = "locatorsMap";
-                        response.data.value = actionResult.result;
                     } else if (message.app === IApps.WEB_RECORDER) {
                         if (command["type"] === "startPicking") {
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: Start Picking: ${command}`);
                             await sendRequest("webInspectorStartPick");
                         } else if (command["type"] === "stopPicking") {
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: Stop Picking: ${command}`);
                             await sendRequest("webInspectorStopPick");
                         }
                     } else if (message.app === IApps.LOCATORS_MANAGER) {
