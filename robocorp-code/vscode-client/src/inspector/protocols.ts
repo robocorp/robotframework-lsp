@@ -31,7 +31,17 @@ export type IWebRecorderCommands =
     | { type: "save"; locator: Locator }
     | { type: "validate"; locator: Locator };
 
-export type IWindowsRecorderCommands = { type: "startPicking" } | { type: "stopPicking" };
+export type IWindowsRecorderCommands =
+    | { type: "getLocators" }
+    | { type: "getAppWindows" }
+    | { type: "collectAppTree"; locator: string; depth?: number; strategy?: "all" | "siblings" }
+    | { type: "setSelectedApp"; handle: string }
+    | { type: "validateLocatorSyntax"; locator: string }
+    | { type: "startPicking" }
+    | { type: "stopPicking" }
+    | { type: "startHighlighting"; locator: string; depth?: number; strategy?: "all" | "siblings" }
+    | { type: "stopHighlighting" }
+    | { type: "validate"; locator: Locator };
 
 // IResponseMessage - should be sent with an expectation of Response
 export interface IRequestMessage {
@@ -44,6 +54,33 @@ export interface IRequestMessage {
 // =====================================
 // RESPONSES
 // =====================================
+export type ResponseDataType = "locator" | "locatorsMap" | "winApps" | "winAppTree";
+export type WindowsAppDetails = { executable: string; name: string; handle: string };
+export type WindowsAppsResponse = WindowsAppDetails[];
+export type WindowsAppElement = {
+    control: string;
+    class: string;
+    name: string;
+    automation_id: string;
+    handle: number;
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
+    width: number;
+    height: number;
+    xcenter: number;
+    ycenter: number;
+    depth: number;
+    child_pos: number;
+    path: string;
+};
+export type WindowsAppTree = WindowsAppElement[];
+export type WindowsAppTreeResponse = {
+    matched_paths: string[];
+    hierarchy: WindowsAppTree;
+};
+
 // IResponseMessage - should respond to a Request
 export interface IResponseMessage {
     id: number;
@@ -51,19 +88,37 @@ export interface IResponseMessage {
     app: IAppsType;
     status: "success" | "failure";
     message?: string;
-    data?: Locator | LocatorsMap;
-    dataType?: "locator" | "locatorsMap";
+    data?:
+        | {
+              type: "locator";
+              value: Locator;
+          }
+        | {
+              type: "locatorsMap";
+              value: LocatorsMap;
+          }
+        | { type: "winApps"; value: WindowsAppsResponse }
+        | {
+              type: "winAppTree";
+              value: WindowsAppTreeResponse;
+          };
 }
-
 // IResponseMessage - should be equidistant from Requests or Responses
 export interface IEventMessage {
     id: number;
     type: IMessageType.EVENT;
-    event: {
-        type: "pickedLocator";
-        status: "success" | "failure";
-        message?: string;
-        data: Locator;
-    };
+    event:
+        | {
+              type: "pickedLocator";
+              status: "success" | "failure";
+              message?: string;
+              data: Locator;
+          }
+        | {
+              type: "pickedWinLocator";
+              status: "success" | "failure";
+              message?: string;
+              data: WindowsAppTree;
+          };
 }
 export type IMessage = IRequestMessage | IResponseMessage | IEventMessage;
