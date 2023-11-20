@@ -279,13 +279,15 @@ class WindowsInspector:
                 "Unable to make match because `set_window_locator` was not previously used to set the window of interest."
             )
 
+        self.reset_to_default_state()
+        self._state = _State.highlighting
+        
         matched_controls = self._element_inspector.start_highlight(
             locator,
             search_depth=search_depth,
             timeout=0,
             search_strategy=search_strategy,
         )
-        self._state = _State.highlighting
 
         parent = self._element_inspector.control_element
         return to_matches_and_hierarchy(parent, matched_controls)
