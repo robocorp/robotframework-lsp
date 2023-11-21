@@ -547,7 +547,12 @@ class InspectorApi(PythonLanguageServer):
         search_depth: int = 8,
         search_strategy: Literal["siblings", "all"] = "all",
     ) -> ActionResultDict:
-        log.info("Win - API - Collecting Tree. locator: %s, search_depth: %s, search_strategy: %s", locator, search_depth, search_strategy)
+        log.info(
+            "Win - API - Collecting Tree. locator: %s, search_depth: %s, search_strategy: %s",
+            locator,
+            search_depth,
+            search_strategy,
+        )
         return self._enqueue_windows(
             _WindowsCollectTree(locator, search_depth, search_strategy)
         )
