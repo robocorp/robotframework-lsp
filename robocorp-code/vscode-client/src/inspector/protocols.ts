@@ -45,7 +45,7 @@ export type IWindowsRecorderCommands =
 
 // IResponseMessage - should be sent with an expectation of Response
 export interface IRequestMessage {
-    id: number;
+    id: string;
     type: IMessageType.REQUEST;
     app: IAppsType;
     command: IManagerCommands | IWebRecorderCommands | IWindowsRecorderCommands;
@@ -83,7 +83,7 @@ export type WindowsAppTreeResponse = {
 
 // IResponseMessage - should respond to a Request
 export interface IResponseMessage {
-    id: number;
+    id: string;
     type: IMessageType.RESPONSE;
     app: IAppsType;
     status: "success" | "failure";
