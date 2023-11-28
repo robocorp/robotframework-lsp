@@ -279,6 +279,8 @@ class WindowsInspector:
                 "Unable to make match because `set_window_locator` was not previously used to set the window of interest."
             )
 
+        self.reset_to_default_state()
+        self._state = _State.highlighting
         matched_controls = self._element_inspector.start_highlight(
             locator,
             search_depth=search_depth,
@@ -293,11 +295,16 @@ class WindowsInspector:
         """
         Stops highlighting matches.
         """
-        log.info("Win-WinInsp-StopHighlight:state", self._state)
-        if self._element_inspector is not None:
+        if self._state == _State.highlighting:
             log.info("Win-WinInsp-StopHighlight:stopping...")
-            self._element_inspector.stop_highlight()
-        self._state = _State.default
+            if self._element_inspector is not None:
+                self._element_inspector.stop_highlight()
+            self._state = _State.default
+        else:
+            log.info(
+                "Win-WinInsp-StopHighlight:nothing done (state=%s is not highlight)",
+                self._state,
+            )
 
     def list_windows(self) -> List[WindowLocatorInfoTypedDict]:
         from robocorp_code.inspector.windows import robocorp_windows
@@ -316,9 +323,12 @@ class WindowsInspector:
                 "Unable to collect tree because `set_window_locator` was not previously used to set the window of interest."
             )
 
-        log.info("Win-WinInsp-CollectTree:locator", locator)
-        log.info("Win-WinInsp-CollectTree:search_depth", search_depth)
-        log.info("Win-WinInsp-CollectTree:search_strategy", search_strategy)
+        log.info(
+            "Win-WinInsp-CollectTree: locator: %s, search_depth: %s, search_strategy: %s",
+            locator,
+            search_depth,
+            search_strategy,
+        )
 
         matched_controls: List[
             "ControlElement"

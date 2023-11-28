@@ -905,6 +905,19 @@ def sort_diagnostics(diagnostics):
     return sorted(diagnostics, key=key)
 
 
+def filter_diagnostics(diagnostics):
+    ret = []
+    for diag in diagnostics:
+        # Filter out some diagnostics.
+        if "SSL_CERT_FILE is set to" in diag["message"]:
+            continue
+
+        if "Dependencies drift file" in diag["message"]:
+            continue
+        ret.append(diag)
+    return ret
+
+
 def test_lint_robot_integration_rcc(
     language_server_initialized: IRobocorpLanguageServerClient, tmpdir, data_regression
 ):
@@ -948,7 +961,7 @@ dependencies:
 
     assert message_matcher.event.wait(TIMEOUT)
     diag = message_matcher.msg["params"]["diagnostics"]
-    data_regression.check(sort_diagnostics(diag))
+    data_regression.check(filter_diagnostics(sort_diagnostics(diag)))
 
 
 @pytest.fixture
