@@ -332,7 +332,7 @@ const serverOptions: ServerOptions = async function () {
 
         let src: string = path.resolve(__dirname, "../../src");
         const serverProcess = cp.spawn(executableAndMessage.executable[0], args, {
-            env: { ...process.env, PYTHONPATH: src },
+            env: { ...process.env, PYTHONPATH: src + (!process.env.PYTHONPATH ? '' : ':' + process.env.PYTHONPATH) },
         });
         if (!serverProcess || !serverProcess.pid) {
             throw new Error(
