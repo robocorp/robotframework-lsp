@@ -45,7 +45,7 @@ export type IWindowsRecorderCommands =
 
 // IResponseMessage - should be sent with an expectation of Response
 export interface IRequestMessage {
-    id: number;
+    id: string;
     type: IMessageType.REQUEST;
     app: IAppsType;
     command: IManagerCommands | IWebRecorderCommands | IWindowsRecorderCommands;
@@ -83,7 +83,7 @@ export type WindowsAppTreeResponse = {
 
 // IResponseMessage - should respond to a Request
 export interface IResponseMessage {
-    id: number;
+    id: string;
     type: IMessageType.RESPONSE;
     app: IAppsType;
     status: "success" | "failure";
@@ -105,7 +105,7 @@ export interface IResponseMessage {
 }
 // IResponseMessage - should be equidistant from Requests or Responses
 export interface IEventMessage {
-    id: number;
+    id: string;
     type: IMessageType.EVENT;
     event:
         | {
@@ -115,7 +115,7 @@ export interface IEventMessage {
               data: Locator;
           }
         | {
-              type: "pickedWinLocator";
+              type: "pickedWinLocatorTree";
               status: "success" | "failure";
               message?: string;
               data: WindowsAppTree;
