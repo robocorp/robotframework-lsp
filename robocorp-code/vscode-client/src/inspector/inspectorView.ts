@@ -90,8 +90,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
     // Windows Inspector - Create listeners for BE (Python) messages
     context.subscriptions.push(
         langServer.onNotification("$/windowsPick", (values) => {
-            OUTPUT_CHANNEL.appendLine(`> Receiving: picked.values: ${values}`);
-            const pickedLocator: WindowsAppTree = JSON.stringify(values) as unknown as WindowsAppTree;
+            const pickedLocator: WindowsAppTree = JSON.stringify(values["picked"]) as unknown as WindowsAppTree;
             OUTPUT_CHANNEL.appendLine(`> Receiving: picked.element: ${pickedLocator}`);
             const response: IEventMessage = {
                 id: Date.now(),

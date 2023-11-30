@@ -227,7 +227,7 @@ class _WindowsInspectorThread(threading.Thread):
         endpoint = self._endpoint
 
         def _on_pick(picked: List[ControlLocatorInfoTypedDict]):
-            endpoint.notify("$/windowsPick", picked)
+            endpoint.notify("$/windowsPick", {"picked": picked})
 
         self._windows_inspector.on_pick.register(_on_pick)
 
