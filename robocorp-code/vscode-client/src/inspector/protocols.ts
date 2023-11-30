@@ -105,7 +105,7 @@ export interface IResponseMessage {
 }
 // IResponseMessage - should be equidistant from Requests or Responses
 export interface IEventMessage {
-    id: number;
+    id: string;
     type: IMessageType.EVENT;
     event:
         | {
@@ -115,7 +115,7 @@ export interface IEventMessage {
               data: Locator;
           }
         | {
-              type: "pickedWinLocator";
+              type: "pickedWinLocatorTree";
               status: "success" | "failure";
               message?: string;
               data: WindowsAppTree;
