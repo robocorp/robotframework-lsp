@@ -33,8 +33,9 @@ Configuration
 After having `Robot Framework Language Server` installed, some configurations (such as specifying
 the python executable used for launching the Language Server or Robot Framework)
 may be needed (by default it'll use the `python` from the `PATH`).
+In addition, you might want to configure the Pythonpath to your project root folder (this options is useful when you want to reslov resources and imports).
 
-The settings may be configured at: `File > Settings > Languages & Frameworks > Robot Framework Language Server`.
+The settings may be configured at: `File > Settings > Languages & Frameworks > Robot Framework (Global/Project)`.
 
 Developing
 ------------
