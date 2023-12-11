@@ -209,7 +209,7 @@ class WindowsInspector:
 
         # No timeout. The windows must be there already.
         pick_window = find_window(window_locator, timeout=0)
-        self._element_inspector = ElementInspector(pick_window)
+        self._element_inspector = ElementInspector(control_element=pick_window)
 
     def _on_internal_pick(self, found: List["ControlTreeNode[ControlElement]"]):
         converted: List[ControlLocatorInfoTypedDict] = []

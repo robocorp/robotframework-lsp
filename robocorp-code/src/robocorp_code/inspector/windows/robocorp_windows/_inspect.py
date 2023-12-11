@@ -1,6 +1,7 @@
 import itertools
 import logging
 import math
+from re import S
 import sys
 import threading
 import time
@@ -62,16 +63,16 @@ def request_action(queue):
             """
 Choose action:
 print tree        (p): Prints the reachable elements that match the given filter.
-                       i.e.: `p: name:"calc` will show all lines containing that 
+                       i.e.: `p: name:"calc` will show all lines containing that
                        substring (case independent).
                        The max depth may be customizable with max_depth=<value>
                        i.e.: p:max_depth=1 calc
-highlight         (h): Highlights all elements reachable given a locator. 
+highlight         (h): Highlights all elements reachable given a locator.
                        i.e.: `h: name:"Calculator"`.
-highlight mouse   (m): Highlights based on the mouse position. 
+highlight mouse   (m): Highlights based on the mouse position.
 highlight all     (a): Creates highlight boxes in all the reachable elements.
 select window     (s): Selects a window to inspect. Can include a filter as
-                       the parameter (i.e.: s:notepad). 
+                       the parameter (i.e.: s:notepad).
 quit              (q): Stops the inspection.
 """
         ).strip()
@@ -152,14 +153,18 @@ class _TkHandler:
         root = tk.Tk()
         root.title("Inspect picker root")
         root.overrideredirect(True)  # Remove window decorations
-        root.attributes("-alpha", 0.1)  # Set window transparency (0.0 to 1.0)
+        root.attributes("-alpha", 0.4)  # Set window transparency (0.0 to 1.0)
         root.geometry("0x0+0+0")
         root.attributes("-topmost", 1)
 
         from tkinter.constants import SOLID
 
         canvas = tk.Canvas(
-            root, bg="red", highlightthickness=0, relief=SOLID, borderwidth=2
+            root,
+            bg="red",
+            relief=SOLID,
+            borderwidth=4,
+            border=2,
         )
 
         canvas.pack(fill=tk.BOTH, expand=True)
@@ -771,12 +776,70 @@ class _PickerThread(threading.Thread):
         self._stop_event.set()
 
 
+class _CursorListenerThread(threading.Thread):
+    def __init__(
+        self,
+        tk_handler_thread: _TkHandlerThread,
+        control_element: ControlElement,
+    ) -> None:
+        threading.Thread.__init__(self)
+
+        self._stop_event = threading.Event()
+        self._tk_handler_thread = tk_handler_thread
+        self._control_element = control_element
+
+    def run(self) -> None:
+        try:
+            self._run()
+        except Exception:
+            import traceback
+
+            traceback.print_exc()
+
+    def _run(self) -> None:
+        from ._vendored.uiautomation.uiautomation import (
+            GetCursorPos,
+            UIAutomationInitializerInThread,
+        )
+
+        def kill_highlight():
+            self._tk_handler_thread.quitloop()
+            self._tk_handler_thread.destroy_tk_handler()
+            self.stop()
+
+        DEBOUNCE_TIME = 1.0
+        with UIAutomationInitializerInThread(debug=True):
+            hits = 0
+            last_cursor_pos = CursorPos(*GetCursorPos())
+
+            while True:
+                if self._stop_event.wait(0.2):
+                    return
+
+                if not self._control_element.has_valid_geometry():
+                    kill_highlight()
+                    return
+
+                cursor_pos = CursorPos(*GetCursorPos())
+                if not cursor_pos.consider_same_as(last_cursor_pos) and hits >= 3:
+                    kill_highlight()
+                    return
+
+                hits += 1
+                time.sleep(DEBOUNCE_TIME)
+
+    def stop(self):
+        self._stop_event.set()
+
+
 class ElementInspector:
     def __init__(self, control_element: ControlElement):
         self.control_element = control_element
+        self._picker_thread: Optional[_PickerThread] = None
+        self._cursor_thread: Optional[_CursorListenerThread] = None
+
         self._tk_handler_thread: _TkHandlerThread = _TkHandlerThread()
         self._tk_handler_thread.start()
-        self._picker_thread: Optional[_PickerThread] = None
         self._current_thread = threading.current_thread()
 
     def __enter__(self):
@@ -819,6 +882,8 @@ class ElementInspector:
             highlighting and to exit the tk loop).
         """
         self._check_thread()
+        self.bring_window_on_top()
+
         self._tk_handler_thread.destroy_tk_handler()
         self._tk_handler_thread.create()
 
@@ -847,18 +912,39 @@ class ElementInspector:
 
         tk_handler_thread.set_rects(rects)
         tk_handler_thread.loop()
+
+        if locator is not None and self._cursor_thread is None:
+            # start listening to the cursor to remove the highlight
+            self._cursor_thread = _CursorListenerThread(
+                self._tk_handler_thread, self.control_element
+            )
+            self._cursor_thread.start()
+
         return matches
 
     def stop_highlight(self) -> None:
         self._check_thread()
         self._tk_handler_thread.quitloop()
         self._tk_handler_thread.destroy_tk_handler()
+        if self._cursor_thread:
+            # make sure to stop the cursor listener
+            self._cursor_thread.stop()
+            self._cursor_thread.join()
+            self._cursor_thread = None
 
     def list_windows(self) -> List[WindowElement]:
         self._check_thread()
         from . import desktop
 
         return desktop().find_windows("regex:.*")
+
+    def bring_window_on_top(self) -> None:
+        self._check_thread()
+        self.control_element.update_geometry()
+        if not self.control_element.has_valid_geometry():
+            self.control_element.restore_window()
+            time.sleep(0.25)
+        self.control_element.foreground_window()
 
     def start_picking(self, on_pick):
         self._check_thread()
