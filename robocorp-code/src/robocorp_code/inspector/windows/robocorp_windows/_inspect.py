@@ -38,6 +38,8 @@ log = logging.getLogger(__name__)
 
 DEBUG = False
 
+MAX_ELEMENTS_TO_HIGHLIGHT = 20
+
 
 class _BoundsIndex:
     def __init__(self):
@@ -901,6 +903,10 @@ class ElementInspector:
                 matches = ()
         else:
             matches = ()
+
+        if len(list(matches)) > MAX_ELEMENTS_TO_HIGHLIGHT:
+            # skipping displaying highlights if number of matches exceeds limit
+            return matches
 
         tk_handler_thread = self._tk_handler_thread
         rects = []
