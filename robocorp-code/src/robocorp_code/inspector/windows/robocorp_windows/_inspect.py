@@ -17,6 +17,7 @@ from typing import (
     Sequence,
     Set,
     Tuple,
+    cast,
 )
 
 import _ctypes
@@ -946,11 +947,12 @@ class ElementInspector:
 
     def bring_window_on_top(self) -> None:
         self._check_thread()
-        self.control_element.update_geometry()
-        if not self.control_element.has_valid_geometry():
-            self.control_element.restore_window()
+        window_element = cast(WindowElement, self.control_element)
+        window_element.update_geometry()
+        if not window_element.has_valid_geometry():
+            window_element.restore_window()
             time.sleep(0.25)
-        self.control_element.foreground_window()
+        window_element.foreground_window()
 
     def start_picking(self, on_pick):
         self._check_thread()
