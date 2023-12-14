@@ -810,7 +810,7 @@ class _CursorListenerThread(threading.Thread):
             self._tk_handler_thread.destroy_tk_handler()
             self.stop()
 
-        DEBOUNCE_TIME = 1.0
+        DEBOUNCE_TIME = 0.25
         with UIAutomationInitializerInThread(debug=True):
             hits = 0
             last_cursor_pos = CursorPos(*GetCursorPos())
@@ -824,7 +824,7 @@ class _CursorListenerThread(threading.Thread):
                     return
 
                 cursor_pos = CursorPos(*GetCursorPos())
-                if not cursor_pos.consider_same_as(last_cursor_pos) and hits >= 3:
+                if not cursor_pos.consider_same_as(last_cursor_pos) and hits >= 10:
                     kill_highlight()
                     return
 
@@ -953,6 +953,7 @@ class ElementInspector:
             window_element.restore_window()
             time.sleep(0.25)
         window_element.foreground_window()
+        time.sleep(0.1)
 
     def start_picking(self, on_pick):
         self._check_thread()
