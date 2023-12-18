@@ -479,7 +479,7 @@ COMMANDS = [
     ),
     Command(
         "robocorp.inspector",
-        "Open Inspector Applications",
+        "Open Inspector",
         server_handled=False,
         hide_from_command_palette=False,
     ),

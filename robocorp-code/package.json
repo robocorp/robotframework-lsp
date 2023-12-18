@@ -559,7 +559,7 @@
             },
             {
                 "command": "robocorp.inspector",
-                "title": "Open Inspector Applications",
+                "title": "Open Inspector",
                 "category": "Robocorp"
             },
             {
