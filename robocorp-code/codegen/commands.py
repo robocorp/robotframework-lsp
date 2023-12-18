@@ -335,6 +335,13 @@ COMMANDS = [
         icon="$(add)",
     ),
     Command(
+        "robocorp.newRobocorpInspectorWindows",
+        "Add Windows Locator",
+        add_to_package_json=True,
+        server_handled=False,
+        icon="$(add)",
+    ),
+    Command(
         "robocorp.newRobocorpInspectorImage",
         "Add Image Locator",
         add_to_package_json=True,
@@ -342,8 +349,8 @@ COMMANDS = [
         icon="$(add)",
     ),
     Command(
-        "robocorp.newRobocorpInspectorWindows",
-        "Add Windows Locator",
+        "robocorp.newRobocorpInspectorJava",
+        "Add Java Locator",
         add_to_package_json=True,
         server_handled=False,
         icon="$(add)",
@@ -472,9 +479,15 @@ COMMANDS = [
     ),
     Command(
         "robocorp.inspector",
-        "Open Robocorp Inspector (Experimental)",
+        "Open Inspector",
         server_handled=False,
-        when_clause="config.robocorp.experimental.inspector == true",
+        hide_from_command_palette=False,
+    ),
+    Command(
+        "robocorp.inspector.duplicate",
+        "Create & manage locators",
+        server_handled=False,
+        hide_from_command_palette=False,
     ),
     Command(
         "robocorp.errorFeedback.internal",
