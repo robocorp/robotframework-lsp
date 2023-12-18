@@ -108,6 +108,8 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
 
     panel.onDidDispose(() => {
         sendRequest("webInspectorCloseBrowser", {});
+        sendRequest("windowsInspectorStopPick", {});
+        sendRequest("windowsInspectorStopHighlight", {});
     });
 
     const buildProtocolResponseFromActionResponse = (
