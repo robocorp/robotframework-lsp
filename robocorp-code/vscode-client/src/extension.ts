@@ -140,6 +140,7 @@ import {
     ROBOCORP_DEBUG_ROBOCORPS_PYTHON_TASK,
     ROBOCORP_OPEN_PLAYWRIGHT_RECORDER,
     ROBOCORP_INSPECTOR,
+    ROBOCORP_INSPECTOR_DUPLICATE,
 } from "./robocorpCommands";
 import { installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
@@ -370,18 +371,6 @@ function registerRobocorpCodeCommands(C: CommandRegistry, context: ExtensionCont
     C.register(ROBOCORP_DEBUG_ROBOCORPS_PYTHON_TASK, (args: string[]) => runRobocorpTasks(false, args));
     C.register(ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR, (locator?: LocatorEntry) =>
         inspector.openRobocorpInspector(undefined, locator)
-    );
-    C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_BROWSER, () =>
-        inspector.openRobocorpInspector(inspector.InspectorType.Browser)
-    );
-    C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE, () =>
-        inspector.openRobocorpInspector(inspector.InspectorType.Image)
-    );
-    C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_WINDOWS, () =>
-        inspector.openRobocorpInspector(inspector.InspectorType.Windows)
-    );
-    C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_WEB_RECORDER, () =>
-        inspector.openRobocorpInspector(inspector.InspectorType.WebRecorder)
     );
     C.register(ROBOCORP_OPEN_PLAYWRIGHT_RECORDER, (useTreeSelected: boolean = false) =>
         playwright.openPlaywrightRecorder(useTreeSelected)
@@ -624,18 +613,6 @@ interface ExecuteWorkspaceCommandArgs {
     arguments: any;
 }
 
-let inspectorExperimentRegistered: boolean = false;
-
-let registerInspectorExperiment = (context: ExtensionContext, C: CommandRegistry) => {
-    if (inspectorExperimentRegistered) {
-        return;
-    }
-    inspectorExperimentRegistered = true;
-    C.registerWithoutStub(ROBOCORP_INSPECTOR, async () => {
-        await showInspectorUI(context);
-    });
-};
-
 export async function doActivate(context: ExtensionContext, C: CommandRegistry) {
     // Note: register the submit issue actions early on so that we can later actually
     // report startup errors.
@@ -643,7 +620,18 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
         await showSubmitIssueUI(context);
     });
 
-    registerInspectorExperiment(context, C);
+    // register Inspector applications
+    C.registerWithoutStub(ROBOCORP_INSPECTOR, async () => {
+        await showInspectorUI(context);
+    });
+
+    C.registerWithoutStub(ROBOCORP_INSPECTOR_DUPLICATE, async () => {
+        await showInspectorUI(context);
+    });
+    C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_BROWSER, async () => await showInspectorUI(context));
+    C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE, async () => await showInspectorUI(context));
+    C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_WINDOWS, async () => await showInspectorUI(context));
+    C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_WEB_RECORDER, async () => await showInspectorUI(context));
 
     // i.e.: allow other extensions to also use our submit issue api.
     C.registerWithoutStub(

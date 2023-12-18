@@ -61,8 +61,9 @@
         "onCommand:robocorp.openLocatorsJson",
         "onCommand:robocorp.openCloudHome",
         "onCommand:robocorp.newRobocorpInspectorBrowser",
-        "onCommand:robocorp.newRobocorpInspectorImage",
         "onCommand:robocorp.newRobocorpInspectorWindows",
+        "onCommand:robocorp.newRobocorpInspectorImage",
+        "onCommand:robocorp.newRobocorpInspectorJava",
         "onCommand:robocorp.newRobocorpInspectorWebRecorder",
         "onCommand:robocorp.openPlaywrightRecorder",
         "onCommand:robocorp.openPlaywrightRecorder.internal",
@@ -81,6 +82,7 @@
         "onCommand:robocorp.submitIssue",
         "onCommand:robocorp.inspector.internal",
         "onCommand:robocorp.inspector",
+        "onCommand:robocorp.inspector.duplicate",
         "onCommand:robocorp.errorFeedback.internal",
         "onCommand:robocorp.feedback.internal",
         "onCommand:robocorp.configuration.diagnostics.internal",
@@ -439,14 +441,20 @@
                 "icon": "$(add)"
             },
             {
+                "command": "robocorp.newRobocorpInspectorWindows",
+                "title": "Add Windows Locator",
+                "category": "Robocorp",
+                "icon": "$(add)"
+            },
+            {
                 "command": "robocorp.newRobocorpInspectorImage",
                 "title": "Add Image Locator",
                 "category": "Robocorp",
                 "icon": "$(add)"
             },
             {
-                "command": "robocorp.newRobocorpInspectorWindows",
-                "title": "Add Windows Locator",
+                "command": "robocorp.newRobocorpInspectorJava",
+                "title": "Add Java Locator",
                 "category": "Robocorp",
                 "icon": "$(add)"
             },
@@ -551,7 +559,12 @@
             },
             {
                 "command": "robocorp.inspector",
-                "title": "Open Robocorp Inspector (Experimental)",
+                "title": "Open Inspector Applications",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.inspector.duplicate",
+                "title": "Create & manage locators",
                 "category": "Robocorp"
             },
             {
