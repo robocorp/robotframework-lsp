@@ -474,7 +474,7 @@ COMMANDS = [
         "robocorp.inspector",
         "Open Robocorp Inspector (Experimental)",
         server_handled=False,
-        when_clause="config.robocorp.experimental.inspector == true",
+        hide_from_command_palette=False,
     ),
     Command(
         "robocorp.errorFeedback.internal",

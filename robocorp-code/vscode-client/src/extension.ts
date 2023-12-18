@@ -158,7 +158,6 @@ import { runRobocorpTasks } from "./robo/runRobocorpTasks";
 import { RobotOutputViewProvider } from "./output/outView";
 import { setupDebugSessionOutViewIntegration } from "./output/outViewRunIntegration";
 import { showInspectorUI } from "./inspector/inspectorView";
-import { getExperimentalInspector } from "./robocorpSettings";
 
 interface InterpreterInfo {
     pythonExe: string;
@@ -637,15 +636,6 @@ let registerInspectorExperiment = (context: ExtensionContext, C: CommandRegistry
     });
 };
 
-let updateInspectorExperiment = (context: ExtensionContext, C: CommandRegistry) => {
-    const enabled = getExperimentalInspector();
-    if (enabled) {
-        registerInspectorExperiment(context, C);
-    }
-
-    vscode.commands.executeCommand("setContext", "robocorp.experimental.inspector", enabled);
-};
-
 export async function doActivate(context: ExtensionContext, C: CommandRegistry) {
     // Note: register the submit issue actions early on so that we can later actually
     // report startup errors.
@@ -653,12 +643,7 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
         await showSubmitIssueUI(context);
     });
 
-    updateInspectorExperiment(context, C);
-    workspace.onDidChangeConfiguration((event) => {
-        if (event.affectsConfiguration(roboConfig.ROBOCORP_EXPERIMENTAL_INSPECTOR)) {
-            updateInspectorExperiment(context, C);
-        }
-    });
+    registerInspectorExperiment(context, C);
 
     // i.e.: allow other extensions to also use our submit issue api.
     C.registerWithoutStub(
