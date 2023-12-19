@@ -181,7 +181,7 @@ class WindowElement(ControlElement):
             foreground,
         )
 
-    def foreground_window(self) -> "WindowElement":
+    def foreground_window(self, skip_cursor_centering: bool = False) -> "WindowElement":
         """
         Bring this window to the foreground (note: `find_window` makes the
         window the foreground window by default).
@@ -204,7 +204,10 @@ class WindowElement(ControlElement):
 
         _call_attribute_if_available(window.item, "SetFocus")
         _call_attribute_if_available(window.item, "SetActive")
-        window.item.MoveCursorToMyCenter(simulateMove=config().simulate_mouse_movement)
+        if not skip_cursor_centering:
+            window.item.MoveCursorToMyCenter(
+                simulateMove=config().simulate_mouse_movement
+            )
         return self
 
     def _resize_window(self, *, attribute: str) -> bool:

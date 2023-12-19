@@ -120,6 +120,7 @@ def find_window(
     timeout: Optional[float] = None,
     wait_time: Optional[float] = None,
     foreground: bool = True,
+    skip_cursor_centering: bool = False,
 ) -> "WindowElement":
     """
     Finds the first window matching the passed locator.
@@ -157,7 +158,9 @@ def find_window(
         window = find_window('executable:Spotify.exe')
         ```
     """
-    return desktop().find_window(locator, search_depth, timeout, wait_time, foreground)
+    return desktop().find_window(
+        locator, search_depth, timeout, wait_time, foreground, skip_cursor_centering
+    )
 
 
 def find_windows(

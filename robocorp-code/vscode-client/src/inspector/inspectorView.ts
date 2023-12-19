@@ -28,7 +28,6 @@ import { ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL } from "../robocorpCommands";
 let ROBOCORP_INSPECTOR_IS_OPENED = false;
 
 export async function showInspectorUI(context: vscode.ExtensionContext) {
-    OUTPUT_CHANNEL.appendLine(`# Robocorp Inspector is: ${ROBOCORP_INSPECTOR_IS_OPENED}`);
     if (ROBOCORP_INSPECTOR_IS_OPENED) {
         OUTPUT_CHANNEL.appendLine("# Robocorp Inspector is already opened! Thank you!");
         return;

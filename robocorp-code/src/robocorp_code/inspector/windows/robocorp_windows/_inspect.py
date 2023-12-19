@@ -810,7 +810,7 @@ class _CursorListenerThread(threading.Thread):
             self._tk_handler_thread.destroy_tk_handler()
             self.stop()
 
-        DEBOUNCE_TIME = 0.25
+        DEBOUNCE_TIME = 0.3
         with UIAutomationInitializerInThread(debug=True):
             hits = 0
             last_cursor_pos = CursorPos(*GetCursorPos())
@@ -885,31 +885,34 @@ class ElementInspector:
             highlighting and to exit the tk loop).
         """
         self._check_thread()
-        self.bring_window_on_top()
+        self.bring_window_to_foreground()
 
+        # kill the TK thread
+        self._tk_handler_thread.quitloop()
         self._tk_handler_thread.destroy_tk_handler()
+        # recreate the TK thread
         self._tk_handler_thread.create()
+        self._tk_handler_thread.loop()
+
+        if locator is None or search_depth <= 0:
+            return ()
 
         matches: Sequence[ControlElement]
-        if locator:
-            try:
-                matches = self.control_element.find_many(
-                    locator,
-                    search_depth,
-                    timeout,
-                    search_strategy,
-                    wait_for_element=False,
-                )
-            except ElementNotFound:
-                matches = ()
-        else:
+        try:
+            matches = self.control_element.find_many(
+                locator,
+                search_depth,
+                timeout,
+                search_strategy,
+                wait_for_element=False,
+            )
+        except ElementNotFound:
             matches = ()
 
         if len(list(matches)) > MAX_ELEMENTS_TO_HIGHLIGHT:
             # skipping displaying highlights if number of matches exceeds limit
             return matches
 
-        tk_handler_thread = self._tk_handler_thread
         rects = []
         for control_element in matches:
             if not control_element.has_valid_geometry():
@@ -917,10 +920,9 @@ class ElementInspector:
             left, top, right, bottom = control_element.rectangle
             rects.append((left, top, right, bottom))
 
-        tk_handler_thread.set_rects(rects)
-        tk_handler_thread.loop()
+        self._tk_handler_thread.set_rects(rects)
 
-        if locator is not None and self._cursor_thread is None:
+        if self._cursor_thread is None:
             # start listening to the cursor to remove the highlight
             self._cursor_thread = _CursorListenerThread(
                 self._tk_handler_thread, self.control_element
@@ -945,20 +947,24 @@ class ElementInspector:
 
         return desktop().find_windows("regex:.*")
 
-    def bring_window_on_top(self) -> None:
+    def bring_window_to_foreground(self) -> None:
         self._check_thread()
         window_element = cast(WindowElement, self.control_element)
         window_element.update_geometry()
         if not window_element.has_valid_geometry():
             window_element.restore_window()
+            # compensating because of Windows animations
             time.sleep(0.25)
-        window_element.foreground_window()
+        window_element.foreground_window(skip_cursor_centering=True)
+        # making sure we have the window in focus
         time.sleep(0.1)
 
     def start_picking(self, on_pick):
         self._check_thread()
         assert self._picker_thread is None, "Error. A picking is already in place."
-        self.start_highlight(None)
+
+        self.start_highlight()
+
         self._picker_thread = _PickerThread(
             self._tk_handler_thread, self.control_element, on_pick
         )

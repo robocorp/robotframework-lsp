@@ -41,6 +41,7 @@ def find_window(
     timeout: Optional[float] = None,
     wait_time: Optional[float] = None,
     foreground: bool = True,
+    skip_cursor_centering: bool = False,
 ) -> WindowElement:
     from . import config as windows_config
     from ._find_ui_automation import (
@@ -73,7 +74,7 @@ def find_window(
         )
         window_element = WindowElement(element)
         if foreground:
-            window_element.foreground_window()
+            window_element.foreground_window(skip_cursor_centering)
         if wait_time:
             time.sleep(wait_time)
         return window_element
