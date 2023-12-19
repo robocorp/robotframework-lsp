@@ -120,7 +120,7 @@ def find_window(
     timeout: Optional[float] = None,
     wait_time: Optional[float] = None,
     foreground: bool = True,
-    skip_cursor_centering: bool = False,
+    move_cursor_to_center: bool = True,
 ) -> "WindowElement":
     """
     Finds the first window matching the passed locator.
@@ -159,7 +159,7 @@ def find_window(
         ```
     """
     return desktop().find_window(
-        locator, search_depth, timeout, wait_time, foreground, skip_cursor_centering
+        locator, search_depth, timeout, wait_time, foreground, move_cursor_to_center
     )
 
 

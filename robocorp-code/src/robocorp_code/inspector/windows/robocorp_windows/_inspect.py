@@ -955,7 +955,7 @@ class ElementInspector:
             window_element.restore_window()
             # compensating because of Windows animations
             time.sleep(0.25)
-        window_element.foreground_window(skip_cursor_centering=True)
+        window_element.foreground_window(move_cursor_to_center=False)
         # making sure we have the window in focus
         time.sleep(0.1)
 
