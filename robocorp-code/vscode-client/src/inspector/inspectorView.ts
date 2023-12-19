@@ -25,7 +25,16 @@ import { langServer } from "../extension";
 import { ActionResult, LocalRobotMetadataInfo } from "../protocols";
 import { ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL } from "../robocorpCommands";
 
+let ROBOCORP_INSPECTOR_IS_OPENED = false;
+
 export async function showInspectorUI(context: vscode.ExtensionContext) {
+    OUTPUT_CHANNEL.appendLine(`# Robocorp Inspector is: ${ROBOCORP_INSPECTOR_IS_OPENED}`);
+    if (ROBOCORP_INSPECTOR_IS_OPENED) {
+        OUTPUT_CHANNEL.appendLine("# Robocorp Inspector is already opened! Thank you!");
+        return;
+    }
+    ROBOCORP_INSPECTOR_IS_OPENED = true;
+
     const panel = vscode.window.createWebviewPanel(
         "robocorpCodeInspector",
         "Robocorp Inspector",
@@ -110,6 +119,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
         sendRequest("webInspectorCloseBrowser", {});
         sendRequest("windowsInspectorStopPick", {});
         sendRequest("windowsInspectorStopHighlight", {});
+        ROBOCORP_INSPECTOR_IS_OPENED = false;
     });
 
     const buildProtocolResponseFromActionResponse = (
