@@ -123,6 +123,7 @@ class Desktop(ControlElement):
         timeout: Optional[float] = None,
         wait_time: Optional[float] = None,
         foreground: bool = True,
+        move_cursor_to_center: bool = True,
     ) -> "WindowElement":
         """
         Finds windows matching the given locator.
@@ -157,7 +158,13 @@ class Desktop(ControlElement):
         from . import _find_window
 
         return _find_window.find_window(
-            None, locator, search_depth, timeout, wait_time, foreground
+            None,
+            locator,
+            search_depth,
+            timeout,
+            wait_time,
+            foreground,
+            move_cursor_to_center,
         )
 
     def find_windows(
