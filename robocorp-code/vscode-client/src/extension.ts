@@ -369,9 +369,14 @@ function registerRobocorpCodeCommands(C: CommandRegistry, context: ExtensionCont
     C.register(ROBOCORP_ROBOTS_VIEW_TASK_DEBUG, (entry: RobotEntry) => views.runSelectedRobot(false, entry));
     C.register(ROBOCORP_RUN_ROBOCORPS_PYTHON_TASK, (args: string[]) => runRobocorpTasks(true, args));
     C.register(ROBOCORP_DEBUG_ROBOCORPS_PYTHON_TASK, (args: string[]) => runRobocorpTasks(false, args));
-    C.register(ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR, (locator?: LocatorEntry) =>
-        inspector.openRobocorpInspector(undefined, locator)
-    );
+    C.register(ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR, (locator?: LocatorEntry): Promise<void> => {
+        switch (locator.type) {
+            case "image":
+                return inspector.openRobocorpInspector(undefined, locator);
+            default:
+                return showInspectorUI(context, InspectorAppRoutes.LOCATORS_MANAGER);
+        }
+    });
     C.register(ROBOCORP_OPEN_PLAYWRIGHT_RECORDER, (useTreeSelected: boolean = false) =>
         playwright.openPlaywrightRecorder(useTreeSelected)
     );
