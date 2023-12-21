@@ -95,8 +95,8 @@ export class LocatorsTreeDataProvider
             iconPath = "file-media";
         } else if (type === InspectorType.Windows) {
             iconPath = "multiple-windows";
-        } else if (type === InspectorType.WebRecorder) {
-            iconPath = "globe";
+        } else if (type === InspectorType.Java) {
+            iconPath = "coffee";
         } else if (type === InspectorType.PlaywrightRecorder) {
             iconPath = "browser";
         } else if (type === "error" || type === "info") {
@@ -113,10 +113,11 @@ export class LocatorsTreeDataProvider
             treeItem.iconPath = new vscode.ThemeIcon(iconPath);
             if (entry.locatorType === InspectorType.Browser) {
                 treeItem.contextValue = "newBrowserLocator";
-                treeItem.tooltip =
-                    "Browser locators recognized by `RPA.Browser.Selenium` using `alias:<locator-name>`.";
+                treeItem.tooltip = "Browser locators saved for future references";
             } else if (entry.locatorType === InspectorType.Image) {
                 treeItem.contextValue = "newImageLocator";
+            } else if (entry.locatorType === InspectorType.Java) {
+                treeItem.contextValue = "newJavaLocator";
             } else if (entry.locatorType === InspectorType.Windows) {
                 treeItem.contextValue = "newWindowsLocator";
             } else if (entry.locatorType === InspectorType.WebRecorder) {
@@ -169,15 +170,6 @@ class LocatorEntryNode {
                     `Select and store in \`locators.json\` a locator to be used with the ${this.caption} library.`
                 )
             );
-            if (this.locatorType === InspectorType.Browser) {
-                this.children.push(
-                    new LocatorCreationNode(
-                        InspectorType.WebRecorder,
-                        "Selenium Recorder (Robot Framework) ...",
-                        "A recorder which records browser actions to be used in Robot Framework with the `RPA.Browser.Selenium` library."
-                    )
-                );
-            }
         }
     }
 }
@@ -197,10 +189,11 @@ class LocatorCreationNode {
 function buildTree(entries: LocatorEntry[]): any[] {
     // Roots may mix LocatorEntryNode along with LocatorEntry (if it's an error).
     const roots: any[] = [
-        new LocatorEntryNode(InspectorType.Browser, "RPA.Browser.Selenium", true),
-        new LocatorEntryNode(InspectorType.Image, "RPA.Desktop (Image)", true),
-        new LocatorEntryNode(InspectorType.Windows, "RPA.Windows", true),
-        new LocatorEntryNode(InspectorType.PlaywrightRecorder, "Playwright (Browser)", true),
+        new LocatorEntryNode(InspectorType.Browser, "Web", true),
+        new LocatorEntryNode(InspectorType.Windows, "Windows", true),
+        new LocatorEntryNode(InspectorType.Image, "Image", true),
+        new LocatorEntryNode(InspectorType.Java, "Java", true),
+        new LocatorEntryNode(InspectorType.PlaywrightRecorder, "Playwright", true),
     ];
     const typeToElement = {};
     roots.forEach((element) => {

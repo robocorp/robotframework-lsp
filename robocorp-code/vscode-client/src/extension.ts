@@ -635,9 +635,8 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
         ROBOCORP_NEW_ROBOCORP_INSPECTOR_WINDOWS,
         async () => await showInspectorUI(context, InspectorAppRoutes.WINDOWS_RECORDER)
     );
-    C.register(
-        ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE,
-        async () => await showInspectorUI(context, InspectorAppRoutes.LOCATORS_MANAGER)
+    C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE, async () =>
+        inspector.openRobocorpInspector(inspector.InspectorType.Image)
     );
     C.register(
         ROBOCORP_NEW_ROBOCORP_INSPECTOR_JAVA,

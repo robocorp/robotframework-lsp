@@ -329,21 +329,21 @@ COMMANDS = [
     # just use the one selected in the robots tree.
     Command(
         "robocorp.newRobocorpInspectorBrowser",
-        "Add Web Browser Locator",
+        "Add Web Locator",
         add_to_package_json=True,
         server_handled=False,
         icon="$(add)",
     ),
     Command(
         "robocorp.newRobocorpInspectorWindows",
-        "Add Windows App Locator",
+        "Add Windows Locator",
         add_to_package_json=True,
         server_handled=False,
         icon="$(add)",
     ),
     Command(
         "robocorp.newRobocorpInspectorImage",
-        "Add Image Locator (coming soon)",
+        "Add Image Locator",
         add_to_package_json=True,
         server_handled=False,
         icon="$(add)",

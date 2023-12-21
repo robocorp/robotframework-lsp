@@ -435,19 +435,19 @@
             },
             {
                 "command": "robocorp.newRobocorpInspectorBrowser",
-                "title": "Add Web Browser Locator",
+                "title": "Add Web Locator",
                 "category": "Robocorp",
                 "icon": "$(add)"
             },
             {
                 "command": "robocorp.newRobocorpInspectorWindows",
-                "title": "Add Windows App Locator",
+                "title": "Add Windows Locator",
                 "category": "Robocorp",
                 "icon": "$(add)"
             },
             {
                 "command": "robocorp.newRobocorpInspectorImage",
-                "title": "Add Image Locator (coming soon)",
+                "title": "Add Image Locator",
                 "category": "Robocorp",
                 "icon": "$(add)"
             },
