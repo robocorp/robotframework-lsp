@@ -1,10 +1,9 @@
-NEXT
+New in 1.14.0 (2023-12-21)
 -----------------------------
 
-- New inspector (work in progress):
-    - Requires the `robocorp.experimental.inspector` setting to be `true`.
-    - Sneak peek by using the `Robocorp: Open Inspector (Experimental)` action.
-- RCC upgraded to to `v17.4.1`.
+- New Browser/Windows inspector/recorder available!
+    - Note: First experimental version, looking for feedback!
+- RCC upgraded to to `v17.12.0`.
 
 
 New in 1.12.0 (2023-09-28)
