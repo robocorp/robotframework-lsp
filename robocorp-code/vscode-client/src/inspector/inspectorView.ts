@@ -27,7 +27,15 @@ import { ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL } from "../robocorpCommands";
 
 let ROBOCORP_INSPECTOR_IS_OPENED = false;
 
-export async function showInspectorUI(context: vscode.ExtensionContext) {
+export enum InspectorAppRoutes {
+    LOCATORS_MANAGER = "/locators-manager/",
+    WEB_RECORDER = "/web-recorder/",
+    WINDOWS_RECORDER = "/windows-recorder/",
+    JAVA_RECORDER = "/java-recorder/",
+    IMAGE_PICKER = "/image-picker/",
+}
+
+export async function showInspectorUI(context: vscode.ExtensionContext, route?: InspectorAppRoutes) {
     if (ROBOCORP_INSPECTOR_IS_OPENED) {
         OUTPUT_CHANNEL.appendLine("# Robocorp Inspector is already opened! Thank you!");
         return;
@@ -70,7 +78,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
             locatorsMap = JSON.parse(doc.getText()) as LocatorsMap;
         }
     }
-    panel.webview.html = getWebviewContent(directory, locatorsMap);
+    panel.webview.html = getWebviewContent(directory, locatorsMap, route);
 
     // Web Inspector - Create listeners for BE (Python) messages
     context.subscriptions.push(
@@ -275,16 +283,30 @@ export async function showInspectorUI(context: vscode.ExtensionContext) {
     );
 }
 
-function getWebviewContent(directory: string, jsonData: LocatorsMap): string {
+function getWebviewContent(directory: string, jsonData: LocatorsMap, startRoute?: InspectorAppRoutes): string {
+    // get the template that's created via the inspector-ext
     const templateFile = getExtensionRelativeFile("../../vscode-client/templates/inspector.html", true);
     const data = readFileSync(templateFile, "utf8");
 
-    const start = '<script id="locatorsJSON" type="application/json">';
-    const startI = data.indexOf(start) + start.length;
-    const end = "</script>";
-    const endI = data.indexOf(end, startI);
+    // inject the locators.json contents
+    const startLocators = '<script id="locatorsJSON" type="application/json">';
+    const startIndexLocators = data.indexOf(startLocators) + startLocators.length;
+    const endLocators = "</script>";
+    const endIndexLocators = data.indexOf(endLocators, startIndexLocators);
 
-    const jsonDataStr = JSON.stringify({ location: directory, data: jsonData }, null, 4);
-    const ret: string = data.substring(0, startI) + jsonDataStr + data.substring(endI);
-    return ret;
+    const contentLocators = JSON.stringify({ location: directory, data: jsonData }, null, 4);
+    const retLocators: string =
+        data.substring(0, startIndexLocators) + contentLocators + data.substring(endIndexLocators);
+
+    // inject the controls json
+    const startControl = '<script id="controlJSON" type="application/json">';
+    const startIndexControl = retLocators.indexOf(startControl) + startControl.length;
+    const endControl = "</script>";
+    const endIndexControl = retLocators.indexOf(endControl, startIndexControl);
+
+    const controlContent = JSON.stringify({ startRoute: startRoute || InspectorAppRoutes.LOCATORS_MANAGER }, null, 4);
+    const retControl: string =
+        retLocators.substring(0, startIndexControl) + controlContent + retLocators.substring(endIndexControl);
+
+    return retControl;
 }
