@@ -350,7 +350,7 @@ COMMANDS = [
     ),
     Command(
         "robocorp.newRobocorpInspectorJava",
-        "Add Java Locator (coming soon)",
+        "Add Java Locator",
         add_to_package_json=True,
         server_handled=False,
         icon="$(add)",

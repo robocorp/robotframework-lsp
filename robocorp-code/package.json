@@ -453,7 +453,7 @@
             },
             {
                 "command": "robocorp.newRobocorpInspectorJava",
-                "title": "Add Java Locator (coming soon)",
+                "title": "Add Java Locator",
                 "category": "Robocorp",
                 "icon": "$(add)"
             },
