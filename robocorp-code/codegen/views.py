@@ -196,19 +196,19 @@ TREE_VIEW_CONTAINERS = [
                             "robocorp-code:single-robot-selected && viewItem == newBrowserLocator",
                         ),
                         Menu(
-                            "robocorp.newRobocorpInspectorImage",
-                            MenuGroup.INLINE,
-                            "robocorp-code:single-robot-selected && viewItem == newImageLocator",
-                        ),
-                        Menu(
                             "robocorp.newRobocorpInspectorWindows",
                             MenuGroup.INLINE,
                             "robocorp-code:single-robot-selected && viewItem == newWindowsLocator",
                         ),
                         Menu(
-                            "robocorp.newRobocorpInspectorWebRecorder",
+                            "robocorp.newRobocorpInspectorImage",
                             MenuGroup.INLINE,
-                            "robocorp-code:single-robot-selected && viewItem == newWebRecorder",
+                            "robocorp-code:single-robot-selected && viewItem == newImageLocator",
+                        ),
+                        Menu(
+                            "robocorp.newRobocorpInspectorJava",
+                            MenuGroup.INLINE,
+                            "robocorp-code:single-robot-selected && viewItem == newJavaLocator",
                         ),
                         # Locators (root)
                         Menu(

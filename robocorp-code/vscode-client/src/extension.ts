@@ -133,7 +133,6 @@ import {
     ROBOCORP_OPEN_LOCATORS_JSON,
     ROBOCORP_OPEN_ROBOT_CONDA_TREE_SELECTION,
     ROBOCORP_CONVERT_PROJECT,
-    ROBOCORP_NEW_ROBOCORP_INSPECTOR_WEB_RECORDER,
     ROBOCORP_PROFILE_IMPORT,
     ROBOCORP_PROFILE_SWITCH,
     ROBOCORP_RUN_ROBOCORPS_PYTHON_TASK,
@@ -141,6 +140,7 @@ import {
     ROBOCORP_OPEN_PLAYWRIGHT_RECORDER,
     ROBOCORP_INSPECTOR,
     ROBOCORP_INSPECTOR_DUPLICATE,
+    ROBOCORP_NEW_ROBOCORP_INSPECTOR_JAVA,
 } from "./robocorpCommands";
 import { installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
@@ -158,7 +158,7 @@ import { registerLinkProviders } from "./robo/linkProvider";
 import { runRobocorpTasks } from "./robo/runRobocorpTasks";
 import { RobotOutputViewProvider } from "./output/outView";
 import { setupDebugSessionOutViewIntegration } from "./output/outViewRunIntegration";
-import { showInspectorUI } from "./inspector/inspectorView";
+import { InspectorAppRoutes, showInspectorUI } from "./inspector/inspectorView";
 
 interface InterpreterInfo {
     pythonExe: string;
@@ -369,9 +369,14 @@ function registerRobocorpCodeCommands(C: CommandRegistry, context: ExtensionCont
     C.register(ROBOCORP_ROBOTS_VIEW_TASK_DEBUG, (entry: RobotEntry) => views.runSelectedRobot(false, entry));
     C.register(ROBOCORP_RUN_ROBOCORPS_PYTHON_TASK, (args: string[]) => runRobocorpTasks(true, args));
     C.register(ROBOCORP_DEBUG_ROBOCORPS_PYTHON_TASK, (args: string[]) => runRobocorpTasks(false, args));
-    C.register(ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR, (locator?: LocatorEntry) =>
-        inspector.openRobocorpInspector(undefined, locator)
-    );
+    C.register(ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR, (locator?: LocatorEntry): Promise<void> => {
+        switch (locator.type) {
+            case "image":
+                return inspector.openRobocorpInspector(undefined, locator);
+            default:
+                return showInspectorUI(context, InspectorAppRoutes.LOCATORS_MANAGER);
+        }
+    });
     C.register(ROBOCORP_OPEN_PLAYWRIGHT_RECORDER, (useTreeSelected: boolean = false) =>
         playwright.openPlaywrightRecorder(useTreeSelected)
     );
@@ -624,14 +629,24 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
     C.registerWithoutStub(ROBOCORP_INSPECTOR, async () => {
         await showInspectorUI(context);
     });
-
     C.registerWithoutStub(ROBOCORP_INSPECTOR_DUPLICATE, async () => {
         await showInspectorUI(context);
     });
-    C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_BROWSER, async () => await showInspectorUI(context));
-    C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE, async () => await showInspectorUI(context));
-    C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_WINDOWS, async () => await showInspectorUI(context));
-    C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_WEB_RECORDER, async () => await showInspectorUI(context));
+    C.register(
+        ROBOCORP_NEW_ROBOCORP_INSPECTOR_BROWSER,
+        async () => await showInspectorUI(context, InspectorAppRoutes.WEB_RECORDER)
+    );
+    C.register(
+        ROBOCORP_NEW_ROBOCORP_INSPECTOR_WINDOWS,
+        async () => await showInspectorUI(context, InspectorAppRoutes.WINDOWS_RECORDER)
+    );
+    C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE, async () =>
+        inspector.openRobocorpInspector(inspector.InspectorType.Image)
+    );
+    C.register(
+        ROBOCORP_NEW_ROBOCORP_INSPECTOR_JAVA,
+        async () => await showInspectorUI(context, InspectorAppRoutes.LOCATORS_MANAGER)
+    );
 
     // i.e.: allow other extensions to also use our submit issue api.
     C.registerWithoutStub(

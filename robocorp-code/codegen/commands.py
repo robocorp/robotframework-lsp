@@ -329,7 +329,7 @@ COMMANDS = [
     # just use the one selected in the robots tree.
     Command(
         "robocorp.newRobocorpInspectorBrowser",
-        "Add Browser Locator",
+        "Add Web Locator",
         add_to_package_json=True,
         server_handled=False,
         icon="$(add)",
@@ -351,13 +351,6 @@ COMMANDS = [
     Command(
         "robocorp.newRobocorpInspectorJava",
         "Add Java Locator",
-        add_to_package_json=True,
-        server_handled=False,
-        icon="$(add)",
-    ),
-    Command(
-        "robocorp.newRobocorpInspectorWebRecorder",
-        "Record Browser actions as code (beta)",
         add_to_package_json=True,
         server_handled=False,
         icon="$(add)",

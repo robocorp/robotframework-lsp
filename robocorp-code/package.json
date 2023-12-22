@@ -64,7 +64,6 @@
         "onCommand:robocorp.newRobocorpInspectorWindows",
         "onCommand:robocorp.newRobocorpInspectorImage",
         "onCommand:robocorp.newRobocorpInspectorJava",
-        "onCommand:robocorp.newRobocorpInspectorWebRecorder",
         "onCommand:robocorp.openPlaywrightRecorder",
         "onCommand:robocorp.openPlaywrightRecorder.internal",
         "onCommand:robocorp.editRobocorpInspectorLocator",
@@ -436,7 +435,7 @@
             },
             {
                 "command": "robocorp.newRobocorpInspectorBrowser",
-                "title": "Add Browser Locator",
+                "title": "Add Web Locator",
                 "category": "Robocorp",
                 "icon": "$(add)"
             },
@@ -455,12 +454,6 @@
             {
                 "command": "robocorp.newRobocorpInspectorJava",
                 "title": "Add Java Locator",
-                "category": "Robocorp",
-                "icon": "$(add)"
-            },
-            {
-                "command": "robocorp.newRobocorpInspectorWebRecorder",
-                "title": "Record Browser actions as code (beta)",
                 "category": "Robocorp",
                 "icon": "$(add)"
             },
@@ -863,18 +856,18 @@
                     "group": "inline"
                 },
                 {
-                    "command": "robocorp.newRobocorpInspectorImage",
-                    "when": "view == robocorp-resources-tree && robocorp-code:single-robot-selected && viewItem == newImageLocator",
-                    "group": "inline"
-                },
-                {
                     "command": "robocorp.newRobocorpInspectorWindows",
                     "when": "view == robocorp-resources-tree && robocorp-code:single-robot-selected && viewItem == newWindowsLocator",
                     "group": "inline"
                 },
                 {
-                    "command": "robocorp.newRobocorpInspectorWebRecorder",
-                    "when": "view == robocorp-resources-tree && robocorp-code:single-robot-selected && viewItem == newWebRecorder",
+                    "command": "robocorp.newRobocorpInspectorImage",
+                    "when": "view == robocorp-resources-tree && robocorp-code:single-robot-selected && viewItem == newImageLocator",
+                    "group": "inline"
+                },
+                {
+                    "command": "robocorp.newRobocorpInspectorJava",
+                    "when": "view == robocorp-resources-tree && robocorp-code:single-robot-selected && viewItem == newJavaLocator",
                     "group": "inline"
                 },
                 {
