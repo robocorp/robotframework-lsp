@@ -13,17 +13,17 @@ export enum IMessageType {
 
 export enum IApps {
     LOCATORS_MANAGER = "locatorsManager",
-    WEB_RECORDER = "webRecorder",
-    WINDOWS_RECORDER = "windowsRecorder",
+    WEB_INSPECTOR = "webInspector",
+    WINDOWS_INSPECTOR = "windowsInspector",
 }
 
-export type IAppsType = IApps.LOCATORS_MANAGER | IApps.WEB_RECORDER | IApps.WINDOWS_RECORDER;
+export type IAppsType = IApps.LOCATORS_MANAGER | IApps.WEB_INSPECTOR | IApps.WINDOWS_INSPECTOR;
 
 // =====================================
 // REQUESTS
 // =====================================
 export type IManagerCommands = { type: "getLocators" } | { type: "delete"; ids: string[] };
-export type IWebRecorderCommands =
+export type IWebInspectorCommands =
     | { type: "getLocators" }
     | { type: "startPicking" }
     | { type: "stopPicking" }
@@ -31,7 +31,7 @@ export type IWebRecorderCommands =
     | { type: "save"; locator: Locator }
     | { type: "validate"; locator: Locator };
 
-export type IWindowsRecorderCommands =
+export type IWindowsInspectorCommands =
     | { type: "getLocators" }
     | { type: "getAppWindows" }
     | { type: "collectAppTree"; locator: string; depth?: number; strategy?: "all" | "siblings" }
@@ -48,7 +48,7 @@ export interface IRequestMessage {
     id: string;
     type: IMessageType.REQUEST;
     app: IAppsType;
-    command: IManagerCommands | IWebRecorderCommands | IWindowsRecorderCommands;
+    command: IManagerCommands | IWebInspectorCommands | IWindowsInspectorCommands;
 }
 
 // =====================================

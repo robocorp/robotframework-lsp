@@ -29,10 +29,10 @@ let ROBOCORP_INSPECTOR_IS_OPENED = false;
 
 export enum InspectorAppRoutes {
     LOCATORS_MANAGER = "/locators-manager/",
-    WEB_RECORDER = "/web-recorder/",
-    WINDOWS_RECORDER = "/windows-recorder/",
-    JAVA_RECORDER = "/java-recorder/",
-    IMAGE_PICKER = "/image-picker/",
+    WEB_INSPECTOR = "/web-inspector/",
+    WINDOWS_INSPECTOR = "/windows-inspector/",
+    JAVA_INSPECTOR = "/java-inspector/",
+    IMAGE_INSPECTOR = "/image-inspector/",
 }
 
 export async function showInspectorUI(context: vscode.ExtensionContext, route?: InspectorAppRoutes) {
@@ -181,7 +181,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                         panel.webview.postMessage(
                             buildProtocolResponseFromActionResponse(message, actionResult, "locatorsMap")
                         );
-                    } else if (message.app === IApps.WEB_RECORDER) {
+                    } else if (message.app === IApps.WEB_INSPECTOR) {
                         if (command["type"] === "startPicking") {
                             OUTPUT_CHANNEL.appendLine(`> Requesting: Start Picking: ${command}`);
                             await sendRequest("webInspectorStartPick");
@@ -205,7 +205,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                             });
                             panel.webview.postMessage(buildProtocolResponseFromActionResponse(message, actionResult));
                         }
-                    } else if (message.app === IApps.WINDOWS_RECORDER) {
+                    } else if (message.app === IApps.WINDOWS_INSPECTOR) {
                         if (command["type"] === "startPicking") {
                             await sendRequest("windowsInspectorStartPick");
                         } else if (command["type"] === "stopPicking") {

@@ -633,11 +633,11 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
     });
     C.register(
         ROBOCORP_NEW_ROBOCORP_INSPECTOR_BROWSER,
-        async () => await showInspectorUI(context, InspectorAppRoutes.WEB_RECORDER)
+        async () => await showInspectorUI(context, InspectorAppRoutes.WEB_INSPECTOR)
     );
     C.register(
         ROBOCORP_NEW_ROBOCORP_INSPECTOR_WINDOWS,
-        async () => await showInspectorUI(context, InspectorAppRoutes.WINDOWS_RECORDER)
+        async () => await showInspectorUI(context, InspectorAppRoutes.WINDOWS_INSPECTOR)
     );
     C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE, async () =>
         inspector.openRobocorpInspector(inspector.InspectorType.Image)
