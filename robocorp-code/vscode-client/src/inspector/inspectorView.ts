@@ -45,7 +45,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
     const panel = vscode.window.createWebviewPanel(
         "robocorpCodeInspector",
         "Robocorp Inspector",
-        vscode.ViewColumn.Beside,
+        vscode.ViewColumn.Active,
         {
             enableScripts: true,
             retainContextWhenHidden: true,
