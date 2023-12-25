@@ -205,11 +205,6 @@ TREE_VIEW_CONTAINERS = [
                             MenuGroup.INLINE,
                             "robocorp-code:single-robot-selected && viewItem == newImageLocator",
                         ),
-                        Menu(
-                            "robocorp.newRobocorpInspectorJava",
-                            MenuGroup.INLINE,
-                            "robocorp-code:single-robot-selected && viewItem == newJavaLocator",
-                        ),
                         # Locators (root)
                         Menu(
                             "robocorp.openLocatorsJson",
