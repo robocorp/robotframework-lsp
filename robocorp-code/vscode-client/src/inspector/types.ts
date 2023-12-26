@@ -21,6 +21,14 @@ export type ElementType = {
     modifier?: string | boolean | number;
 };
 
+export type IFrameData = {
+    name?: string;
+    title?: string;
+    url?: string;
+    isMain?: boolean;
+    props?: { id?: string; name?: string; class?: string; title?: string };
+};
+
 /**
  * @interface LOCATORS
  */
@@ -79,6 +87,12 @@ export interface BrowserLocator {
      * @memberof BrowserLocator
      */
     element?: ElementType;
+    /**
+     *
+     * @type {IFrameData}
+     * @memberof BrowserLocator
+     */
+    frame?: IFrameData;
 }
 /**
  *

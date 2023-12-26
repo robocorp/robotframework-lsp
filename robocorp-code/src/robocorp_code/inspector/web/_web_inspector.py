@@ -1,7 +1,9 @@
+import json
 import threading
 import time
 import weakref
 from typing import Callable, List, Optional, Tuple
+from string import Template
 
 from playwright.sync_api import ElementHandle
 from playwright.sync_api import Error as PlaywrightError
@@ -52,7 +54,19 @@ _ASYNC_MULTI_PICK_CODE = """
     }
 
     var nonStopRun = true;
-    Inspector.startPicker(callback, true);
+    Inspector.startPicker(callback, nonStopRun);
+}
+"""
+_ASYNC_MULTI_PICK_IFRAME_CODE = """
+()=>{
+    var callback = (picked)=>{
+        // console.log('Picked', picked);
+        on_picked(picked);
+    }
+
+    var iFrame = $iFrame;
+    var nonStopRun = true;
+    Inspector.startPicker(callback, nonStopRun, iFrame);
 }
 """
 
@@ -173,7 +187,7 @@ class WebInspector:
             page.on("crash", mark_closed)
 
             def on_picked(*args, **kwargs):
-                log.debug(f"Picked item: {kwargs}")
+                log.info(f"## Picked item: {args}")
                 s = weak_self()
                 if s is not None:
                     s._on_picked(*args, **kwargs)
@@ -207,8 +221,7 @@ class WebInspector:
         if page is None:
             return None
         if url:
-            page.goto(url)
-
+            page.goto(url, timeout=30000, wait_until="load")
         return page
 
     def open_if_new(self, url_if_new):
@@ -290,7 +303,9 @@ class WebInspector:
             if self.is_picker_injected(page):
                 if not self._pick_async_code_evaluate_worked:
                     try:
-                        page.evaluate(_ASYNC_MULTI_PICK_CODE)
+                        self.evaluate_in_all_iframes(
+                            page, _ASYNC_MULTI_PICK_IFRAME_CODE, inject_frame_data=True
+                        )
                         self._pick_async_code_evaluate_worked = True
                     except Exception:
                         log.exception("Error enabling async pick mode.")
@@ -300,7 +315,9 @@ class WebInspector:
                 return False
 
             try:
-                page.evaluate(_ASYNC_MULTI_PICK_CODE)
+                self.evaluate_in_all_iframes(
+                    page, _ASYNC_MULTI_PICK_IFRAME_CODE, inject_frame_data=True
+                )
                 self._pick_async_code_evaluate_worked = True
             except Exception:
                 log.exception("Error enabling async pick mode.")
@@ -386,19 +403,60 @@ class WebInspector:
                     log.debug("page is None in inject_picker!")
                     return False
 
-            log.debug(f"Picker was not injected (injecting now. Reason: {reason}).")
-            page.evaluate(_load_resource("inspector.js"))
+            # we need to wait for the load state before injecting otherwise the evaluation of the picker crashes
+            # not finding the body where to inject the picker in
+            page.wait_for_load_state()
 
+            self.evaluate_in_all_iframes(page, _load_resource("inspector.js"))
             style_contents = _load_resource("inspector.css")
-            page.evaluate(
+            self.evaluate_in_all_iframes(
+                page,
                 'var style = document.getElementById("inspector-style");'
                 f"var content = document.createTextNode(`{style_contents}`);"
-                "style.appendChild(content);"
+                "style.appendChild(content);",
             )
-            log.debug("Picker code / style injected!")
+
             self.loop()
 
             return True
         except Exception:
             log.exception("Error injecting picker.")
             return False
+
+    def evaluate_in_all_iframes(
+        self, page: Page, expression: str, inject_frame_data: bool = False
+    ) -> None:
+        # retrieving only the first layer of iFrames
+        # for additional layers recessiveness is the solution, but doesn't seem necessary right now
+        frames = list(page.frames) + list(page.main_frame.child_frames)
+
+        for frame in frames:
+            # skipping the detached frames as they are not able to evaluate expressions
+            if frame.is_detached():
+                continue
+            log.info(f">>> Injecting in: {frame}")
+
+            props = None
+            if frame != page.main_frame:
+                props = {}
+                props["name"] = frame.frame_element().get_attribute("name")
+                props["id"] = frame.frame_element().get_attribute("id")
+                props["cls"] = frame.frame_element().get_attribute("class")
+                props["title"] = frame.frame_element().get_attribute("title")
+
+            final_exp = (
+                Template(expression).substitute(
+                    iFrame=json.dumps(
+                        {
+                            "name": frame.name,
+                            "title": frame.title(),
+                            "url": frame.url,
+                            "isMain": frame == page.main_frame,
+                            "props": props,
+                        }
+                    )
+                )
+                if inject_frame_data
+                else expression
+            )
+            frame.evaluate(final_exp)
