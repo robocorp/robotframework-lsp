@@ -27,6 +27,12 @@ element:
   modifier: file://
   tag: A
   type: a
+frame:
+  isMain: true
+  name: ''
+  props: null
+  title: ''
+  url: file:///private/var/fold ... <clipped>
 screenshot: data:image/png;base64,iV ... <clipped>
 source: page_to_test.html
 strategy: id

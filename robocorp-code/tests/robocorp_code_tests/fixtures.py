@@ -484,6 +484,10 @@ def fix_locator(locator: "PickedLocatorTypedDict") -> "PickedLocatorTypedDict":
     if modifier and modifier.startswith("file://"):
         modifier = modifier[:7]
         element["modifier"] = modifier
+    frame = locator.get("frame")
+    if frame:
+        frame["url"] = frame["url"][:24] + " ... <clipped>"
+
     return locator
 
 

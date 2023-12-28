@@ -92,6 +92,7 @@ class PickedLocatorTypedDict(TypedDict):
     element: dict
     alternatives: List[LocatorStrategyAlternativeTypedDict]
     screenshot: str  # data:image/png;base64,iVBORw0KGgoA
+    frame: dict
 
 
 class WebInspector:
@@ -161,9 +162,10 @@ class WebInspector:
                 return None
 
             endpoint = self._endpoint
-            endpoint.notify(
-                "$/webInspectorState", {"state": STATE_BROWSER_INITIALIZING}
-            )
+            if endpoint is not None:
+                endpoint.notify(
+                    "$/webInspectorState", {"state": STATE_BROWSER_INITIALIZING}
+                )
 
             from robocorp_code.playwright import robocorp_browser
 
