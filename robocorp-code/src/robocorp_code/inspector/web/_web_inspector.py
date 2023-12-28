@@ -47,17 +47,6 @@ _SYNC_SINGLE_PICK_CODE = """
 # Async mode (will start a pick and when the pick is
 # done an event will be sent).
 # It'll keep picking until cancelled.
-_ASYNC_MULTI_PICK_CODE = """
-()=>{
-    var callback = (picked)=>{
-        // console.log('Picked', picked);
-        on_picked(picked);
-    }
-
-    var nonStopRun = true;
-    Inspector.startPicker(callback, nonStopRun);
-}
-"""
 _ASYNC_MULTI_PICK_IFRAME_CODE = """
 ()=>{
     var callback = (picked)=>{
@@ -414,6 +403,7 @@ class WebInspector:
             # we need to wait for the load state before injecting otherwise the evaluation of the picker crashes
             # not finding the body where to inject the picker in
             page.wait_for_load_state()
+            time.sleep(0.2)
 
             self.evaluate_in_all_iframes(page, _load_resource("inspector.js"))
             style_contents = _load_resource("inspector.css")
@@ -423,7 +413,7 @@ class WebInspector:
                 f"var content = document.createTextNode(`{style_contents}`);"
                 "style.appendChild(content);",
             )
-
+            log.debug("Picker code / style injected!")
             self.loop()
 
             return True
@@ -434,6 +424,9 @@ class WebInspector:
     def evaluate_in_all_iframes(
         self, page: Page, expression: str, inject_frame_data: bool = False
     ) -> None:
+        """
+        Ensures that the expression is evaluated in the child iFrames if any
+        """
         # retrieving only the first layer of iFrames
         # for additional layers recessiveness is the solution, but doesn't seem necessary right now
         frames = list(page.frames) + list(page.main_frame.child_frames)
@@ -442,7 +435,6 @@ class WebInspector:
             # skipping the detached frames as they are not able to evaluate expressions
             if frame.is_detached():
                 continue
-            log.info(f">>> Injecting in: {frame}")
 
             props = None
             if frame != page.main_frame:
@@ -452,8 +444,8 @@ class WebInspector:
                 props["cls"] = frame.frame_element().get_attribute("class")
                 props["title"] = frame.frame_element().get_attribute("title")
 
-            final_exp = (
-                Template(expression).substitute(
+            if inject_frame_data:
+                final_exp = Template(expression).substitute(
                     iFrame=json.dumps(
                         {
                             "name": frame.name,
@@ -464,7 +456,7 @@ class WebInspector:
                         }
                     )
                 )
-                if inject_frame_data
-                else expression
-            )
+            else:
+                final_exp = expression
+
             frame.evaluate(final_exp)
