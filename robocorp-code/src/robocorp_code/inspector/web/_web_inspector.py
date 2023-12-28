@@ -15,6 +15,7 @@ from robocorp_ls_core.robotframework_log import get_logger
 log = get_logger(__name__)
 
 
+STATE_BROWSER_INITIALIZING = "browserInitializing"
 STATE_BROWSER_OPENED = "browserOpened"
 STATE_BROWSER_CLOSED = "browserClosed"
 STATE_BROWSER_PICKING = "browserPicking"
@@ -158,13 +159,18 @@ class WebInspector:
         if page is None or page.is_closed():
             if not auto_create:
                 return None
+
+            endpoint = self._endpoint
+            endpoint.notify(
+                "$/webInspectorState", {"state": STATE_BROWSER_INITIALIZING}
+            )
+
             from robocorp_code.playwright import robocorp_browser
 
             log.debug(f"Page is None or Closed. Creating a new one...")
             page = robocorp_browser.page()
             self._page = page
 
-            endpoint = self._endpoint
             if endpoint is not None:
                 endpoint.notify("$/webInspectorState", {"state": STATE_BROWSER_OPENED})
 

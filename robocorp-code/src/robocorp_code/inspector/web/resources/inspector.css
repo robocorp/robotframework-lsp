@@ -172,7 +172,7 @@
   content: 'Please wait while action is being recorded...';
 }
 
-#inspector-frame.picker_in_progress {
+#inspector-frame.picker_saving {
   position: fixed;
   top: 0;
   right: 0;
@@ -183,7 +183,7 @@
   pointer-events: none !important;
 }
 
-#inspector-frame.picker_in_progress::after {
+#inspector-frame.picker_saving::after {
   content: 'Please wait while locator is being created...';
 }
 

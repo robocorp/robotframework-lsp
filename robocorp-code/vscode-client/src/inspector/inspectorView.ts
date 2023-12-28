@@ -12,6 +12,7 @@ import { OUTPUT_CHANNEL, buildErrorStr, logError } from "../channel";
 import { getSelectedRobot } from "../viewsCommon";
 import { BrowserLocator, LocatorsMap } from "./types";
 import {
+    BrowserState,
     IApps,
     IEventMessage,
     IMessage,
@@ -101,6 +102,17 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
     context.subscriptions.push(
         langServer.onNotification("$/webInspectorState", (state) => {
             OUTPUT_CHANNEL.appendLine(`> Receiving: webInspectorState: ${JSON.stringify(state)}`);
+            const response: IEventMessage = {
+                id: "",
+                type: IMessageType.EVENT,
+                event: {
+                    type: "browserState",
+                    status: "success",
+                    data: state.state as BrowserState,
+                },
+            };
+            // this is an event - postMessage will update the useLocator hook
+            panel.webview.postMessage(response);
         })
     );
     // Windows Inspector - Create listeners for BE (Python) messages

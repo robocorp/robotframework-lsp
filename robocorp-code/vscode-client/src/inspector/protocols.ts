@@ -104,10 +104,23 @@ export interface IResponseMessage {
           };
 }
 // IResponseMessage - should be equidistant from Requests or Responses
+export type BrowserState =
+    | "browserInitializing"
+    | "browserOpened"
+    | "browserClosed"
+    | "browserPicking"
+    | "browserPicking"
+    | "browserNotPicking";
+
 export interface IEventMessage {
     id: string;
     type: IMessageType.EVENT;
     event:
+        | {
+              type: "browserState";
+              status: "success" | "failure";
+              data: BrowserState;
+          }
         | {
               type: "pickedLocator";
               status: "success" | "failure";
