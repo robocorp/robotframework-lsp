@@ -26,7 +26,7 @@ frame:
   name: ''
   props: null
   title: ''
-  url: file:///private/var/fold ... <clipped>
+  url: file:// ... <clipped>
 screenshot: data:image/png;base64,iV ... <clipped>
 source: page_to_test.html
 strategy: id
