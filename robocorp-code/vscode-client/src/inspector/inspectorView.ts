@@ -185,7 +185,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                 case IMessageType.REQUEST:
                     const command = message.command;
                     if (command["type"] === "getLocators") {
-                        OUTPUT_CHANNEL.appendLine(`> Requesting: Get Locators: ${command}`);
+                        OUTPUT_CHANNEL.appendLine(`> Requesting: Get Locators: ${JSON.stringify(command)}`);
                         const actionResult: ActionResult<LocatorsMap> = await sendRequest("loadRobotLocatorContents", {
                             directory: directory,
                         });
@@ -195,10 +195,10 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                         );
                     } else if (message.app === IApps.WEB_INSPECTOR) {
                         if (command["type"] === "startPicking") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Start Picking: ${command}`);
-                            await sendRequest("webInspectorStartPick");
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: Start Picking: ${JSON.stringify(command)}`);
+                            await sendRequest("webInspectorStartPick", { url_if_new: command["url"] });
                         } else if (command["type"] === "stopPicking") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Stop Picking: ${command}`);
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: Stop Picking: ${JSON.stringify(command)}`);
                             await sendRequest("webInspectorStopPick");
                         }
                     } else if (message.app === IApps.LOCATORS_MANAGER) {

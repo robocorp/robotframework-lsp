@@ -212,7 +212,11 @@ class InspectorLanguageServer:
         from robocorp_code.inspector.web import INSPECTOR_GUIDE_PATH
 
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
-        url = uris.from_fs_path(str(INSPECTOR_GUIDE_PATH))
+        url = (
+            params["url_if_new"]
+            if params and "url_if_new" in params
+            else uris.from_fs_path(str(INSPECTOR_GUIDE_PATH))
+        )
         inspector_api_client.send_sync_message(
             "startPick", {"url_if_new": url, "wait": True}
         )

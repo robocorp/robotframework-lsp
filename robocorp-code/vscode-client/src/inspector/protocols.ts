@@ -25,7 +25,7 @@ export type IAppsType = IApps.LOCATORS_MANAGER | IApps.WEB_INSPECTOR | IApps.WIN
 export type IManagerCommands = { type: "getLocators" } | { type: "delete"; ids: string[] };
 export type IWebInspectorCommands =
     | { type: "getLocators" }
-    | { type: "startPicking" }
+    | { type: "startPicking"; url?: string }
     | { type: "stopPicking" }
     | { type: "delete"; ids: string[] }
     | { type: "save"; locator: Locator }
