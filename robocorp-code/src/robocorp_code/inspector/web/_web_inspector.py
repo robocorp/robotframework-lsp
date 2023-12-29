@@ -237,7 +237,7 @@ class WebInspector:
         # "class": By.CLASS_NAME,
         # "tag": By.TAG_NAME,
 
-    def construct_frame_query(self, frame) -> str:
+    def construct_frame_query(self, frame) -> Optional[str]:
         frameQuery = ""
         if frame is not None:
             if "props" in frame and frame["props"] is not None:
