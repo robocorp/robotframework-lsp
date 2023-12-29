@@ -306,7 +306,11 @@ function getWebviewContent(directory: string, jsonData: LocatorsMap, startRoute?
     const endLocators = "</script>";
     const endIndexLocators = data.indexOf(endLocators, startIndexLocators);
 
-    const contentLocators = JSON.stringify({ location: directory, data: jsonData }, null, 4);
+    const contentLocators = JSON.stringify(
+        { location: directory, locatorsLocation: path.join(directory, "locators.json"), data: jsonData },
+        null,
+        4
+    );
     const retLocators: string =
         data.substring(0, startIndexLocators) + contentLocators + data.substring(endIndexLocators);
 
