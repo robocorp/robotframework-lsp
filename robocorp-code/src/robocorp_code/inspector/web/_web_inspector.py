@@ -29,22 +29,6 @@ def _load_resource(name):
     return inspector_js.read_text(encoding="utf-8")
 
 
-# Regular mode (will block until a pick is done).
-_SYNC_SINGLE_PICK_CODE = """
-()=>{
-    var promise = new Promise((resolve, reject) => {
-        var callback = (picked)=>{
-            // console.log('Picked', picked);
-            resolve(picked);
-        }
-        var iFrame = $iFrame;
-        Inspector.startPicker(callback, false, iFrame);
-    });
-
-    return promise;
-}
-"""
-
 # Async mode (will start a pick and when the pick is
 # done an event will be sent).
 # It'll keep picking until cancelled.
@@ -338,40 +322,6 @@ class WebInspector:
                 self.evaluate_in_all_iframes(page, _ASYNC_CANCEL_PICK_CODE)
             except Exception:
                 log.exception("Error evaluating cancel pick code.")
-
-    def pick(self) -> Optional[List[Tuple[str, str]]]:
-        """
-        Waits for the user to pick something in the page. When the user does the
-        pick (or cancels it), returns a list of tuples with `name[:<optional_strategy>], value`
-        which may be used to match the picked element.
-
-        Return example:
-            [
-                ["css", ".step:nth-child(3) > .icon"],
-                ["xpath:position", "//div[3]/div"]
-            ]
-        """
-        self._check_thread()
-        if not self.inject_picker("pick (sync)"):
-            raise RuntimeError(
-                "Unable to make pick. It was not possible to inject the picker code."
-            )
-
-        page = self.page(False)
-        if page is None:
-            return None
-        try:
-            locators = self.evaluate_in_all_iframes(
-                page, _SYNC_SINGLE_PICK_CODE, inject_frame_data=True
-            )
-        except Exception:
-            log.exception(
-                "While (sync) picking an exception happened (most likely the user changed the url or closed the browser)."
-            )
-            return None
-
-        log.debug("Locators found: %s", locators)
-        return locators
 
     def is_picker_injected(self, page=None) -> bool:
         self._check_thread()
