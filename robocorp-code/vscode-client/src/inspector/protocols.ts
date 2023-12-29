@@ -22,14 +22,16 @@ export type IAppsType = IApps.LOCATORS_MANAGER | IApps.WEB_INSPECTOR | IApps.WIN
 // =====================================
 // REQUESTS
 // =====================================
-export type IManagerCommands = { type: "getLocators" } | { type: "delete"; ids: string[] };
+export type IManagerCommands =
+    | { type: "getLocators" }
+    | { type: "delete"; ids: string[] }
+    | { type: "save"; locator: Locator };
+
 export type IWebInspectorCommands =
     | { type: "getLocators" }
     | { type: "startPicking"; url?: string }
     | { type: "stopPicking" }
-    | { type: "delete"; ids: string[] }
-    | { type: "save"; locator: Locator }
-    | { type: "validate"; locator: Locator };
+    | { type: "validate"; locator: Locator; url?: string };
 
 export type IWindowsInspectorCommands =
     | { type: "getLocators" }
@@ -54,7 +56,7 @@ export interface IRequestMessage {
 // =====================================
 // RESPONSES
 // =====================================
-export type ResponseDataType = "locator" | "locatorsMap" | "winApps" | "winAppTree";
+export type ResponseDataType = "locator" | "locatorsMap" | "winApps" | "winAppTree" | "locatorMatches";
 export type WindowsAppDetails = { executable: string; name: string; handle: string };
 export type WindowsAppsResponse = WindowsAppDetails[];
 export type WindowsAppElement = {
@@ -101,6 +103,10 @@ export interface IResponseMessage {
         | {
               type: "winAppTree";
               value: WindowsAppTreeResponse;
+          }
+        | {
+              type: "locatorMatches";
+              value: number;
           };
 }
 // IResponseMessage - should be equidistant from Requests or Responses

@@ -193,14 +193,6 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                         panel.webview.postMessage(
                             buildProtocolResponseFromActionResponse(message, actionResult, "locatorsMap")
                         );
-                    } else if (message.app === IApps.WEB_INSPECTOR) {
-                        if (command["type"] === "startPicking") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Start Picking: ${JSON.stringify(command)}`);
-                            await sendRequest("webInspectorStartPick", { url_if_new: command["url"] });
-                        } else if (command["type"] === "stopPicking") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Stop Picking: ${JSON.stringify(command)}`);
-                            await sendRequest("webInspectorStopPick");
-                        }
                     } else if (message.app === IApps.LOCATORS_MANAGER) {
                         if (command["type"] === "delete") {
                             OUTPUT_CHANNEL.appendLine(`> Requesting: Delete Locators: ${command["ids"]}`);
@@ -216,6 +208,24 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                                 directory: directory,
                             });
                             panel.webview.postMessage(buildProtocolResponseFromActionResponse(message, actionResult));
+                        }
+                    } else if (message.app === IApps.WEB_INSPECTOR) {
+                        if (command["type"] === "startPicking") {
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: Start Picking: ${JSON.stringify(command)}`);
+                            await sendRequest("webInspectorStartPick", { url_if_new: command["url"] });
+                        } else if (command["type"] === "stopPicking") {
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: Stop Picking: ${JSON.stringify(command)}`);
+                            await sendRequest("webInspectorStopPick");
+                        } else if (command["type"] === "validate") {
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: Validate: ${JSON.stringify(command)}`);
+                            const actionResult = await sendRequest("webInspectorValidateLocator", {
+                                locator: command["locator"],
+                                url: command["url"],
+                            });
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: Result: ${JSON.stringify(actionResult)}`);
+                            panel.webview.postMessage(
+                                buildProtocolResponseFromActionResponse(message, actionResult.result, "locatorMatches")
+                            );
                         }
                     } else if (message.app === IApps.WINDOWS_INSPECTOR) {
                         if (command["type"] === "startPicking") {

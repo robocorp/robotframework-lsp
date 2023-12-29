@@ -21,6 +21,9 @@ log = get_logger(__name__)
 _DEFAULT_LOOP_TIMEOUT = 5
 
 
+####
+#### WEB COMMANDS
+####
 class _WebInspectorThread(threading.Thread):
     """
     This is a little tricky:
@@ -52,6 +55,8 @@ class _WebInspectorThread(threading.Thread):
         self._finish = True
 
     def run(self) -> None:
+        from concurrent.futures import Future
+
         self._web_inspector = WebInspector(self._endpoint)
 
         loop_timeout: float = _DEFAULT_LOOP_TIMEOUT
@@ -66,9 +71,10 @@ class _WebInspectorThread(threading.Thread):
                     continue
 
                 if item is not None:
+                    future: Future = item.future
                     try:
                         log.debug("-- Start handling command: %s", item)
-                        item(self)
+                        result = item(self)
                         log.debug("-- End handling command: %s", item)
                         if item.loop_timeout is not None:
                             loop_timeout = item.loop_timeout
@@ -76,6 +82,7 @@ class _WebInspectorThread(threading.Thread):
                         log.exception(f"Error handling {item}.")
                     finally:
                         item.handled_event.set()
+                        future.set_result(result)
         finally:
             from robocorp_code.playwright.robocorp_browser._caches import (
                 clear_all_callback,
@@ -88,7 +95,10 @@ class _WebBaseCommand:
     loop_timeout: Optional[float] = _DEFAULT_LOOP_TIMEOUT
 
     def __init__(self):
+        from concurrent.futures import Future
+
         self.handled_event = threading.Event()
+        self.future = Future()
 
     def __call__(self, web_inspector_thread: _WebInspectorThread):
         pass
@@ -180,7 +190,7 @@ class _WebAsyncPickCommand(_WebBaseCommand):
         web_inspector.pick_async(on_pick)
 
 
-class _AsyncStopCommand(_WebBaseCommand):
+class _WebAsyncStopCommand(_WebBaseCommand):
     # The async pick is only done when playwright is in the loop, so,
     # this needs to be small.
     loop_timeout = 1 / 15
@@ -196,6 +206,44 @@ class _AsyncStopCommand(_WebBaseCommand):
         web_inspector.stop_pick_async()
 
 
+class _WebValidateCommand(_WebBaseCommand):
+    loop_timeout = None  # Don't change it.
+
+    def __init__(self, locator: dict, url: Optional[str]):
+        super().__init__()
+        self.locator = locator
+        self.url = url
+
+    def __call__(self, web_inspector_thread: _WebInspectorThread) -> dict:
+        log.info("### WEB => Called validate.")
+        web_inspector = web_inspector_thread.web_inspector
+        if not web_inspector:
+            return
+        page = web_inspector.page(False)
+        if not page:
+            return
+
+        log.info("### WEB => Loc:", self.locator)
+        log.info("### WEB => URL:", self.url)
+
+        if self.url is not None and page.url != self.url:
+            page.goto(self.url)
+        page.wait_for_load_state()
+        valid = web_inspector.find_matches(
+            strategy=self.locator["strategy"], value=self.locator["value"]
+        )
+        log.info("### WEB => Is valid?", valid)
+        log.info("### WEB => Is valid?", len(valid))
+        return {
+            "success": True,
+            "message": None,
+            "result": len(valid),
+        }
+
+
+####
+#### WINDOWS COMMANDS
+####
 class _WindowsInspectorThread(threading.Thread):
     def __init__(self, endpoint: IEndPoint) -> None:
         threading.Thread.__init__(self)
@@ -482,6 +530,11 @@ class InspectorApi(PythonLanguageServer):
         self._web_inspector_thread.queue.put(cmd)
         if wait:
             cmd.handled_event.wait(20)
+            try:
+                return cmd.future.result()
+            except Exception as e:
+                return {"success": False, "message": str(e), "result": None}
+        return {"success": True, "message": None, "result": None}
 
     def _enqueue_windows(
         self, cmd: _WindowsBaseCommand, wait: bool = True
@@ -502,7 +555,7 @@ class InspectorApi(PythonLanguageServer):
         self._enqueue_web(_WebAsyncPickCommand(self._endpoint, url_if_new), wait)
 
     def m_stop_pick(self, wait: bool = False) -> None:
-        self._enqueue_web(_AsyncStopCommand(), wait)
+        self._enqueue_web(_WebAsyncStopCommand(), wait)
 
     def m_close_browser(self, wait: bool = False) -> None:
         self._enqueue_web(_WebCloseBrowserCommand(), wait)
@@ -513,9 +566,14 @@ class InspectorApi(PythonLanguageServer):
     def m_browser_configure(self, wait=False, **kwargs) -> None:
         self._enqueue_web(_WebBrowserConfigureCommand(kwargs), wait)
 
-    def m_shutdown(self, **_kwargs):
+    def m_shutdown(self, **_kwargs) -> None:
         self._enqueue_web(_WebShutdownCommand(), wait=False)
         PythonLanguageServer.m_shutdown(self, **_kwargs)
+
+    def m_validate_locator(
+        self, locator: dict, url: Optional[str], wait: bool = False
+    ) -> int:
+        return self._enqueue_web((_WebValidateCommand(locator=locator, url=url)), wait)
 
     def m_windows_parse_locator(self, locator: str) -> ActionResultDict:
         return self._enqueue_windows(_WindowsParseLocator(locator))
@@ -524,11 +582,9 @@ class InspectorApi(PythonLanguageServer):
         return self._enqueue_windows(_WindowsSetWindowLocator(locator))
 
     def m_windows_start_pick(self) -> ActionResultDict:
-        log.info("Win - API - Starting pick...")
         return self._enqueue_windows(_WindowsStartPick())
 
     def m_windows_stop_pick(self) -> ActionResultDict:
-        log.info("Win - API - Stopping pick...")
         return self._enqueue_windows(_WindowsStopPick())
 
     def m_windows_start_highlight(
@@ -547,12 +603,6 @@ class InspectorApi(PythonLanguageServer):
         search_depth: int = 8,
         search_strategy: Literal["siblings", "all"] = "all",
     ) -> ActionResultDict:
-        log.info(
-            "Win - API - Collecting Tree. locator: %s, search_depth: %s, search_strategy: %s",
-            locator,
-            search_depth,
-            search_strategy,
-        )
         return self._enqueue_windows(
             _WindowsCollectTree(locator, search_depth, search_strategy)
         )
