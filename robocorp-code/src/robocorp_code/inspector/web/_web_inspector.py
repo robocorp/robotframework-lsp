@@ -37,7 +37,8 @@ _SYNC_SINGLE_PICK_CODE = """
             // console.log('Picked', picked);
             resolve(picked);
         }
-        Inspector.startPicker(callback);
+        var iFrame = $iFrame;
+        Inspector.startPicker(callback, false, iFrame);
     });
 
     return promise;
@@ -47,7 +48,7 @@ _SYNC_SINGLE_PICK_CODE = """
 # Async mode (will start a pick and when the pick is
 # done an event will be sent).
 # It'll keep picking until cancelled.
-_ASYNC_MULTI_PICK_IFRAME_CODE = """
+_ASYNC_MULTI_PICK_CODE = """
 ()=>{
     var callback = (picked)=>{
         // console.log('Picked', picked);
@@ -301,7 +302,7 @@ class WebInspector:
                 if not self._pick_async_code_evaluate_worked:
                     try:
                         self.evaluate_in_all_iframes(
-                            page, _ASYNC_MULTI_PICK_IFRAME_CODE, inject_frame_data=True
+                            page, _ASYNC_MULTI_PICK_CODE, inject_frame_data=True
                         )
                         self._pick_async_code_evaluate_worked = True
                     except Exception:
@@ -313,7 +314,7 @@ class WebInspector:
 
             try:
                 self.evaluate_in_all_iframes(
-                    page, _ASYNC_MULTI_PICK_IFRAME_CODE, inject_frame_data=True
+                    page, _ASYNC_MULTI_PICK_CODE, inject_frame_data=True
                 )
                 self._pick_async_code_evaluate_worked = True
             except Exception:
@@ -334,7 +335,7 @@ class WebInspector:
         page = self.page(False)
         if page is not None:
             try:
-                page.evaluate(_ASYNC_CANCEL_PICK_CODE)
+                self.evaluate_in_all_iframes(page, _ASYNC_CANCEL_PICK_CODE)
             except Exception:
                 log.exception("Error evaluating cancel pick code.")
 
@@ -360,7 +361,9 @@ class WebInspector:
         if page is None:
             return None
         try:
-            locators = page.evaluate(_SYNC_SINGLE_PICK_CODE)
+            locators = self.evaluate_in_all_iframes(
+                page, _SYNC_SINGLE_PICK_CODE, inject_frame_data=True
+            )
         except Exception:
             log.exception(
                 "While (sync) picking an exception happened (most likely the user changed the url or closed the browser)."
@@ -400,11 +403,6 @@ class WebInspector:
                     log.debug("page is None in inject_picker!")
                     return False
 
-            # we need to wait for the load state before injecting otherwise the evaluation of the picker crashes
-            # not finding the body where to inject the picker in
-            page.wait_for_load_state()
-            time.sleep(0.2)
-
             self.evaluate_in_all_iframes(page, _load_resource("inspector.js"))
             style_contents = _load_resource("inspector.css")
             self.evaluate_in_all_iframes(
@@ -427,6 +425,10 @@ class WebInspector:
         """
         Ensures that the expression is evaluated in the child iFrames if any
         """
+        # we need to wait for the load state before injecting otherwise the evaluation of the picker crashes
+        # not finding the body where to inject the picker in
+        page.wait_for_load_state()
+        page.wait_for_selector("body")
         # retrieving only the first layer of iFrames
         # for additional layers recessiveness is the solution, but doesn't seem necessary right now
         frames = list(page.frames) + list(page.main_frame.child_frames)
@@ -459,4 +461,5 @@ class WebInspector:
             else:
                 final_exp = expression
 
+            frame.wait_for_load_state()
             frame.evaluate(final_exp)
