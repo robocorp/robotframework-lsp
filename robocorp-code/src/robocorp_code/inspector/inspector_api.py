@@ -215,30 +215,46 @@ class _WebValidateCommand(_WebBaseCommand):
         self.url = url
 
     def __call__(self, web_inspector_thread: _WebInspectorThread) -> dict:
-        log.info("### WEB => Called validate.")
         web_inspector = web_inspector_thread.web_inspector
         if not web_inspector:
-            return
+            return {
+                "success": False,
+                "message": f"Web Inspector was not initiated",
+                "result": None,
+            }
         page = web_inspector.page(False)
         if not page:
-            return
+            if self.url:
+                page = web_inspector.open(self.url)
+            if not page:
+                return {
+                    "success": False,
+                    "message": f"Page was not initiated",
+                    "result": None,
+                }
 
-        log.info("### WEB => Loc:", self.locator)
-        log.info("### WEB => URL:", self.url)
-
+        frame = self.locator.get("frame", None)
         if self.url is not None and page.url != self.url:
             page.goto(self.url)
+
         page.wait_for_load_state()
-        valid = web_inspector.find_matches(
-            strategy=self.locator["strategy"], value=self.locator["value"]
-        )
-        log.info("### WEB => Is valid?", valid)
-        log.info("### WEB => Is valid?", len(valid))
-        return {
-            "success": True,
-            "message": None,
-            "result": len(valid),
-        }
+        try:
+            matches = web_inspector.find_matches(
+                strategy=self.locator["strategy"],
+                value=self.locator["value"],
+                frame=frame,
+            )
+            return {
+                "success": True,
+                "message": None,
+                "result": len(matches),
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"Exception occurred while validating: {e}",
+                "result": None,
+            }
 
 
 ####
@@ -397,7 +413,6 @@ class _WindowsStopPick(_WindowsBaseCommand):
         if not windows_inspector_thread.windows_inspector:
             raise RuntimeError("windows_inspector not initialized.")
         windows_inspector_thread.windows_inspector.stop_pick()
-
         return {"success": True, "message": None, "result": None}
 
 
@@ -423,7 +438,6 @@ class _WindowsStartHighlight(_WindowsBaseCommand):
             search_depth=self.search_depth,
             search_strategy=self.search_strategy,
         )
-
         return {"success": True, "message": None, "result": result}
 
 
@@ -449,7 +463,6 @@ class _WindowsCollectTree(_WindowsBaseCommand):
             search_depth=self.search_depth,
             search_strategy=self.search_strategy,
         )
-
         return {"success": True, "message": None, "result": result}
 
 
@@ -460,9 +473,6 @@ class _WindowsList(_WindowsBaseCommand):
         if not windows_inspector_thread.windows_inspector:
             raise RuntimeError("windows_inspector not initialized.")
         result = windows_inspector_thread.windows_inspector.list_windows()
-
-        log.info("Win - API - WindowsList - result:", result)
-
         return {"success": True, "message": None, "result": result}
 
 
@@ -472,9 +482,7 @@ class _WindowsStopHighlight(_WindowsBaseCommand):
     ) -> ActionResultDict:
         if not windows_inspector_thread.windows_inspector:
             raise RuntimeError("windows_inspector not initialized.")
-        log.info("Win - API - _WindowsStopHighlight - stopping highlight...")
         windows_inspector_thread.windows_inspector.stop_highlight()
-
         return {"success": True, "message": None, "result": None}
 
 

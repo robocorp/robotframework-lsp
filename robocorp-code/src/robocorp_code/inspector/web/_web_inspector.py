@@ -215,31 +215,19 @@ class WebInspector:
         if page is None or page.is_closed():
             self.open(url_if_new)
 
-    def _query(self, selector):
+    def construct_locator_query(self, strategy, value) -> str:
         self._check_thread()
-        page = self.page(False)
-        if page is None:
-            return []
-        log.debug("Querying: %s", selector)
-        return page.query_selector_all(selector)
-
-    def find_matches(self, strategy, value) -> List[ElementHandle]:
-        self._check_thread()
+        strategy = strategy.split(":")[0]
         if strategy == "id":
-            found_matches = self._query(f"#{value}")
-            return found_matches
+            return f"#{value}"
         elif strategy == "css":
-            found_matches = self._query(value)
-            return found_matches
+            return value
         elif strategy == "xpath":
-            found_matches = self._query(f"xpath={value}")
-            return found_matches
+            return f"xpath={value}"
         elif strategy == "link":
-            found_matches = self._query(f"a:has-text({value!r})")
-            return found_matches
+            return f"a:has-text({value!r})"
         elif strategy == "name":
-            found_matches = self._query(f"[name={value!r}]")
-            return found_matches
+            return f"[name={value!r}]"
         else:
             raise ValueError(f"Unexpected strategy: {strategy} (value: {value}).")
 
@@ -248,6 +236,59 @@ class WebInspector:
         # out for now.
         # "class": By.CLASS_NAME,
         # "tag": By.TAG_NAME,
+
+    def construct_frame_query(self, frame) -> str:
+        frameQuery = ""
+        if frame is not None:
+            if "props" in frame and frame["props"] is not None:
+                props = frame["props"]
+                if "id" in props and props["id"]:
+                    frameQuery = f'id="{props["id"]}"'
+                elif "name" in props and props["name"]:
+                    frameQuery = f'name="{props["name"]}"'
+                elif "title" in props and props["title"]:
+                    frameQuery = f'title="{props["title"]}"'
+                elif "class" in props and props["class"]:
+                    frameQuery = f'{props["class"]}'
+        if frameQuery == "":
+            return None
+
+        return f"iframe[{frameQuery}]"
+
+    def _query(self, selector):
+        self._check_thread()
+        page = self.page(False)
+        if page is None:
+            return []
+        log.info("Querying: %s", selector)
+        return page.query_selector_all(selector)
+
+    def _query_frame(self, frame_selector, selector):
+        self._check_thread()
+        page = self.page(False)
+        if page is None:
+            return []
+        log.info(
+            f'Query: page.frame_locator("{frame_selector}").locator("{selector}").all'
+        )
+        return page.frame_locator(frame_selector).locator(selector).all()
+
+    def find_matches(
+        self, strategy, value, frame: Optional[dict] = None
+    ) -> List[ElementHandle]:
+        self._check_thread()
+        locator_query = self.construct_locator_query(strategy, value)
+        frame_query = None
+        if frame is not None and frame.get("props", None) is not None:
+            is_main = frame.get("props", {}).get("isMain", None)
+            if not is_main:
+                frame_query = self.construct_frame_query(frame)
+        found_matches = (
+            self._query(locator_query)
+            if frame_query is None
+            else self._query_frame(frame_query, locator_query)
+        )
+        return found_matches
 
     def pick_async(self, on_picked: Callable[[PickedLocatorTypedDict], None]) -> bool:
         """
@@ -392,9 +433,13 @@ class WebInspector:
             if frame != page.main_frame:
                 props = {}
                 props["name"] = frame.frame_element().get_attribute("name")
+                if props["name"] is None:
+                    props["name"] = frame.name
                 props["id"] = frame.frame_element().get_attribute("id")
                 props["cls"] = frame.frame_element().get_attribute("class")
                 props["title"] = frame.frame_element().get_attribute("title")
+                if (props["title"]) is None:
+                    props["title"] = frame.title()
 
             if inject_frame_data:
                 final_exp = Template(expression).substitute(
