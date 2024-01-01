@@ -76,6 +76,8 @@ class WebInspector:
             endpoint: If given notifications on the state will be given.
         """
         self._page: Optional[Page] = None
+        self._page_former_url: str = ""
+
         self._on_picked = Callback()
         self._current_thread = threading.current_thread()
         self._picking = False
@@ -165,8 +167,18 @@ class WebInspector:
                         "$/webInspectorState", {"state": STATE_BROWSER_CLOSED}
                     )
 
+            def mark_url_changed(*args, **kwargs):
+                if self._page_former_url == "":
+                    self._page_former_url = self._page.url
+                    return
+                if self._page.url != self._page_former_url:
+                    self._page_former_url = self._page.url
+                    endpoint.notify("$/webURLChange", {"url": self._page_former_url})
+                    return
+
             page.on("close", mark_closed)
             page.on("crash", mark_closed)
+            page.on("framenavigated", mark_url_changed)
 
             def on_picked(*args, **kwargs):
                 log.info(f"## Picked item: {args}")

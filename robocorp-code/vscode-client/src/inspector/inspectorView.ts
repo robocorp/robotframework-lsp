@@ -115,6 +115,22 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
             panel.webview.postMessage(response);
         })
     );
+    context.subscriptions.push(
+        langServer.onNotification("$/webURLChange", (url) => {
+            OUTPUT_CHANNEL.appendLine(`> Receiving: webURLChange: ${JSON.stringify(url)}`);
+            const response: IEventMessage = {
+                id: "",
+                type: IMessageType.EVENT,
+                event: {
+                    type: "urlChange",
+                    status: "success",
+                    data: url.url,
+                },
+            };
+            // this is an event - postMessage will update the useLocator hook
+            panel.webview.postMessage(response);
+        })
+    );
     // Windows Inspector - Create listeners for BE (Python) messages
     context.subscriptions.push(
         langServer.onNotification("$/windowsPick", (values) => {

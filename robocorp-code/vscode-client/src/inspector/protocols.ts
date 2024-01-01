@@ -134,6 +134,12 @@ export interface IEventMessage {
               data: Locator;
           }
         | {
+              type: "urlChange";
+              status: "success" | "failure";
+              message?: string;
+              data: string;
+          }
+        | {
               type: "pickedWinLocatorTree";
               status: "success" | "failure";
               message?: string;

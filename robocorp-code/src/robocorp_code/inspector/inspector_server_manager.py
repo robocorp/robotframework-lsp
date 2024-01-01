@@ -124,6 +124,7 @@ class InspectorServerManager(object):
                         "window/showMessage",
                         "$/webPick",
                         "$/webInspectorState",
+                        "$/webURLChange",
                         "$/windowsPick",
                     ):
                         robocorp_code_language_server: Optional[
