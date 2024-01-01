@@ -170,6 +170,7 @@ class WebInspector:
             def mark_url_changed(*args, **kwargs):
                 if self._page_former_url == "":
                     self._page_former_url = self._page.url
+                    endpoint.notify("$/webURLChange", {"url": self._page_former_url})
                     return
                 if self._page.url != self._page_former_url:
                     self._page_former_url = self._page.url
