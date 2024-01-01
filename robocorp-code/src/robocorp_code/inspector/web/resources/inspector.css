@@ -185,6 +185,8 @@
 
 #inspector-frame.picker_saving::after {
   content: 'Please wait while locator is being created...';
+  background: #10b98f;
+  color: black;
 }
 
 #inspector-frame.error {
@@ -200,7 +202,7 @@
 
 #inspector-frame.error::after {
   content: 'Could not classify activity as valid action';
-  background: #ef444a;
+  background: #ff6169;
 }
 
 #inspector-frame.paused {
@@ -216,7 +218,7 @@
 
 #inspector-frame.paused::after {
   content: 'Inspector paused | Right-Click to restart';
-  background: #f0dc20;
+  background: #eebb11;
   color: black;
 }
 

@@ -73,16 +73,16 @@ class _WebInspectorThread(threading.Thread):
                 if item is not None:
                     future: Future = item.future
                     try:
-                        log.debug("-- Start handling command: %s", item)
                         result = item(self)
-                        log.debug("-- End handling command: %s", item)
                         if item.loop_timeout is not None:
                             loop_timeout = item.loop_timeout
-                    except Exception:
-                        log.exception(f"Error handling {item}.")
+                    except Exception as e:
+                        log.exception(f"Error handling {item}: {e}")
+                        future.set_exception(e)
+                    else:
+                        future.set_result(result)
                     finally:
                         item.handled_event.set()
-                        future.set_result(result)
         finally:
             from robocorp_code.playwright.robocorp_browser._caches import (
                 clear_all_callback,
