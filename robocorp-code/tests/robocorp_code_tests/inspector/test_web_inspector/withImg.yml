@@ -22,6 +22,7 @@ frame:
   isMain: true
   name: ''
   props: null
+  sourceURL: file:// ... <clipped>
   title: ''
   url: file:// ... <clipped>
 screenshot: data:image/png;base64,iV ... <clipped>

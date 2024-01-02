@@ -487,6 +487,7 @@ def fix_locator(locator: "PickedLocatorTypedDict") -> "PickedLocatorTypedDict":
     frame = locator.get("frame")
     if frame:
         frame["url"] = frame["url"][:7] + " ... <clipped>"
+        frame["sourceURL"] = frame["sourceURL"][:7] + " ... <clipped>"
 
     return locator
 
