@@ -1,5 +1,5 @@
 /**
- * @source https://github.com/robocorp/inspector-ext/blob/master/src/utils/types.ts
+ * @source https://github.com/robocorp/inspector-ext/blob/master/src/utils/typesLocator.ts
  *! THIS FILE NEEDS TO ALWAYS MATCH THE SOURCE
  */
 
@@ -19,6 +19,15 @@ export type ElementType = {
     tag: string;
     type?: string;
     modifier?: string | boolean | number;
+};
+
+export type IFrameData = {
+    name?: string;
+    title?: string;
+    url?: string;
+    sourceURL?: string;
+    isMain?: boolean;
+    props?: { id?: string; name?: string; class?: string; title?: string };
 };
 
 /**
@@ -79,6 +88,12 @@ export interface BrowserLocator {
      * @memberof BrowserLocator
      */
     element?: ElementType;
+    /**
+     *
+     * @type {IFrameData}
+     * @memberof BrowserLocator
+     */
+    frame?: IFrameData;
 }
 /**
  *

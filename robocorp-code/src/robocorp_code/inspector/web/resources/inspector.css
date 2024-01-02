@@ -7,12 +7,12 @@
 
 #inspector-focus {
   position: absolute;
-  z-index: 999;
+  z-index: 9999;
   display: block;
   box-shadow: 0 0 1px 1px #7158f1;
   background-color: rgba(113, 88, 241, 0.5);
   animation-name: inspector-focus-animation;
-  animation-duration: 0.3s;
+  animation-duration: 0.5s;
   animation-timing-function: linear;
   animation-delay: 0.2s;
   animation-iteration-count: 3;
@@ -31,6 +31,36 @@
   }
 }
 
+@keyframes changeLetter {
+  0% {
+    content: '🌕 Click element to record it | Right-Click to pause';
+  }
+  10% {
+    content: '🌖 Click element to record it | Right-Click to pause';
+  }
+  20% {
+    content: '🌗 Click element to record it | Right-Click to pause';
+  }
+  30% {
+    content: '🌘 Click element to record it | Right-Click to pause';
+  }
+  50% {
+    content: '🌑 Click element to record it | Right-Click to pause';
+  }
+  60% {
+    content: '🌒 Click element to record it | Right-Click to pause';
+  }
+  70% {
+    content: '🌓 Click element to record it | Right-Click to pause';
+  }
+  80% {
+    content: '🌔 Click element to record it | Right-Click to pause';
+  }
+  100% {
+    content: '🌕 Click element to record it | Right-Click to pause';
+  }
+}
+
 #inspector-frame {
   position: fixed;
   top: 0;
@@ -41,7 +71,7 @@
   height: 100vh;
 
   z-index: 9999;
-  box-shadow: inset 0 0 0 4px #7158f1;
+  /* box-shadow: inset 0 0 0 4px #7158f1; */
   cursor: crosshair;
   pointer-events: none;
 }
@@ -61,16 +91,70 @@
   opacity: 1;
 }
 
+#inspector-frame.picker {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+
+  z-index: 9999;
+  cursor: crosshair;
+  pointer-events: none;
+}
+
 #inspector-frame.picker::after {
-  content: 'Click element to automate it | Right-Click to pause picking';
+  /* animation: changeLetter 1s ease-in-out infinite; */
+  content: 'Click element to record it | Right-Click to pause';
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  margin-left: -300px;
+  padding: 8px;
+  width: 600px;
+  background: #7158f1;
+
+  color: white;
+  text-align: center;
+  font-size: 14px;
+  opacity: 1;
+}
+
+#inspector-frame.picker_top {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+
+  z-index: 9999;
+  cursor: crosshair;
+  pointer-events: none;
+}
+
+#inspector-frame.picker_top::after {
+  content: 'Click element to record it | Right-Click to pause';
+  position: fixed;
+  top: 0;
+  left: 50%;
+  margin-left: -300px;
+  padding: 8px;
+  width: 600px;
+  height: 40px;
+  background: #7158f1;
+
+  color: white;
+  text-align: center;
+  font-size: 14px;
+  opacity: 1;
 }
 
 #inspector-frame.recorder::after {
   content: 'Click to record | Right-Click to wait for element | Press ESC to stop recording';
-}
-
-#inspector-frame.recorder_in_progress::after {
-  content: 'Please wait while action is being recorded...';
 }
 
 #inspector-frame.recorder_in_progress {
@@ -80,30 +164,29 @@
   bottom: 0;
   left: 0;
   z-index: 999 !important;
-  box-shadow: inset 0 0 0 40px #7158f1;
   cursor: not-allowed !important;
   pointer-events: none !important;
 }
 
-#inspector-frame.picker_in_progress::after {
-  content: 'Please wait while locator is being created...';
+#inspector-frame.recorder_in_progress::after {
+  content: 'Please wait while action is being recorded...';
 }
 
-#inspector-frame.picker_in_progress {
+#inspector-frame.picker_saving {
   position: fixed;
   top: 0;
   right: 0;
   bottom: 0;
   left: 0;
   z-index: 999 !important;
-  box-shadow: inset 0 0 0 40px #7158f1;
   cursor: not-allowed !important;
   pointer-events: none !important;
 }
 
-#inspector-frame.error::after {
-  content: 'Could not classify activity as valid action';
-  background: #ef444a;
+#inspector-frame.picker_saving::after {
+  content: 'Please wait while locator is being created...';
+  background: #10b98f;
+  color: black;
 }
 
 #inspector-frame.error {
@@ -113,15 +196,13 @@
   bottom: 0;
   left: 0;
   z-index: 999 !important;
-  box-shadow: inset 0 0 0 8px #ef444a;
   cursor: not-allowed !important;
   pointer-events: none !important;
 }
 
-#inspector-frame.paused::after {
-  content: 'Inspector paused | Right-Click to start picking';
-  background: #f0dc20;
-  color: black;
+#inspector-frame.error::after {
+  content: 'Could not classify activity as valid action';
+  background: #ff6169;
 }
 
 #inspector-frame.paused {
@@ -131,9 +212,31 @@
   bottom: 0;
   left: 0;
   z-index: 999 !important;
-  box-shadow: inset 0 0 0 0px #f0dc20;
   cursor: not-allowed !important;
   pointer-events: none !important;
+}
+
+#inspector-frame.paused::after {
+  content: 'Inspector paused | Right-Click to restart';
+  background: #eebb11;
+  color: black;
+}
+
+#inspector-frame.hide {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0 !important;
+  box-shadow: inset 0 0 0 0px transparent !important;
+}
+
+#inspector-frame.hide::after {
+  content: none !important;
+  width: 0px !important;
+  background: transparent !important;
+  color: transparent !important;
 }
 
 #inspector-info-box {

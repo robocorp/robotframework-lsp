@@ -212,7 +212,11 @@ class InspectorLanguageServer:
         from robocorp_code.inspector.web import INSPECTOR_GUIDE_PATH
 
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
-        url = uris.from_fs_path(str(INSPECTOR_GUIDE_PATH))
+        url = (
+            params["url_if_new"]
+            if params and "url_if_new" in params
+            else uris.from_fs_path(str(INSPECTOR_GUIDE_PATH))
+        )
         inspector_api_client.send_sync_message(
             "startPick", {"url_if_new": url, "wait": True}
         )
@@ -220,6 +224,14 @@ class InspectorLanguageServer:
     def m_web_inspector_stop_pick(self, **params):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         inspector_api_client.send_sync_message("stopPick", {"wait": True})
+
+    def m_web_inspector_validate_locator(self, **params):
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        return partial(
+            inspector_api_client.send_sync_message,
+            "validateLocator",
+            {"locator": params["locator"], "url": params["url"], "wait": True},
+        )
 
     def m_windows_inspector_parse_locator(self, locator: str):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
@@ -233,7 +245,6 @@ class InspectorLanguageServer:
     def m_windows_inspector_set_window_locator(self, locator: str):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         # Not blocking (return callback to run in thread).
-        log.info("LS-Win-Set-Window-Locator", locator)
         return partial(
             inspector_api_client.send_sync_message,
             "windowsSetWindowLocator",

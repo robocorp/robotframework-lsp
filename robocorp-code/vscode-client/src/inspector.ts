@@ -15,7 +15,6 @@ export enum InspectorType {
     Browser = "browser",
     Windows = "windows",
     Image = "image",
-    Java = "java",
     WebRecorder = "web-recorder",
     PlaywrightRecorder = "playwright-recorder",
 }
@@ -26,7 +25,6 @@ export const DEFAULT_INSPECTOR_VALUE = {
     browser: false,
     image: false,
     windows: false,
-    java: false,
     "web-recorder": false,
     "playwright-recorder": false,
 };

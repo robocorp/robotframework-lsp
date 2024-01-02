@@ -24,9 +24,16 @@ alternatives:
   strategy: xpath:inner-text
   value: //a[contains(.,'Link "to Something')]
 element:
-  modifier: file://
+  modifier: ''
   tag: A
   type: a
+frame:
+  isMain: true
+  name: ''
+  props: null
+  sourceURL: file:// ... <clipped>
+  title: ''
+  url: file:// ... <clipped>
 screenshot: data:image/png;base64,iV ... <clipped>
 source: page_to_test.html
 strategy: id
