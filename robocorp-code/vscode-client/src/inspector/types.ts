@@ -25,6 +25,7 @@ export type IFrameData = {
     name?: string;
     title?: string;
     url?: string;
+    sourceURL?: string;
     isMain?: boolean;
     props?: { id?: string; name?: string; class?: string; title?: string };
 };

@@ -35,7 +35,6 @@ def _load_resource(name):
 _ASYNC_MULTI_PICK_CODE = """
 ()=>{
     var callback = (picked)=>{
-        // console.log('Picked', picked);
         on_picked(picked);
     }
 
@@ -439,12 +438,15 @@ class WebInspector:
         # not finding the body where to inject the picker in
         page.wait_for_load_state()
         page.wait_for_selector("body")
-        page.wait_for_timeout(300)
+        page.wait_for_timeout(1)
         # retrieving only the first layer of iFrames
         # for additional layers recessiveness is the solution, but doesn't seem necessary right now
         frames = list(page.frames) + list(page.main_frame.child_frames)
 
         for frame in frames:
+            # make sure we wait for the load state to trigger in frames as well
+            frame.wait_for_load_state()
+
             # skipping the detached frames as they are not able to evaluate expressions
             if frame.is_detached():
                 continue
@@ -461,20 +463,34 @@ class WebInspector:
                 if (props["title"]) is None:
                     props["title"] = frame.title()
 
-            if inject_frame_data:
-                final_exp = Template(expression).substitute(
+            final_exp = (
+                Template(expression).substitute(
                     iFrame=json.dumps(
                         {
                             "name": frame.name,
                             "title": frame.title(),
                             "url": frame.url,
+                            "sourceURL": page.url,
                             "isMain": frame == page.main_frame,
                             "props": props,
                         }
                     )
                 )
-            else:
-                final_exp = expression
+                if inject_frame_data
+                else expression
+            )
 
-            frame.wait_for_load_state()
-            frame.evaluate(final_exp)
+            try:
+                # make sure we wait for the load state to trigger in frames as well
+                frame.wait_for_load_state()
+                frame.wait_for_timeout(1)
+                # inject the code
+                frame.evaluate(final_exp)
+            except Exception as e:
+                # when we deal with the main frame, raise exception
+                # the iframes (child frames or attached) can cause unexpected behaviors due to their construction
+                # we can try to address them later
+                if frame == page.main_frame:
+                    raise e
+                log.exception(f"Exception occurred inside of an iFrame: {e}")
+                continue
