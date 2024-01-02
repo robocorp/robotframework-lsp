@@ -157,7 +157,8 @@ import { registerLinkProviders } from "./robo/linkProvider";
 import { runRobocorpTasks } from "./robo/runRobocorpTasks";
 import { RobotOutputViewProvider } from "./output/outView";
 import { setupDebugSessionOutViewIntegration } from "./output/outViewRunIntegration";
-import { InspectorAppRoutes, showInspectorUI } from "./inspector/inspectorView";
+import { showInspectorUI } from "./inspector/inspectorView";
+import { IAppRoutes } from "./inspector/protocols";
 
 interface InterpreterInfo {
     pythonExe: string;
@@ -373,7 +374,7 @@ function registerRobocorpCodeCommands(C: CommandRegistry, context: ExtensionCont
             case "image":
                 return inspector.openRobocorpInspector(undefined, locator);
             default:
-                return showInspectorUI(context, InspectorAppRoutes.LOCATORS_MANAGER);
+                return showInspectorUI(context, IAppRoutes.LOCATORS_MANAGER);
         }
     });
     C.register(ROBOCORP_OPEN_PLAYWRIGHT_RECORDER, (useTreeSelected: boolean = false) =>
@@ -633,11 +634,11 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
     });
     C.register(
         ROBOCORP_NEW_ROBOCORP_INSPECTOR_BROWSER,
-        async () => await showInspectorUI(context, InspectorAppRoutes.WEB_INSPECTOR)
+        async () => await showInspectorUI(context, IAppRoutes.WEB_INSPECTOR)
     );
     C.register(
         ROBOCORP_NEW_ROBOCORP_INSPECTOR_WINDOWS,
-        async () => await showInspectorUI(context, InspectorAppRoutes.WINDOWS_INSPECTOR)
+        async () => await showInspectorUI(context, IAppRoutes.WINDOWS_INSPECTOR)
     );
     C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE, async () =>
         inspector.openRobocorpInspector(inspector.InspectorType.Image)

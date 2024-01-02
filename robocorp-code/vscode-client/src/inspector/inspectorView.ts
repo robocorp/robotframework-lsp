@@ -19,6 +19,7 @@ import {
     IMessageType,
     IRequestMessage,
     IResponseMessage,
+    IAppRoutes,
     ResponseDataType,
     WindowsAppTree,
 } from "./protocols";
@@ -26,22 +27,26 @@ import { langServer } from "../extension";
 import { ActionResult, LocalRobotMetadataInfo } from "../protocols";
 import { ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL } from "../robocorpCommands";
 
-let ROBOCORP_INSPECTOR_IS_OPENED = false;
+let ROBOCORP_INSPECTOR_PANEL: vscode.WebviewPanel | undefined = undefined;
 
-export enum InspectorAppRoutes {
-    LOCATORS_MANAGER = "/locators-manager/",
-    WEB_INSPECTOR = "/web-inspector/",
-    WINDOWS_INSPECTOR = "/windows-inspector/",
-    JAVA_INSPECTOR = "/java-inspector/",
-    IMAGE_INSPECTOR = "/image-inspector/",
-}
-
-export async function showInspectorUI(context: vscode.ExtensionContext, route?: InspectorAppRoutes) {
-    if (ROBOCORP_INSPECTOR_IS_OPENED) {
+export async function showInspectorUI(context: vscode.ExtensionContext, route?: IAppRoutes) {
+    if (ROBOCORP_INSPECTOR_PANEL !== undefined && route) {
         OUTPUT_CHANNEL.appendLine("# Robocorp Inspector is already opened! Thank you!");
+        OUTPUT_CHANNEL.appendLine(`# Switching to the commanded Route: ${route}`);
+        const response: IEventMessage = {
+            id: "",
+            type: IMessageType.EVENT,
+            event: {
+                type: "gotoInspectorApp",
+                status: "success",
+                data: route,
+            },
+        };
+        // this is an event - postMessage will update the useLocator hook
+        ROBOCORP_INSPECTOR_PANEL.webview.postMessage(response);
+        ROBOCORP_INSPECTOR_PANEL.reveal();
         return;
     }
-    ROBOCORP_INSPECTOR_IS_OPENED = true;
 
     const panel = vscode.window.createWebviewPanel(
         "robocorpCodeInspector",
@@ -52,6 +57,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
             retainContextWhenHidden: true,
         }
     );
+    ROBOCORP_INSPECTOR_PANEL = panel;
 
     const robot = getSelectedRobot();
     let directory = undefined;
@@ -154,7 +160,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
         sendRequest("webInspectorCloseBrowser", {});
         sendRequest("windowsInspectorStopPick", {});
         sendRequest("windowsInspectorStopHighlight", {});
-        ROBOCORP_INSPECTOR_IS_OPENED = false;
+        ROBOCORP_INSPECTOR_PANEL = undefined;
     });
 
     const buildProtocolResponseFromActionResponse = (
@@ -320,7 +326,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
     );
 }
 
-function getWebviewContent(directory: string, jsonData: LocatorsMap, startRoute?: InspectorAppRoutes): string {
+function getWebviewContent(directory: string, jsonData: LocatorsMap, startRoute?: IAppRoutes): string {
     // get the template that's created via the inspector-ext
     const templateFile = getExtensionRelativeFile("../../vscode-client/templates/inspector.html", true);
     const data = readFileSync(templateFile, "utf8");
@@ -345,7 +351,7 @@ function getWebviewContent(directory: string, jsonData: LocatorsMap, startRoute?
     const endControl = "</script>";
     const endIndexControl = retLocators.indexOf(endControl, startIndexControl);
 
-    const controlContent = JSON.stringify({ startRoute: startRoute || InspectorAppRoutes.LOCATORS_MANAGER }, null, 4);
+    const controlContent = JSON.stringify({ startRoute: startRoute || IAppRoutes.LOCATORS_MANAGER }, null, 4);
     const retControl: string =
         retLocators.substring(0, startIndexControl) + controlContent + retLocators.substring(endIndexControl);
 

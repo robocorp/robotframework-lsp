@@ -19,6 +19,14 @@ export enum IApps {
 
 export type IAppsType = IApps.LOCATORS_MANAGER | IApps.WEB_INSPECTOR | IApps.WINDOWS_INSPECTOR;
 
+export enum IAppRoutes {
+    LOCATORS_MANAGER = "/locators-manager/",
+    WEB_INSPECTOR = "/web-inspector/",
+    WINDOWS_INSPECTOR = "/windows-inspector/",
+    JAVA_INSPECTOR = "/java-inspector/",
+    IMAGE_INSPECTOR = "/image-inspector/",
+}
+
 // =====================================
 // REQUESTS
 // =====================================
@@ -122,6 +130,12 @@ export interface IEventMessage {
     id: string;
     type: IMessageType.EVENT;
     event:
+        | {
+              type: "gotoInspectorApp";
+              status: "success" | "failure";
+              message?: string;
+              data: IAppRoutes;
+          }
         | {
               type: "browserState";
               status: "success" | "failure";

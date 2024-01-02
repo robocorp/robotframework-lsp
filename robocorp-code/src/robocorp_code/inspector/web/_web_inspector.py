@@ -279,7 +279,7 @@ class WebInspector:
         page = self.page(False)
         if page is None:
             return []
-        log.info("Querying: %s", selector)
+        log.debug(f"Query: page.query_selector_all('{selector}')")
         return page.query_selector_all(selector)
 
     def _query_frame(self, frame_selector, selector):
@@ -287,8 +287,8 @@ class WebInspector:
         page = self.page(False)
         if page is None:
             return []
-        log.info(
-            f'Query: page.frame_locator("{frame_selector}").locator("{selector}").all'
+        log.debug(
+            f'Query: page.frame_locator("{frame_selector}").locator("{selector}").all()'
         )
         return page.frame_locator(frame_selector).locator(selector).all()
 
@@ -439,6 +439,7 @@ class WebInspector:
         # not finding the body where to inject the picker in
         page.wait_for_load_state()
         page.wait_for_selector("body")
+        page.wait_for_timeout(300)
         # retrieving only the first layer of iFrames
         # for additional layers recessiveness is the solution, but doesn't seem necessary right now
         frames = list(page.frames) + list(page.main_frame.child_frames)
