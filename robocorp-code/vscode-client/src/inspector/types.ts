@@ -1,5 +1,5 @@
 /**
- * @source https://github.com/robocorp/inspector-ext/blob/master/src/utils/types.ts
+ * @source https://github.com/robocorp/inspector-ext/blob/master/src/utils/typesLocator.ts
  *! THIS FILE NEEDS TO ALWAYS MATCH THE SOURCE
  */
 

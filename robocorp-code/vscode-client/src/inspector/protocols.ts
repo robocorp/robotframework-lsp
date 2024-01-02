@@ -123,7 +123,6 @@ export type BrowserState =
     | "browserOpened"
     | "browserClosed"
     | "browserPicking"
-    | "browserPicking"
     | "browserNotPicking";
 
 export interface IEventMessage {
