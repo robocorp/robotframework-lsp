@@ -180,7 +180,7 @@ class _WebAsyncPickCommand(_WebBaseCommand):
             return
 
         if self.url_if_new:
-            web_inspector.open_if_new(self.url_if_new)
+            web_inspector.open(self.url_if_new)
 
         endpoint = self.endpoint
 
