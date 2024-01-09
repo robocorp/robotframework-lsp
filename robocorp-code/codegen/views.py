@@ -44,9 +44,9 @@ TREE_VIEW_CONTAINERS = [
         icon="images/robocorp-outline.svg",
         tree_views=[
             TreeView(
-                id="robocorp-robots-tree",
-                name="Robots",
-                contextual_title="Robots",
+                id="robocorp-task-packages-tree",
+                name="Task Packages",
+                contextual_title="Task Packages",
                 menus={
                     # See: https://code.visualstudio.com/api/references/contribution-points#contributes.menus
                     # for targets
@@ -127,9 +127,9 @@ TREE_VIEW_CONTAINERS = [
                 },
             ),
             TreeView(
-                id="robocorp-robot-content-tree",
-                name="Robot Content",
-                contextual_title="Robot Content",
+                id="robocorp-package-content-tree",
+                name="Package Content",
+                contextual_title="Package Content",
                 menus={
                     "view/title": [
                         Menu(
@@ -184,9 +184,9 @@ TREE_VIEW_CONTAINERS = [
                 },
             ),
             TreeView(
-                id="robocorp-resources-tree",
-                name="Resources",
-                contextual_title="Resources",
+                id="robocorp-package-resources-tree",
+                name="Package Resources",
+                contextual_title="Package Resources",
                 menus={
                     "view/item/context": [
                         # Locators (root)
@@ -255,7 +255,7 @@ TREE_VIEW_CONTAINERS = [
             ),
             TreeView(
                 id="robocorp-cloud-tree",
-                name="Robocorp",
+                name="Robocorp Cloud",
                 contextual_title="Robocorp",
                 menus={
                     "view/item/context": [
