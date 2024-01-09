@@ -64,7 +64,7 @@ import {
     updateLaunchEnvironment,
 } from "./activities";
 import { handleProgressMessage, ProgressReport } from "./progress";
-import { TREE_VIEW_ROBOCORP_TASK_PACKAGES_TREE, TREE_VIEW_ROBOCORP_PACKAGE_CONTENT_TREE,  } from "./robocorpViews";
+import { TREE_VIEW_ROBOCORP_TASK_PACKAGES_TREE, TREE_VIEW_ROBOCORP_PACKAGE_CONTENT_TREE } from "./robocorpViews";
 import { askAndCreateRccTerminal } from "./rccTerminal";
 import {
     deleteResourceInRobotContentTree,
