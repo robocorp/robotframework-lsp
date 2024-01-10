@@ -64,7 +64,7 @@ import {
     updateLaunchEnvironment,
 } from "./activities";
 import { handleProgressMessage, ProgressReport } from "./progress";
-import { TREE_VIEW_ROBOCORP_ROBOTS_TREE, TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE } from "./robocorpViews";
+import { TREE_VIEW_ROBOCORP_TASK_PACKAGES_TREE, TREE_VIEW_ROBOCORP_PACKAGE_CONTENT_TREE } from "./robocorpViews";
 import { askAndCreateRccTerminal } from "./rccTerminal";
 import {
     deleteResourceInRobotContentTree,
@@ -363,7 +363,7 @@ function registerRobocorpCodeCommands(C: CommandRegistry, context: ExtensionCont
     C.register(ROBOCORP_RUN_ROBOT_RCC, () => askAndRunRobotRCC(true));
     C.register(ROBOCORP_DEBUG_ROBOT_RCC, () => askAndRunRobotRCC(false));
     C.register(ROBOCORP_SET_PYTHON_INTERPRETER, () => setPythonInterpreterFromRobotYaml());
-    C.register(ROBOCORP_REFRESH_ROBOTS_VIEW, () => refreshTreeView(TREE_VIEW_ROBOCORP_ROBOTS_TREE));
+    C.register(ROBOCORP_REFRESH_ROBOTS_VIEW, () => refreshTreeView(TREE_VIEW_ROBOCORP_TASK_PACKAGES_TREE));
     C.register(ROBOCORP_REFRESH_CLOUD_VIEW, () => refreshCloudTreeView());
     C.register(ROBOCORP_ROBOTS_VIEW_TASK_RUN, (entry: RobotEntry) => views.runSelectedRobot(true, entry));
     C.register(ROBOCORP_ROBOTS_VIEW_TASK_DEBUG, (entry: RobotEntry) => views.runSelectedRobot(false, entry));
@@ -400,7 +400,7 @@ function registerRobocorpCodeCommands(C: CommandRegistry, context: ExtensionCont
         views.createRccTerminalTreeSelection(robot)
     );
     C.register(ROBOCORP_RCC_TERMINAL_NEW, () => askAndCreateRccTerminal());
-    C.register(ROBOCORP_REFRESH_ROBOT_CONTENT_VIEW, () => refreshTreeView(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE));
+    C.register(ROBOCORP_REFRESH_ROBOT_CONTENT_VIEW, () => refreshTreeView(TREE_VIEW_ROBOCORP_PACKAGE_CONTENT_TREE));
     C.register(ROBOCORP_NEW_FILE_IN_ROBOT_CONTENT_VIEW, newFileInRobotContentTree);
     C.register(ROBOCORP_NEW_FOLDER_IN_ROBOT_CONTENT_VIEW, newFolderInRobotContentTree);
     C.register(ROBOCORP_DELETE_RESOURCE_IN_ROBOT_CONTENT_VIEW, deleteResourceInRobotContentTree);

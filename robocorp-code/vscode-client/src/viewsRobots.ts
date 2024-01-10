@@ -124,7 +124,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                 // giving more instructions to the user.
                 let added: boolean = false;
                 for (const label of [
-                    "No robots found.",
+                    "No task package found.",
                     "Three ways to get started:",
                     "➔ Run the “Robocorp: Create Robot” action",
                     "➔ Open a robot folder (with a “robot.yaml” file)",
@@ -156,7 +156,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
             if (element.type === RobotEntryType.Task) {
                 return [
                     {
-                        "label": "Run",
+                        "label": "Run Task",
                         "uri": element.uri,
                         "robot": element.robot,
                         "taskName": element.taskName,
@@ -165,7 +165,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                         "parent": element,
                     },
                     {
-                        "label": "Debug",
+                        "label": "Debug Task",
                         "uri": element.uri,
                         "robot": element.robot,
                         "taskName": element.taskName,
@@ -194,7 +194,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                     }
                 }
                 robotChildren.push({
-                    "label": "Actions",
+                    "label": "Activities",
                     "uri": element.uri,
                     "robot": element.robot,
                     "iconPath": "tools",
@@ -206,7 +206,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
             if (element.type === RobotEntryType.ActionsInRobot) {
                 return [
                     {
-                        "label": "Upload Robot to Control Room",
+                        "label": "Upload Task to Control Room",
                         "uri": element.uri,
                         "robot": element.robot,
                         "iconPath": "cloud-upload",
@@ -214,7 +214,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                         "parent": element,
                     },
                     {
-                        "label": "Open Robot Terminal",
+                        "label": "Open Task Terminal",
                         "uri": element.uri,
                         "robot": element.robot,
                         "iconPath": "terminal",
@@ -222,7 +222,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                         "parent": element,
                     },
                     {
-                        "label": "Configure Robot (robot.yaml)",
+                        "label": "Configure Tasks (robot.yaml)",
                         "uri": element.uri,
                         "robot": element.robot,
                         "iconPath": "go-to-file",

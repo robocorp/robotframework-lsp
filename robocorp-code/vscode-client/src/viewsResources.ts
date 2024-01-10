@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { TREE_VIEW_ROBOCORP_RESOURCES_TREE } from "./robocorpViews";
+import { TREE_VIEW_ROBOCORP_PACKAGE_RESOURCES_TREE } from "./robocorpViews";
 import { getSingleTreeSelection, LocatorEntry, SingleTreeSelectionOpts } from "./viewsCommon";
 import { LocatorsTreeDataProvider } from "./viewsLocators";
 import { RobotSelectionTreeDataProviderBase } from "./viewsRobotSelectionTreeBase";
@@ -10,7 +10,7 @@ const SUBTREE_WORK_ITEMS = "work-items";
 const SUBTREE_LOCATORS = "locators";
 
 export async function getLocatorSingleTreeSelection(opts?: SingleTreeSelectionOpts): Promise<LocatorEntry | undefined> {
-    let selection = await getSingleTreeSelection<any>(TREE_VIEW_ROBOCORP_RESOURCES_TREE, opts);
+    let selection = await getSingleTreeSelection<any>(TREE_VIEW_ROBOCORP_PACKAGE_RESOURCES_TREE, opts);
     if (selection.resourcesTreeType == ROOT_TYPE) {
         return undefined; // Root items aren't part of the locators tree.
     }

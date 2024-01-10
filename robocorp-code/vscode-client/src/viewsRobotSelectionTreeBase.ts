@@ -2,10 +2,10 @@ import * as vscode from "vscode";
 import { basename, dirname } from "path";
 
 import { debounce, FSEntry, getSelectedRobot, RobotEntry, treeViewIdToTreeView } from "./viewsCommon";
-import { TREE_VIEW_ROBOCORP_ROBOTS_TREE } from "./robocorpViews";
+import { TREE_VIEW_ROBOCORP_TASK_PACKAGES_TREE } from "./robocorpViews";
 
 export async function getCurrRobotDir(): Promise<FSEntry | undefined> {
-    let robotContentTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_ROBOTS_TREE);
+    let robotContentTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_TASK_PACKAGES_TREE);
     if (!robotContentTree) {
         return undefined;
     }

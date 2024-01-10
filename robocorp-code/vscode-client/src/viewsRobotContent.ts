@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
 import { logError } from "./channel";
-import { TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE } from "./robocorpViews";
+import { TREE_VIEW_ROBOCORP_PACKAGE_CONTENT_TREE } from "./robocorpViews";
 import { FSEntry, getSelectedRobot, RobotEntry, treeViewIdToTreeView } from "./viewsCommon";
 import { basename, dirname, join } from "path";
 import { Uri } from "vscode";
@@ -10,7 +10,7 @@ import { RobotSelectionTreeDataProviderBase } from "./viewsRobotSelectionTreeBas
 const fsPromises = fs.promises;
 
 export async function getCurrRobotTreeContentDir(): Promise<FSEntry | undefined> {
-    let robotContentTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE);
+    let robotContentTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_PACKAGE_CONTENT_TREE);
     if (!robotContentTree) {
         return undefined;
     }
@@ -69,7 +69,7 @@ export async function newFileInRobotContentTree() {
 }
 
 export async function renameResourceInRobotContentTree() {
-    let robotContentTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE);
+    let robotContentTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_PACKAGE_CONTENT_TREE);
     if (!robotContentTree) {
         return undefined;
     }
@@ -117,7 +117,7 @@ export async function renameResourceInRobotContentTree() {
 }
 
 export async function deleteResourceInRobotContentTree() {
-    let robotContentTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_ROBOT_CONTENT_TREE);
+    let robotContentTree = treeViewIdToTreeView.get(TREE_VIEW_ROBOCORP_PACKAGE_CONTENT_TREE);
     if (!robotContentTree) {
         return undefined;
     }
