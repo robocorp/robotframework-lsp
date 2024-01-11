@@ -1,3 +1,12 @@
+New in 1.14.1 (2024-01-11)
+-----------------------------
+
+- Several improvements to the Robocorp Inspector
+    - Note: First experimental version, looking for feedback!
+- Renaming to the new terminology for the Side Bar
+    - Note: Part of moving to Task Packages & Tasks & Actions
+
+
 New in 1.14.0 (2023-12-21)
 -----------------------------
 
@@ -22,7 +31,7 @@ New in 1.11.0 (2023-09-07)
 - When hovering over conda dependencies in `conda.yaml`, information from conda-forge is shown.
 - Warning if the versions for conda-forge in `conda.yaml` have updates.
 - RCC is now distributed along with `Robocorp Code` (so, it'll no longer be downloaded in the first activation).
-- A warning is no longer shown if a pre-release is available in pypi and the latest version is actually being used already. 
+- A warning is no longer shown if a pre-release is available in pypi and the latest version is actually being used already.
 - Fixed issue where a parse exception was shown when a git url was used to install a pip dependency.
 - Fixed issue where a method decorated with `@task_cache` would have code lenses which should only appear to `@task`.
 
@@ -38,7 +47,7 @@ New in 1.10.0 (2023-08-21)
 - `ROBO TASKS OUTPUT` updated to latest version:
     - Support for `robocorp-log 2.7.0`:
         - `if` statements now create a scope in `log.html` (when the function is not a generator).
-        - If an exception has a cause or context the context/cause is now shown in the log 
+        - If an exception has a cause or context the context/cause is now shown in the log
           - (i.e.: when an exception is raised from another exception or is raised while handling another exception all exceptions are shown).
         - `continue` and `break` inside a loop are properly handled.
         - `continue` and `break` are now shown in the logs.
@@ -84,7 +93,7 @@ New in 1.6.0 (2023-07-10)
 
 - Updated `ROBO TASKS OUTPUT` so that places showing the file/line of messages are now clickable and
   can be used to open the file location inside of VSCode.
-  
+
 - In the `ROBO TASKS OUTPUT`, it's possible to view log messages along with the terminal
   output.
 
@@ -171,7 +180,7 @@ New in 1.0.0 (2023-01-16)
 - When specifying the timeout for the vault, the token is guaranteed to have that as the minimum value (in previous versions it could reuse it for `75%` of the time, so, a `2h` timeout request could return a `0:30h` minutes token).
     - Timeout limits are now in place so that the minimum timeout is 5 minutes and maximum is 1 hour (but the token requested may be a bit higher so that the extension can cache it and reuse it for more time).
     - Note: if a longer timeout is needed for testing, a managed environment such as `Robocorp Control Room` or `Robocorp Assistant` is recommended.
-  
+
 
 New in 0.43.0 (2023-01-05)
 -----------------------------
@@ -185,7 +194,7 @@ New in 0.42.0 (2022-12-22)
 
 - RCC was upgraded to `v11.36.3`.
 - No longer showing warnings regarding locks at startup.
-- It's now possible to proceed even with long paths disabled. 
+- It's now possible to proceed even with long paths disabled.
 - New setting: `robocorp.vaultTokenTimeoutInMinutes` can be used to change the timeout for the token used for vault access when launching.
 
 
@@ -199,7 +208,7 @@ New in 0.41.0 (2022-12-13)
 New in 0.40.2 (2022-12-05)
 -----------------------------
 
-- Fixed regression where `noDebug` was not being properly set in generated launch. 
+- Fixed regression where `noDebug` was not being properly set in generated launch.
 
 
 New in 0.40.1 (2022-12-03)
@@ -239,7 +248,7 @@ New in 0.37.0 (2022-09-14)
 - Improved UI for submit issue.
 - RCC was upgraded to `v11.26.3`.
 - Locators:
-    - `robocorp-inspector` was upgraded to `0.7.1`. 
+    - `robocorp-inspector` was upgraded to `0.7.1`.
     - Added recording functionality to command palette
 
 
@@ -255,8 +264,8 @@ New in 0.35.0 (2022-07-04)
 -----------------------------
 
 - `RCC` was upgraded to to `v11.14.5`.
-- RCC is now configured to put the holotree contents in a location shared by multiple users (which allows 
-  for the import of pre-created environments from a .zip file). 
+- RCC is now configured to put the holotree contents in a location shared by multiple users (which allows
+  for the import of pre-created environments from a .zip file).
 - The base environment created for the extension bootstrap is now imported from a base environment downloaded from .zip
   (which is *much* faster).
 
