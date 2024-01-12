@@ -1,4 +1,4 @@
-New in 1.14.1 (2024-01-11)
+New in 1.14.2 (2024-01-12)
 -----------------------------
 
 - Several improvements to the Robocorp Inspector
