@@ -510,9 +510,11 @@ class InspectorApi(PythonLanguageServer):
 
     @property
     def _windows_inspector_thread(self):
+        from sys import platform
+
         # Lazily-initialize
         ret = self.__windows_inspector_thread
-        if ret is None:
+        if ret is None and platform == "win32":
             self.__windows_inspector_thread = _WindowsInspectorThread(self._endpoint)
             self.__windows_inspector_thread.start()
 
@@ -547,6 +549,12 @@ class InspectorApi(PythonLanguageServer):
     def _enqueue_windows(
         self, cmd: _WindowsBaseCommand, wait: bool = True
     ) -> ActionResultDict:
+        if self.__windows_inspector_thread is None:
+            return {
+                "success": False,
+                "message": "Windows Thread not initialized",
+                "result": None,
+            }
         self._windows_inspector_thread.queue.put(cmd)
         if wait:
             try:

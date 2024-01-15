@@ -9,7 +9,7 @@ from .protocols import Locator
 
 
 def restrict_to_window_locators(
-    or_search_params: Tuple[OrSearchParams, ...]
+    or_search_params: Tuple[OrSearchParams, ...],
 ) -> Tuple[OrSearchParams, ...]:
     last_part: OrSearchParams = or_search_params[-1]
     also_add_as_pane = []
@@ -73,6 +73,13 @@ def find_window(
             timeout=timeout,
         )
         window_element = WindowElement(element)
+
+        # trigger app
+        ptt = window_element.ui_automation_control.GetLegacyIAccessiblePattern()
+        ptt.DoDefaultAction()
+        ptt.GetIAccessible()
+
+        # check foreground
         if foreground:
             window_element.foreground_window(move_cursor_to_center)
         if wait_time:
