@@ -74,10 +74,16 @@ def find_window(
         )
         window_element = WindowElement(element)
 
-        # trigger app
-        ptt = window_element.ui_automation_control.GetLegacyIAccessiblePattern()
-        ptt.DoDefaultAction()
-        ptt.GetIAccessible()
+        print(">>>>> Trying to activate the legacy pattern!")
+        try:
+            # trigger app
+            ptt = window_element.ui_automation_control.GetLegacyIAccessiblePattern()
+            ptt.DoDefaultAction()
+            ptt.GetIAccessible()
+        except Exception as e:
+            print(">>>>> !!! Exception occurred as trying to activate legacy:", e)
+
+        print(">>>>> Everything went well with activating the legacy!")
 
         # check foreground
         if foreground:
