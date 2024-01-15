@@ -510,11 +510,9 @@ class InspectorApi(PythonLanguageServer):
 
     @property
     def _windows_inspector_thread(self):
-        import sys
-
         # Lazily-initialize
         ret = self.__windows_inspector_thread
-        if ret is None and sys.platform.startswith("win32"):
+        if ret is None:
             self.__windows_inspector_thread = _WindowsInspectorThread(self._endpoint)
             self.__windows_inspector_thread.start()
 
