@@ -547,12 +547,6 @@ class InspectorApi(PythonLanguageServer):
     def _enqueue_windows(
         self, cmd: _WindowsBaseCommand, wait: bool = True
     ) -> ActionResultDict:
-        if self.__windows_inspector_thread is None:
-            return {
-                "success": False,
-                "message": "Windows Thread not initialized",
-                "result": None,
-            }
         self._windows_inspector_thread.queue.put(cmd)
         if wait:
             try:
