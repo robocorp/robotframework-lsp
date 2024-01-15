@@ -76,10 +76,58 @@ def find_window(
 
         print(">>>>> Trying to activate the legacy pattern!")
         try:
-            # trigger app
-            ptt = window_element.ui_automation_control.GetLegacyIAccessiblePattern()
-            ptt.DoDefaultAction()
-            ptt.GetIAccessible()
+            import ctypes
+            import comtypes
+            from comtypes import IUnknown, GUID
+            from comtypes.client import GetBestInterface, CreateObject
+
+            # Define necessary structures and constants
+            ACCESSIBLE_OBJECT_ID = 0xFFFFFFFC
+            IID_IAccessible2 = GUID("{E89F726E-C4F4-4c19-BB19-B647D7FA8478}")
+
+            # Define the necessary interfaces
+            class IAccessible(IUnknown):
+                _iid_ = GUID("{618736e0-3c3d-11cf-810c-00aa00389b71}")
+
+            class IServiceProvider(IUnknown):
+                _iid_ = GUID("{6d5140c1-7436-11ce-8034-00aa006009fa}")
+
+            # Function to get IAccessible2 interface
+            def get_IAccessible2(acc):
+                try:
+                    service_provider = GetBestInterface(acc, IServiceProvider)
+                    return GetBestInterface(service_provider, IID_IAccessible2)
+                except Exception:
+                    return None
+
+            # Function to get IAccessible from window handle
+            def get_IAccessible_from_window(hwnd):
+                acc = CreateObject(
+                    "{618736e0-3c3d-11cf-810c-00aa00389b71}", None, None, IAccessible
+                )
+                ptr_acc_obj = ctypes.windll.oleacc.AccessibleObjectFromWindow(
+                    hwnd,
+                    ACCESSIBLE_OBJECT_ID,
+                    ctypes.byref(IAccessible._iid_),
+                    ctypes.byref(acc),
+                )
+                return GetBestInterface(ptr_acc_obj, IAccessible)
+
+            # Main function to get IAccessible2 from process ID
+            def get_IAccessible2_from_pid(pid):
+                try:
+                    proc = ctypes.windll.kernel32.OpenProcess(1, False, pid)
+                    hwnd = ctypes.windll.user32.GetTopWindow(proc)
+
+                    acc = get_IAccessible_from_window(hwnd)
+                    if acc:
+                        acc2 = get_IAccessible2(acc)
+                        return acc2
+                finally:
+                    ctypes.windll.kernel32.CloseHandle(proc)
+
+            get_IAccessible2_from_pid(window_element.pid)
+
         except Exception as e:
             print(">>>>> !!! Exception occurred as trying to activate legacy:", e)
 
