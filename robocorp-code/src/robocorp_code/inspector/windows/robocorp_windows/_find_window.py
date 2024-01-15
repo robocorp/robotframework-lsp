@@ -74,7 +74,12 @@ def find_window(
         )
         window_element = WindowElement(element)
 
-        print(">>>>> Trying to activate the legacy pattern!")
+        from robocorp_ls_core.robotframework_log import get_logger
+
+        log = get_logger(__name__)
+
+        log.info(">>>>> Trying to activate the legacy pattern!")
+
         try:
             import ctypes
             import comtypes
@@ -95,43 +100,67 @@ def find_window(
             # Function to get IAccessible2 interface
             def get_IAccessible2(acc):
                 try:
+                    log.info(
+                        ">>>>> get_IAccessible2 - Trying to get the interface from the service provider..."
+                    )
                     service_provider = GetBestInterface(acc, IServiceProvider)
-                    return GetBestInterface(service_provider, IID_IAccessible2)
+                    log.info(
+                        ">>>>> get_IAccessible2 - Service provider:", service_provider
+                    )
+                    intf = GetBestInterface(service_provider, IID_IAccessible2)
+                    log.info(">>>>> get_IAccessible2 - Interface:", intf)
+                    return intf
                 except Exception:
                     return None
 
             # Function to get IAccessible from window handle
             def get_IAccessible_from_window(hwnd):
+                log.info(">>>>> get_IAccessible_from_window - hwnd:", hwnd)
                 acc = CreateObject(
                     "{618736e0-3c3d-11cf-810c-00aa00389b71}", None, None, IAccessible
                 )
+                log.info(">>>>> get_IAccessible_from_window - acc object:", acc)
                 ptr_acc_obj = ctypes.windll.oleacc.AccessibleObjectFromWindow(
                     hwnd,
                     ACCESSIBLE_OBJECT_ID,
                     ctypes.byref(IAccessible._iid_),
                     ctypes.byref(acc),
                 )
-                return GetBestInterface(ptr_acc_obj, IAccessible)
+                log.info(
+                    ">>>>> get_IAccessible_from_window - ptr_acc_obj object:",
+                    ptr_acc_obj,
+                )
+                intf = GetBestInterface(ptr_acc_obj, IAccessible)
+                log.info(">>>>> get_IAccessible_from_window - intf object:", intf)
+                return intf
 
             # Main function to get IAccessible2 from process ID
             def get_IAccessible2_from_pid(pid):
                 try:
+                    log.info(">>>>> get_IAccessible2_from_pid - pid:", pid)
+                    log.info(">>>>> get_IAccessible2_from_pid - opening process:", pid)
                     proc = ctypes.windll.kernel32.OpenProcess(1, False, pid)
+                    log.info(
+                        ">>>>> get_IAccessible2_from_pid - getting top window:", proc
+                    )
                     hwnd = ctypes.windll.user32.GetTopWindow(proc)
-
+                    log.info(">>>>> get_IAccessible2_from_pid - hwnd:", hwnd)
                     acc = get_IAccessible_from_window(hwnd)
+                    log.info(">>>>> get_IAccessible2_from_pid - result acc:", acc)
                     if acc:
                         acc2 = get_IAccessible2(acc)
+                        log.info(">>>>> get_IAccessible2_from_pid - result acc2:", acc)
                         return acc2
                 finally:
+                    log.info(">>>>> get_IAccessible2_from_pid - CloseHandle:")
                     ctypes.windll.kernel32.CloseHandle(proc)
 
             get_IAccessible2_from_pid(window_element.pid)
 
         except Exception as e:
-            print(">>>>> !!! Exception occurred as trying to activate legacy:", e)
+            log.error(">>>>> !!! Exception occurred as trying to activate legacy:", e)
 
-        print(">>>>> Everything went well with activating the legacy!")
+        log.info(">>>>> All is well!")
 
         # check foreground
         if foreground:
