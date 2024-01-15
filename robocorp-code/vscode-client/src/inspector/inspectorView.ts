@@ -259,6 +259,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                         } else if (command["type"] === "getAppWindows") {
                             OUTPUT_CHANNEL.appendLine(`> Requesting: Get Apps: ${JSON.stringify(command)}`);
                             const actionResult: ActionResult<any> = await sendRequest("windowsInspectorListWindows");
+                            OUTPUT_CHANNEL.appendLine(`> Result: Get Apps: ${JSON.stringify(actionResult)}`);
                             panel.webview.postMessage(
                                 buildProtocolResponseFromActionResponse(message, actionResult.result, "winApps")
                             );
@@ -268,6 +269,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                                 "windowsInspectorSetWindowLocator",
                                 { locator: `handle:${command["handle"]}` }
                             );
+                            OUTPUT_CHANNEL.appendLine(`> Result: Set Selected App: ${JSON.stringify(actionResult)}`);
                             panel.webview.postMessage(
                                 buildProtocolResponseFromActionResponse(message, actionResult.result)
                             );
@@ -278,6 +280,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                                 search_depth: command["depth"] || 8,
                                 search_strategy: command["strategy"] || "all",
                             });
+                            OUTPUT_CHANNEL.appendLine(`> Result: Collect App Tree: ${JSON.stringify(actionResult)}`);
                             panel.webview.postMessage(
                                 buildProtocolResponseFromActionResponse(message, actionResult.result, "winAppTree")
                             );
@@ -288,6 +291,9 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                             const actionResult: ActionResult<any> = await sendRequest("windowsInspectorParseLocator", {
                                 locator: command["locator"],
                             });
+                            OUTPUT_CHANNEL.appendLine(
+                                `> Result: Validate Locator Syntax: ${JSON.stringify(actionResult)}`
+                            );
                             panel.webview.postMessage(
                                 buildProtocolResponseFromActionResponse(message, actionResult.result, "locator")
                             );
@@ -301,12 +307,14 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                                     search_strategy: command["strategy"] || "all",
                                 }
                             );
+                            OUTPUT_CHANNEL.appendLine(`> Result: Start Highlighting: ${JSON.stringify(actionResult)}`);
                             panel.webview.postMessage(
                                 buildProtocolResponseFromActionResponse(message, actionResult.result, "locator")
                             );
                         } else if (command["type"] === "stopHighlighting") {
                             OUTPUT_CHANNEL.appendLine(`> Requesting: Stop Highlighting: ${JSON.stringify(command)}`);
                             const actionResult: ActionResult<any> = await sendRequest("windowsInspectorStopHighlight");
+                            OUTPUT_CHANNEL.appendLine(`> Result: Stop Highlighting: ${JSON.stringify(actionResult)}`);
                             panel.webview.postMessage(
                                 buildProtocolResponseFromActionResponse(message, actionResult.result, "locator")
                             );
