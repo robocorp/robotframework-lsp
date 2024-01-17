@@ -97,32 +97,16 @@ def find_window(
             class IServiceProvider(IUnknown):
                 _iid_ = GUID("{6d5140c1-7436-11ce-8034-00aa006009fa}")
 
-            # Function to get IAccessible2 interface
-            def get_IAccessible2(acc):
-                try:
-                    log.info(
-                        ">>>>> get_IAccessible2 - Trying to get the interface from the service provider..."
-                    )
-                    service_provider = GetBestInterface(acc, IServiceProvider)
-                    log.info(
-                        ">>>>> get_IAccessible2 - Service provider:", service_provider
-                    )
-                    intf = GetBestInterface(service_provider, IID_IAccessible2)
-                    log.info(">>>>> get_IAccessible2 - Interface:", intf)
-                    return intf
-                except Exception:
-                    return None
-
             # Function to get IAccessible from window handle
             def get_IAccessible_from_window(hwnd):
-                log.info(">>>>> get_IAccessible_from_window - hwnd:", hwnd)
+                log.info(">>>>> _from_window - hwnd:", hwnd)
                 # log.info(">>>>> get_IAccessible_from_window - creating obj...")
                 # acc = CreateObject(
                 #     GUID("{618736e0-3c3d-11cf-810c-00aa00389b71}"),
                 #     interface=IAccessible,
                 # )
                 # log.info(">>>>> get_IAccessible_from_window - acc object:", acc)
-                log.info(">>>>> get_IAccessible_from_window - accessing window...")
+                log.info(">>>>> _from_window - accessing window...")
                 ptr_acc_obj = ctypes.windll.oleacc.AccessibleObjectFromWindow(
                     hwnd,
                     ACCESSIBLE_OBJECT_ID,
@@ -130,11 +114,21 @@ def find_window(
                     ctypes.byref(IAccessible._iid_),
                 )
                 log.info(
-                    ">>>>> get_IAccessible_from_window - ptr_acc_obj object:",
+                    ">>>>> _from_window - ptr_acc_obj object:",
                     ptr_acc_obj,
                 )
-                intf = GetBestInterface(ptr_acc_obj, IAccessible)
-                log.info(">>>>> get_IAccessible_from_window - intf object:", intf)
+                intf = GetBestInterface(ptr_acc_obj)
+                log.info(">>>>> _from_window - intf object:", intf)
+
+                if intf:
+                    log.info(">>>>> _from_window - query interface: service provider")
+                    service_provider = intf.QueryInterface(IServiceProvider)
+                    # service_provider = GetBestInterface(acc, IServiceProvider)
+                    log.info(">>>>> _from_window - service provider:", service_provider)
+                    # intf = GetBestInterface(IID_IAccessible2)
+                    # log.info(">>>>> _from_window - Interface:", intf)
+                else:
+                    log.info(">>>>> _from_window - intf is None")
                 return intf
 
             # Main function to get IAccessible2 from process ID
@@ -148,12 +142,7 @@ def find_window(
                     )
                     hwnd = ctypes.windll.user32.GetTopWindow(proc)
                     log.info(">>>>> get_IAccessible2_from_pid - hwnd:", hwnd)
-                    acc = get_IAccessible_from_window(hwnd)
-                    log.info(">>>>> get_IAccessible2_from_pid - result acc:", acc)
-                    if acc:
-                        acc2 = get_IAccessible2(acc)
-                        log.info(">>>>> get_IAccessible2_from_pid - result acc2:", acc)
-                        return acc2
+                    get_IAccessible_from_window(hwnd)
                 finally:
                     log.info(">>>>> get_IAccessible2_from_pid - CloseHandle:")
                     ctypes.windll.kernel32.CloseHandle(proc)
