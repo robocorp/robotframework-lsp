@@ -116,17 +116,18 @@ def find_window(
             # Function to get IAccessible from window handle
             def get_IAccessible_from_window(hwnd):
                 log.info(">>>>> get_IAccessible_from_window - hwnd:", hwnd)
-                log.info(">>>>> get_IAccessible_from_window - creating obj...")
-                acc = CreateObject(
-                    GUID("{618736e0-3c3d-11cf-810c-00aa00389b71}"),
-                    interface=IAccessible,
-                )
-                log.info(">>>>> get_IAccessible_from_window - acc object:", acc)
+                # log.info(">>>>> get_IAccessible_from_window - creating obj...")
+                # acc = CreateObject(
+                #     GUID("{618736e0-3c3d-11cf-810c-00aa00389b71}"),
+                #     interface=IAccessible,
+                # )
+                # log.info(">>>>> get_IAccessible_from_window - acc object:", acc)
+                log.info(">>>>> get_IAccessible_from_window - accessing window...")
                 ptr_acc_obj = ctypes.windll.oleacc.AccessibleObjectFromWindow(
                     hwnd,
                     ACCESSIBLE_OBJECT_ID,
                     ctypes.byref(IAccessible._iid_),
-                    ctypes.byref(acc),
+                    ctypes.byref(IAccessible._iid_),
                 )
                 log.info(
                     ">>>>> get_IAccessible_from_window - ptr_acc_obj object:",
