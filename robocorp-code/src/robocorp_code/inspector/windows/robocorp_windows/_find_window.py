@@ -88,11 +88,13 @@ def find_window(
 
             # Define necessary structures and constants
             ACCESSIBLE_OBJECT_ID = 0xFFFFFFFC
-            IID_IAccessible2 = GUID("{E89F726E-C4F4-4c19-BB19-B647D7FA8478}")
 
             # Define the necessary interfaces
             class IAccessible(IUnknown):
                 _iid_ = GUID("{618736e0-3c3d-11cf-810c-00aa00389b71}")
+
+            class IAccessible2(IUnknown):
+                _iid_ = GUID("{E89F726E-C4F4-4c19-BB19-B647D7FA8478}")
 
             class IServiceProvider(IUnknown):
                 _iid_ = GUID("{6d5140c1-7436-11ce-8034-00aa006009fa}")
@@ -101,17 +103,17 @@ def find_window(
             def get_IAccessible_from_window(hwnd):
                 log.info(">>>>> _from_window - hwnd:", hwnd)
                 # log.info(">>>>> get_IAccessible_from_window - creating obj...")
-                # acc = CreateObject(
-                #     GUID("{618736e0-3c3d-11cf-810c-00aa00389b71}"),
-                #     interface=IAccessible,
-                # )
+                acc = CreateObject(
+                    IAccessible._iid_,
+                    interface=IAccessible,
+                )
                 # log.info(">>>>> get_IAccessible_from_window - acc object:", acc)
                 log.info(">>>>> _from_window - accessing window...")
                 ptr_acc_obj = ctypes.windll.oleacc.AccessibleObjectFromWindow(
                     hwnd,
                     ACCESSIBLE_OBJECT_ID,
                     ctypes.byref(IAccessible._iid_),
-                    ctypes.byref(IAccessible._iid_),
+                    ctypes.byref(acc),
                 )
                 log.info(
                     ">>>>> _from_window - ptr_acc_obj object:",
@@ -148,6 +150,7 @@ def find_window(
                     ctypes.windll.kernel32.CloseHandle(proc)
 
             get_IAccessible2_from_pid(window_element.pid)
+            window_element.n
 
         except Exception as e:
             log.error(">>>>> !!! Exception occurred as trying to activate legacy:", e)
