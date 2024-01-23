@@ -605,7 +605,7 @@ def get_conda_config_path(
 
     conda_config_path = parent / conda_config
     if not conda_config_path.exists():
-        log.critical("conda.yaml does not exist in %s", conda_config_path)
+        log.critical(f"{conda_config} (defined from condaConfigFile) does not exist in %s", conda_config_path)
         return None
 
     return conda_config_path

@@ -224,7 +224,7 @@ class LaunchProcess(object):
             )
             if not conda_yaml_path:
                 return mark_invalid(
-                    f"Unable to resolve conda.yaml related to {robot_yaml}"
+                    f"Unable to resolve `condaConfigFile` related to {robot_yaml}"
                 )
 
             try:

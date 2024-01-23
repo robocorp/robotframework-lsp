@@ -111,7 +111,7 @@ class Analyzer:
     ):
         """
         Args:
-            contents: The contents of the conda.yaml.
+            contents: The contents of the conda.yaml/action-server.yaml.
             path: The path for the conda yaml.
         """
         from ._conda_deps import CondaDeps

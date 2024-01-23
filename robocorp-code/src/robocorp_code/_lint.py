@@ -134,9 +134,9 @@ class _CurrLintInfo(BaseLintInfo):
         is_saved = self.is_saved
         doc_uri = self.doc_uri
 
-        if doc_uri.endswith("conda.yaml") or doc_uri.endswith("robot.yaml"):
+        if doc_uri.endswith(("conda.yaml", "action-server.yaml")) or doc_uri.endswith("robot.yaml"):
             robot_yaml_fs_path = uris.to_fs_path(doc_uri)
-            if robot_yaml_fs_path.endswith("conda.yaml"):
+            if robot_yaml_fs_path.endswith(("conda.yaml", "action-server.yaml")):
                 p = os.path.dirname(robot_yaml_fs_path)
                 for _ in range(3):
                     target = os.path.join(p, "robot.yaml")
@@ -167,7 +167,7 @@ class _CurrLintInfo(BaseLintInfo):
             found = []
             # Ok, we started collecting RCC diagnostics in a thread. We
             # can now also collect other diagnostics here.
-            if doc_uri.endswith("conda.yaml"):
+            if doc_uri.endswith(("conda.yaml", "action-server.yaml")):
                 if robocorp_language_server is not None:
                     ws = robocorp_language_server.workspace
                     if ws is not None:
