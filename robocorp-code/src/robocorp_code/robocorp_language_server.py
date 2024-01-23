@@ -1152,7 +1152,7 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
             return require_monitor(
                 partial(self._hover_on_locators_json, doc_uri, line, col)
             )
-        if fspath.endswith(("conda.yaml", 'action-server.yaml')):
+        if fspath.endswith(("conda.yaml", "action-server.yaml")):
             return require_monitor(
                 partial(self._hover_on_conda_yaml, doc_uri, line, col)
             )

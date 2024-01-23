@@ -291,13 +291,13 @@
         "commands": [
             {
                 "command": "robocorp.createRobot",
-                "title": "Create Robot",
+                "title": "Create Task Package (Robot)",
                 "category": "Robocorp",
                 "icon": "$(add)"
             },
             {
                 "command": "robocorp.uploadRobotToCloud",
-                "title": "Upload Robot to the Control Room",
+                "title": "Upload Task Package (Robot) to Control Room",
                 "category": "Robocorp"
             },
             {
@@ -308,12 +308,12 @@
             },
             {
                 "command": "robocorp.runRobotRcc",
-                "title": "Run Robot",
+                "title": "Run Task Package (Robot)",
                 "category": "Robocorp"
             },
             {
                 "command": "robocorp.debugRobotRcc",
-                "title": "Debug Robot",
+                "title": "Debug Task Package (Robot)",
                 "category": "Robocorp"
             },
             {
@@ -365,7 +365,7 @@
             },
             {
                 "command": "robocorp.refreshRobotsView",
-                "title": "Refresh Robots view",
+                "title": "Refresh Task Packages (Robots) view",
                 "category": "Robocorp",
                 "icon": {
                     "light": "images/light/refresh.svg",
@@ -374,7 +374,7 @@
             },
             {
                 "command": "robocorp.refreshRobotContentView",
-                "title": "Refresh Robot Content view",
+                "title": "Refresh Task Package (Robot) Content view",
                 "category": "Robocorp",
                 "icon": {
                     "light": "images/light/refresh.svg",
@@ -482,7 +482,7 @@
             },
             {
                 "command": "robocorp.openRobotTreeSelection",
-                "title": "Configure Robot (robot.yaml)",
+                "title": "Configure Task Package (Robot) (robot.yaml)",
                 "category": "Robocorp",
                 "icon": "$(go-to-file)"
             },
@@ -518,13 +518,13 @@
             },
             {
                 "command": "robocorp.cloudUploadRobotTreeSelection",
-                "title": "Upload Robot to Control Room",
+                "title": "Upload Task Package (Robot) to Control Room",
                 "category": "Robocorp",
                 "icon": "$(cloud-upload)"
             },
             {
                 "command": "robocorp.rccTerminalCreateRobotTreeSelection",
-                "title": "Open terminal with Robot environment",
+                "title": "Open terminal with Task Package (Robot) environment",
                 "category": "Robocorp",
                 "icon": "$(terminal)"
             },
@@ -565,28 +565,28 @@
             },
             {
                 "command": "robocorp.configuration.diagnostics.internal",
-                "title": "Robot Configuration Diagnostics (internal)",
+                "title": "Task Package (Robot) Configuration Diagnostics (internal)",
                 "category": "Robocorp"
             },
             {
                 "command": "robocorp.configuration.diagnostics",
-                "title": "Robot Configuration Diagnostics",
+                "title": "Task Package (Robot) Configuration Diagnostics",
                 "category": "Robocorp"
             },
             {
                 "command": "robocorp.rccTerminalNew",
-                "title": "Terminal with Robot environment",
+                "title": "Terminal with Task Package (Robot) environment",
                 "category": "Robocorp",
                 "icon": "$(terminal)"
             },
             {
                 "command": "robocorp.listWorkItems.internal",
-                "title": "Lists the work items available for a Robot",
+                "title": "Lists the work items available for a Task Package (Robot)",
                 "category": "Robocorp"
             },
             {
                 "command": "robocorp.updateLaunchEnv",
-                "title": "Updates the environment variables used for some launch (given a Robot)",
+                "title": "Updates the environment variables used for some launch (given a Task Package (Robot))",
                 "category": "Robocorp"
             },
             {
@@ -668,7 +668,7 @@
             },
             {
                 "command": "robocorp.convertProject",
-                "title": "Conversion Accelerator from third party RPA to Robocorp Robot",
+                "title": "Conversion Accelerator from third party RPA to Robocorp Task Package (Robot)",
                 "category": "Robocorp"
             },
             {

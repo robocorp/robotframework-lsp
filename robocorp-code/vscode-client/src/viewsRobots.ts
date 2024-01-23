@@ -206,7 +206,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
             if (element.type === RobotEntryType.ActionsInRobot) {
                 return [
                     {
-                        "label": "Upload Task to Control Room",
+                        "label": "Upload Task Package to Control Room",
                         "uri": element.uri,
                         "robot": element.robot,
                         "iconPath": "cloud-upload",
@@ -214,7 +214,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                         "parent": element,
                     },
                     {
-                        "label": "Open Task Terminal",
+                        "label": "Open Task Package Terminal",
                         "uri": element.uri,
                         "robot": element.robot,
                         "iconPath": "terminal",

@@ -134,7 +134,9 @@ class _CurrLintInfo(BaseLintInfo):
         is_saved = self.is_saved
         doc_uri = self.doc_uri
 
-        if doc_uri.endswith(("conda.yaml", "action-server.yaml")) or doc_uri.endswith("robot.yaml"):
+        if doc_uri.endswith(("conda.yaml", "action-server.yaml")) or doc_uri.endswith(
+            "robot.yaml"
+        ):
             robot_yaml_fs_path = uris.to_fs_path(doc_uri)
             if robot_yaml_fs_path.endswith(("conda.yaml", "action-server.yaml")):
                 p = os.path.dirname(robot_yaml_fs_path)

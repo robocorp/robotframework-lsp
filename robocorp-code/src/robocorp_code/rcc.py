@@ -890,7 +890,7 @@ class Rcc(object):
         broken_action_result = self.broken_conda_configs.get(
             formatted_conda_yaml_contents
         )
-        
+
         if broken_action_result is not None:
             msg = f"Environment from previously broken {conda_yaml_path.name} requested: {conda_yaml_path}.\n-- VSCode restart required to retry."
             log.critical(msg)

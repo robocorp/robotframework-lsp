@@ -69,27 +69,27 @@ COMMANDS = [
     # and the proceeds to ask for the server for the actual implementation.
     Command(
         "robocorp.createRobot",
-        "Create Robot",
+        "Create Task Package (Robot)",
         server_handled=False,
         icon="$(add)",
     ),
     # Internal commands for robocorp.createRobot.
     Command(
         "robocorp.listRobotTemplates.internal",
-        "Provides a list with the available robot templates",
+        "Provides a list with the available Task Package (Robot) templates",
         add_to_package_json=False,
         server_handled=True,
     ),
     Command(
         "robocorp.createRobot.internal",
-        "Actually calls rcc to create the robot",
+        "Actually calls rcc to create the Task Package (Robot)",
         add_to_package_json=False,
         server_handled=True,
     ),
     # Started from the client due to needing UI actions.
     Command(
         "robocorp.uploadRobotToCloud",
-        "Upload Robot to the Control Room",
+        "Upload Task Package (Robot) to Control Room",
         add_to_package_json=True,
         server_handled=False,
     ),
@@ -132,13 +132,13 @@ COMMANDS = [
     ),
     Command(
         "robocorp.uploadToNewRobot.internal",
-        "Uploads a Robot as a new Robot in the Control Room",
+        "Uploads a Task Package (Robot) as a new Task Package (Robot) in the Control Room",
         add_to_package_json=False,
         server_handled=True,
     ),
     Command(
         "robocorp.uploadToExistingRobot.internal",
-        "Uploads a Robot as an existing Robot in the Control Room",
+        "Uploads a Task Package (Robot) as an existing Task Package (Robot) in the Control Room",
         add_to_package_json=False,
         server_handled=True,
     ),
@@ -150,13 +150,13 @@ COMMANDS = [
     ),
     Command(
         "robocorp.runRobotRcc",
-        "Run Robot",
+        "Run Task Package (Robot)",
         add_to_package_json=True,
         server_handled=False,
     ),
     Command(
         "robocorp.debugRobotRcc",
-        "Debug Robot",
+        "Debug Task Package (Robot)",
         add_to_package_json=True,
         server_handled=False,
     ),
@@ -206,7 +206,7 @@ COMMANDS = [
     ),
     Command(
         "robocorp.computeRobotLaunchFromRobocorpCodeLaunch",
-        "Computes a robot launch debug configuration based on the robocorp code launch debug configuration",
+        "Computes a Task Package (Robot) launch debug configuration based on the robocorp code launch debug configuration",
         add_to_package_json=False,
         server_handled=True,
     ),
@@ -237,14 +237,14 @@ COMMANDS = [
     ),
     Command(
         "robocorp.refreshRobotsView",
-        "Refresh Robots view",
+        "Refresh Task Packages (Robots) view",
         add_to_package_json=True,
         server_handled=False,
         icon={"light": "images/light/refresh.svg", "dark": "images/dark/refresh.svg"},
     ),
     Command(
         "robocorp.refreshRobotContentView",
-        "Refresh Robot Content view",
+        "Refresh Task Package (Robot) Content view",
         add_to_package_json=True,
         server_handled=False,
         icon={"light": "images/light/refresh.svg", "dark": "images/dark/refresh.svg"},
@@ -381,7 +381,7 @@ COMMANDS = [
     ),
     Command(
         "robocorp.openRobotTreeSelection",
-        "Configure Robot (robot.yaml)",
+        "Configure Task Package (Robot) (robot.yaml)",
         add_to_package_json=True,
         server_handled=False,
         hide_from_command_palette=True,
@@ -429,7 +429,7 @@ COMMANDS = [
     ),
     Command(
         "robocorp.cloudUploadRobotTreeSelection",
-        "Upload Robot to Control Room",
+        "Upload Task Package (Robot) to Control Room",
         add_to_package_json=True,
         server_handled=False,
         hide_from_command_palette=True,
@@ -437,7 +437,7 @@ COMMANDS = [
     ),
     Command(
         "robocorp.rccTerminalCreateRobotTreeSelection",
-        "Open terminal with Robot environment",
+        "Open terminal with Task Package (Robot) environment",
         add_to_package_json=True,
         server_handled=False,
         hide_from_command_palette=True,
@@ -489,30 +489,30 @@ COMMANDS = [
     ),
     Command(
         "robocorp.configuration.diagnostics.internal",
-        "Robot Configuration Diagnostics (internal)",
+        "Task Package (Robot) Configuration Diagnostics (internal)",
         server_handled=True,
         hide_from_command_palette=True,
     ),
     Command(
         "robocorp.configuration.diagnostics",
-        "Robot Configuration Diagnostics",
+        "Task Package (Robot) Configuration Diagnostics",
         server_handled=False,
     ),
     Command(
         "robocorp.rccTerminalNew",
-        "Terminal with Robot environment",
+        "Terminal with Task Package (Robot) environment",
         server_handled=False,
         icon="$(terminal)",
     ),
     Command(
         "robocorp.listWorkItems.internal",
-        "Lists the work items available for a Robot",
+        "Lists the work items available for a Task Package (Robot)",
         server_handled=True,
         hide_from_command_palette=True,
     ),
     Command(
         "robocorp.updateLaunchEnv",
-        "Updates the environment variables used for some launch (given a Robot)",
+        "Updates the environment variables used for some launch (given a Task Package (Robot))",
         server_handled=False,
         hide_from_command_palette=True,
     ),
@@ -625,7 +625,7 @@ COMMANDS = [
     ),
     Command(
         "robocorp.convertProject",
-        "Conversion Accelerator from third party RPA to Robocorp Robot",
+        "Conversion Accelerator from third party RPA to Robocorp Task Package (Robot)",
         add_to_package_json=True,
         server_handled=False,
         hide_from_command_palette=False,
