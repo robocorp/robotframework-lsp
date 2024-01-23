@@ -600,7 +600,10 @@ def get_conda_config_path(
     conda_config = yaml_contents.get("condaConfigFile")
 
     if not conda_config:
-        log.critical("Could not find condaConfigFile in %s", robot_yaml)
+        log.critical(
+            "Dif not find env match in environmentConfigs/condaConfigFile in %s",
+            robot_yaml,
+        )
         return None
 
     conda_config_path = parent / conda_config

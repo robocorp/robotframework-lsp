@@ -21,14 +21,14 @@ jobs:
       fail-fast: false
       matrix:
         name: [
-          "windows-py37-pip-v3",
+          "windows-py39-pip-v3",
 #           "ubuntu-py38-master", TODO: Reenable when RF fixes https://github.com/robotframework/robotframework/issues/4607
           "ubuntu-py38-pip-v4",
         ]
         
         include:
-          - name: "windows-py37-pip-v3"
-            python: "3.7"
+          - name: "windows-py39-pip-v3"
+            python: "3.9"
             os: windows-latest
 #           - name: "ubuntu-py38-master" TODO: Reenable when RF fixes https://github.com/robotframework/robotframework/issues/4607
 #             python: "3.8"

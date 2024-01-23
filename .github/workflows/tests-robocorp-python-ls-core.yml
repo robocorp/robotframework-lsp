@@ -20,14 +20,14 @@ jobs:
       fail-fast: false
       matrix:
         name: [
-          "windows-py37",
+          "windows-py311",
           "ubuntu-py39",
           "macos-py38"
         ]
         
         include:
-          - name: "windows-py37"
-            python: "3.7"
+          - name: "windows-py311"
+            python: "3.11"
             os: windows-latest
           - name: "ubuntu-py39"
             python: "3.9"

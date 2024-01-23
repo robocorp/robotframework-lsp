@@ -21,17 +21,17 @@ jobs:
       fail-fast: false
       matrix:
         name: [
-          "windows-py37-pip-v3",
+          "windows-py311-pip-v3",
           "ubuntu-py310-pip-v5",  # RF5 Must be with 3.10 due to a test using the `|` union operator.
           "ubuntu-py38-pip-v6",
           "ubuntu-py39-master",
 #           "ubuntu-pypy3-master",
-          "macos-py37",
+          "macos-py311",
         ]
         
         include:
-          - name: "windows-py37-pip-v3"
-            python: "3.7"
+          - name: "windows-py311-pip-v3"
+            python: "3.11"
             os: windows-latest
           - name: "ubuntu-py310-pip-v5"
             python: "3.10"
@@ -50,8 +50,8 @@ jobs:
 # See:
 # https://github.community/t5/GitHub-Actions/Jobs-on-Mac-OS-failing-on-Complete-Job/m-p/52401
 # https://github.community/t5/GitHub-Actions/Jobs-on-macOS-latest-sometimes-gets-cancelled-An-error-occurred/td-p/44124
-          - name: "macos-py37"
-            python: "3.7"
+          - name: "macos-py311"
+            python: "3.11"
             os: macos-latest
 
     steps:
