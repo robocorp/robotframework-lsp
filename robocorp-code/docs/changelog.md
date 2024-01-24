@@ -1,3 +1,9 @@
+New in 1.15.0 (2024-01-24)
+-----------------------------
+
+- Accept`action-server.yaml` for the action server environment bootstrap 
+  (still requires `robot.yaml` alongside it).
+
 New in 1.14.2 (2024-01-12)
 -----------------------------
 
