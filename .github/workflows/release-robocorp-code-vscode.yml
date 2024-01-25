@@ -54,12 +54,12 @@ jobs:
         name: robocorp-code-win32-x64.vsix
         path: ./robocorp-code/robocorp-code-win32-x64.vsix
     
-    - name: Publish pre-release to vscode marketplace
-      run: vsce publish --packagePath ./robocorp-code-win32-x64.vsix -p $VSCE_TOKEN
-      env:
-        VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+#     - name: Publish to vscode marketplace
+#       run: vsce publish --packagePath ./robocorp-code-win32-x64.vsix -p $VSCE_TOKEN
+#       env:
+#         VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
         
-    - name: Publish windows to open vsx marketplace 
+    - name: Publish to open vsx marketplace 
       run: npx ovsx publish robocorp-code-win32-x64.vsix -p $OPEN_VSX_TOKEN
       env:
         OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
