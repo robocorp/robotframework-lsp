@@ -59,10 +59,10 @@ jobs:
 #       env:
 #         VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
         
-    - name: Publish to open vsx marketplace 
-      run: npx ovsx publish robocorp-code-win32-x64.vsix -p $OPEN_VSX_TOKEN
-      env:
-        OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
+#     - name: Publish to open vsx marketplace 
+#       run: npx ovsx publish robocorp-code-win32-x64.vsix -p $OPEN_VSX_TOKEN
+#       env:
+#         OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
                 
     # Deal with Linux --------------
     - name: Download rcc for linux
@@ -75,15 +75,15 @@ jobs:
         name: robocorp-code-linux-x64.vsix
         path: ./robocorp-code/robocorp-code-linux-x64.vsix
     
-    - name: Publish pre-release to vscode marketplace
-      run: vsce publish --packagePath ./robocorp-code-linux-x64.vsix -p $VSCE_TOKEN
-      env:
-        VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
-        
-    - name: Publish linux to open vsx marketplace 
-      run: npx ovsx publish robocorp-code-linux-x64.vsix -p $OPEN_VSX_TOKEN
-      env:
-        OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
+#     - name: Publish pre-release to vscode marketplace
+#       run: vsce publish --packagePath ./robocorp-code-linux-x64.vsix -p $VSCE_TOKEN
+#       env:
+#         VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
+#         
+#     - name: Publish linux to open vsx marketplace 
+#       run: npx ovsx publish robocorp-code-linux-x64.vsix -p $OPEN_VSX_TOKEN
+#       env:
+#         OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
         
     # Deal with Darwin x64 --------------
     - name: Download rcc for darwin
