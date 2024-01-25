@@ -1,3 +1,9 @@
+New in 1.15.1 (2024-01-25)
+-----------------------------
+
+- Fixed issue where using `action-server.yaml` for the action server environment
+  didn't do the semantic checks done for `conda.yaml`.
+  
 New in 1.15.0 (2024-01-24)
 -----------------------------
 
