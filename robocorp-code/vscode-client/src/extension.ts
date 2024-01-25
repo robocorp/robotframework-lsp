@@ -170,6 +170,7 @@ const clientOptions: LanguageClientOptions = {
     documentSelector: [
         { language: "json", pattern: "**/locators.json" },
         { language: "yaml", pattern: "**/conda.yaml" },
+        { language: "yaml", pattern: "**/action-server.yaml" },
         { language: "yaml", pattern: "**/robot.yaml" },
 
         // Needed to detect tasks decorated with @task (from robocorp.tasks).
