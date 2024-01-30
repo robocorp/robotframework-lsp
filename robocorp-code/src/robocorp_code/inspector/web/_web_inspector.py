@@ -12,14 +12,15 @@ from robocorp_ls_core.callbacks import Callback
 from robocorp_ls_core.protocols import IEndPoint, TypedDict
 from robocorp_ls_core.robotframework_log import get_logger
 
+from robocorp_code.inspector.common import (
+    STATE_CLOSED,
+    STATE_INITIALIZING,
+    STATE_NOT_PICKING,
+    STATE_OPENED,
+    STATE_PICKING,
+)
+
 log = get_logger(__name__)
-
-
-STATE_BROWSER_INITIALIZING = "browserInitializing"
-STATE_BROWSER_OPENED = "browserOpened"
-STATE_BROWSER_CLOSED = "browserClosed"
-STATE_BROWSER_PICKING = "browserPicking"
-STATE_BROWSER_NOT_PICKING = "browserNotPicking"
 
 
 def _load_resource(name):
@@ -138,9 +139,7 @@ class WebInspector:
 
             endpoint = self._endpoint
             if endpoint is not None:
-                endpoint.notify(
-                    "$/webInspectorState", {"state": STATE_BROWSER_INITIALIZING}
-                )
+                endpoint.notify("$/webInspectorState", {"state": STATE_INITIALIZING})
 
             from robocorp_code.playwright import robocorp_browser
 
@@ -149,7 +148,7 @@ class WebInspector:
             self._page = page
 
             if endpoint is not None:
-                endpoint.notify("$/webInspectorState", {"state": STATE_BROWSER_OPENED})
+                endpoint.notify("$/webInspectorState", {"state": STATE_OPENED})
 
             weak_self = weakref.ref(self)
 
@@ -162,9 +161,7 @@ class WebInspector:
                     self._pick_async_code_evaluate_worked = False
 
                 if endpoint is not None:
-                    endpoint.notify(
-                        "$/webInspectorState", {"state": STATE_BROWSER_CLOSED}
-                    )
+                    endpoint.notify("$/webInspectorState", {"state": STATE_CLOSED})
 
             def mark_url_changed(*args, **kwargs):
                 if self._page_former_url == "":
@@ -324,7 +321,7 @@ class WebInspector:
 
         endpoint = self._endpoint
         if endpoint is not None:
-            endpoint.notify("$/webInspectorState", {"state": STATE_BROWSER_PICKING})
+            endpoint.notify("$/webInspectorState", {"state": STATE_PICKING})
 
         if len(self._on_picked) == 0:
             self._on_picked.register(on_picked)
@@ -373,7 +370,7 @@ class WebInspector:
 
         endpoint = self._endpoint
         if endpoint is not None:
-            endpoint.notify("$/webInspectorState", {"state": STATE_BROWSER_NOT_PICKING})
+            endpoint.notify("$/webInspectorState", {"state": STATE_NOT_PICKING})
 
         page = self.page(False)
         if page is not None:

@@ -3,10 +3,11 @@
  *! THIS FILE NEEDS TO ALWAYS MATCH THE SOURCE
  */
 
-export declare enum LocatorType {
+export const enum LocatorType {
     Browser = "browser",
     Windows = "windows",
     Image = "image",
+    Java = "java",
 }
 
 export type StrategyType = {
@@ -29,10 +30,6 @@ export type IFrameData = {
     isMain?: boolean;
     props?: { id?: string; name?: string; class?: string; title?: string };
 };
-
-/**
- * @interface LOCATORS
- */
 
 /**
  *
@@ -161,13 +158,24 @@ export interface ImageLocator {
      * @type {string}
      * @memberof ImageLocator
      */
-    value: string;
+    path: string;
     /**
      *
-     * @type {string}
+     * @type {number}
      * @memberof ImageLocator
      */
-    path?: string;
+    screenResolutionWidth?: number;
+    /**
+     *
+     * @type {number}
+     * @memberof ImageLocator
+     */
+    screenResolutionHeight?: number;
+    /**
+     *
+     * @type {number}
+     * @memberof ImageLocator
+     */
     /**
      *
      * @type {number}
@@ -179,7 +187,7 @@ export interface ImageLocator {
      * @type {string}
      * @memberof ImageLocator
      */
-    screenshot?: string;
+    screenshot: string;
     /**
      *
      * @type {string}
@@ -205,3 +213,4 @@ export declare type LocatorsMapWindows = {
 export declare type LocatorsArray = [string, Locator][];
 export declare type LocatorsArrayWindows = [string, WindowsLocator][];
 export declare type LocatorsArrayWeb = [string, BrowserLocator][];
+export declare type LocatorsArrayImage = [string, ImageLocator][];

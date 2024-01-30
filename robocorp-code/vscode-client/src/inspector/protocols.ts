@@ -15,9 +15,10 @@ export enum IApps {
     LOCATORS_MANAGER = "locatorsManager",
     WEB_INSPECTOR = "webInspector",
     WINDOWS_INSPECTOR = "windowsInspector",
+    IMAGE_INSPECTOR = "imageInspector",
 }
 
-export type IAppsType = IApps.LOCATORS_MANAGER | IApps.WEB_INSPECTOR | IApps.WINDOWS_INSPECTOR;
+export type IAppsType = IApps.LOCATORS_MANAGER | IApps.WEB_INSPECTOR | IApps.WINDOWS_INSPECTOR | IApps.IMAGE_INSPECTOR;
 
 export enum IAppRoutes {
     LOCATORS_MANAGER = "/locators-manager/",
@@ -53,18 +54,23 @@ export type IWindowsInspectorCommands =
     | { type: "stopHighlighting" }
     | { type: "validate"; locator: Locator };
 
+export type IImageInspectorCommands =
+    | { type: "startPicking"; minimize?: boolean; confidenceLevel?: number }
+    | { type: "stopPicking" }
+    | { type: "validate"; locator: Locator }
+    | { type: "saveImage"; imageBase64: string };
+
 // IResponseMessage - should be sent with an expectation of Response
 export interface IRequestMessage {
     id: string;
     type: IMessageType.REQUEST;
     app: IAppsType;
-    command: IManagerCommands | IWebInspectorCommands | IWindowsInspectorCommands;
+    command: IManagerCommands | IWebInspectorCommands | IWindowsInspectorCommands | IImageInspectorCommands;
 }
 
 // =====================================
 // RESPONSES
 // =====================================
-export type ResponseDataType = "locator" | "locatorsMap" | "winApps" | "winAppTree" | "locatorMatches";
 export type WindowsAppDetails = { executable: string; name: string; handle: string };
 export type WindowsAppsResponse = WindowsAppDetails[];
 export type WindowsAppElement = {
@@ -91,6 +97,16 @@ export type WindowsAppTreeResponse = {
     hierarchy: WindowsAppTree;
 };
 
+export type ImagePickResponse = {
+    screenshot: string;
+    screenResolutionWidth: number;
+    screenResolutionHeight: number;
+    screenPixelRatio: number;
+    matches: number;
+    confidence: number;
+};
+
+export type ResponseDataType = "locator" | "locatorsMap" | "winApps" | "winAppTree" | "locatorMatches" | "imagePath";
 // IResponseMessage - should respond to a Request
 export interface IResponseMessage {
     id: string;
@@ -115,15 +131,18 @@ export interface IResponseMessage {
         | {
               type: "locatorMatches";
               value: number;
+          }
+        | {
+              type: "imagePath";
+              value: string;
           };
 }
-// IResponseMessage - should be equidistant from Requests or Responses
-export type BrowserState =
-    | "browserInitializing"
-    | "browserOpened"
-    | "browserClosed"
-    | "browserPicking"
-    | "browserNotPicking";
+
+// =====================================
+// EVENTS
+// =====================================
+export type SuccessORFailure = "success" | "failure";
+export type ReportedStates = "initializing" | "opened" | "closed" | "picking" | "notPicking";
 
 export interface IEventMessage {
     id: string;
@@ -131,32 +150,51 @@ export interface IEventMessage {
     event:
         | {
               type: "gotoInspectorApp";
-              status: "success" | "failure";
+              status: SuccessORFailure;
               message?: string;
               data: IAppRoutes;
           }
         | {
               type: "browserState";
-              status: "success" | "failure";
-              data: BrowserState;
+              status: SuccessORFailure;
+              message?: string;
+              data: ReportedStates;
           }
         | {
               type: "pickedLocator";
-              status: "success" | "failure";
+              status: SuccessORFailure;
               message?: string;
               data: Locator;
           }
         | {
               type: "urlChange";
-              status: "success" | "failure";
+              status: SuccessORFailure;
               message?: string;
               data: string;
           }
         | {
               type: "pickedWinLocatorTree";
-              status: "success" | "failure";
+              status: SuccessORFailure;
               message?: string;
               data: WindowsAppTree;
+          }
+        | {
+              type: "pickedImageSnapshot";
+              status: SuccessORFailure;
+              message?: string;
+              data: ImagePickResponse;
+          }
+        | {
+              type: "pickedImageValidation";
+              status: SuccessORFailure;
+              message?: string;
+              data: number;
+          }
+        | {
+              type: "snippingToolState";
+              status: SuccessORFailure;
+              message?: string;
+              data: ReportedStates;
           };
 }
 export type IMessage = IRequestMessage | IResponseMessage | IEventMessage;

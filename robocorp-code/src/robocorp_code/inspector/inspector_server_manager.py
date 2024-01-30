@@ -122,10 +122,16 @@ class InspectorServerManager(object):
                     if method in (
                         "$/customProgress",
                         "window/showMessage",
+                        # web
                         "$/webPick",
                         "$/webInspectorState",
                         "$/webURLChange",
+                        # windows
                         "$/windowsPick",
+                        # image
+                        "$/imagePick",
+                        "$/imageValidation",
+                        "$/imageInspectorState",
                     ):
                         robocorp_code_language_server: Optional[
                             RobocorpLanguageServer

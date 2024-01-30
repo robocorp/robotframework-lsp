@@ -18,10 +18,11 @@ from robocorp_ls_core.ep_resolve_interpreter import (
 from robocorp_ls_core.pluginmanager import PluginManager
 from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
 
-from robocorp_code.inspector.web._web_inspector import (
-    STATE_BROWSER_CLOSED,
-    STATE_BROWSER_NOT_PICKING,
-    STATE_BROWSER_OPENED,
+from robocorp_code.inspector.common import (
+    STATE_PICKING,
+    STATE_CLOSED,
+    STATE_NOT_PICKING,
+    STATE_OPENED,
 )
 from robocorp_code.protocols import (
     ActionResult,
@@ -1163,7 +1164,9 @@ class LSAutoApiClient:
 
             def method(**kwargs):
                 ret = self.ls_client.request_sync(method_name, **kwargs)
-                result = ret["result"]
+                result = None
+                if ret is not None and isinstance(result, dict) and "result" in ret:
+                    result = ret.get("result", None)
                 if isinstance(result, dict):
                     # Deal with ActionResultDict.
                     success = result.get("success")
@@ -1236,8 +1239,6 @@ def test_web_inspector_integrated_state(
         RobocorpLanguageServerClient,
     )
 
-    from robocorp_code.inspector.web._web_inspector import STATE_BROWSER_PICKING
-
     cases.copy_to("robots", ws_root_path)
 
     ls_client: RobocorpLanguageServerClient = language_server_initialized
@@ -1260,29 +1261,29 @@ def test_web_inspector_integrated_state(
                 return True
         return False
 
-    wait_for_condition(lambda: check_messages(STATE_BROWSER_OPENED))
-    wait_for_condition(lambda: check_messages(STATE_BROWSER_PICKING))
+    wait_for_condition(lambda: check_messages(STATE_OPENED))
+    wait_for_condition(lambda: check_messages(STATE_PICKING))
     del messages[:]
 
     api_client.m_web_inspector_stop_pick()
-    wait_for_condition(lambda: check_messages(STATE_BROWSER_NOT_PICKING))
+    wait_for_condition(lambda: check_messages(STATE_NOT_PICKING))
     del messages[:]
 
     api_client.m_web_inspector_start_pick()
-    wait_for_condition(lambda: check_messages(STATE_BROWSER_PICKING))
+    wait_for_condition(lambda: check_messages(STATE_PICKING))
     del messages[:]
 
     api_client.m_web_inspector_close_browser()
-    wait_for_condition(lambda: check_messages(STATE_BROWSER_CLOSED))
+    wait_for_condition(lambda: check_messages(STATE_CLOSED))
     del messages[:]
 
     api_client.m_web_inspector_start_pick()
-    wait_for_condition(lambda: check_messages(STATE_BROWSER_OPENED))
-    wait_for_condition(lambda: check_messages(STATE_BROWSER_PICKING))
+    wait_for_condition(lambda: check_messages(STATE_OPENED))
+    wait_for_condition(lambda: check_messages(STATE_PICKING))
     del messages[:]
 
     api_client.m_web_inspector_close_browser()
-    wait_for_condition(lambda: check_messages(STATE_BROWSER_CLOSED))
+    wait_for_condition(lambda: check_messages(STATE_CLOSED))
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows only test.")

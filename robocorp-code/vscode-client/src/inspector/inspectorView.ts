@@ -10,9 +10,9 @@ import * as vscode from "vscode";
 import { getExtensionRelativeFile, verifyFileExists } from "../files";
 import { OUTPUT_CHANNEL, buildErrorStr, logError } from "../channel";
 import { getSelectedRobot } from "../viewsCommon";
-import { BrowserLocator, LocatorsMap } from "./types";
+import { BrowserLocator, ImageLocator, LocatorType, LocatorsMap } from "./types";
 import {
-    BrowserState,
+    ReportedStates,
     IApps,
     IEventMessage,
     IMessage,
@@ -22,6 +22,7 @@ import {
     IAppRoutes,
     ResponseDataType,
     WindowsAppTree,
+    ImagePickResponse,
 } from "./protocols";
 import { langServer } from "../extension";
 import { ActionResult, LocalRobotMetadataInfo } from "../protocols";
@@ -29,8 +30,18 @@ import { ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL } from "../robocorpCommands";
 
 let ROBOCORP_INSPECTOR_PANEL: vscode.WebviewPanel | undefined = undefined;
 
+let ROBOT_DIRECTORY: string | undefined = undefined;
+
+// eslint-disable-next-line class-methods-use-this
+const generateID = (): string => {
+    const prefix = `${Math.floor(Math.random() * 9000) + 1000}`; // this creates a 4 digit number
+    const middle = `${Date.now()}`.replace(/(.{2})/g, "$1-"); // this will split the number up into groups of two or one
+    const suffix = `${Math.floor(Math.random() * 9000) + 1000}`; // this creates a 4 digit number
+    return `${prefix}-${middle}-${suffix}`;
+};
+
 export async function showInspectorUI(context: vscode.ExtensionContext, route?: IAppRoutes) {
-    if (ROBOCORP_INSPECTOR_PANEL !== undefined && route) {
+    if (ROBOCORP_INSPECTOR_PANEL !== undefined) {
         OUTPUT_CHANNEL.appendLine("# Robocorp Inspector is already opened! Thank you!");
         OUTPUT_CHANNEL.appendLine(`# Switching to the commanded Route: ${route}`);
         const response: IEventMessage = {
@@ -47,6 +58,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
         ROBOCORP_INSPECTOR_PANEL.reveal();
         return;
     }
+    OUTPUT_CHANNEL.appendLine(`# Robocorp Inspector is ROBOCORP_INSPECTOR_PANEL: ${ROBOCORP_INSPECTOR_PANEL}`);
 
     const panel = vscode.window.createWebviewPanel(
         "robocorpCodeInspector",
@@ -76,6 +88,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
     }
     if (directory) {
         locatorJson = path.join(directory, "locators.json");
+        ROBOT_DIRECTORY = directory;
     }
 
     let locatorsMap = {};
@@ -85,7 +98,10 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
             locatorsMap = JSON.parse(doc.getText()) as LocatorsMap;
         }
     }
-    panel.webview.html = getWebviewContent(directory, locatorsMap, route);
+    const onDiskPath = vscode.Uri.file(directory);
+    const directoryURI = panel.webview.asWebviewUri(onDiskPath);
+    OUTPUT_CHANNEL.appendLine(`> ON DISK PATH ROBOT DIRECTORY: ${directoryURI.toString()}`);
+    panel.webview.html = getWebviewContent(directory, directoryURI.toString(), locatorsMap, route);
 
     // Web Inspector - Create listeners for BE (Python) messages
     context.subscriptions.push(
@@ -93,7 +109,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
             const pickedLocator: BrowserLocator = JSON.stringify(values) as unknown as BrowserLocator;
             OUTPUT_CHANNEL.appendLine(`> Receiving: picked.element: ${pickedLocator}`);
             const response: IEventMessage = {
-                id: "",
+                id: generateID(),
                 type: IMessageType.EVENT,
                 event: {
                     type: "pickedLocator",
@@ -109,12 +125,12 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
         langServer.onNotification("$/webInspectorState", (state) => {
             OUTPUT_CHANNEL.appendLine(`> Receiving: webInspectorState: ${JSON.stringify(state)}`);
             const response: IEventMessage = {
-                id: "",
+                id: generateID(),
                 type: IMessageType.EVENT,
                 event: {
                     type: "browserState",
                     status: "success",
-                    data: state.state as BrowserState,
+                    data: state.state as ReportedStates,
                 },
             };
             // this is an event - postMessage will update the useLocator hook
@@ -125,7 +141,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
         langServer.onNotification("$/webURLChange", (url) => {
             OUTPUT_CHANNEL.appendLine(`> Receiving: webURLChange: ${JSON.stringify(url)}`);
             const response: IEventMessage = {
-                id: "",
+                id: generateID(),
                 type: IMessageType.EVENT,
                 event: {
                     type: "urlChange",
@@ -143,12 +159,63 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
             const pickedLocator: WindowsAppTree = JSON.stringify(values["picked"]) as unknown as WindowsAppTree;
             OUTPUT_CHANNEL.appendLine(`> Receiving: picked.element: ${pickedLocator}`);
             const response: IEventMessage = {
-                id: "",
+                id: generateID(),
                 type: IMessageType.EVENT,
                 event: {
                     type: "pickedWinLocatorTree",
                     status: "success",
                     data: pickedLocator,
+                },
+            };
+            // this is an event - postMessage will update the useLocator hook
+            panel.webview.postMessage(response);
+        })
+    );
+    // Image Inspector - Create listeners for BE (Python) messages
+    context.subscriptions.push(
+        langServer.onNotification("$/imagePick", (values) => {
+            const pickedLocator: ImagePickResponse = JSON.stringify(values["picked"]) as unknown as ImagePickResponse;
+            OUTPUT_CHANNEL.appendLine(`> Receiving: picked.element: ${pickedLocator}`);
+            const response: IEventMessage = {
+                id: generateID(),
+                type: IMessageType.EVENT,
+                event: {
+                    type: "pickedImageSnapshot",
+                    status: "success",
+                    data: pickedLocator,
+                },
+            };
+            // this is an event - postMessage will update the useLocator hook
+            panel.webview.postMessage(response);
+        })
+    );
+    context.subscriptions.push(
+        langServer.onNotification("$/imageValidation", (values) => {
+            const matches: number = JSON.stringify(values["matches"]) as unknown as number;
+            OUTPUT_CHANNEL.appendLine(`> Receiving: matches: ${matches}`);
+            const response: IEventMessage = {
+                id: generateID(),
+                type: IMessageType.EVENT,
+                event: {
+                    type: "pickedImageValidation",
+                    status: "success",
+                    data: matches,
+                },
+            };
+            // this is an event - postMessage will update the useLocator hook
+            panel.webview.postMessage(response);
+        })
+    );
+    context.subscriptions.push(
+        langServer.onNotification("$/imageInspectorState", (state) => {
+            OUTPUT_CHANNEL.appendLine(`> Receiving: imageInspectorState: ${JSON.stringify(state)}`);
+            const response: IEventMessage = {
+                id: generateID(),
+                type: IMessageType.EVENT,
+                event: {
+                    type: "snippingToolState",
+                    status: "success",
+                    data: state.state as ReportedStates,
                 },
             };
             // this is an event - postMessage will update the useLocator hook
@@ -208,7 +275,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                     const command = message.command;
                     if (command["type"] === "getLocators") {
                         OUTPUT_CHANNEL.appendLine(`> Requesting: Get Locators: ${JSON.stringify(command)}`);
-                        const actionResult: ActionResult<LocatorsMap> = await sendRequest("loadRobotLocatorContents", {
+                        const actionResult: ActionResult<LocatorsMap> = await sendRequest("managerLoadLocators", {
                             directory: directory,
                         });
                         OUTPUT_CHANNEL.appendLine(`> Requesting: Response: ${JSON.stringify(actionResult)}`);
@@ -311,6 +378,37 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                                 buildProtocolResponseFromActionResponse(message, actionResult.result, "locator")
                             );
                         }
+                    } else if (message.app === IApps.IMAGE_INSPECTOR) {
+                        if (command["type"] === "startPicking") {
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: Start Picking: ${JSON.stringify(command)}`);
+                            await sendRequest("imageInspectorStartPick", {
+                                minimize: command["minimize"],
+                                confidence_level: command["confidenceLevel"],
+                            });
+                        } else if (command["type"] === "stopPicking") {
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: Stop Picking: ${JSON.stringify(command)}`);
+                            await sendRequest("imageInspectorStopPick");
+                        } else if (command["type"] === "validate") {
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: Validate: ${JSON.stringify(command)}`);
+                            await sendRequest("imageInspectorValidateLocator", {
+                                locator: command["locator"],
+                                confidence_level: (command["locator"] as ImageLocator).confidence,
+                            });
+                            // OUTPUT_CHANNEL.appendLine(`> Result: Validate: ${JSON.stringify(actionResult)}`);
+                            // panel.webview.postMessage(
+                            //     buildProtocolResponseFromActionResponse(message, actionResult.result, "locatorMatches")
+                            // );
+                        } else if (command["type"] === "saveImage") {
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: SaveImage: ${JSON.stringify(command)}`);
+                            const actionResult = await sendRequest("imageInspectorSaveImage", {
+                                root_directory: ROBOT_DIRECTORY,
+                                image_base64: command["imageBase64"],
+                            });
+                            OUTPUT_CHANNEL.appendLine(`> Result: SaveImage: ${JSON.stringify(actionResult)}`);
+                            panel.webview.postMessage(
+                                buildProtocolResponseFromActionResponse(message, actionResult.result, "imagePath")
+                            );
+                        }
                     }
                     return;
                 case IMessageType.RESPONSE:
@@ -326,7 +424,12 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
     );
 }
 
-function getWebviewContent(directory: string, jsonData: LocatorsMap, startRoute?: IAppRoutes): string {
+function getWebviewContent(
+    directory: string,
+    directoryURI: string,
+    jsonData: LocatorsMap,
+    startRoute?: IAppRoutes
+): string {
     // get the template that's created via the inspector-ext
     const templateFile = getExtensionRelativeFile("../../vscode-client/templates/inspector.html", true);
     const data = readFileSync(templateFile, "utf8");
@@ -338,7 +441,12 @@ function getWebviewContent(directory: string, jsonData: LocatorsMap, startRoute?
     const endIndexLocators = data.indexOf(endLocators, startIndexLocators);
 
     const contentLocators = JSON.stringify(
-        { location: directory, locatorsLocation: path.join(directory, "locators.json"), data: jsonData },
+        {
+            location: directory,
+            locationURI: directoryURI,
+            locatorsLocation: path.join(directory, "locators.json"),
+            data: jsonData,
+        },
         null,
         4
     );
