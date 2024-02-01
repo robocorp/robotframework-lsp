@@ -13,6 +13,19 @@ After this step, it should be possible to open the `robocorp_code` folder in VSC
 `Extension: Robocorp Code` to have a new instance of VSCode with the loaded extension.
 
 
+Creating a local environment for python development
+----------------------------------------------------
+
+For local development, `poetry` should be used to install the libraries needed,
+so, head on to `/robocorp-code` and do `poetry install` to get your python
+environment setup.
+
+If everything went well, just pointing your IDE to use the python executable
+at .venv/Scripts/python should suffice.
+
+-- in VSCode that'd be using the `Python: Select Interpreter` command.
+
+
 Building a VSIX locally
 ------------------------
 
@@ -49,56 +62,27 @@ To add a new setting, add it at the `SETTINGS` in `/robocorp-code/codegen/settin
 (in a shell in the `/robocorp-code` directory) `python -m dev codegen`.
 
 
-Creating a local environment for python development
-----------------------------------------------------
+Updating the dependencies needed
+---------------------------------
 
-For local development, it's interesting to run the Python code/tests directly.
-It's suggested that a virtual environment is created with the proper
-libraries and the PYTHONPATH is set accordingly.
+The dependencies are set based in `/robocorp/bin/create_env/condaXXX.yaml` files.
+When one of the conda-yaml files are updated, one needs to:
 
-To do that, in the command line, make sure you're at the root folder of this project:
-(say, something as: X:\vscode-robot\robotframework-lsp)
+Log into the Robocorp Control Room (sorry, you have to be an employee for that
+right now), then go to `Environment pre-builts`, then go to `Unattended Processes`, 
+and run the related processes with `Run with input data`, passing the related 
+`conda.yaml` files as input data.
 
-Then run the commands below (considering that you have a Python 3.8 in your path):
+After the runs are done, the file:
 
-In Windows:
+`/robocorp-code/vscode-client/src/rcc.ts`
 
-```
-python -m venv .venv
-.venv/Scripts/activate.bat
-python -m pip install -r robocorp-code/tests/test_requirements.txt
-python -m pip install -r robocorp-code/dev_requirements.txt
-python -m pip install robotframework
-python -m pip install robotremoteserver
-echo %cd%\robotframework-ls\src > .venv\Lib\site-packages\rf_src.pth
-echo %cd%\robocorp-code\src >> .venv\Lib\site-packages\rf_src.pth
-echo %cd%\robocorp-python-ls-core\src >> .venv\Lib\site-packages\rf_src.pth
-echo %cd%\robotframework-ls\tests >> .venv\Lib\site-packages\rf_src.pth
-echo %cd%\robocorp-code\tests >> .venv\Lib\site-packages\rf_src.pth
-echo %cd%\robocorp-python-ls-core\tests >> .venv\Lib\site-packages\rf_src.pth
-```
+needs to be updated to set the `BASENAME_PREBUILT_XXX` global variables based
+on the new paths.
 
-In Linux:
+Also, the `pyproject.toml` should be updated so that the python development environment
+is updated accordingly.
 
-```
-python -m venv .venv
-source ./.venv/bin/activate
-python -m pip install -r robocorp-code/tests/test_requirements.txt
-python -m pip install -r robocorp-code/dev_requirements.txt
-python -m pip install robotframework
-python -m pip install robotremoteserver
-echo $PWD/robotframework-ls/src > .venv/lib/python3.8/site-packages/rf_src.pth
-echo $PWD/robocorp-code/src >> .venv/lib/python3.8/site-packages/rf_src.pth
-echo $PWD/robocorp-python-ls-core/src >> .venv/lib/python3.8/site-packages/rf_src.pth
-echo $PWD/robotframework-ls/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
-echo $PWD/robocorp-code/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
-echo $PWD/robocorp-python-ls-core/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
-```
-
-If everything went well, just pointing your IDE to use the python executable
-at .venv/Scripts/python should suffice.
-
--- in VSCode that'd be using the `Python: Select Interpreter` command.
 
 Updating RCC
 --------------------
