@@ -813,7 +813,7 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         import re
 
         # Find the amount of work items that match the output prefix
-        pattern = f"^{re.escape(output_prefix)}\d+$"
+        pattern = rf"^{re.escape(output_prefix)}\d+$"
         non_recyclable_output_work_items = []
         recyclable_output_work_items = []
 
@@ -1000,6 +1000,10 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         return compute_launch.compute_robot_launch_from_robocorp_code_launch(
             name, request, task, robot, additional_pythonpath_entries, env, python_exe
         )
+
+    @property
+    def pm(self):
+        return self._pm
 
     @command_dispatcher(commands.ROBOCORP_RESOLVE_INTERPRETER, dict)
     def _resolve_interpreter(self, params=None) -> ActionResultDict:

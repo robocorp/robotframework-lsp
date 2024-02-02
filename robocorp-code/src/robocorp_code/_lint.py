@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.lsp import DiagnosticsTypedDict, LSPMessages
-from robocorp_ls_core.protocols import IEndPoint, IMonitor, IWorkspace
+from robocorp_ls_core.protocols import IDocument, IEndPoint, IMonitor, IWorkspace
 from robocorp_ls_core.python_ls import BaseLintInfo, BaseLintManager
 from robocorp_ls_core.robotframework_log import get_logger
 
@@ -133,6 +133,22 @@ class _CurrLintInfo(BaseLintInfo):
 
         is_saved = self.is_saved
         doc_uri = self.doc_uri
+
+        if doc_uri.endswith(".py"):
+            ws: Optional[IWorkspace] = robocorp_language_server.workspace
+            if ws is not None:
+                doc: Optional[IDocument] = ws.get_document(
+                    doc_uri, accept_from_file=True
+                )
+                errors = []
+                if doc is not None:
+                    source = doc.source
+                    if "@action" in source:
+                        from robocorp_code.robo.lint_action import collect_lint_errors
+
+                        errors = collect_lint_errors(robocorp_language_server.pm, doc)
+                self._lsp_messages.publish_diagnostics(doc_uri, errors)
+            return
 
         if doc_uri.endswith(("conda.yaml", "action-server.yaml")) or doc_uri.endswith(
             "robot.yaml"

@@ -25,6 +25,7 @@ from robocorp_ls_core.options import DEFAULT_TIMEOUT
 from typing import TypeVar, Any, Callable, Tuple
 from robocorp_ls_core.jsonrpc.exceptions import JsonRpcRequestCancelled
 from functools import lru_cache
+from dataclasses import dataclass
 
 
 PARENT_PROCESS_WATCH_INTERVAL = 3  # 3 s
@@ -552,3 +553,118 @@ def notify_about_import(import_name):
 
     builtins.__import__ = new_import
     return _RestoreCtxManager(original_import)
+
+
+@dataclass
+class ProcessRunResult:
+    stdout: str
+    stderr: str
+    returncode: int
+
+
+from concurrent.futures import Future
+
+
+def launch_and_return_future(
+    cmd, environ, cwd, timeout=100, stdin: bytes = b"\n"
+) -> "Future[ProcessRunResult]":
+    import subprocess
+
+    full_env = dict(os.environ)
+    full_env.update(environ)
+    kwargs: dict = build_subprocess_kwargs(
+        cwd,
+        full_env,
+        stderr=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stdin=subprocess.PIPE,
+    )
+
+    def stream_reader(stream, write_to):
+        try:
+            for line in iter(stream.readline, b""):
+                if not line:
+                    break
+                write_to.write(line.decode("utf-8", "replace"))
+        except Exception as e:
+            log.error("Error reading stream:", e)
+
+    log.info(f'Running: {" ".join(str(x) for x in cmd)}')
+    process = subprocess.Popen(cmd, **kwargs)
+
+    # Not sure why, but (just when running in VSCode) something as:
+    # launching sys.executable actually got stuck unless a \n was written
+    # (even if stdin was closed it wasn't enough).
+    # -- note: this may be particular to my machine (fabioz), but it
+    # may also be related to VSCode + Windows 11 + Windows Defender + python
+    _stdin_write(process, stdin)
+
+    import io
+
+    stderr_contens = io.StringIO()
+    stdout_contens = io.StringIO()
+
+    threads = [
+        threading.Thread(
+            target=stream_reader,
+            args=(process.stdout, stdout_contens),
+            name="stream_reader_stdout",
+        ),
+        threading.Thread(
+            target=stream_reader,
+            args=(process.stderr, stderr_contens),
+            name="stream_reader_stderr",
+        ),
+    ]
+    for t in threads:
+        t.start()
+
+    future: "Future[ProcessRunResult]" = Future()
+
+    def report_output():
+        try:
+            process.wait(timeout)
+            try:
+                for t in threads:
+                    t.join(2)
+            except Exception:
+                pass
+
+            future.set_result(
+                ProcessRunResult(
+                    stdout=stdout_contens.getvalue(),
+                    stderr=stderr_contens.getvalue(),
+                    returncode=process.poll(),
+                )
+            )
+        except BaseException as e:
+            future.set_exception(e)
+
+    threading.Thread(target=report_output, daemon=True).start()
+    return future
+
+
+def _stdin_write(process, input):
+    if input:
+        try:
+            process.stdin.write(input)
+        except BrokenPipeError:
+            pass  # communicate() must ignore broken pipe errors.
+        except OSError as exc:
+            if exc.errno == errno.EINVAL:
+                # bpo-19612, bpo-30418: On Windows, stdin.write() fails
+                # with EINVAL if the child process exited or if the child
+                # process is still running but closed the pipe.
+                pass
+            else:
+                raise
+
+    try:
+        process.stdin.close()
+    except BrokenPipeError:
+        pass  # communicate() must ignore broken pipe errors.
+    except OSError as exc:
+        if exc.errno == errno.EINVAL:
+            pass
+        else:
+            raise

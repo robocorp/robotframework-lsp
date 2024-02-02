@@ -4,8 +4,8 @@ import re
 from robocorp_ls_core.protocols import IDocumentSelection, IDocument
 
 
-RE_START_WORD = re.compile("[\w]*$")
-RE_END_WORD = re.compile("^[\w]*")
+RE_START_WORD = re.compile(r"[\w]*$")
+RE_END_WORD = re.compile(r"^[\w]*")
 
 
 def word_to_column(line_to_cursor):

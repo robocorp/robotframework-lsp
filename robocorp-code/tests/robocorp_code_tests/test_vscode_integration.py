@@ -4,13 +4,18 @@ import sys
 import time
 import typing
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import pytest
 from robocorp_code_tests.fixtures import RccPatch
 from robocorp_code_tests.protocols import IRobocorpLanguageServerClient
 from robocorp_ls_core.basic import wait_for_condition
 from robocorp_ls_core.callbacks import Callback
+from robocorp_ls_core.ep_resolve_interpreter import (
+    DefaultInterpreterInfo,
+    IInterpreterInfo,
+)
+from robocorp_ls_core.pluginmanager import PluginManager
 from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
 
 from robocorp_code.inspector.web._web_inspector import (
@@ -914,6 +919,9 @@ def filter_diagnostics(diagnostics):
 
         if "Dependencies drift file" in diag["message"]:
             continue
+
+        if "PLAYWRIGHT_BROWSERS_PATH" in diag["message"]:
+            continue
         ret.append(diag)
     return ret
 
@@ -1078,6 +1086,57 @@ condaConfigFile: conda.yaml
     )
     assert message_matcher
     language_server.open_doc(conda_yaml_uri, 1, conda_yaml_text)
+
+    assert message_matcher.event.wait(TIMEOUT)
+    diag = message_matcher.msg["params"]["diagnostics"]
+    data_regression.check(sort_diagnostics(diag))
+
+
+class ResolveInterpreterCurrentEnv:
+    def get_interpreter_info_for_doc_uri(self, doc_uri) -> Optional[IInterpreterInfo]:
+        """
+        Provides a customized interpreter for a given document uri.
+        """
+        return DefaultInterpreterInfo("interpreter_id", sys.executable, {}, [])
+
+
+def test_lint_python_action(
+    language_server_initialized: IRobocorpLanguageServerClient,
+    tmpdir,
+    data_regression,
+    disable_rcc_diagnostics,
+):
+    from robocorp_ls_core import uris
+    from robocorp_ls_core.ep_resolve_interpreter import EPResolveInterpreter
+    from robocorp_ls_core.unittest_tools.fixtures import TIMEOUT
+
+    conda_yaml = tmpdir.join("action.py")
+    python_file = """
+from robocorp.actions import action
+
+@action
+def my_action():
+    pass
+    """
+    conda_yaml.write_text(
+        python_file,
+        "utf-8",
+    )
+
+    language_server_client = language_server_initialized
+
+    # Note: so that we don't create a conda.yaml with robocorp.actions installed
+    # in it, we just add a new resolver which adds the current environment
+    # (and added robocorp.actions to the current environment in pyproject.toml).
+    language_server = language_server_client.language_server_instance  # type:ignore
+    pm: PluginManager = language_server.pm
+    pm.register(EPResolveInterpreter, ResolveInterpreterCurrentEnv)
+    conda_yaml_uri = uris.from_fs_path(str(conda_yaml))
+    message_matcher = language_server_client.obtain_pattern_message_matcher(
+        {"method": "textDocument/publishDiagnostics"}
+    )
+    assert message_matcher
+    language_server_client.open_doc(conda_yaml_uri, 1, python_file)
 
     assert message_matcher.event.wait(TIMEOUT)
     diag = message_matcher.msg["params"]["diagnostics"]
