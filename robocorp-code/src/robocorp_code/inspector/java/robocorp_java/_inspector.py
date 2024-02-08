@@ -7,9 +7,9 @@ from JABWrapper.jab_wrapper import JavaAccessBridgeWrapper, JavaWindow
 class ElementInspector:
     def _start_event_pump(func, *args, **kwargs):
         def wrapper(self: "ElementInspector", *args, **kwargs):
-            from ._event_pump import _EventPumpThread
+            from ._event_pump import EventPumpThread
 
-            event_pump_thread = _EventPumpThread()
+            event_pump_thread = EventPumpThread()
             event_pump_thread.start()
             jab_wrapper = event_pump_thread.get_wrapper()
             ret = func(self, jab_wrapper, *args, **kwargs)
@@ -30,7 +30,14 @@ class ElementInspector:
         locator: Optional[str] = None,
     ) -> Union[ContextNode, List[ContextNode]]:
         jab_wrapper.switch_window_by_title(window)
-        context_tree = ContextTree(jab_wrapper)
+
+        from ._context_tree import ContextTreeThread
+
+        context_tree_thread = ContextTreeThread(jab_wrapper)
+        context_tree_thread.start()
+        context_tree = context_tree_thread.get_context_tree()
+        context_tree_thread.join()
+
         if locator:
             from ._locators import find_elements_from_tree
 

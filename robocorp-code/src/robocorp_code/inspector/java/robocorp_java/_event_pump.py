@@ -17,7 +17,7 @@ log = get_logger(__name__)
 REMOVE_FROM_QUEUE = 0x0001
 
 
-class _EventPumpThread(threading.Thread):
+class EventPumpThread(threading.Thread):
     def __init__(
         self,
     ) -> None:
