@@ -55,18 +55,18 @@ echo %cd%\robocorp-python-ls-core\tests >> .venv\Lib\site-packages\rf_src.pth
 In Linux:
 
 ```
-python -m venv .venv
+python3 -m venv .venv
 source ./.venv/bin/activate
-python -m pip install -r robocorp-code/tests/test_requirements.txt
-python -m pip install -r robocorp-code/dev_requirements.txt
-python -m pip install robotframework
-python -m pip install robotremoteserver
-echo $PWD/robotframework-ls/src > .venv/lib/python3.8/site-packages/rf_src.pth
-echo $PWD/robocorp-code/src >> .venv/lib/python3.8/site-packages/rf_src.pth
-echo $PWD/robocorp-python-ls-core/src >> .venv/lib/python3.8/site-packages/rf_src.pth
-echo $PWD/robotframework-ls/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
-echo $PWD/robocorp-code/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
-echo $PWD/robocorp-python-ls-core/tests >> .venv/lib/python3.8/site-packages/rf_src.pth
+python3 -m pip install -r tests/test_requirements.txt
+python3 -m pip install robotframework
+python3 -m pip install robotremoteserver
+export PY_VER=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+echo $PWD/robotframework-ls/src > .venv/lib/python${PY_VER}/site-packages/rf_src.pth
+echo $PWD/robocorp-code/src >> .venv/lib/python${PY_VER}/site-packages/rf_src.pth
+echo $PWD/robocorp-python-ls-core/src >> .venv/lib/python${PY_VER}/site-packages/rf_src.pth
+echo $PWD/robotframework-ls/tests >> .venv/lib/python${PY_VER}/site-packages/rf_src.pth
+echo $PWD/robocorp-code/tests >> .venv/lib/python${PY_VER}/site-packages/rf_src.pth
+echo $PWD/robocorp-python-ls-core/tests >> .venv/lib/python${PY_VER}/site-packages/rf_src.pth
 ```
 
 Head to the root directory (where `package.json` is located) and run:
