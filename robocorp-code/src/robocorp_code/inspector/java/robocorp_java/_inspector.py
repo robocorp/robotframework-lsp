@@ -1,7 +1,15 @@
-from typing import List, Optional, Union
+from typing import List, Optional, TypedDict, Union
 
 from JABWrapper.context_tree import ContextNode, ContextTree
 from JABWrapper.jab_wrapper import JavaAccessBridgeWrapper, JavaWindow
+
+ColletedTreeTypedDict = TypedDict(
+    "ColletedTreeTypedDict",
+    {
+        "matches": Union[ContextNode, List[ContextNode]],
+        "tree": ContextNode,
+    },
+)
 
 
 class ElementInspector:
@@ -31,11 +39,12 @@ class ElementInspector:
         window: str,
         search_depth: int,
         locator: Optional[str] = None,
-    ) -> Union[ContextNode, List[ContextNode]]:
+    ) -> ColletedTreeTypedDict:
         jab_wrapper.switch_window_by_title(window)
         context_tree = ContextTree(jab_wrapper, search_depth)
+        matches: Union[ContextNode, List[ContextNode]] = []
         if locator:
             from ._locators import find_elements_from_tree
 
-            return find_elements_from_tree(context_tree, locator)
-        return context_tree.root
+            matches = find_elements_from_tree(context_tree, locator)
+        return {"matches": matches, "tree": context_tree.root}
