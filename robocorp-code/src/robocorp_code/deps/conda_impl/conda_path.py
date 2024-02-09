@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import os
 import re
-import subprocess
 import sys
-from distutils.spawn import find_executable
 from functools import lru_cache
 from logging import getLogger
 from os.path import (
@@ -273,50 +271,6 @@ def get_python_noarch_target_path(source_short_path, target_site_packages_short_
         return source_short_path.replace("python-scripts", bin_dir, 1)
     else:
         return source_short_path
-
-
-def win_path_to_unix(path, root_prefix=""):
-    # If the user wishes to drive conda from MSYS2 itself while also having
-    # msys2 packages in their environment this allows the path conversion to
-    # happen relative to the actual shell. The onus is on the user to set
-    # CYGPATH to e.g. /usr/bin/cygpath.exe (this will be translated to e.g.
-    # (C:\msys32\usr\bin\cygpath.exe by MSYS2) to ensure this one is used.
-    if not path:
-        return ""
-    bash = which("bash")
-    if bash:
-        cygpath = os.environ.get(
-            "CYGPATH", os.path.join(os.path.dirname(bash), "cygpath.exe")
-        )
-    else:
-        cygpath = os.environ.get("CYGPATH", "cygpath.exe")
-    try:
-        path = (
-            subprocess.check_output([cygpath, "-up", path])
-            .decode("ascii")
-            .split("\n")[0]
-        )
-    except Exception as e:
-        log.debug("%r" % e, exc_info=True)
-
-        # Convert a path or ;-separated string of paths into a unix representation
-        # Does not add cygdrive.  If you need that, set root_prefix to "/cygdrive"
-        def _translation(found_path):  # NOQA
-            found = (
-                found_path.group(1)
-                .replace("\\", "/")
-                .replace(":", "")
-                .replace("//", "/")
-            )
-            return root_prefix + "/" + found
-
-        path_re = '(?<![:/^a-zA-Z])([a-zA-Z]:[/\\\\]+(?:[^:*?"<>|]+[/\\\\]+)*[^:*?"<>|;/\\\\]+?(?![a-zA-Z]:))'  # noqa
-        path = re.sub(path_re, _translation, path).replace(";/", ":/")
-    return path
-
-
-def which(executable):
-    return find_executable(executable)
 
 
 def strip_pkg_extension(path: str):

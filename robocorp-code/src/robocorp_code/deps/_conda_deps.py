@@ -21,7 +21,7 @@ class CondaDepInfo:
 
 
 class CondaDeps:
-    def __init__(self):
+    def __init__(self) -> None:
         self._deps: Dict[str, CondaDepInfo] = {}
 
     def add_dep(self, value: str, dep_range: _RangeTypedDict):

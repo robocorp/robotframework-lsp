@@ -196,7 +196,7 @@ WHERE Packages.package_name = ? and Versions.version = ?
 
 
 def version_key(version_info: CondaVersionInfo):
-    from robocorp_code.deps.conda_impl.conda_version import VersionOrder
+    from .conda_impl.conda_version import VersionOrder
 
     version_order = VersionOrder(version_info.version)
     return version_order
@@ -209,7 +209,7 @@ def sort_conda_version_infos(
 
 
 def version_str_key(version: str):
-    from robocorp_code.deps.conda_impl.conda_version import VersionOrder
+    from .conda_impl.conda_version import VersionOrder
 
     version_order = VersionOrder(version)
     return version_order
@@ -345,16 +345,47 @@ def index_conda_info(json_file: Path, target_sqlite_file: Path):
 Arch = str
 
 
+class _Callback(object):
+    """
+    Note that it's thread safe to register/unregister callbacks while callbacks
+    are being notified, but it's not thread-safe to register/unregister at the
+    same time in multiple threads.
+    """
+
+    def __init__(self):
+        self._callbacks = []
+
+    def register(self, callback):
+        new_callbacks = self._callbacks[:]
+        new_callbacks.append(callback)
+        self._callbacks = new_callbacks
+
+    def unregister(self, callback):
+        new_callbacks = [x for x in self._callbacks if x != callback]
+        self._callbacks = new_callbacks
+
+    def __call__(self, *args, **kwargs):
+        for c in self._callbacks:
+            try:
+                c(*args, **kwargs)
+            except Exception:
+                log.exception("Error in callback.")
+
+    def __len__(self):
+        return len(self._callbacks)
+
+    def clear(self):
+        self._callbacks = []
+
+
 class _AfterDownloadMakeSqlite:
     def __init__(
         self, available_arch: List[Arch], cache_dir: Path, index_cache_dir: Path
     ):
-        from robocorp_ls_core.callbacks import Callback
-
         self._available_arch = available_arch
         self._lock = threading.Lock()
         self._count = 0
-        self._call_on_finished = Callback()
+        self._call_on_finished = _Callback()
         self._finished = False
         self._arch_to_sqlite: Dict[str, Path] = {}
         self._index_cache_dir = index_cache_dir

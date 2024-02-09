@@ -8,17 +8,16 @@ from typing import Any, Iterator, List, Optional, Tuple
 
 import yaml
 
-from robocorp_code.deps._conda_deps import CondaDepInfo
-from robocorp_code.deps._deps_protocols import (
+from ._conda_deps import CondaDepInfo
+from ._deps_protocols import (
     ICondaCloud,
+    IPyPiCloud,
     _DiagnosticSeverity,
     _DiagnosticsTypedDict,
     _RangeTypedDict,
 )
-from robocorp_code.deps.conda_impl.conda_version import VersionSpec
-
-from ._deps_protocols import IPyPiCloud
 from ._pip_deps import PipDepInfo
+from .conda_impl.conda_version import VersionSpec
 from .pypi_cloud import PyPiCloud
 
 
@@ -238,7 +237,7 @@ class Analyzer:
                         yield diagnostic
 
     def iter_conda_issues(self) -> Iterator[_DiagnosticsTypedDict]:
-        from robocorp_code.deps.conda_cloud import sort_conda_versions
+        from .conda_cloud import sort_conda_versions
 
         diagnostic: _DiagnosticsTypedDict
         dep_vspec = self._conda_deps.get_dep_vspec("python")
@@ -336,12 +335,83 @@ class Analyzer:
         return None
 
 
-def is_inside(range_dct: _RangeTypedDict, line: int, col: int) -> bool:
-    from robocorp_ls_core.lsp import Position
+class _Position:
+    def __init__(self, line: int = 0, character: int = 0):
+        self.line: int = line
+        self.character: int = character
 
+    def __repr__(self):
+        import json
+
+        return json.dumps(self.to_dict(), indent=4)
+
+    def __getitem__(self, name):
+        # provide tuple-access, not just dict access.
+        if name == 0:
+            return self.line
+        if name == 1:
+            return self.character
+        return getattr(self, name)
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, _Position)
+            and self.line == other.line
+            and self.character == other.character
+        )
+
+    def __ge__(self, other):
+        line_gt = self.line > other.line
+
+        if line_gt:
+            return line_gt
+
+        if self.line == other.line:
+            return self.character >= other.character
+
+        return False
+
+    def __gt__(self, other):
+        line_gt = self.line > other.line
+
+        if line_gt:
+            return line_gt
+
+        if self.line == other.line:
+            return self.character > other.character
+
+        return False
+
+    def __le__(self, other):
+        line_lt = self.line < other.line
+
+        if line_lt:
+            return line_lt
+
+        if self.line == other.line:
+            return self.character <= other.character
+
+        return False
+
+    def __lt__(self, other):
+        line_lt = self.line < other.line
+
+        if line_lt:
+            return line_lt
+
+        if self.line == other.line:
+            return self.character < other.character
+
+        return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+
+def is_inside(range_dct: _RangeTypedDict, line: int, col: int) -> bool:
     start = range_dct["start"]
     end = range_dct["end"]
-    start_pos = Position(start["line"], start["character"])
-    end_pos = Position(end["line"], end["character"])
-    curr_pos = Position(line, col)
+    start_pos = _Position(start["line"], start["character"])
+    end_pos = _Position(end["line"], end["character"])
+    curr_pos = _Position(line, col)
     return start_pos <= curr_pos <= end_pos

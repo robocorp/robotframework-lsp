@@ -5,12 +5,7 @@ from typing import Dict, Iterator, List, Optional, Sequence, Union
 
 from robocorp_ls_core.robotframework_log import get_logger
 
-from robocorp_code.deps._deps_protocols import (
-    PyPiInfoTypedDict,
-    ReleaseData,
-    Versions,
-    VersionStr,
-)
+from ._deps_protocols import PyPiInfoTypedDict, ReleaseData, Versions, VersionStr
 
 log = get_logger(__name__)
 
@@ -31,7 +26,7 @@ class PackageData:
             version_str: The version we have info on.
             release_info: For each release we may have a list of files available.
         """
-        from robocorp_code.deps.pip_impl import pip_packaging_version
+        from .pip_impl import pip_packaging_version
 
         version = pip_packaging_version.parse(version_str)
         upload_time: Optional[str] = None
@@ -202,7 +197,7 @@ class PyPiCloud:
         """
 
         if isinstance(version, VersionStr):
-            from robocorp_code.deps.pip_impl import pip_packaging_version
+            from .pip_impl import pip_packaging_version
 
             version = pip_packaging_version.parse(version)
 

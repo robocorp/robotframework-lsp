@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Iterator, List, Optional, Tuple
 
-from robocorp_code.deps._deps_protocols import _RangeTypedDict
+from ._deps_protocols import _RangeTypedDict
 
 
 @dataclass
@@ -27,10 +27,7 @@ class PipDeps:
         self._pip_versions = {}
 
     def add_dep(self, value, as_range):
-        from robocorp_code.deps.pip_impl.pip_distlib_util import (
-            IDENTIFIER,
-            parse_requirement,
-        )
+        from .pip_impl.pip_distlib_util import IDENTIFIER, parse_requirement
 
         try:
             req = parse_requirement(value)

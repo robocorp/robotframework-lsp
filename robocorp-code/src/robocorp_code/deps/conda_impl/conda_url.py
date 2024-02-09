@@ -383,7 +383,7 @@ def _split_platform_re(known_subdirs):
 
 
 def has_platform(url, known_subdirs):
-    from robocorp_code.deps.conda_impl.conda_path import split_filename
+    from .conda_path import split_filename
 
     url_no_package_name, _ = split_filename(url)
     if not url_no_package_name:
@@ -415,7 +415,7 @@ def split_scheme_auth_token(url):
 
 
 def split_conda_url_easy_parts(known_subdirs, url):
-    from robocorp_code.deps.conda_impl.conda_path import strip_pkg_extension
+    from .conda_path import strip_pkg_extension
 
     # scheme, auth, token, platform, package_filename, host, port, path, query
     cleaned_url, token = split_anaconda_token(url)
