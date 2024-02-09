@@ -385,3 +385,107 @@ class InspectorLanguageServer:
             "imageSaveImage",
             {"root_directory": root_directory, "image_base64": image_base64},
         )
+
+    def m_java_inspector_parse_locator(self, locator: str):
+        log.info("=== LS: JAVA INSPECTOR - parse locator:", locator)
+
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        # Not blocking (return callback to run in thread).
+        return partial(
+            inspector_api_client.send_sync_message,
+            "javaParseLocator",
+            {"locator": locator},
+        )
+
+    def m_java_inspector_set_window_locator(self, locator: str):
+        log.info("=== LS: JAVA INSPECTOR - set window locator:", locator)
+
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        # Not blocking (return callback to run in thread).
+        return partial(
+            inspector_api_client.send_sync_message,
+            "javaSetWindowLocator",
+            {"locator": locator},
+        )
+
+    def m_java_inspector_list_windows(self):
+        log.info("=== LS: JAVA INSPECTOR - list windows")
+
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        # Not blocking (return callback to run in thread).
+        return partial(
+            inspector_api_client.send_sync_message,
+            "javaListWindows",
+            {},
+        )
+
+    def m_java_inspector_start_pick(self):
+        log.info("=== LS: JAVA INSPECTOR - start pick")
+
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        # Not blocking (return callback to run in thread).
+        return partial(
+            inspector_api_client.send_sync_message,
+            "javaStartPick",
+            {},
+        )
+
+    def m_java_inspector_stop_pick(self):
+        log.info("=== LS: JAVA INSPECTOR - stop pick")
+
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        # Not blocking (return callback to run in thread).
+        return partial(
+            inspector_api_client.send_sync_message,
+            "javaStopPick",
+            {},
+        )
+
+    def m_java_inspector_start_highlight(
+        self,
+        locator: str,
+        search_depth: int = 8,
+        search_strategy: Literal["siblings", "all"] = "all",
+    ):
+        log.info("=== LS: JAVA INSPECTOR - start highlight")
+
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        # Not blocking (return callback to run in thread).
+        return partial(
+            inspector_api_client.send_sync_message,
+            "javaStartHighlight",
+            dict(
+                locator=locator,
+                search_depth=search_depth,
+                search_strategy=search_strategy,
+            ),
+        )
+
+    def m_java_inspector_collect_tree(
+        self,
+        locator: str,
+        search_depth: int = 8,
+    ):
+        log.info("=== LS: JAVA INSPECTOR - collect tree")
+
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        # Not blocking (return callback to run in thread).
+        return partial(
+            inspector_api_client.send_sync_message,
+            "javaCollectTree",
+            dict(
+                locator=locator,
+                search_depth=search_depth,
+            ),
+        )
+
+    def m_java_inspector_stop_highlight(self):
+        log.info("=== LS: JAVA INSPECTOR - stop highlight")
+
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        # Not blocking (return callback to run in thread).
+        return partial(
+            inspector_api_client.send_sync_message,
+            "javaStopHighlight",
+            {},
+        )

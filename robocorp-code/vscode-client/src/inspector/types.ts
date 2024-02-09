@@ -176,6 +176,7 @@ export interface ImageLocator {
      * @type {number}
      * @memberof ImageLocator
      */
+    screenPixelRatio?: number;
     /**
      *
      * @type {number}
@@ -201,16 +202,70 @@ export interface ImageLocator {
      */
     element?: ElementType;
 }
+/**
+ *
+ * @export
+ * @interface JavaLocator
+ */
+export interface JavaLocator {
+    /**
+     *
+     * @type {LocatorType}
+     * @memberof JavaLocator
+     */
+    type: LocatorType.Java;
+    /**
+     *
+     * @type {string}
+     * @memberof JavaLocator
+     */
+    window: string;
+    /**
+     *
+     * @type {string}
+     * @memberof JavaLocator
+     */
+    value: string;
+    /**
+     *
+     * @type {number}
+     * @memberof JavaLocator
+     */
+    version: number;
+    /**
+     *
+     * @type {string}
+     * @memberof JavaLocator
+     */
+    screenshot?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof JavaLocator
+     */
+    name?: string;
+    /**
+     *
+     * @type {ElementType}
+     * @memberof JavaLocator
+     */
+    element?: ElementType;
+}
 
-export declare type Locator = BrowserLocator | WindowsLocator | ImageLocator;
+export declare type Locator = BrowserLocator | WindowsLocator | ImageLocator | JavaLocator;
 export declare type LocatorsMap = {
     [name: string]: Locator;
 };
 export declare type LocatorsMapWindows = {
     [name: string]: WindowsLocator;
 };
+export declare type LocatorsMapJava = {
+    [name: string]: JavaLocator;
+};
+
 // LocatorsArray = [ name, Locator ][]
 export declare type LocatorsArray = [string, Locator][];
 export declare type LocatorsArrayWindows = [string, WindowsLocator][];
 export declare type LocatorsArrayWeb = [string, BrowserLocator][];
 export declare type LocatorsArrayImage = [string, ImageLocator][];
+export declare type LocatorsArrayJava = [string, JavaLocator][];
