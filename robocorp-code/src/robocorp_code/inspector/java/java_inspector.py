@@ -65,9 +65,9 @@ class JavaInspector:
         return [to_window_info(window) for window in windows]
 
     def collect_tree(
-        self, window: str, locator: Optional[str] = None
+        self, window: str, search_depth: int = 8, locator: Optional[str] = None
     ) -> LocatorTreeInfoTypedDict:
         log.info(f"Collect tree from locator: {locator}")
 
-        tree = self._inspector.collect_tree(window, locator)
+        tree = self._inspector.collect_tree(window, search_depth, locator)
         return [to_locator_info(node) for node in tree]

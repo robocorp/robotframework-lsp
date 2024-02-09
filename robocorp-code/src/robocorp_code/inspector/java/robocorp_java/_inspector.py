@@ -11,9 +11,11 @@ class ElementInspector:
 
             event_pump_thread = EventPumpThread()
             event_pump_thread.start()
-            jab_wrapper = event_pump_thread.get_wrapper()
-            ret = func(self, jab_wrapper, *args, **kwargs)
-            event_pump_thread.stop()
+            try:
+                jab_wrapper = event_pump_thread.get_wrapper()
+                ret = func(self, jab_wrapper, *args, **kwargs)
+            finally:
+                event_pump_thread.stop()
             return ret
 
         return wrapper
@@ -27,17 +29,11 @@ class ElementInspector:
         self,
         jab_wrapper: JavaAccessBridgeWrapper,
         window: str,
+        search_depth: int,
         locator: Optional[str] = None,
     ) -> Union[ContextNode, List[ContextNode]]:
         jab_wrapper.switch_window_by_title(window)
-
-        from ._context_tree import ContextTreeThread
-
-        context_tree_thread = ContextTreeThread(jab_wrapper)
-        context_tree_thread.start()
-        context_tree = context_tree_thread.get_context_tree()
-        context_tree_thread.join()
-
+        context_tree = ContextTree(jab_wrapper, search_depth)
         if locator:
             from ._locators import find_elements_from_tree
 
