@@ -193,6 +193,17 @@ files = [
 ]
 
 [[package]]
+name = "docstring-parser-fork"
+version = "0.0.5"
+description = "Parse Python docstrings in reST, Google and Numpydoc format"
+optional = false
+python-versions = ">=3.6,<4.0"
+files = [
+    {file = "docstring_parser_fork-0.0.5-py3-none-any.whl", hash = "sha256:d521dea9b9cc6c60ab5569fa0c1115e3b84a83e6413266fb111a7c81cb935997"},
+    {file = "docstring_parser_fork-0.0.5.tar.gz", hash = "sha256:395ae8ee6a359e268670ebc4fe9a40dab917a94f6decd7cda8e86f9bea5c9456"},
+]
+
+[[package]]
 name = "exceptiongroup"
 version = "1.2.0"
 description = "Backport of PEP 654 (exception groups)"
@@ -925,6 +936,20 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
+name = "robocorp-actions"
+version = "0.0.7"
+description = "Robocorp Actions"
+optional = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "robocorp_actions-0.0.7-py3-none-any.whl", hash = "sha256:a25fff2275eada96656f6631623ca372b1b9acee3cef09335c4f03fd7b00d9fd"},
+    {file = "robocorp_actions-0.0.7.tar.gz", hash = "sha256:6845d33737191df08d5521f5fad24771359245b99cfefda7e29fc063e9c1928a"},
+]
+
+[package.dependencies]
+robocorp-tasks = ">=2.9.1,<3.0.0"
+
+[[package]]
 name = "robocorp-log"
 version = "2.9.0"
 description = "Automatic trace logging for Python"
@@ -1225,4 +1250,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.11"
-content-hash = "1de959340c92466f4c5c4d25bd916a2e9e599425e465bb304ef872c58d78122d"
+content-hash = "9377eacc65e5c6057f4dc3eeab2abd73a8077ed3c141d8ad19e2b2872d4aed93"
