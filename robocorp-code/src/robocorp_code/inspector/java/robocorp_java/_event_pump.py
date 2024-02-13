@@ -1,15 +1,11 @@
 import ctypes
+import platform
 import queue
 import threading
 import time
 
-from JABWrapper.jab_wrapper import JavaAccessBridgeWrapper
+from JABWrapper.jab_wrapper import JavaAccessBridgeWrapper  # type: ignore
 from robocorp_ls_core.robotframework_log import get_logger
-
-PeekMessage = ctypes.windll.user32.PeekMessageW
-GetMessage = ctypes.windll.user32.GetMessageW
-TranslateMessage = ctypes.windll.user32.TranslateMessage
-DispatchMessage = ctypes.windll.user32.DispatchMessageW
 
 log = get_logger(__name__)
 
@@ -24,11 +20,15 @@ class EventPumpThread(threading.Thread):
         super().__init__()
         # Jab wrapper needs to be part of the thread that pumps the window events
         self._jab_wrapper: JavaAccessBridgeWrapper = None
-        self._queue = queue.Queue()
+        self._queue: queue.Queue = queue.Queue()
         self._quit_queue_loop = threading.Event()
 
     def _pump_background(self) -> bool:
         try:
+            PeekMessage = ctypes.windll.user32.PeekMessageW  # type: ignore
+            TranslateMessage = ctypes.windll.user32.TranslateMessage  # type: ignore
+            DispatchMessage = ctypes.windll.user32.DispatchMessageW  # type: ignore
+
             message = ctypes.byref(ctypes.wintypes.MSG())
             # Nonblocking API to get windows window events from the queue.
             # https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-peekmessagea
@@ -45,6 +45,9 @@ class EventPumpThread(threading.Thread):
         return False
 
     def run(self) -> None:
+        if platform.system() != "Windows":
+            return
+
         self._jab_wrapper = JavaAccessBridgeWrapper(ignore_callbacks=True)
         self._queue.put(self._jab_wrapper)
         while not self._quit_queue_loop.is_set():

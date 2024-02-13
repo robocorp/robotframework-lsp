@@ -1,6 +1,10 @@
 from typing import List, Optional, Union
 
-from JABWrapper.context_tree import ContextNode, ContextTree, SearchElement
+from JABWrapper.context_tree import (  # type: ignore
+    ContextNode,
+    ContextTree,
+    SearchElement,
+)
 
 IntegerLocatorTypes = [
     "x",
@@ -29,7 +33,7 @@ def _parse_locator(locator: str, strict_default=False):
             elif parts[0].lower() == "strict":
                 strict_mode = bool(parts[1])
                 continue
-            elif parts[0] in IntegerLocatorTypes:
+            elif len(parts) > 1 and parts[0] in IntegerLocatorTypes:
                 try:
                     parts[1] = int(parts[1])
                 except ValueError as err:

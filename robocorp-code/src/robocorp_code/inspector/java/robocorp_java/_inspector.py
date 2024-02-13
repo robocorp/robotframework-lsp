@@ -17,7 +17,7 @@ class ElementInspector:
         self._context: Optional[ContextNode] = None
 
     def _start_event_pump(func, *args, **kwargs):
-        def wrapper(self: "ElementInspector", *args, **kwargs):
+        def wrapper(self, *args, **kwargs):
             from ._event_pump import EventPumpThread
 
             event_pump_thread = EventPumpThread()
@@ -54,12 +54,16 @@ class ElementInspector:
     ) -> ColletedTreeTypedDict:
         from threading import RLock
 
-        from ._errors import NoMatchingLocatorException
+        from ._errors import ContextNotAvailable, NoMatchingLocatorException
         from ._locators import find_elements_from_tree
 
         # The JavaAccessBridgeWrapper object needs to be inserted into the context as the
         # object has to be recreated every time we do a new query
         # TODO: update the ContextTree to introduce the API for this
+        if not self._context:
+            raise ContextNotAvailable(
+                "Cannot search from context as it hasn't been created yet"
+            )
         self._context._jab_wrapper = jab_wrapper
         match = find_elements_from_tree(self._context, locator)
         node = match[0] if isinstance(match, List) and len(match) > 0 else match

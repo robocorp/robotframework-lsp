@@ -1,7 +1,7 @@
 from typing import List, Optional, TypedDict, cast
 
-from JABWrapper.context_tree import ContextNode
-from JABWrapper.jab_wrapper import JavaWindow
+from JABWrapper.context_tree import ContextNode  # type: ignore
+from JABWrapper.jab_wrapper import JavaWindow  # type: ignore
 from robocorp_ls_core.robotframework_log import get_logger
 
 from robocorp_code.inspector.java.robocorp_java._inspector import ColletedTreeTypedDict
@@ -18,7 +18,7 @@ JavaWindowInfoTypedDict = TypedDict(
 )
 
 LocatorNodeInfoTypedDict = TypedDict(
-    "LocatorNoneInfoTypedDict",
+    "LocatorNodeInfoTypedDict",
     {
         "name": str,
         "role": str,
@@ -70,7 +70,7 @@ def to_matches_and_hierarchy(
         else [str(match) for match in matches_and_hierarchy["matches"]]
     )
     hierarchy = [to_locator_info(node) for node in matches_and_hierarchy["tree"]]
-    return {"matches": matches, "hierarchy": hierarchy}
+    return {"matched_paths": matches, "hierarchy": hierarchy}
 
 
 class JavaInspector:
