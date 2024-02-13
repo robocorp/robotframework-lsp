@@ -1,8 +1,8 @@
 import ctypes
 import platform
-import queue
 import threading
 import time
+from concurrent import futures
 
 from JABWrapper.jab_wrapper import JavaAccessBridgeWrapper  # type: ignore
 from robocorp_ls_core.robotframework_log import get_logger
@@ -20,7 +20,7 @@ class EventPumpThread(threading.Thread):
         super().__init__()
         # Jab wrapper needs to be part of the thread that pumps the window events
         self._jab_wrapper: JavaAccessBridgeWrapper = None
-        self._queue: queue.Queue = queue.Queue()
+        self._future: futures.Future = futures.Future()
         self._quit_queue_loop = threading.Event()
 
     def _pump_background(self) -> bool:
@@ -49,7 +49,7 @@ class EventPumpThread(threading.Thread):
             return
 
         self._jab_wrapper = JavaAccessBridgeWrapper(ignore_callbacks=True)
-        self._queue.put(self._jab_wrapper)
+        self._future.set_result(self._jab_wrapper)
         while not self._quit_queue_loop.is_set():
             # The pump is non blocking. If the is no message in the queue
             # wait for 10 milliseconds until check again to prevent too
@@ -61,6 +61,8 @@ class EventPumpThread(threading.Thread):
     def stop(self):
         self._quit_queue_loop.set()
         self._jab_wrapper = None
+        if not self._future.done():
+            self._future.cancel()
 
     def get_wrapper(self) -> JavaAccessBridgeWrapper:
-        return self._queue.get()
+        return self._future.result()
