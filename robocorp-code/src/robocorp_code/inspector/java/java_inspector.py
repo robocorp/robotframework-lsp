@@ -30,6 +30,7 @@ LocatorNodeInfoTypedDict = TypedDict(
         "y": int,
         "width": int,
         "height": int,
+        "ancestry": int,
     },
 )
 
@@ -53,7 +54,10 @@ def to_window_info(java_window: JavaWindow) -> JavaWindowInfoTypedDict:
 def to_locator_info(context_node: ContextNode) -> LocatorNodeInfoTypedDict:
     ret = {}
     for dct_name in LocatorNodeInfoTypedDict.__annotations__:
-        ret[dct_name] = getattr(context_node.context_info, dct_name)
+        if (dct_name) == "ancestry":
+            ret["ancestry"] = getattr(context_node, dct_name)
+        else:
+            ret[dct_name] = getattr(context_node.context_info, dct_name)
     return cast(LocatorNodeInfoTypedDict, ret)
 
 
@@ -82,7 +86,7 @@ class JavaInspector:
         return [to_window_info(window) for window in windows]
 
     def collect_tree(
-        self, window: str, search_depth: int = 8, locator: Optional[str] = None
+        self, window: str, search_depth=1, locator: Optional[str] = None
     ) -> MatchesAndHierarchyTypedDict:
         log.info(f"Collect tree from locator: {locator}")
 

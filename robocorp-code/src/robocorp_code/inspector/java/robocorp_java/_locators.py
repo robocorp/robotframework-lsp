@@ -22,8 +22,8 @@ def _parse_locator(locator: str, strict_default=False):
         conditions = lvl.split(" and ")
         lvl_search = []
         strict_mode = strict_default
-        for cond in conditions:
-            parts = cond.split(":", 1)
+        for condition in conditions:
+            parts = condition.split(":", 1)
             if len(parts) == 1:
                 parts = ["name", parts[0]]
             elif parts[0].lower() == "strict":
