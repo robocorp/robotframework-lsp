@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Optional, Sequence, Union
 
 from JABWrapper.context_tree import (  # type: ignore
     ContextNode,
@@ -27,13 +27,13 @@ def _parse_locator(locator: str, strict_default=False):
         lvl_search = []
         strict_mode = strict_default
         for condition in conditions:
-            parts = condition.split(":", 1)
+            parts: Sequence[str | int] = condition.split(":", 1)
             if len(parts) == 1:
                 parts = ["name", parts[0]]
             elif parts[0].lower() == "strict":
                 strict_mode = bool(parts[1])
                 continue
-            elif len(parts) > 1 and parts[0] in IntegerLocatorTypes:
+            elif parts[0] in IntegerLocatorTypes:
                 try:
                     parts[1] = int(parts[1])
                 except ValueError as err:

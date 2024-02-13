@@ -4,3 +4,7 @@ class NoMatchingLocatorException(Exception):
 
 class ContextNotAvailable(Exception):
     """The Java context has not been created yet."""
+
+
+class LocatorNotProvidedException(Exception):
+    """Locator not provided."""

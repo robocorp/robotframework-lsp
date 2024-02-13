@@ -1,7 +1,8 @@
-from typing import List, Optional, TypedDict, Union
+from functools import wraps
+from typing import Any, Callable, List, Optional, TypedDict, TypeVar, Union, cast
 
-from JABWrapper.context_tree import ContextNode, ContextTree
-from JABWrapper.jab_wrapper import JavaAccessBridgeWrapper, JavaWindow
+from JABWrapper.context_tree import ContextNode, ContextTree  # type: ignore
+from JABWrapper.jab_wrapper import JavaAccessBridgeWrapper, JavaWindow  # type: ignore
 
 ColletedTreeTypedDict = TypedDict(
     "ColletedTreeTypedDict",
@@ -11,13 +12,17 @@ ColletedTreeTypedDict = TypedDict(
     },
 )
 
+TFun = TypeVar("TFun", bound=Callable[..., Any])
+
 
 class ElementInspector:
     def __init__(self) -> None:
         self._context: Optional[ContextNode] = None
 
-    def _start_event_pump(func, *args, **kwargs):
-        def wrapper(self, *args, **kwargs):
+    @staticmethod
+    def _start_event_pump(func: TFun) -> TFun:
+        @wraps(func)
+        def wrapper(self: "ElementInspector", *args, **kwargs):
             from ._event_pump import EventPumpThread
 
             event_pump_thread = EventPumpThread()
@@ -29,7 +34,7 @@ class ElementInspector:
                 event_pump_thread.stop()
             return ret
 
-        return wrapper
+        return cast(TFun, wrapper)
 
     @_start_event_pump
     def list_windows(self, jab_wrapper: JavaAccessBridgeWrapper) -> List[JavaWindow]:
@@ -88,9 +93,15 @@ class ElementInspector:
         search_depth: int,
         locator: Optional[str] = None,
     ) -> ColletedTreeTypedDict:
+        from ._errors import LocatorNotProvidedException
+
         jab_wrapper.switch_window_by_title(window)
 
         if not self._context:
             return self._collect_from_root(jab_wrapper, locator, search_depth)
         else:
+            if not locator:
+                raise LocatorNotProvidedException(
+                    "Locator needs to be provided to search the context"
+                )
             return self._collect_from_context(jab_wrapper, locator, search_depth)
