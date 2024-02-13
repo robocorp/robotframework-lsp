@@ -28,10 +28,11 @@ class _PickerThread(threading.Thread):
     def run(self) -> None:
         try:
             self._run()
-        except Exception:
+        except Exception as e:
             import traceback
 
             traceback.print_exc()
+            log.exception("Exception occurred:", e)
 
     def _run(self) -> None:
         assert self.bridge is not None
@@ -96,10 +97,15 @@ class ImageInspector:
         # internals
         self._image_bridge = ImageBridge(endpoint=endpoint, logger=log)
         # threads
+        self._current_thread = threading.current_thread()
         self._picker_thread: Optional[_PickerThread] = None
         self._validate_thread: Optional[_ValidateThread] = None
 
+    def _check_thread(self):
+        assert self._current_thread is threading.current_thread()
+
     def start_pick(self, confidence: Optional[int] = None) -> None:
+        self._check_thread()
         log.info(">>> Image - Start pick...")
 
         self._picker_thread = _PickerThread(
@@ -110,6 +116,7 @@ class ImageInspector:
         self._picker_thread.start()
 
     def stop_pick(self) -> None:
+        self._check_thread()
         log.info(">>> Image - Stop pick...")
         if self._picker_thread:
             self._picker_thread._stop_event.set()
@@ -117,7 +124,9 @@ class ImageInspector:
             self._validate_thread._stop_event.set()
         self._image_bridge.stop()
 
+    # TODO: replace this implementation when the robocorp library has image recognition
     def validate(self, image_base64: str, confidence: Optional[int] = None) -> None:
+        self._check_thread()
         log.info(">>> Image - Validate pick...")
 
         self._validate_thread = _ValidateThread(
@@ -129,6 +138,7 @@ class ImageInspector:
         self._validate_thread.start()
 
     def save_image(self, root_directory: str, image_base64: str) -> str:
+        self._check_thread()
         log.info(">>> Image - Save image...")
         return self._image_bridge.save_image(
             root_directory=root_directory, image_base64=image_base64

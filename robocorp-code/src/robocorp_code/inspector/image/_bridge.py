@@ -12,6 +12,7 @@ from robocorp_code.inspector.common import (
     STATE_INITIALIZING,
     STATE_PICKING,
 )
+from robocorp_ls_core.protocols import IEndPoint
 
 DEFAULT_CONFIDENCE = 80
 
@@ -27,7 +28,6 @@ def _base64_to_image(img: str):
 
 
 class ImageBridge:
-    from robocorp_ls_core.protocols import IEndPoint
 
     """Javascript API bridge for image template locators."""
 
@@ -67,7 +67,7 @@ class ImageBridge:
         stdout, _ = self.snipping_process.communicate()
 
         # If you want to capture the output, you can use stdout.decode('utf-8') to convert it to a string
-        output = stdout.decode("utf-8")
+        output = stdout.decode("utf-8", "replace")
 
         #: Validating the result from the Snipping Tool
         if not output:
@@ -115,6 +115,7 @@ class ImageBridge:
             self.snipping_process.kill()
         self.logger.info("=== Process stopped")
 
+    # TODO: replace this implementation when the robocorp library has image recognition
     def validate(
         self,
         image_base64: str,

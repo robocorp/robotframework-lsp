@@ -1,21 +1,20 @@
 import threading
-import typing
 from queue import Queue
-from typing import Literal, Optional, TypedDict
+from typing import Literal, Optional
 
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.protocols import ActionResultDict, IConfig, IEndPoint
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.robotframework_log import get_logger
 
+
 from robocorp_code.inspector.web._web_inspector import (
     PickedLocatorTypedDict,
     WebInspector,
 )
+from robocorp_code.inspector.windows.windows_inspector import WindowsInspector
 from robocorp_code.inspector.image._image_inspector import ImageInspector
 
-if typing.TYPE_CHECKING:
-    from robocorp_code.inspector.windows.windows_inspector import WindowsInspector
 
 log = get_logger(__name__)
 
@@ -490,20 +489,6 @@ class _WindowsStopHighlight(_WindowsBaseCommand):
 #### IMAGE COMMANDS
 ####
 class _ImageInspectorThread(threading.Thread):
-    """
-    This is a little tricky:
-
-    Playwright internally requires an event loop which is abstracted away from
-    us in most cases (as we're just dealing with the page directly and we'd be
-    waiting for it), but in our use case, we actually have 2 loops, one which
-    is related to dealing with received messages and the other one which is
-    the playwright event loop.
-
-    Note: if the pick wasn't async we could do without this additional layer,
-    but then we wouldn't be able to receive messages while the user is doing a
-    pick.
-    """
-
     def __init__(self, endpoint: IEndPoint) -> None:
         threading.Thread.__init__(self)
         self._endpoint = endpoint
@@ -594,6 +579,7 @@ class _ImageStopPick(_ImageBaseCommand):
         return {"success": True, "message": None, "result": None}
 
 
+# TODO: replace this implementation when the robocorp library has image recognition
 class _ImageValidateLocator(_ImageBaseCommand):
     def __init__(self, locator: dict, confidence_level: Optional[int] = None) -> None:
         super().__init__()
@@ -828,9 +814,11 @@ class InspectorApi(PythonLanguageServer):
             "confidenceLevel",
             confidence_level,
         )
-        return self._enqueue_image(
-            _ImageValidateLocator(locator=locator, confidence_level=confidence_level)
-        )
+        return {"success": True, "message": None, "result": None}
+        # TODO: replace this implementation when the robocorp library has image recognition
+        # return self._enqueue_image(
+        #     _ImageValidateLocator(locator=locator, confidence_level=confidence_level)
+        # )
 
     def m_image_save_image(self, root_directory: str, image_base64: str):
         log.info("### Image ### Save Image: root_directory:", root_directory)
