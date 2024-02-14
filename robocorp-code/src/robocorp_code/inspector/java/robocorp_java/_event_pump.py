@@ -21,7 +21,7 @@ class EventPumpThread(threading.Thread):
         # Jab wrapper needs to be part of the thread that pumps the window events
         self._jab_wrapper: JavaAccessBridgeWrapper = None
         self._future: futures.Future = futures.Future()
-        self._quit_queue_loop = threading.Event()
+        self._quit_event_loop = threading.Event()
 
     def _pump_background(self) -> bool:
         try:
@@ -48,9 +48,10 @@ class EventPumpThread(threading.Thread):
         if platform.system() != "Windows":
             return
 
+        # Raise the error to the main thread from here
         self._jab_wrapper = JavaAccessBridgeWrapper(ignore_callbacks=True)
         self._future.set_result(self._jab_wrapper)
-        while not self._quit_queue_loop.is_set():
+        while not self._quit_event_loop.is_set():
             # The pump is non blocking. If the is no message in the queue
             # wait for 10 milliseconds until check again to prevent too
             # fast loop.
@@ -59,7 +60,7 @@ class EventPumpThread(threading.Thread):
                 time.sleep(0.01)
 
     def stop(self):
-        self._quit_queue_loop.set()
+        self._quit_event_loop.set()
         self._jab_wrapper = None
         if not self._future.done():
             self._future.cancel()
