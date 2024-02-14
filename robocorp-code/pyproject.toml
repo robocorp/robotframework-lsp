@@ -39,6 +39,8 @@ pillow = "^9.0"
 pywin32 = { version = ">=300,<304", platform = "win32", python = "!=3.8.1" }
 psutil = "^5.9.0"
 comtypes = "^1.1"
+java-access-bridge-wrapper = "^1.1.0"
+ruff = "^0.2.1"
 
 [tool.poetry.group.dev.dependencies]
 robocorp-python-ls-core = {path = "../robocorp-python-ls-core/", develop = true}
@@ -52,7 +54,6 @@ robocorp-actions = "^0.0.7" # Just needed for testing.
 
 numpy = "<2"
 black = "^23.1.0"
-ruff = "^0.0.255"
 mypy = "^1.1.1"
 isort = { version = "^5.12.0", python = "^3.8" }
 invoke = "^2.0"
@@ -89,7 +90,7 @@ exclude = "vendored"
 [tool.ruff]
 ignore = [
     "E501", # Line-len.
-    "F541", # f-string without placeholders. 
+    "F541", # f-string without placeholders.
     "E731", # Use 'def' instead of lambda.
 ]
 
