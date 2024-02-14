@@ -1164,16 +1164,16 @@ class LSAutoApiClient:
 
             def method(**kwargs):
                 ret = self.ls_client.request_sync(method_name, **kwargs)
-                result = None
-                if ret is not None and isinstance(result, dict) and "result" in ret:
-                    result = ret.get("result", None)
+                result = {}
+                if ret is not None:
+                    result = ret.get("result", {})
                 if isinstance(result, dict):
                     # Deal with ActionResultDict.
                     success = result.get("success")
                     if success is not None:
                         assert success
 
-                    return result["result"]
+                    return result.get("result", {})
 
                 return result
 
@@ -1207,9 +1207,9 @@ def test_web_inspector_integrated(
         name_to_info[robot["name"]] = robot
 
     robot2_directory = name_to_info["robot2"]["directory"]
-    assert api_client.m_load_robot_locator_contents(directory=robot2_directory) == {}
+    assert api_client.m_manager_load_locators(directory=robot2_directory) == {}
 
-    existing = api_client.m_load_robot_locator_contents(
+    existing = api_client.m_manager_load_locators(
         directory=name_to_info["robot1"]["directory"]
     )
     assert len(existing) == 3
