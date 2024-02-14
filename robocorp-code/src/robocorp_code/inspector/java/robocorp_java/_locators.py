@@ -27,7 +27,9 @@ def _parse_locator(locator: str, strict_default=False):
         lvl_search = []
         strict_mode = strict_default
         for condition in conditions:
-            parts: Sequence[str | int] = condition.split(":", 1)
+            parts: Sequence[str] = condition.split(":", 1)
+            name: str = parts[0] if len(parts) > 0 else ""
+            value: Union[str, int] = parts[1] if len(parts) > 1 else ""
             if len(parts) == 1:
                 parts = ["name", parts[0]]
             elif parts[0].lower() == "strict":
@@ -35,12 +37,12 @@ def _parse_locator(locator: str, strict_default=False):
                 continue
             elif parts[0] in IntegerLocatorTypes:
                 try:
-                    parts[1] = int(parts[1])
+                    value = int(parts[1])
                 except ValueError as err:
                     raise Exception(
                         "Locator '%s' needs to be of 'integer' type" % parts[0]
                     ) from err
-            lvl_search.append(SearchElement(parts[0], parts[1], strict=strict_mode))
+            lvl_search.append(SearchElement(name, value, strict=strict_mode))
         searches.append(lvl_search)
     return searches
 
