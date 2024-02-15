@@ -10,8 +10,11 @@ dependencies:
     - msgspec=0.18.2
     - robocorp-truststore=0.8.0 # https://github.com/sethmlarson/truststore/blob/main/CHANGELOG.md
     - pywin32=303 # https://github.com/mhammond/pywin32/blob/main/CHANGES.txt
+    - pyscreeze==0.1.30 # VSCode Image Inspector dependency
+    - python-mss==9.0.1 # VSCode Image Inspector dependency
+    - comtypes==1.2.1 # VSCode Windows Inspector dependency
+    - psutil==5.9.8 # VSCode Windows Inspector dependency
     - pip:
           - --use-feature=truststore
-          - robocorp-inspector==0.10.2 # https://github.com/robocorp/inspector/blob/master/CHANGELOG.md
           - robotframework==5.0.1 # https://github.com/robotframework/robotframework/blob/master/doc/releasenotes/rf-5.0.1.rst
           - playwright==1.37.0

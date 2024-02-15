@@ -1,5 +1,5 @@
 import threading
-import typing
+from typing import TYPE_CHECKING
 from queue import Queue
 from typing import Literal, Optional
 
@@ -8,13 +8,16 @@ from robocorp_ls_core.protocols import ActionResultDict, IConfig, IEndPoint
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.robotframework_log import get_logger
 
+
 from robocorp_code.inspector.web._web_inspector import (
     PickedLocatorTypedDict,
     WebInspector,
 )
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from robocorp_code.inspector.windows.windows_inspector import WindowsInspector
+    from robocorp_code.inspector.image._image_inspector import ImageInspector
+
 
 log = get_logger(__name__)
 
@@ -286,13 +289,12 @@ class _WindowsInspectorThread(threading.Thread):
             WindowsInspector,
         )
 
-        self._windows_inspector = WindowsInspector()
-
         endpoint = self._endpoint
 
         def _on_pick(picked: List[ControlLocatorInfoTypedDict]):
             endpoint.notify("$/windowsPick", {"picked": picked})
 
+        self._windows_inspector = WindowsInspector()
         self._windows_inspector.on_pick.register(_on_pick)
 
         item: Optional[_WindowsBaseCommand]
@@ -486,6 +488,139 @@ class _WindowsStopHighlight(_WindowsBaseCommand):
         return {"success": True, "message": None, "result": None}
 
 
+####
+#### IMAGE COMMANDS
+####
+class _ImageInspectorThread(threading.Thread):
+    def __init__(self, endpoint: IEndPoint) -> None:
+        threading.Thread.__init__(self)
+        self._endpoint = endpoint
+        self.daemon = True
+        self.queue: "Queue[Optional[_ImageBaseCommand]]" = Queue()
+        self._finish = False
+        self._image_inspector: Optional["ImageInspector"] = None
+
+    @property
+    def image_inspector(self) -> Optional["ImageInspector"]:
+        return self._image_inspector
+
+    def shutdown(self) -> None:
+        self._finish = True
+        self.queue.put(None)
+
+    def run(self) -> None:
+        from concurrent.futures import Future
+        from robocorp_code.inspector.image._image_inspector import ImageInspector
+
+        endpoint = self._endpoint
+
+        def _on_pick(picked: dict):
+            endpoint.notify("$/imagePick", {"picked": picked})
+
+        def _on_validate(matches: int):
+            endpoint.notify("$/imageValidation", {"matches": matches})
+
+        self._image_inspector = ImageInspector(endpoint=endpoint)
+        self._image_inspector.on_pick.register(_on_pick)
+        self._image_inspector.on_validate.register(_on_validate)
+
+        item: Optional[_ImageBaseCommand]
+
+        while not self._finish:
+            try:
+                item = self.queue.get()
+            except Exception:
+                continue
+
+            if item is not None:
+                future: Future = item.future
+                try:
+                    result = item(self)
+                except Exception as e:
+                    log.exception(f"Error handling {item}.")
+                    future.set_exception(e)
+                else:
+                    future.set_result(result)
+
+
+class _ImageBaseCommand:
+    loop_timeout: Optional[float] = _DEFAULT_LOOP_TIMEOUT
+
+    def __init__(self):
+        from concurrent.futures import Future
+
+        self.handled_event = threading.Event()
+        self.future = Future()
+
+    def __call__(self, image_inspector_thread: _ImageInspectorThread):
+        pass
+
+
+class _ImageStartPick(_ImageBaseCommand):
+    def __init__(
+        self, minimize: Optional[bool] = None, confidence_level: Optional[int] = None
+    ) -> None:
+        super().__init__()
+        self.minimize = minimize
+        self.confidence_level = confidence_level
+
+    def __call__(
+        self, image_inspector_thread: _ImageInspectorThread
+    ) -> ActionResultDict:
+        if not image_inspector_thread.image_inspector:
+            raise RuntimeError("image_inspector not initialized.")
+        image_inspector_thread.image_inspector.start_pick(self.confidence_level)
+        return {"success": True, "message": None, "result": None}
+
+
+class _ImageStopPick(_ImageBaseCommand):
+    def __call__(
+        self, image_inspector_thread: _ImageInspectorThread
+    ) -> ActionResultDict:
+        if not image_inspector_thread.image_inspector:
+            raise RuntimeError("image_inspector not initialized.")
+        image_inspector_thread.image_inspector.stop_pick()
+        return {"success": True, "message": None, "result": None}
+
+
+# TODO: replace this implementation when the robocorp library has image recognition
+class _ImageValidateLocator(_ImageBaseCommand):
+    def __init__(self, locator: dict, confidence_level: Optional[int] = None) -> None:
+        super().__init__()
+        self.locator = locator
+        self.confidence_level = confidence_level
+
+    def __call__(
+        self, image_inspector_thread: _ImageInspectorThread
+    ) -> ActionResultDict:
+        if not image_inspector_thread.image_inspector:
+            raise RuntimeError("image_inspector not initialized.")
+        image_inspector_thread.image_inspector.validate(
+            image_base64=self.locator["screenshot"], confidence=self.confidence_level
+        )
+        return {"success": True, "message": None, "result": None}
+
+
+class _ImageSaveImage(_ImageBaseCommand):
+    def __init__(self, root_directory: str, image_base64: str) -> None:
+        super().__init__()
+        self.root_directory = root_directory
+        self.image_base64 = image_base64
+
+    def __call__(
+        self, image_inspector_thread: _ImageInspectorThread
+    ) -> ActionResultDict:
+        if not image_inspector_thread.image_inspector:
+            raise RuntimeError("image_inspector not initialized.")
+        result = image_inspector_thread.image_inspector.save_image(
+            root_directory=self.root_directory, image_base64=self.image_base64
+        )
+        return {"success": True, "message": None, "result": result}
+
+
+####
+#### INSPECTOR API
+####
 class InspectorApi(PythonLanguageServer):
     """
     This is a custom server. It uses the same message-format used in the language
@@ -497,6 +632,7 @@ class InspectorApi(PythonLanguageServer):
         PythonLanguageServer.__init__(self, read_from, write_to)
         self.__web_inspector_thread: Optional[_WebInspectorThread] = None
         self.__windows_inspector_thread: Optional[_WindowsInspectorThread] = None
+        self.__image_inspector_thread: Optional[_ImageInspectorThread] = None
 
     @property
     def _web_inspector_thread(self):
@@ -518,6 +654,16 @@ class InspectorApi(PythonLanguageServer):
 
         return self.__windows_inspector_thread
 
+    @property
+    def _image_inspector_thread(self):
+        # Lazily-initialize
+        ret = self.__image_inspector_thread
+        if ret is None:
+            self.__image_inspector_thread = _ImageInspectorThread(self._endpoint)
+            self.__image_inspector_thread.start()
+
+        return self.__image_inspector_thread
+
     def _create_config(self) -> IConfig:
         from robocorp_code.robocorp_config import RobocorpConfig
 
@@ -534,6 +680,9 @@ class InspectorApi(PythonLanguageServer):
     def m_echo(self, arg):
         return "echo", arg
 
+    ####
+    #### ENQUEUE COMMANDS TO THREAD WORKERS
+    ####
     def _enqueue_web(self, cmd: _WebBaseCommand, wait: bool):
         self._web_inspector_thread.queue.put(cmd)
         if wait:
@@ -556,6 +705,21 @@ class InspectorApi(PythonLanguageServer):
 
         return {"success": True, "message": None, "result": None}
 
+    def _enqueue_image(
+        self, cmd: _ImageBaseCommand, wait: bool = True
+    ) -> ActionResultDict:
+        self._image_inspector_thread.queue.put(cmd)
+        if wait:
+            try:
+                return cmd.future.result()
+            except Exception as e:
+                return {"success": False, "message": str(e), "result": None}
+
+        return {"success": True, "message": None, "result": None}
+
+    ####
+    #### WEB RELATED APIs
+    ####
     def m_open_browser(self, url: str, wait: bool = False) -> None:
         self._enqueue_web(_WebOpenUrlCommand(url), wait)
 
@@ -583,6 +747,9 @@ class InspectorApi(PythonLanguageServer):
     ) -> int:
         return self._enqueue_web((_WebValidateCommand(locator=locator, url=url)), wait)
 
+    ####
+    #### WINDOWS RELATED APIs
+    ####
     def m_windows_parse_locator(self, locator: str) -> ActionResultDict:
         return self._enqueue_windows(_WindowsParseLocator(locator))
 
@@ -622,3 +789,41 @@ class InspectorApi(PythonLanguageServer):
 
     def m_windows_stop_highlight(self) -> ActionResultDict:
         return self._enqueue_windows(_WindowsStopHighlight())
+
+    ####
+    #### IMAGE RELATED APIs
+    ####
+    def m_image_start_pick(
+        self, minimize: Optional[bool] = None, confidence_level: Optional[int] = None
+    ):
+        log.info("### Image ### Start Pick: minimize:", minimize)
+        log.info(
+            "### Image ### Start Pick: confidenceLevel:",
+            confidence_level,
+        )
+        return self._enqueue_image(
+            _ImageStartPick(confidence_level=confidence_level, minimize=minimize)
+        )
+
+    def m_image_stop_pick(self):
+        log.info("### Image ### Stop Pick")
+        return self._enqueue_image(_ImageStopPick())
+
+    def m_image_validate_locator(
+        self, locator: dict, confidence_level: Optional[int] = None
+    ):
+        log.info(
+            "### Image ### Validate: locator:",
+            locator,
+            "confidenceLevel",
+            confidence_level,
+        )
+        return {"success": True, "message": None, "result": None}
+        # TODO: replace this implementation when the robocorp library has image recognition
+        # return self._enqueue_image(
+        #     _ImageValidateLocator(locator=locator, confidence_level=confidence_level)
+        # )
+
+    def m_image_save_image(self, root_directory: str, image_base64: str):
+        log.info("### Image ### Save Image: root_directory:", root_directory)
+        return self._enqueue_image(_ImageSaveImage(root_directory, image_base64))

@@ -1255,7 +1255,7 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
 
     @staticmethod
     def _load_locators_db(robot_yaml_path) -> ActionResultDictLocatorsJson:
-        from RPA.core.locators.database import LocatorsDatabase
+        from .vendored.locators.database import LocatorsDatabase
 
         locators_json = Path(robot_yaml_path).parent / "locators.json"
         db = LocatorsDatabase(str(locators_json))
@@ -1277,7 +1277,7 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
     def _get_locators_json_info(
         self, params: Optional[dict] = None
     ) -> ActionResultDictLocatorsJsonInfo:
-        from RPA.core.locators.containers import Locator
+        from .vendored.locators.containers import Locator
 
         if not params or "robotYaml" not in params:
             return {

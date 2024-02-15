@@ -371,12 +371,7 @@ function registerRobocorpCodeCommands(C: CommandRegistry, context: ExtensionCont
     C.register(ROBOCORP_RUN_ROBOCORPS_PYTHON_TASK, (args: string[]) => runRobocorpTasks(true, args));
     C.register(ROBOCORP_DEBUG_ROBOCORPS_PYTHON_TASK, (args: string[]) => runRobocorpTasks(false, args));
     C.register(ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR, (locator?: LocatorEntry): Promise<void> => {
-        switch (locator.type) {
-            case "image":
-                return inspector.openRobocorpInspector(undefined, locator);
-            default:
-                return showInspectorUI(context, IAppRoutes.LOCATORS_MANAGER);
-        }
+        return showInspectorUI(context, IAppRoutes.LOCATORS_MANAGER);
     });
     C.register(ROBOCORP_OPEN_PLAYWRIGHT_RECORDER, (useTreeSelected: boolean = false) =>
         playwright.openPlaywrightRecorder(useTreeSelected)
@@ -628,10 +623,10 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
 
     // register Inspector applications
     C.registerWithoutStub(ROBOCORP_INSPECTOR, async () => {
-        await showInspectorUI(context);
+        await showInspectorUI(context, IAppRoutes.LOCATORS_MANAGER);
     });
     C.registerWithoutStub(ROBOCORP_INSPECTOR_DUPLICATE, async () => {
-        await showInspectorUI(context);
+        await showInspectorUI(context, IAppRoutes.LOCATORS_MANAGER);
     });
     C.register(
         ROBOCORP_NEW_ROBOCORP_INSPECTOR_BROWSER,
@@ -641,8 +636,9 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
         ROBOCORP_NEW_ROBOCORP_INSPECTOR_WINDOWS,
         async () => await showInspectorUI(context, IAppRoutes.WINDOWS_INSPECTOR)
     );
-    C.register(ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE, async () =>
-        inspector.openRobocorpInspector(inspector.InspectorType.Image)
+    C.register(
+        ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE,
+        async () => await showInspectorUI(context, IAppRoutes.IMAGE_INSPECTOR)
     );
 
     // i.e.: allow other extensions to also use our submit issue api.

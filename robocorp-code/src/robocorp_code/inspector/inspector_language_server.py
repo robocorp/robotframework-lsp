@@ -1,7 +1,7 @@
 import weakref
 from functools import partial
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Optional
 
 from robocorp_ls_core.protocols import ActionResultDict
 from robocorp_ls_core.robotframework_log import get_logger
@@ -48,7 +48,7 @@ class InspectorLanguageServer:
         # Use the stripped version.
         locator["name"] = name
 
-        loaded_locators_action_result = self.m_load_robot_locator_contents(
+        loaded_locators_action_result = self.m_manager_load_locators(
             directory=directory
         )
 
@@ -101,7 +101,7 @@ class InspectorLanguageServer:
 
         import json
 
-        loaded_locators_action_result = self.m_load_robot_locator_contents(
+        loaded_locators_action_result = self.m_manager_load_locators(
             directory=directory
         )
         if not loaded_locators_action_result["success"]:
@@ -135,11 +135,7 @@ class InspectorLanguageServer:
         }
         return ret
 
-    def m_web_inspector_close_browser(self, **params) -> None:
-        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
-        inspector_api_client.send_sync_message("closeBrowser", {})
-
-    def m_load_robot_locator_contents(self, directory: str) -> ActionResultDict:
+    def m_manager_load_locators(self, directory: str) -> ActionResultDict:
         import json
 
         ret: ActionResultDict
@@ -202,6 +198,10 @@ class InspectorLanguageServer:
 
         inspector_api_client.open_browser(url, wait=True)
 
+    def m_web_inspector_close_browser(self, **params) -> None:
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        inspector_api_client.send_sync_message("closeBrowser", {})
+
     def m_web_inspector_click(self, locator):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         inspector_api_client.click(locator, wait=True)
@@ -263,7 +263,6 @@ class InspectorLanguageServer:
     def m_windows_inspector_start_pick(self):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         # Not blocking (return callback to run in thread).
-        log.info("LS-Win-StartPick")
         return partial(
             inspector_api_client.send_sync_message,
             "windowsStartPick",
@@ -323,4 +322,55 @@ class InspectorLanguageServer:
             inspector_api_client.send_sync_message,
             "windowsStopHighlight",
             {},
+        )
+
+    def m_image_inspector_start_pick(
+        self, minimize: Optional[bool], confidence_level: Optional[int]
+    ):
+        log.info(
+            "### Image ### Start Pick: minimize",
+            minimize,
+            "confidence_level",
+            confidence_level,
+        )
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        return partial(
+            inspector_api_client.send_sync_message,
+            "imageStartPick",
+            {"minimize": minimize, "confidence_level": confidence_level},
+        )
+
+    def m_image_inspector_stop_pick(self):
+        log.info("### Image ### Stop Pick")
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        return partial(inspector_api_client.send_sync_message, "imageStopPick", {})
+
+    def m_image_inspector_validate_locator(
+        self, locator: dict, confidence_level: Optional[bool]
+    ):
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        log.info(
+            "### Image ### Validate: locator:",
+            locator,
+            "confidence_level",
+            confidence_level,
+        )
+        return partial(
+            inspector_api_client.send_sync_message,
+            "imageValidateLocator",
+            {"locator": locator, "confidence_level": confidence_level},
+        )
+
+    def m_image_inspector_save_image(self, root_directory: str, image_base64: str):
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        log.info(
+            "### Image ### Validate: root_directory:",
+            root_directory,
+            "image_base64",
+            image_base64,
+        )
+        return partial(
+            inspector_api_client.send_sync_message,
+            "imageSaveImage",
+            {"root_directory": root_directory, "image_base64": image_base64},
         )
