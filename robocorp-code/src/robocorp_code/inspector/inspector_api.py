@@ -1,4 +1,5 @@
 import threading
+from typing import TYPE_CHECKING
 from queue import Queue
 from typing import Literal, Optional
 
@@ -12,8 +13,10 @@ from robocorp_code.inspector.web._web_inspector import (
     PickedLocatorTypedDict,
     WebInspector,
 )
-from robocorp_code.inspector.windows.windows_inspector import WindowsInspector
-from robocorp_code.inspector.image._image_inspector import ImageInspector
+
+if TYPE_CHECKING:
+    from robocorp_code.inspector.windows.windows_inspector import WindowsInspector
+    from robocorp_code.inspector.image._image_inspector import ImageInspector
 
 
 log = get_logger(__name__)
@@ -495,10 +498,10 @@ class _ImageInspectorThread(threading.Thread):
         self.daemon = True
         self.queue: "Queue[Optional[_ImageBaseCommand]]" = Queue()
         self._finish = False
-        self._image_inspector: Optional[ImageInspector] = None
+        self._image_inspector: Optional["ImageInspector"] = None
 
     @property
-    def image_inspector(self) -> Optional[ImageInspector]:
+    def image_inspector(self) -> Optional["ImageInspector"]:
         return self._image_inspector
 
     def shutdown(self) -> None:
@@ -507,6 +510,7 @@ class _ImageInspectorThread(threading.Thread):
 
     def run(self) -> None:
         from concurrent.futures import Future
+        from robocorp_code.inspector.image._image_inspector import ImageInspector
 
         endpoint = self._endpoint
 
