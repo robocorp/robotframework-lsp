@@ -29,9 +29,6 @@ class _PickerThread(threading.Thread):
         try:
             self._run()
         except Exception as e:
-            import traceback
-
-            traceback.print_exc()
             log.exception("Exception occurred:", e)
 
     def _run(self) -> None:
@@ -60,10 +57,8 @@ class _ValidateThread(threading.Thread):
     def run(self) -> None:
         try:
             self._run()
-        except Exception:
-            import traceback
-
-            traceback.print_exc()
+        except Exception as e:
+            log.exception("Exception occurred:", e)
 
     def _run(self) -> None:
         assert self.bridge is not None
