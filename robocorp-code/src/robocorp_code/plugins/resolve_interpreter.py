@@ -16,7 +16,7 @@ from robocorp_ls_core.protocols import RCCActionResult
 
 try:
     from robocorp_code.rcc import Rcc  # noqa
-except:
+except ImportError:
     # Automatically add it to the path if executing as a plugin the first time.
     sys.path.append(
         os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -48,11 +48,7 @@ log = get_logger(__name__)
 
 _CachedFileMTimeInfo = namedtuple("_CachedFileMTimeInfo", "st_mtime, st_size, path")
 
-_CachedInterpreterMTime = Tuple[
-    Optional[_CachedFileMTimeInfo],
-    Optional[_CachedFileMTimeInfo],
-    Optional[_CachedFileMTimeInfo],
-]
+_CachedInterpreterMTime = Tuple[Optional[_CachedFileMTimeInfo], ...]
 
 
 def _get_mtime_cache_info(file_path: Path) -> Optional[_CachedFileMTimeInfo]:
@@ -62,7 +58,7 @@ def _get_mtime_cache_info(file_path: Path) -> Optional[_CachedFileMTimeInfo]:
     try:
         stat = file_path.stat()
         return _CachedFileMTimeInfo(stat.st_mtime, stat.st_size, str(file_path))
-    except:
+    except Exception:
         # It could be removed in the meanwhile.
         log.exception(f"Unable to get mtime info for: {file_path}")
         return None
@@ -260,6 +256,12 @@ Full error message
             env_json_path_file_info.mtime_info if env_json_path_file_info else None,
         )
 
+    def _obtain_package_yaml_mtime(
+        self,
+        package_yaml_file_info: _CachedFileInfo,
+    ) -> _CachedInterpreterMTime:
+        return (package_yaml_file_info.mtime_info,)
+
     def is_cache_valid(
         self,
         robot_yaml_file_info: _CachedFileInfo,
@@ -269,6 +271,12 @@ Full error message
         return self._mtime == self._obtain_mtime(
             robot_yaml_file_info, conda_config_file_info, env_json_path_file_info
         )
+
+    def is_package_yaml_cache_valid(
+        self,
+        package_yaml_file_info: _CachedFileInfo,
+    ) -> bool:
+        return self._mtime == self._obtain_package_yaml_mtime(package_yaml_file_info)
 
 
 class _CacheInfo(object):
@@ -375,13 +383,13 @@ class _TouchInfo(object):
                     temp_dir_path = Path(temp_dir)
                     try:
                         temp_dir_path.mkdir(exist_ok=True)
-                    except:
+                    except Exception:
                         log.exception(f"Error making dir: {temp_dir_path}")
 
                     try:
                         recycle_path: Path = temp_dir_path / "recycle.now"
                         recycle_path.touch()
-                    except:
+                    except Exception:
                         log.exception(f"Error touching: {recycle_path}")
 
 
@@ -499,19 +507,34 @@ class RobocorpResolveInterpreter(object):
             fs_path = Path(uris.to_fs_path(doc_uri))
             # Note: there's a use-case where a directory may be passed to
             # compute as the doc_uri, so, handle that too.
+            found_robot_yaml = False
+            found_package_yaml = False
+
             for path in itertools.chain(iter([fs_path]), fs_path.parents):
                 robot_yaml: Path = path / "robot.yaml"
                 if robot_yaml.exists():
+                    found_robot_yaml = True
+                    break
+
+                package_yaml: Path = path / "package.yaml"
+                found_package_yaml = True
+                if package_yaml.exists():
+                    found_package_yaml = True
                     break
             else:
                 # i.e.: Could not find any robot.yaml in the structure.
                 log.debug("Could not find robot.yaml for: %s", fs_path)
                 return None
 
+            if found_package_yaml:
+                # RCC does not have a way to consume the package.yaml directly,
+                # so, what we do at this point is generate the `
+                robot_yaml_file_info = _CacheInfo.get_file_info(package_yaml)
+
             # Ok, we have the robot_yaml, so, we should be able to run RCC with it.
             try:
                 robot_yaml_file_info = _CacheInfo.get_file_info(robot_yaml)
-            except:
+            except Exception:
                 log.exception("Error collecting info from: %s", robot_yaml)
                 return None
 
@@ -527,7 +550,7 @@ class RobocorpResolveInterpreter(object):
 
             try:
                 conda_config_file_info = _CacheInfo.get_file_info(conda_config_path)
-            except:
+            except Exception:
                 log.exception("Error collecting info from: %s", conda_config_path)
                 return None
 
@@ -536,7 +559,7 @@ class RobocorpResolveInterpreter(object):
             if env_json_path.exists():
                 try:
                     env_json_path_file_info = _CacheInfo.get_file_info(env_json_path)
-                except:
+                except Exception:
                     log.exception("Error collecting info from: %s", env_json_path)
                     return None
 
@@ -547,7 +570,7 @@ class RobocorpResolveInterpreter(object):
                 pm,
             )
 
-        except:
+        except Exception:
             log.exception(f"Error getting interpreter info for: {doc_uri}")
         return None
 

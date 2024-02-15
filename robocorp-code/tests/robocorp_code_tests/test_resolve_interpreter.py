@@ -161,6 +161,40 @@ def test_fix_entry():
         )
 
 
+def test_resolve_interpreter_action_package(
+    cases: CasesFixture,
+    config_provider: IConfigProvider,
+    rcc_conda_installed,
+    rcc_patch,
+) -> None:
+    from robocorp_ls_core import uris
+    from robocorp_ls_core.constants import NULL
+    from robocorp_ls_core.ep_providers import (
+        EPConfigurationProvider,
+        EPEndPointProvider,
+    )
+    from robocorp_ls_core.pluginmanager import PluginManager
+
+    from robocorp_code.plugins.resolve_interpreter import (
+        RobocorpResolveInterpreter,
+        _CacheInfo,
+    )
+
+    _CacheInfo._cache_hit_files = 0
+
+    pm = PluginManager()
+    pm.set_instance(EPConfigurationProvider, config_provider)
+    pm.set_instance(EPEndPointProvider, NULL)
+
+    resolve_interpreter = RobocorpResolveInterpreter(weak_pm=weakref.ref(pm))
+    path = cases.get_path("action_package")
+    rcc_patch.apply()
+    interpreter_info = resolve_interpreter.get_interpreter_info_for_doc_uri(
+        uris.from_fs_path(path)
+    )
+    print(interpreter_info)
+
+
 def test_resolve_interpreter(
     cases: CasesFixture,
     config_provider: IConfigProvider,
