@@ -8,9 +8,12 @@ from robocorp_ls_core.protocols import IDocument, IEndPoint, IMonitor, IWorkspac
 from robocorp_ls_core.python_ls import BaseLintInfo, BaseLintManager
 from robocorp_ls_core.robotframework_log import get_logger
 
-from robocorp_code.deps._deps_protocols import ICondaCloud, IPyPiCloud
 from robocorp_code.protocols import IRcc
 from robocorp_code.robocorp_language_server import RobocorpLanguageServer
+from robocorp_code.vendored_deps.package_deps._deps_protocols import (
+    ICondaCloud,
+    IPyPiCloud,
+)
 
 log = get_logger(__name__)
 
@@ -27,7 +30,7 @@ def collect_conda_yaml_diagnostics(
     conda_yaml_uri: str,
     monitor: Optional[IMonitor],
 ) -> List[DiagnosticsTypedDict]:
-    from robocorp_code.deps import analyzer
+    from robocorp_code.vendored_deps.package_deps import analyzer
 
     if not DiagnosticsConfig.analyze_versions:
         return []

@@ -92,7 +92,7 @@ def cases(tmpdir_factory) -> CasesFixture:
     scope="session",
 )
 def cached_conda_cloud():
-    from robocorp_code.deps import conda_cloud
+    from robocorp_code.vendored_deps.package_deps import conda_cloud
 
     f = __file__
     original_resources_dir = Path(os.path.join(os.path.dirname(f), "_resources"))
@@ -419,7 +419,7 @@ def patch_pypi_cloud(monkeypatch):
     )
 
     from robocorp_code import hover
-    from robocorp_code.deps.pypi_cloud import PyPiCloud
+    from robocorp_code.vendored_deps.package_deps.pypi_cloud import PyPiCloud
 
     def _get_json_from_cloud(self, url):
         if url == "https://pypi.org/pypi/rpaframework/json":
@@ -448,7 +448,7 @@ def patch_pypi_cloud_no_releases_12_months(monkeypatch):
     from robocorp_code_tests.deps.cloud_mock_data import RPAFRAMEWORK_PYPI_MOCK_DATA
 
     from robocorp_code import hover
-    from robocorp_code.deps.pypi_cloud import PyPiCloud
+    from robocorp_code.vendored_deps.package_deps.pypi_cloud import PyPiCloud
 
     def _get_json_from_cloud(self, url):
         if url == "https://pypi.org/pypi/rpaframework/json":

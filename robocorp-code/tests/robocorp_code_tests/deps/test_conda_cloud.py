@@ -5,7 +5,10 @@ from pathlib import Path
 
 
 def test_conda_cloud_index(datadir, data_regression):
-    from robocorp_code.deps.conda_cloud import SqliteQueries, index_conda_info
+    from robocorp_code.vendored_deps.package_deps.conda_cloud import (
+        SqliteQueries,
+        index_conda_info,
+    )
 
     target_sqlite = datadir / "sqlite.db"
     index_conda_info(datadir / "noarch-testdata.json", target_sqlite)
@@ -52,7 +55,10 @@ def test_conda_cloud_index(datadir, data_regression):
 
 def _test_check_manual():
     # Manual performance tests with a downloaded file.
-    from robocorp_code.deps.conda_cloud import SqliteQueries, index_conda_info
+    from robocorp_code.vendored_deps.package_deps.conda_cloud import (
+        SqliteQueries,
+        index_conda_info,
+    )
 
     p = Path(r"C:\temp\conda_check\linux-64.db")
     import os
@@ -80,7 +86,7 @@ def _test_check_manual():
 def test_conda_cloud(datadir):
     from robocorp_ls_core.basic import wait_for_condition
 
-    from robocorp_code.deps.conda_cloud import CondaCloud, State
+    from robocorp_code.vendored_deps.package_deps.conda_cloud import CondaCloud, State
 
     cache_dir = datadir / "cache"
     conda_cloud = CondaCloud(cache_dir, reindex_if_old=True)

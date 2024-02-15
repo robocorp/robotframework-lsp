@@ -20,7 +20,7 @@ def get_conda_yaml_doc(datadir, name) -> IDocument:
 @pytest.fixture
 def check_conda_yaml(datadir, data_regression, cached_conda_cloud) -> Iterator:
     def check(name):
-        from robocorp_code.deps.analyzer import Analyzer
+        from robocorp_code.vendored_deps.package_deps.analyzer import Analyzer
 
         doc = get_conda_yaml_doc(datadir, name)
 
@@ -52,7 +52,7 @@ def test_conda_version_old(check_conda_yaml, patch_pypi_cloud) -> None:
 
 
 def test_hover_conda_yaml_pip_package(datadir, patch_pypi_cloud, cached_conda_cloud):
-    from robocorp_code.deps.analyzer import Analyzer
+    from robocorp_code.vendored_deps.package_deps.analyzer import Analyzer
 
     doc = get_conda_yaml_doc(datadir, "check_python_version")
 
@@ -63,7 +63,7 @@ def test_hover_conda_yaml_pip_package(datadir, patch_pypi_cloud, cached_conda_cl
 
 
 def test_hover_conda_yaml_conda_package(datadir, patch_pypi_cloud, cached_conda_cloud):
-    from robocorp_code.deps.analyzer import Analyzer
+    from robocorp_code.vendored_deps.package_deps.analyzer import Analyzer
 
     doc = get_conda_yaml_doc(datadir, "check_python_version")
 
@@ -76,8 +76,8 @@ def test_hover_conda_yaml_conda_package(datadir, patch_pypi_cloud, cached_conda_
 def test_hover_conda_yaml_rpaframework(
     datadir, data_regression, patch_pypi_cloud, cached_conda_cloud
 ):
-    from robocorp_code.deps.pypi_cloud import PyPiCloud
     from robocorp_code.hover import hover_on_conda_yaml
+    from robocorp_code.vendored_deps.package_deps.pypi_cloud import PyPiCloud
 
     doc = get_conda_yaml_doc(datadir, "check_python_version")
 
@@ -88,8 +88,10 @@ def test_hover_conda_yaml_rpaframework(
 
 
 def test_conda_version_spec_api():
-    from robocorp_code.deps.conda_impl import conda_version
-    from robocorp_code.deps.conda_impl.conda_match_spec import parse_spec_str
+    from robocorp_code.vendored_deps.package_deps.conda_impl import conda_version
+    from robocorp_code.vendored_deps.package_deps.conda_impl.conda_match_spec import (
+        parse_spec_str,
+    )
 
     v = conda_version.VersionSpec("22.1.3")
     op = v.get_matcher(">=22")[1]
@@ -122,7 +124,7 @@ def test_conda_version_spec_api():
 
 
 def test_pypi_cloud(patch_pypi_cloud) -> None:
-    from robocorp_code.deps.pypi_cloud import PyPiCloud
+    from robocorp_code.vendored_deps.package_deps.pypi_cloud import PyPiCloud
 
     pypi_cloud = PyPiCloud()
 
@@ -156,7 +158,7 @@ def test_pypi_cloud(patch_pypi_cloud) -> None:
 
 
 def test_pypi_cloud_jq(patch_pypi_cloud) -> None:
-    from robocorp_code.deps.pypi_cloud import PyPiCloud
+    from robocorp_code.vendored_deps.package_deps.pypi_cloud import PyPiCloud
 
     pypi_cloud = PyPiCloud()
 

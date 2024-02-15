@@ -19,7 +19,6 @@ from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
 
 from robocorp_code import commands
-from robocorp_code.deps._deps_protocols import ICondaCloud, IPyPiCloud
 from robocorp_code.inspector.inspector_language_server import InspectorLanguageServer
 from robocorp_code.protocols import (
     ActionResultDict,
@@ -45,6 +44,10 @@ from robocorp_code.protocols import (
     UploadRobotParamsDict,
     WorkItem,
     WorkspaceInfoDict,
+)
+from robocorp_code.vendored_deps.package_deps._deps_protocols import (
+    ICondaCloud,
+    IPyPiCloud,
 )
 
 log = get_logger(__name__)
@@ -107,8 +110,8 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         from robocorp_code._language_server_pre_run_scripts import _PreRunScripts
         from robocorp_code._language_server_profile import _Profile
         from robocorp_code._language_server_vault import _Vault
-        from robocorp_code.deps.pypi_cloud import PyPiCloud
         from robocorp_code.rcc import Rcc
+        from robocorp_code.vendored_deps.package_deps.pypi_cloud import PyPiCloud
 
         user_home = os.getenv("ROBOCORP_CODE_USER_HOME", None)
         if user_home is None:
@@ -235,7 +238,7 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         Note: monkey-patched in tests (so that we don't reindex
         and specify the conda-indexes to use).
         """
-        from robocorp_code.deps.conda_cloud import CondaCloud
+        from robocorp_code.vendored_deps.package_deps.conda_cloud import CondaCloud
 
         return CondaCloud(Path(cache_dir) / ".conda_indexes")
 

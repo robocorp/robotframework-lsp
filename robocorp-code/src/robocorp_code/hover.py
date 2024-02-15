@@ -5,14 +5,14 @@ from typing import Dict, List, Optional, Set
 from robocorp_ls_core.lsp import HoverTypedDict, MarkupContent, MarkupKind
 from robocorp_ls_core.protocols import IDocument
 
-from robocorp_code.deps._conda_deps import CondaDepInfo
-from robocorp_code.deps._deps_protocols import (
+from robocorp_code.vendored_deps.package_deps._conda_deps import CondaDepInfo
+from robocorp_code.vendored_deps.package_deps._deps_protocols import (
     CondaVersionInfo,
     ICondaCloud,
     IPyPiCloud,
     ReleaseData,
 )
-from robocorp_code.deps._pip_deps import PipDepInfo
+from robocorp_code.vendored_deps.package_deps._pip_deps import PipDepInfo
 
 # Can be used in tests to force a date.
 FORCE_DATETIME_NOW: Optional[datetime.datetime] = None
@@ -27,7 +27,7 @@ def hover_on_conda_yaml(
 ) -> Optional[HoverTypedDict]:
     from robocorp_ls_core.protocols import IDocumentSelection
 
-    from robocorp_code.deps.analyzer import Analyzer
+    from robocorp_code.vendored_deps.package_deps.analyzer import Analyzer
 
     sel: IDocumentSelection = doc.selection(line, col)
     analyzer = Analyzer(doc.source, doc.path, conda_cloud, pypi_cloud)
@@ -51,7 +51,9 @@ def _create_conda_requirements_desc_parts(
     """
     import msgspec
 
-    from robocorp_code.deps.conda_impl.conda_match_spec import parse_spec_str
+    from robocorp_code.vendored_deps.package_deps.conda_impl.conda_match_spec import (
+        parse_spec_str,
+    )
 
     desc_parts = []
     sub_to_dep_names: Dict[str, Set] = {}
@@ -124,7 +126,7 @@ def _create_conda_requirements_desc_parts(
 def _hover_handle_conda_dep(
     conda_cloud: ICondaCloud, conda_dep: CondaDepInfo
 ) -> Optional[HoverTypedDict]:
-    from robocorp_code.deps.conda_cloud import (
+    from robocorp_code.vendored_deps.package_deps.conda_cloud import (
         sort_conda_versions,
         timestamp_to_datetime,
     )
