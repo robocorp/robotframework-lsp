@@ -202,15 +202,31 @@ documentation: https://github.com/...
     else:
         target.write_text(output, encoding="utf-8")
 
+    # Remove conda.yaml
     if backup:
-        new_path = conda_yaml.parent / (conda_yaml.name + ".bak")
-        print(f"Renaming {conda_yaml.name} to {new_path.name}", file=stream)
+        new_conda_yaml_path = conda_yaml.parent / (conda_yaml.name + ".bak")
+        print(f"Renaming {conda_yaml.name} to {new_conda_yaml_path.name}", file=stream)
         if not dry_run:
-            conda_yaml.rename(new_path)
+            conda_yaml.rename(new_conda_yaml_path)
     else:
         print(f"Removing {conda_yaml.name}", file=stream)
         if not dry_run:
             os.remove(conda_yaml)
+
+    # Remove robot.yaml
+    robot_yaml = conda_yaml.parent / "robot.yaml"
+    if robot_yaml.exists():
+        if backup:
+            new_robot_yaml_path = robot_yaml.parent / (robot_yaml.name + ".bak")
+            print(
+                f"Renaming {robot_yaml.name} to {new_robot_yaml_path.name}", file=stream
+            )
+            if not dry_run:
+                robot_yaml.rename(new_robot_yaml_path)
+        else:
+            print(f"Removing {robot_yaml.name}", file=stream)
+            if not dry_run:
+                os.remove(robot_yaml)
 
 
 def update_package(
