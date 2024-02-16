@@ -652,12 +652,12 @@ class _JavaInspectorThread(threading.Thread):
         threading.Thread.__init__(self)
         self._endpoint = endpoint
         self.daemon = True
-        self.queue: Queue[Optional[_JavaBaseCommand]] = Queue()
+        self.queue: "Queue[Optional[_JavaBaseCommand]]" = Queue()
         self._finish = False
-        self._java_inspector: Optional[JavaInspector] = None
+        self._java_inspector: Optional["JavaInspector"] = None
 
     @property
-    def java_inspector(self) -> Optional[JavaInspector]:
+    def java_inspector(self) -> Optional["JavaInspector"]:
         return self._java_inspector
 
     def shutdown(self) -> None:
@@ -1154,9 +1154,7 @@ class InspectorApi(PythonLanguageServer):
         locator,
         search_depth: int = 8,
     ) -> ActionResultDict:
-        return self._enqueue_java(
-            _JavaCollectTree(locator, search_depth)
-        )
+        return self._enqueue_java(_JavaCollectTree(locator, search_depth))
 
     def m_java_list_windows(
         self,
