@@ -248,25 +248,9 @@ def create_hash(contents: str) -> str:
     return sha256_hash.hexdigest()
 
 
-def create_conda_from_package_yaml(datadir: Path, package_yaml: Path) -> Path:
-    """
-    Args:
-        package_yaml: This is the package.yaml from which the conda.yaml
-            (to be supplied to rcc to create the env) should be created.
-
-    Returns: The path to the generated conda.yaml.
-    """
-    import yaml
-
-    if not package_yaml.exists():
-        raise ActionPackageError(f"File does not exist ({package_yaml}).")
-
-    try:
-        with open(package_yaml, "r", encoding="utf-8") as stream:
-            contents = yaml.safe_load(stream)
-    except Exception:
-        raise ActionPackageError(f"Error loading file as yaml ({package_yaml}).")
-
+def create_conda_contents_from_package_yaml_contents(
+    package_yaml: Path, package_yaml_contents: dict
+) -> dict:
     def _get_in_dict(
         dct: dict,
         entry: str,
@@ -297,15 +281,17 @@ def create_conda_from_package_yaml(datadir: Path, package_yaml: Path) -> Path:
             )
         found_names.add(name)
 
-    if not isinstance(contents, dict):
+    if not isinstance(package_yaml_contents, dict):
         raise ActionPackageError(
             f"Dict not found as top-level element (in {package_yaml})."
         )
 
-    python_deps = _get_in_dict(contents, "dependencies", dict)
+    python_deps = _get_in_dict(package_yaml_contents, "dependencies", dict)
     conda_forge = _get_in_dict(python_deps, "conda-forge", list)
     local_wheels = _get_in_dict(python_deps, "local-wheels", list, required=False)
-    post_install = _get_in_dict(contents, "post-install", list, required=False)
+    post_install = _get_in_dict(
+        package_yaml_contents, "post-install", list, required=False
+    )
     pip = _get_in_dict(python_deps, "pip", list)
 
     converted_conda_entries: list = []
@@ -358,13 +344,42 @@ def create_conda_from_package_yaml(datadir: Path, package_yaml: Path) -> Path:
     if post_install:
         data["rccPostInstall"] = post_install
 
+    return data
+
+
+def create_conda_from_package_yaml(datadir: Path, package_yaml: Path) -> Path:
+    """
+    Args:
+        package_yaml: This is the package.yaml from which the conda.yaml
+            (to be supplied to rcc to create the env) should be created.
+
+        package_yaml_contents: If specified this are the yaml-loaded contents
+            of the package yaml.
+
+    Returns: The path to the generated conda.yaml.
+    """
+    import yaml
+
+    if not package_yaml.exists():
+        raise ActionPackageError(f"File does not exist ({package_yaml}).")
+
+    try:
+        with open(package_yaml, "r", encoding="utf-8") as stream:
+            package_yaml_contents = yaml.safe_load(stream)
+    except Exception:
+        raise ActionPackageError(f"Error loading file as yaml ({package_yaml}).")
+
+    data = create_conda_contents_from_package_yaml_contents(
+        package_yaml, package_yaml_contents
+    )
+
     tmpdir = datadir / "tmpdir"
     if not tmpdir.exists():
         tmpdir.mkdir(exist_ok=True)
 
-    contents = yaml.dump(data)
+    new_package_yaml_contents = yaml.dump(data)
 
-    conda_path = tmpdir / f"conda_{create_hash(contents)[:12]}.yaml"
-    conda_path.write_text(contents)
+    conda_path = tmpdir / f"conda_{create_hash(new_package_yaml_contents)[:12]}.yaml"
+    conda_path.write_text(new_package_yaml_contents)
 
     return conda_path

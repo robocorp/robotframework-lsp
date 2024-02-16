@@ -82,15 +82,7 @@ class HolotreeManager:
         self._rcc = rcc
         self.timeout_for_updates_in_seconds = timeout_for_updates_in_seconds
         if not directory:
-            robocorp_home_str = self._rcc.get_robocorp_home_from_settings()
-            if not robocorp_home_str:
-                from robocorp_code.rcc import get_default_robocorp_home_location
-
-                robocorp_home = get_default_robocorp_home_location()
-            else:
-                robocorp_home = Path(robocorp_home_str)
-
-            directory = robocorp_home / ".robocorp_code"
+            directory = self._rcc.get_robocorp_code_datadir()
 
         directory.mkdir(parents=True, exist_ok=True)
 

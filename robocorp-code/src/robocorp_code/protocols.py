@@ -278,6 +278,13 @@ class IRcc(Protocol):
         otherwise it returns None.
         """
 
+    def get_robocorp_code_datadir(self) -> Path:
+        """
+        Provides the directory to store info for robocorp code.
+
+        Usually ROBOCORP_HOME/.robocorp_code
+        """
+
     def get_template_names(self) -> ActionResult[List[RobotTemplate]]:
         pass
 

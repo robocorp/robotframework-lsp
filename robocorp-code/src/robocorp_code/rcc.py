@@ -223,6 +223,16 @@ class Rcc(object):
 
         return self._get_str_optional_setting(ROBOCORP_HOME)
 
+    def get_robocorp_code_datadir(self) -> Path:
+        robocorp_home_str = self.get_robocorp_home_from_settings()
+        if not robocorp_home_str:
+            robocorp_home = get_default_robocorp_home_location()
+        else:
+            robocorp_home = Path(robocorp_home_str)
+
+        directory = robocorp_home / ".robocorp_code"
+        return directory
+
     @property
     def config_location(self) -> Optional[str]:
         """
