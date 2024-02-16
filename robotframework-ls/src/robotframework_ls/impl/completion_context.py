@@ -112,17 +112,19 @@ class CompletionContext(object):
         tracing: bool = False,
     ) -> None:
         if col is Sentinel.SENTINEL or line is Sentinel.SENTINEL:
-            assert (
-                col is Sentinel.SENTINEL
-            ), "Either line and col are not set, or both are set. Found: (%s, %s)" % (
-                line,
-                col,
+            assert col is Sentinel.SENTINEL, (
+                "Either line and col are not set, or both are set. Found: (%s, %s)"
+                % (
+                    line,
+                    col,
+                )
             )
-            assert (
-                line is Sentinel.SENTINEL
-            ), "Either line and col are not set, or both are set. Found: (%s, %s)" % (
-                line,
-                col,
+            assert line is Sentinel.SENTINEL, (
+                "Either line and col are not set, or both are set. Found: (%s, %s)"
+                % (
+                    line,
+                    col,
+                )
             )
 
             # If both are not set, use the doc len as the selection.

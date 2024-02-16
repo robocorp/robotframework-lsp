@@ -108,9 +108,7 @@ def test_library_completions_absolute(
 
     doc = workspace.put_doc("case1.robot")
     doc.source = """*** Settings ***
-Library           %s/""" % (
-        directory,
-    )
+Library           %s/""" % (directory,)
 
     completions = filesystem_section_completions.complete(
         CompletionContext(doc, workspace=workspace.ws)

@@ -57,11 +57,7 @@ Demo2
 
 *** Keywords ***
 Some keyword
-""".replace(
-        "\r\n", "\n"
-    ).replace(
-        "\r", "\n"
-    )
+""".replace("\r\n", "\n").replace("\r", "\n")
 
     api.m_text_document__did_change(
         textDocument={"uri": uri},
@@ -101,9 +97,7 @@ def test_robotframework_formatting_unicode():
 Unicode
     ${mydict} =   Create Dictionary   kangaroo=🦘   egg=🥚""".replace(
         "\r\n", "\n"
-    ).replace(
-        "\r", "\n"
-    )
+    ).replace("\r", "\n")
 
     api.m_text_document__did_change(
         textDocument={"uri": uri},
@@ -119,9 +113,5 @@ Unicode
         == """*** Test Cases ***
 Unicode
     ${mydict} =    Create Dictionary    kangaroo=🦘    egg=🥚
-""".replace(
-            "\r\n", "\n"
-        ).replace(
-            "\r", "\n"
-        )
+""".replace("\r\n", "\n").replace("\r", "\n")
     )

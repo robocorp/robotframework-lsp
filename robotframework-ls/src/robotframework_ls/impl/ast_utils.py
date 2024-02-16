@@ -2074,22 +2074,28 @@ def _gen_tokens_in_py_expr(
                 if gen_var_token_info.start[1] == token_info.start[1] - 1:
                     start_offset = gen_var_token_info.start[1]
 
-                    yield Token(
-                        op_type,
-                        gen_var_token_info.string,
-                        expression_token.lineno,
-                        expression_token.col_offset + start_offset,
-                        expression_token.error,
-                    ), AdditionalVarInfo(context=AdditionalVarInfo.CONTEXT_EXPRESSION)
+                    yield (
+                        Token(
+                            op_type,
+                            gen_var_token_info.string,
+                            expression_token.lineno,
+                            expression_token.col_offset + start_offset,
+                            expression_token.error,
+                        ),
+                        AdditionalVarInfo(context=AdditionalVarInfo.CONTEXT_EXPRESSION),
+                    )
 
-                    yield Token(
-                        var_type,
-                        token_info.string,
-                        expression_token.lineno,
-                        expression_token.col_offset + token_info.start[1],
-                        expression_token.error,
-                    ), AdditionalVarInfo(
-                        "$", context=AdditionalVarInfo.CONTEXT_EXPRESSION
+                    yield (
+                        Token(
+                            var_type,
+                            token_info.string,
+                            expression_token.lineno,
+                            expression_token.col_offset + token_info.start[1],
+                            expression_token.error,
+                        ),
+                        AdditionalVarInfo(
+                            "$", context=AdditionalVarInfo.CONTEXT_EXPRESSION
+                        ),
                     )
 
     except:

@@ -192,9 +192,7 @@ class SafeRepr(object):
                     size = None
                 if size is not None and size > self.maxcollection[level]:
                     return True
-                return any(
-                    (self._is_long_iter(item, level + 1) for item in obj)
-                )  # noqa
+                return any((self._is_long_iter(item, level + 1) for item in obj))  # noqa
             return any(
                 i > self.maxcollection[level] or self._is_long_iter(item, level + 1)
                 for i, item in enumerate(obj)
@@ -380,9 +378,7 @@ class SafeRepr(object):
                 obj_repr = object.__repr__(obj)
             except Exception:
                 try:
-                    obj_repr = (
-                        "<no repr available for " + type(obj).__name__ + ">"
-                    )  # noqa
+                    obj_repr = "<no repr available for " + type(obj).__name__ + ">"  # noqa
                 except Exception:
                     obj_repr = "<no repr available for object>"
 

@@ -589,12 +589,13 @@ class _DebuggerAPI(object):
             )
         )
         eval_response = self.wait_for_response(eval_request)
-        assert (
-            eval_response.success == success
-        ), "Expected success to be: %s (found: %s).\nMessage:\n%s" % (
-            success,
-            eval_response.success,
-            eval_response.to_dict(),
+        assert eval_response.success == success, (
+            "Expected success to be: %s (found: %s).\nMessage:\n%s"
+            % (
+                success,
+                eval_response.success,
+                eval_response.to_dict(),
+            )
         )
         return eval_response
 

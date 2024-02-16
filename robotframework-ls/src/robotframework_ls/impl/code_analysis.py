@@ -578,9 +578,7 @@ def collect_analysis_errors(initial_completion_context):
                                     keyword_found.keyword_args, keyword_found
                                 )
                                 args_tokens = template_arguments_node_info.node.tokens
-                                for (
-                                    error
-                                ) in keyword_argument_analysis.collect_keyword_usage_errors(
+                                for error in keyword_argument_analysis.collect_keyword_usage_errors(
                                     UsageInfoForKeywordArgumentAnalysis(
                                         template_arguments_node_info.node,
                                         args_tokens[-1],

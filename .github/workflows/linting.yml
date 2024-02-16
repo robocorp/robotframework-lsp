@@ -56,27 +56,27 @@ jobs:
         working-directory: ./robotframework-interactive/vscode-interpreter-webview
         run: prettier --check src/**/*.{ts,tsx}
         
-      - name: Black check robocorp-code
+      - name: ruff format check robocorp-code
         run: |
           echo $PWD
           ls -la
           source ./.venv/bin/activate
-          black --check ./robocorp-code --exclude=vendored
+          ruff format --check ./robocorp-code --exclude=vendored --exclude=_vendored
           
-      - name: Black check robotframework-ls
+      - name: ruff format check robotframework-ls
         run: |
           source ./.venv/bin/activate
-          black --check ./robotframework-ls --exclude=vendored --exclude=atest_v5
+          ruff format --check ./robotframework-ls --exclude=vendored --exclude=atest_v5
           
-      - name: Black check robotframework-interactive
+      - name: ruff format check robotframework-interactive
         run: |
           source ./.venv/bin/activate
-          black --check ./robotframework-interactive --exclude=vendored
+          ruff format --check ./robotframework-interactive --exclude=vendored
           
-      - name: Black check robocorp-python-ls-core
+      - name: ruff format check robocorp-python-ls-core
         run: |
           source ./.venv/bin/activate
-          black --check ./robocorp-python-ls-core --exclude=vendored --exclude=libs
+          ruff format --check ./robocorp-python-ls-core --exclude=vendored --exclude=libs
           
       - name: mypy robocorp-code
         run: |

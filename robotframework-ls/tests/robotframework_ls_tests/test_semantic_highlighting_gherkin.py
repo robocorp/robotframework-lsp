@@ -23,11 +23,7 @@ Some Keyword
         Exit For Loop If     ${is_end_of_page}==${TRUE}
         Scroll to next part of page        
     END
-""".replace(
-    "\r\n", "\n"
-).replace(
-    "\r", "\n"
-)
+""".replace("\r\n", "\n").replace("\r", "\n")
 
 
 def set_test_case_with_keyword(keyword, workspace):

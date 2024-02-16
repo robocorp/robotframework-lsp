@@ -38,10 +38,9 @@ def collect_vendored_files():
                 rel_file = os.path.join(rel_dir, file_name)
                 ret.append(rel_file)
 
-    assert (
-        len(ret) == 1
-    ), "Did not collect robot_interactive_console.robot file properly. Found: %s" % (
-        ret,
+    assert len(ret) == 1, (
+        "Did not collect robot_interactive_console.robot file properly. Found: %s"
+        % (ret,)
     )
     return ret
 

@@ -598,9 +598,7 @@ class _EvaluationInfo(object):
 *** Test Cases ***
 Evaluation
     %s
-""" % (
-            self.expression,
-        )
+""" % (self.expression,)
         model = get_model(s)
         ast_utils.set_localization_info_in_model(model, LocalizationInfo("en"))
         usage_info = list(

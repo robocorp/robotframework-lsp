@@ -296,16 +296,18 @@ def _tokenize_token(
             scope, token_keyword
         )
         if token_gherkin_prefix:
-            yield token_gherkin_prefix, scope.get_index_from_internal_token_type(
-                token_gherkin_prefix.type
+            yield (
+                token_gherkin_prefix,
+                scope.get_index_from_internal_token_type(token_gherkin_prefix.type),
             )
 
         token_library_prefix, token_keyword = _extract_library_token_from_keyword(
             token_keyword, scope
         )
         if token_library_prefix:
-            yield token_library_prefix, scope.get_index_from_internal_token_type(
-                token_library_prefix.type
+            yield (
+                token_library_prefix,
+                scope.get_index_from_internal_token_type(token_library_prefix.type),
             )
 
         use_token = token_keyword

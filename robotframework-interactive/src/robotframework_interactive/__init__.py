@@ -38,9 +38,9 @@ def import_robocorp_ls_core() -> None:
                 # should be alongside it).
                 use_folder = src_folder
                 log_contents.append("Using vendored mode. Found: %s" % (use_folder,))
-                assert os.path.isdir(
-                    use_folder
-                ), "Expected: %s to exist and be a directory." % (use_folder,)
+                assert os.path.isdir(use_folder), (
+                    "Expected: %s to exist and be a directory." % (use_folder,)
+                )
 
             sys.path.append(use_folder)
             import robocorp_ls_core

@@ -391,8 +391,11 @@ class _KeywordUsageHandler:
     def iter_tokens_with_type(self) -> Iterator[Tuple[IRobotToken, int]]:
         self._ensure_cached()
         for tok in self.node.tokens:
-            yield tok, self._token_line_col_to_type.get(
-                (tok.lineno, tok.col_offset), TOK_TYPE_NONE
+            yield (
+                tok,
+                self._token_line_col_to_type.get(
+                    (tok.lineno, tok.col_offset), TOK_TYPE_NONE
+                ),
             )
 
     def get_keyword_usage_for_token_line_col(

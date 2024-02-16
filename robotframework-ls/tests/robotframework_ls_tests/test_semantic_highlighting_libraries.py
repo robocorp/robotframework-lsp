@@ -16,11 +16,7 @@ Test case name
 Keyword that does something
     <PLACEHOLDER_KEYWORDS_KEYWORD>
 
-""".replace(
-    "\r\n", "\n"
-).replace(
-    "\r", "\n"
-)
+""".replace("\r\n", "\n").replace("\r", "\n")
 
 
 def set_test_case_with_keyword(keyword, workspace):

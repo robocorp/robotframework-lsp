@@ -584,9 +584,7 @@ def update_class_to_generate_init(class_to_generate):
     """
 %(init_body)s
     self.kwargs = kwargs
-''' % dict(
-        args=args, init_body=init_body, docstring=docstring
-    )
+''' % dict(args=args, init_body=init_body, docstring=docstring)
 
     class_to_generate["init"] = _indent_lines(class_to_generate["init"])
 

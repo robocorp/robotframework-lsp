@@ -37,9 +37,9 @@ def import_robocorp_ls_core():
                     "Using vendored mode. Found: %s" % (vendored_folder,)
                 )
                 use_folder = vendored_folder
-                assert os.path.isdir(
-                    use_folder
-                ), "Expected: %s to exist and be a directory." % (use_folder,)
+                assert os.path.isdir(use_folder), (
+                    "Expected: %s to exist and be a directory." % (use_folder,)
+                )
 
             sys.path.append(use_folder)
             import robocorp_ls_core
