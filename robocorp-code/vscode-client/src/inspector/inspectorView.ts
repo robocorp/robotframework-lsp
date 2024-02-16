@@ -23,6 +23,7 @@ import {
     ResponseDataType,
     WindowsAppTree,
     ImagePickResponse,
+    JavaAppTree,
 } from "./protocols";
 import { langServer } from "../extension";
 import { ActionResult, LocalRobotMetadataInfo } from "../protocols";
@@ -240,7 +241,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
     // Java Inspector - Create listeners for BE (Python) messages
     context.subscriptions.push(
         langServer.onNotification("$/javaPick", (values) => {
-            const pickedLocator: WindowsAppTree = JSON.stringify(values["picked"]) as unknown as WindowsAppTree;
+            const pickedLocator: JavaAppTree = JSON.stringify(values["picked"]) as unknown as JavaAppTree;
             OUTPUT_CHANNEL.appendLine(`> Receiving: picked.element: ${pickedLocator}`);
             const response: IEventMessage = {
                 id: generateID(),

@@ -135,22 +135,17 @@ export type ImagePickResponse = {
 export type JavaAppDetails = { pid: number; hwnd: number; title: string };
 export type JavaAppsResponse = JavaAppDetails[];
 export type JavaAppElement = {
-    control: string;
-    class: string;
-    name: string;
-    automation_id: string;
-    handle: number;
-    left: number;
-    right: number;
-    top: number;
-    bottom: number;
-    width: number;
-    height: number;
-    xcenter: number;
-    ycenter: number;
-    depth: number;
-    child_pos: number;
-    path: string;
+    name: string,
+    role: string,
+    description: string,
+    states: string,
+    indexInParent: number,
+    childrenCount: number,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    ancestry: number,
 };
 export type JavaAppTree = JavaAppElement[];
 export type JavaAppTreeResponse = {
