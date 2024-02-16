@@ -590,6 +590,8 @@ environmentConfigs:
             "utf-8",
         )
 
+        # Mark when it was last used (we should remove things unused for
+        # a long time).
         last_use: Path = use_dir / "last-use.touch"
         last_use.touch()
 
