@@ -21,6 +21,15 @@ TFun = TypeVar("TFun", bound=Callable[..., Any])
 
 class ElementInspector:
     def __init__(self) -> None:
+        # TODO: the context now stores only the latest searched ContextNode and it's children
+        # to the given search depth. When user traveres back up the tree we would need to have
+        # the cached snapshot of all the previous searches in store.
+        #
+        # We need to store the whole tree here and always just update the tree from the locator
+        # the user is picking and update the matched node and it's children.
+        #
+        # This will also need an update to the JavaAccessBridgeWrapper to have an API to update only
+        # it and it's childen (refresh is there, but does it respect search depth?).
         self._context: Optional[ContextNode] = None
         self._selected_window: Optional[str] = None
 

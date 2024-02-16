@@ -148,18 +148,27 @@ class JavaInspector:
             pass
 
     def list_opened_applications(self) -> List[JavaWindowInfoTypedDict]:
+        """
+        List all available Java applications.
+        """
         log.info(f"=== JAVA: list_windows")
         windows = self._inspector.list_windows()
         log.info(f"=== JAVA: list_windows: wins:", windows)
         return [to_window_info(window) for window in windows]
 
     def set_window_locator(self, window: str) -> None:
+        """
+        Set the current Java window user chose.
+        """
         log.info(f"Selected window: {window}")
         self._inspector.set_window(window)
 
     def collect_tree(
         self, search_depth=1, locator: Optional[str] = None
     ) -> MatchesAndHierarchyTypedDict:
+        """
+        Collect the app element hierarchy from the locator match with given search depth.
+        """
         log.info(f"=== JAVA: collect_tree: {locator}")
 
         matches_and_hierarchy = self._inspector.collect_tree(search_depth, locator)
@@ -175,7 +184,17 @@ class JavaInspector:
         pass
 
     def start_highlight(self) -> None:
+        """
+        Can we use the same Windows highlight implementation?
+
+        This API should get the locator and find the element based on that locator.
+        The found element has x, y coordinates plus the width and the heigth fields
+        that we can use to calculate the borders for the highlited area.
+        """
         pass
 
     def stop_highlight(self) -> None:
+        """
+        Dispose the highligth thread.
+        """
         pass
