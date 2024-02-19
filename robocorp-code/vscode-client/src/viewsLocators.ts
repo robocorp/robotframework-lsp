@@ -3,7 +3,7 @@ import { OUTPUT_CHANNEL } from "./channel";
 import { InspectorType } from "./inspector";
 import { ActionResult } from "./protocols";
 import * as roboCommands from "./robocorpCommands";
-import { getSelectedRobot, LocatorEntry, RobotEntry } from "./viewsCommon";
+import { getSelectedRobot, LocatorEntry, NO_PACKAGE_FOUND_MSG, RobotEntry } from "./viewsCommon";
 
 export class LocatorsTreeDataProvider
     implements vscode.TreeDataProvider<LocatorEntry | LocatorEntryNode | LocatorCreationNode>
@@ -14,7 +14,7 @@ export class LocatorsTreeDataProvider
         if (!robotEntry) {
             return [
                 {
-                    name: "<Waiting for Robot Selection...>",
+                    name: NO_PACKAGE_FOUND_MSG,
                     type: "info",
                     line: 0,
                     column: 0,

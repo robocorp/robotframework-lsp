@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as fs from "fs";
 import { logError } from "./channel";
 import { TREE_VIEW_ROBOCORP_PACKAGE_CONTENT_TREE } from "./robocorpViews";
-import { FSEntry, getSelectedRobot, RobotEntry, treeViewIdToTreeView } from "./viewsCommon";
+import { FSEntry, getSelectedRobot, NO_PACKAGE_FOUND_MSG, RobotEntry, treeViewIdToTreeView } from "./viewsCommon";
 import { basename, dirname, join } from "path";
 import { Uri } from "vscode";
 import { RobotSelectionTreeDataProviderBase } from "./viewsRobotSelectionTreeBase";
@@ -189,7 +189,7 @@ export class RobotContentTreeDataProvider extends RobotSelectionTreeDataProvider
                 this.lastRobotEntry = undefined;
                 return [
                     {
-                        name: "<Waiting for Robot Selection...>",
+                        name: NO_PACKAGE_FOUND_MSG,
                         isDirectory: false,
                         filePath: undefined,
                     },

@@ -14,8 +14,11 @@ export interface LocatorEntry {
     tooltip: string | undefined;
 }
 
+export const NO_PACKAGE_FOUND_MSG = "No package found in current folder"
+
 export enum RobotEntryType {
     Robot,
+    ActionPackage,
     Task,
     Error,
     Run,

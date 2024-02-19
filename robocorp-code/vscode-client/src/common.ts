@@ -1,5 +1,3 @@
-import { Uri, workspace, WorkspaceFolder } from "vscode";
-
 export const debounce = (func, wait) => {
     let timeout: NodeJS.Timeout;
 
@@ -12,4 +10,11 @@ export const debounce = (func, wait) => {
         clearTimeout(timeout);
         timeout = setTimeout(later, wait);
     };
+};
+
+export interface PackageEntry {
+    filePath: string;
+}
+export const isActionPackage = (entry: PackageEntry) => {
+    return entry.filePath.endsWith("package.yaml");
 };

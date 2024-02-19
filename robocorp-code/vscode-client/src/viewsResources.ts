@@ -1,10 +1,18 @@
 import * as vscode from "vscode";
 import { TREE_VIEW_ROBOCORP_PACKAGE_RESOURCES_TREE } from "./robocorpViews";
-import { getSingleTreeSelection, LocatorEntry, SingleTreeSelectionOpts } from "./viewsCommon";
+import {
+    getSelectedRobot,
+    getSingleTreeSelection,
+    LocatorEntry,
+    NO_PACKAGE_FOUND_MSG,
+    RobotEntry,
+    SingleTreeSelectionOpts,
+} from "./viewsCommon";
 import { LocatorsTreeDataProvider } from "./viewsLocators";
 import { RobotSelectionTreeDataProviderBase } from "./viewsRobotSelectionTreeBase";
 import { WorkItemsTreeDataProvider } from "./viewsWorkItems";
 
+const NO_ROBOT_TYPE = "no-robot-selected";
 const ROOT_TYPE = "root";
 const SUBTREE_WORK_ITEMS = "work-items";
 const SUBTREE_LOCATORS = "locators";
@@ -26,6 +34,19 @@ export class ResourcesTreeDataProvider extends RobotSelectionTreeDataProviderBas
     workItemsTreeDataProvider = new WorkItemsTreeDataProvider();
 
     async getChildren(element?: any): Promise<any> {
+        const robotEntry: RobotEntry = getSelectedRobot();
+        if (!robotEntry) {
+            this.lastRobotEntry = undefined;
+            return [
+                {
+                    name: NO_PACKAGE_FOUND_MSG,
+                    resourcesTreeType: NO_ROBOT_TYPE,
+                },
+            ];
+        }
+
+        this.lastRobotEntry = robotEntry;
+
         if (!element) {
             return [
                 {
@@ -66,6 +87,12 @@ export class ResourcesTreeDataProvider extends RobotSelectionTreeDataProviderBas
     }
 
     getTreeItem(element: any): vscode.TreeItem {
+        if (element.resourcesTreeType === NO_ROBOT_TYPE) {
+            const item = new vscode.TreeItem(element.name);
+            item.iconPath = new vscode.ThemeIcon("error");
+            return item;
+        }
+
         if (element.resourcesTreeType === ROOT_TYPE) {
             const item = new vscode.TreeItem(element.name, vscode.TreeItemCollapsibleState.Expanded);
             if (element.subTree === SUBTREE_LOCATORS) {

@@ -4,6 +4,7 @@ import { uriExists } from "./files";
 import { LocalRobotMetadataInfo, ActionResult } from "./protocols";
 import * as roboCommands from "./robocorpCommands";
 import { basename, getSelectedRobot, RobotEntry, RobotEntryType } from "./viewsCommon";
+import { isActionPackage } from "./common";
 
 let _globalSentMetric: boolean = false;
 
@@ -124,11 +125,13 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                 // giving more instructions to the user.
                 let added: boolean = false;
                 for (const label of [
-                    "No task package found.",
-                    "Three ways to get started:",
-                    "➔ Run the “Robocorp: Create Robot” action",
-                    "➔ Open a robot folder (with a “robot.yaml” file)",
-                    "➔ Open a parent folder (with multiple robots)",
+                    "No Task nor Action Package found.",
+                    "A few ways to get started:",
+                    "➔ Run the “Robocorp: Create Task Package”",
+                    "➔ Run the “Robocorp: Create Action Package”",
+                    "➔ Open a Task Package folder (with a “robot.yaml” file)",
+                    "➔ Open an Action Package folder (with a “package.yaml” file)",
+                    "➔ Open a parent folder (with multiple Task or Action packages)",
                 ]) {
                     ret.push({
                         "label": label,
@@ -284,7 +287,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
             "uri": vscode.Uri.file(robotInfo.filePath),
             "robot": robotInfo,
             "iconPath": "package",
-            "type": RobotEntryType.Robot,
+            "type": isActionPackage(robotInfo) ? RobotEntryType.ActionPackage : RobotEntryType.Robot,
             "parent": element,
             "collapsed": collapsed,
         }));

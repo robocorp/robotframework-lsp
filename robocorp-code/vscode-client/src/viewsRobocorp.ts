@@ -88,21 +88,12 @@ export class CloudTreeDataProvider implements vscode.TreeDataProvider<CloudEntry
             try {
                 await this._fillRoots(ret);
                 ret.push({
-                    "label": "Robot Development Guide",
+                    "label": "Documentation",
                     "iconPath": "book",
                     "command": {
-                        "title": "Open https://robocorp.com/docs/development-guide",
+                        "title": "Open https://robocorp.com/docs",
                         "command": "vscode.open",
-                        "arguments": [vscode.Uri.parse("https://robocorp.com/docs/development-guide")],
-                    },
-                });
-                ret.push({
-                    "label": "Keyword Libraries Documentation",
-                    "iconPath": "notebook",
-                    "command": {
-                        "title": "Open https://robocorp.com/docs/libraries",
-                        "command": "vscode.open",
-                        "arguments": [vscode.Uri.parse("https://robocorp.com/docs/libraries")],
+                        "arguments": [vscode.Uri.parse("https://robocorp.com/docs")],
                     },
                 });
             } catch (error) {

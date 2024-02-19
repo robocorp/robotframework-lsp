@@ -607,7 +607,7 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         the old cache to remove stale values... all that's valid is put in
         the new cache).
         """
-        robot_yaml = sub / "robot.yaml"
+        check_yamls = [sub / "robot.yaml", sub / "package.yaml"]
 
         cached_file_info: Optional[
             CachedFileInfo[LocalRobotMetadataInfoDict]
@@ -617,32 +617,33 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
                 new_cache[sub] = cached_file_info
                 return cached_file_info.value
 
-        if robot_yaml.exists():
-            from robocorp_ls_core import yaml_wrapper
+        for yaml_file in check_yamls:
+            if yaml_file.exists():
+                from robocorp_ls_core import yaml_wrapper
 
-            try:
+                try:
 
-                def get_robot_metadata(robot_yaml: Path):
-                    name = robot_yaml.parent.name
-                    with robot_yaml.open("r", encoding="utf-8") as stream:
-                        yaml_contents = yaml_wrapper.load(stream)
-                        name = yaml_contents.get("name", name)
+                    def get_robot_metadata(robot_yaml: Path):
+                        name = robot_yaml.parent.name
+                        with robot_yaml.open("r", encoding="utf-8") as stream:
+                            yaml_contents = yaml_wrapper.load(stream)
+                            name = yaml_contents.get("name", name)
 
-                    robot_metadata: LocalRobotMetadataInfoDict = {
-                        "directory": str(sub),
-                        "filePath": str(robot_yaml),
-                        "name": name,
-                        "yamlContents": yaml_contents,
-                    }
-                    return robot_metadata
+                        robot_metadata: LocalRobotMetadataInfoDict = {
+                            "directory": str(sub),
+                            "filePath": str(robot_yaml),
+                            "name": name,
+                            "yamlContents": yaml_contents,
+                        }
+                        return robot_metadata
 
-                cached_file_info = new_cache[sub] = CachedFileInfo(
-                    robot_yaml, get_robot_metadata
-                )
-                return cached_file_info.value
+                    cached_file_info = new_cache[sub] = CachedFileInfo(
+                        yaml_file, get_robot_metadata
+                    )
+                    return cached_file_info.value
 
-            except Exception:
-                log.exception(f"Unable to get load robot metadata for: {robot_yaml}")
+                except Exception:
+                    log.exception(f"Unable to get load metadata for: {yaml_file}")
 
         return None
 

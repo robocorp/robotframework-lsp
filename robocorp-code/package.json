@@ -214,8 +214,8 @@
             "robocorp-robots": [
                 {
                     "id": "robocorp-task-packages-tree",
-                    "name": "Task Packages",
-                    "contextualTitle": "Task Packages"
+                    "name": "Task/Action Packages",
+                    "contextualTitle": "Task/Action Packages"
                 },
                 {
                     "id": "robocorp-package-content-tree",

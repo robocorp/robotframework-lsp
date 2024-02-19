@@ -45,8 +45,8 @@ TREE_VIEW_CONTAINERS = [
         tree_views=[
             TreeView(
                 id="robocorp-task-packages-tree",
-                name="Task Packages",
-                contextual_title="Task Packages",
+                name="Task/Action Packages",
+                contextual_title="Task/Action Packages",
                 menus={
                     # See: https://code.visualstudio.com/api/references/contribution-points#contributes.menus
                     # for targets
