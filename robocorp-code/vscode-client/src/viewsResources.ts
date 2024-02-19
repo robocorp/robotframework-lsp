@@ -6,6 +6,7 @@ import {
     LocatorEntry,
     NO_PACKAGE_FOUND_MSG,
     RobotEntry,
+    RobotEntryType,
     SingleTreeSelectionOpts,
 } from "./viewsCommon";
 import { LocatorsTreeDataProvider } from "./viewsLocators";
@@ -48,7 +49,7 @@ export class ResourcesTreeDataProvider extends RobotSelectionTreeDataProviderBas
         this.lastRobotEntry = robotEntry;
 
         if (!element) {
-            return [
+            const ret: any[] = [
                 {
                     name: "Recorders / Locators",
                     resourcesTreeType: ROOT_TYPE,
@@ -56,12 +57,16 @@ export class ResourcesTreeDataProvider extends RobotSelectionTreeDataProviderBas
                     tooltip:
                         "Recorders which output code and locators (which identify how to locate a specific element in a given library).",
                 },
-                {
+            ];
+            if (robotEntry.type === RobotEntryType.Robot) {
+                // No work items unless it's a task package (i.e.: Robot)
+                ret.push({
                     name: "Work Items",
                     resourcesTreeType: ROOT_TYPE,
                     subTree: SUBTREE_WORK_ITEMS,
-                },
-            ];
+                });
+            }
+            return ret;
         }
 
         let childrenForElement = element;
