@@ -67,6 +67,7 @@ class _WebInspectorThread(threading.Thread):
             self._shutdown_callback()
         # signal the run to finish
         self._finish = True
+        self.queue.put(None)
 
     def run(self) -> None:
         from concurrent.futures import Future
@@ -105,9 +106,10 @@ class _WebInspectorThread(threading.Thread):
                     clear_all_callback,
                 )
 
-                clear_all_callback()
+                if self._web_inspector.page(auto_create=False):
+                    clear_all_callback()
             except Exception as e:
-                log.exception(f"Clearing callbacks raised Exception: {e}")
+                log.exception(f"Clearing callbacks raised Exception:", e)
 
 
 class _WebBaseCommand:
@@ -670,10 +672,6 @@ class InspectorApi(PythonLanguageServer):
         # Lazily-initialize
         ret = self.__web_inspector_thread
         if ret is None:
-            log.info(
-                "@@@@@@@@@@@@ WEB INSPECTOR THREAD CONFIGURATION:",
-                self.__web_inspector_configuration,
-            )
             self.__web_inspector_thread = _WebInspectorThread(
                 endpoint=self._endpoint,
                 configuration=self.__web_inspector_configuration,
@@ -791,9 +789,6 @@ class InspectorApi(PythonLanguageServer):
             "viewport_size"
         ] = viewport_size
         self.__web_inspector_configuration["url"] = url
-        log.info(
-            "@@@@@@@@@@@@@ WEB INSPECTOR CONFIG:", self.__web_inspector_configuration
-        )
         # command
         self._enqueue_web(
             _WebBrowserConfigureCommand(

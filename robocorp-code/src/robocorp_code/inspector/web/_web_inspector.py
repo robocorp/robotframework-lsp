@@ -176,6 +176,9 @@ class WebInspector:
                 if endpoint is not None:
                     endpoint.notify("$/webInspectorState", {"state": STATE_CLOSED})
 
+                # shut down the current thread
+                self._current_thread.shutdown()
+
             def mark_url_changed(*args, **kwargs):
                 if self._page_former_url == "":
                     self._page_former_url = self._page.url
@@ -444,63 +447,73 @@ class WebInspector:
         """
         Ensures that the expression is evaluated in the child iFrames if any
         """
-        # we need to wait for the load state before injecting otherwise the evaluation of the picker crashes
-        # not finding the body where to inject the picker in
-        page.wait_for_load_state()
-        page.wait_for_selector("body")
-        page.wait_for_timeout(1)
-        # retrieving only the first layer of iFrames
-        # for additional layers recessiveness is the solution, but doesn't seem necessary right now
-        frames = list(page.frames) + list(page.main_frame.child_frames)
+        try:
+            # we need to wait for the load state before injecting otherwise the evaluation of the picker crashes
+            # not finding the body where to inject the picker in
+            page.wait_for_load_state()
+            page.wait_for_selector("body")
+            page.wait_for_timeout(1)
 
-        for frame in frames:
-            # make sure we wait for the load state to trigger in frames as well
-            frame.wait_for_load_state()
+            # retrieving only the first layer of iFrames
+            # for additional layers recessiveness is the solution, but doesn't seem necessary right now
+            frames = list(page.frames) + list(page.main_frame.child_frames)
 
-            # skipping the detached frames as they are not able to evaluate expressions
-            if frame.is_detached():
-                continue
-
-            props = None
-            if frame != page.main_frame:
-                props = {}
-                props["name"] = frame.frame_element().get_attribute("name")
-                if props["name"] is None:
-                    props["name"] = frame.name
-                props["id"] = frame.frame_element().get_attribute("id")
-                props["cls"] = frame.frame_element().get_attribute("class")
-                props["title"] = frame.frame_element().get_attribute("title")
-                if (props["title"]) is None:
-                    props["title"] = frame.title()
-
-            final_exp = (
-                Template(expression).substitute(
-                    iFrame=json.dumps(
-                        {
-                            "name": frame.name,
-                            "title": frame.title(),
-                            "url": frame.url,
-                            "sourceURL": page.url,
-                            "isMain": frame == page.main_frame,
-                            "props": props,
-                        }
-                    )
-                )
-                if inject_frame_data
-                else expression
-            )
-
-            try:
+            for frame in frames:
                 # make sure we wait for the load state to trigger in frames as well
                 frame.wait_for_load_state()
-                frame.wait_for_timeout(1)
-                # inject the code
-                frame.evaluate(final_exp)
-            except Exception as e:
-                # when we deal with the main frame, raise exception
-                # the iframes (child frames or attached) can cause unexpected behaviors due to their construction
-                # we can try to address them later
-                if frame == page.main_frame:
-                    raise e
-                log.exception(f"Exception occurred inside of an iFrame: {e}")
-                continue
+
+                # skipping the detached frames as they are not able to evaluate expressions
+                if frame.is_detached():
+                    continue
+
+                # returning if page is closed
+                if page.is_closed():
+                    return
+
+                props = None
+                if frame != page.main_frame:
+                    props = {}
+                    props["name"] = frame.frame_element().get_attribute("name")
+                    if props["name"] is None:
+                        props["name"] = frame.name
+                    props["id"] = frame.frame_element().get_attribute("id")
+                    props["cls"] = frame.frame_element().get_attribute("class")
+                    props["title"] = frame.frame_element().get_attribute("title")
+                    if (props["title"]) is None:
+                        props["title"] = frame.title()
+
+                final_exp = (
+                    Template(expression).substitute(
+                        iFrame=json.dumps(
+                            {
+                                "name": frame.name,
+                                "title": frame.title(),
+                                "url": frame.url,
+                                "sourceURL": page.url,
+                                "isMain": frame == page.main_frame,
+                                "props": props,
+                            }
+                        )
+                    )
+                    if inject_frame_data
+                    else expression
+                )
+
+                try:
+                    # make sure we wait for the load state to trigger in frames as well
+                    frame.wait_for_load_state()
+                    frame.wait_for_timeout(1)
+                    # inject the code
+                    frame.evaluate(final_exp)
+                except Exception as e:
+                    # when we deal with the main frame, raise exception
+                    # the iframes (child frames or attached) can cause unexpected behaviors due to their construction
+                    # we can try to address them later
+                    if frame == page.main_frame:
+                        raise e
+                    log.exception(f"Exception occurred inside of an iFrame: {e}")
+                    continue
+
+        except Exception as e:
+            log.exception(f"Exception occurred evaluating code in iFrames: {e}")
+            pass
