@@ -10,8 +10,9 @@ import { LocalRobotMetadataInfo, ActionResult, InterpreterInfo } from "./protoco
 
 export async function askAndCreateRccTerminal() {
     let robot: LocalRobotMetadataInfo = await listAndAskRobotSelection(
-        "Please select the target Robot for the terminal.",
-        "Unable to create terminal (no Robot detected in the Workspace)."
+        "Please select the target Task Package for the terminal.",
+        "Unable to create terminal (no Task Package detected in the Workspace).",
+        { showActionPackages: false, showTaskPackages: true }
     );
     if (robot) {
         await createRccTerminal(robot);

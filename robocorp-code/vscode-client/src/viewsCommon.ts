@@ -14,7 +14,7 @@ export interface LocatorEntry {
     tooltip: string | undefined;
 }
 
-export const NO_PACKAGE_FOUND_MSG = "No package found in current folder"
+export const NO_PACKAGE_FOUND_MSG = "No package found in current folder";
 
 export enum RobotEntryType {
     Robot,
@@ -29,6 +29,7 @@ export enum RobotEntryType {
     RobotTerminal,
     OpenRobotYaml,
     OpenRobotCondaYaml,
+    StartActionServer,
 }
 
 export interface CloudEntry {
@@ -49,6 +50,7 @@ export interface RobotEntry {
     type: RobotEntryType;
     parent: RobotEntry | undefined;
     collapsed?: boolean | undefined;
+    tooltip?: string | undefined;
 }
 
 export interface FSEntry {

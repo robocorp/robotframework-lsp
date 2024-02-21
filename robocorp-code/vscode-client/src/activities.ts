@@ -40,6 +40,12 @@ import {
 } from "./protocols";
 import { envVarsForOutViewIntegration } from "./output/outViewRunIntegration";
 import { connectWorkspace } from "./vault";
+import { isActionPackage } from "./common";
+
+export interface ListOpts {
+    showTaskPackages: boolean;
+    showActionPackages: boolean;
+}
 
 export async function cloudLogin(): Promise<boolean> {
     let loggedIn: boolean;
@@ -164,7 +170,8 @@ export async function resolveInterpreter(targetRobot: string): Promise<ActionRes
 
 export async function listAndAskRobotSelection(
     selectionMessage: string,
-    noRobotErrorMessage: string
+    noRobotErrorMessage: string,
+    opts: ListOpts
 ): Promise<LocalRobotMetadataInfo> {
     let actionResult: ActionResult<LocalRobotMetadataInfo[]> = await commands.executeCommand(
         roboCommands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL
@@ -176,6 +183,25 @@ export async function listAndAskRobotSelection(
     }
     let robotsInfo: LocalRobotMetadataInfo[] = actionResult.result;
 
+    if (!robotsInfo || robotsInfo.length == 0) {
+        window.showInformationMessage(noRobotErrorMessage);
+        return;
+    }
+
+    const filter = (entry: LocalRobotMetadataInfo) => {
+        const isActionPkg = isActionPackage(entry);
+        const isTaskPackage = !isActionPkg;
+
+        if (!opts.showActionPackages && isActionPkg) {
+            return false;
+        }
+        if (!opts.showTaskPackages && isTaskPackage) {
+            return false;
+        }
+        return true;
+    };
+
+    robotsInfo = robotsInfo.filter(filter);
     if (!robotsInfo || robotsInfo.length == 0) {
         window.showInformationMessage(noRobotErrorMessage);
         return;

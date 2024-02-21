@@ -110,6 +110,12 @@ SETTINGS = [
         "Specifies whether the 'Run Task' and 'Debug Task' code lenses should be shown.",
         setting_type="boolean",
     ),
+    Setting(
+        "robocorp.actionServer.location",
+        "",
+        "Specifies the location of the action-server executable.",
+        setting_type="string",
+    ),
 ]
 
 

@@ -93,3 +93,5 @@ export const ROBOCORP_PROFILE_LIST_INTERNAL = "robocorp.profileList.internal";  
 export const ROBOCORP_HAS_PRE_RUN_SCRIPTS_INTERNAL = "robocorp.hasPreRunScripts.internal";  // Has Pre Run Scripts
 export const ROBOCORP_RUN_PRE_RUN_SCRIPTS_INTERNAL = "robocorp.runPreRunScripts.internal";  // Run Pre Run Scripts
 export const ROBOCORP_GET_PY_PI_BASE_URLS_INTERNAL = "robocorp.getPyPiBaseUrls.internal";  // Get PyPi base urls
+export const ROBOCORP_START_ACTION_SERVER = "robocorp.startActionServer";  // Start Action Server
+export const ROBOCORP_START_ACTION_SERVER_INTERNAL = "robocorp.startActionServer.internal";  // Start Action Server (internal)

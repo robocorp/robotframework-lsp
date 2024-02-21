@@ -112,6 +112,8 @@
         "onCommand:robocorp.hasPreRunScripts.internal",
         "onCommand:robocorp.runPreRunScripts.internal",
         "onCommand:robocorp.getPyPiBaseUrls.internal",
+        "onCommand:robocorp.startActionServer",
+        "onCommand:robocorp.startActionServer.internal",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-task-packages-tree",
@@ -191,6 +193,11 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Specifies whether the 'Run Task' and 'Debug Task' code lenses should be shown."
+                },
+                "robocorp.actionServer.location": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Specifies the location of the action-server executable."
                 }
             }
         },
@@ -712,6 +719,16 @@
                 "command": "robocorp.getPyPiBaseUrls.internal",
                 "title": "Get PyPi base urls",
                 "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.startActionServer",
+                "title": "Start Action Server",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.startActionServer.internal",
+                "title": "Start Action Server (internal)",
+                "category": "Robocorp"
             }
         ],
         "menus": {
@@ -1113,6 +1130,10 @@
                 },
                 {
                     "command": "robocorp.getPyPiBaseUrls.internal",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.startActionServer.internal",
                     "when": "false"
                 }
             ]

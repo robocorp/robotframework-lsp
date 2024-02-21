@@ -3,7 +3,13 @@ import { resolve, join, dirname, basename } from "path";
 
 import { logError } from "./channel";
 import { ROBOCORP_LIST_WORK_ITEMS_INTERNAL, ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL } from "./robocorpCommands";
-import { FSEntry, getSelectedRobot, NO_PACKAGE_FOUND_MSG, RobotEntry, treeViewIdToTreeDataProvider } from "./viewsCommon";
+import {
+    FSEntry,
+    getSelectedRobot,
+    NO_PACKAGE_FOUND_MSG,
+    RobotEntry,
+    treeViewIdToTreeDataProvider,
+} from "./viewsCommon";
 import { TREE_VIEW_ROBOCORP_PACKAGE_RESOURCES_TREE } from "./robocorpViews";
 import { getCurrRobotDir, RobotSelectionTreeDataProviderBase } from "./viewsRobotSelectionTreeBase";
 import { resolveInterpreter } from "./activities";

@@ -140,6 +140,7 @@ import {
     ROBOCORP_OPEN_PLAYWRIGHT_RECORDER,
     ROBOCORP_INSPECTOR,
     ROBOCORP_INSPECTOR_DUPLICATE,
+    ROBOCORP_START_ACTION_SERVER,
 } from "./robocorpCommands";
 import { installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
@@ -159,6 +160,7 @@ import { RobotOutputViewProvider } from "./output/outView";
 import { setupDebugSessionOutViewIntegration } from "./output/outViewRunIntegration";
 import { showInspectorUI } from "./inspector/inspectorView";
 import { IAppRoutes } from "./inspector/protocols";
+import { startActionServer } from "./actionServer";
 
 interface InterpreterInfo {
     pythonExe: string;
@@ -356,6 +358,8 @@ async function cloudLogoutAndRefresh() {
 }
 
 function registerRobocorpCodeCommands(C: CommandRegistry, context: ExtensionContext) {
+    C.register(ROBOCORP_START_ACTION_SERVER, startActionServer);
+
     C.register(ROBOCORP_GET_LANGUAGE_SERVER_PYTHON, () => getLanguageServerPython());
     C.register(ROBOCORP_GET_LANGUAGE_SERVER_PYTHON_INFO, () => getLanguageServerPythonInfo());
     C.register(ROBOCORP_CREATE_ROBOT, () => createRobot());

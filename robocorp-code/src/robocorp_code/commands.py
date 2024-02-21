@@ -94,6 +94,8 @@ ROBOCORP_PROFILE_LIST_INTERNAL = "robocorp.profileList.internal"  # List Profile
 ROBOCORP_HAS_PRE_RUN_SCRIPTS_INTERNAL = "robocorp.hasPreRunScripts.internal"  # Has Pre Run Scripts
 ROBOCORP_RUN_PRE_RUN_SCRIPTS_INTERNAL = "robocorp.runPreRunScripts.internal"  # Run Pre Run Scripts
 ROBOCORP_GET_PY_PI_BASE_URLS_INTERNAL = "robocorp.getPyPiBaseUrls.internal"  # Get PyPi base urls
+ROBOCORP_START_ACTION_SERVER = "robocorp.startActionServer"  # Start Action Server
+ROBOCORP_START_ACTION_SERVER_INTERNAL = "robocorp.startActionServer.internal"  # Start Action Server (internal)
 
 ALL_SERVER_COMMANDS = [
     ROBOCORP_GET_PLUGINS_DIR,
@@ -128,6 +130,7 @@ ALL_SERVER_COMMANDS = [
     ROBOCORP_HAS_PRE_RUN_SCRIPTS_INTERNAL,
     ROBOCORP_RUN_PRE_RUN_SCRIPTS_INTERNAL,
     ROBOCORP_GET_PY_PI_BASE_URLS_INTERNAL,
+    ROBOCORP_START_ACTION_SERVER_INTERNAL,
 ]
 
 # fmt: on

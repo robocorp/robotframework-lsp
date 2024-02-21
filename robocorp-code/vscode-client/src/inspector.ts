@@ -154,8 +154,9 @@ export async function _internalOpenRobocorpInspector(
     if (robot === undefined) {
         // Ask for the robot to be used and then show dialog with the options.
         robot = await listAndAskRobotSelection(
-            "Please select the Robot where the locators should be saved.",
-            "Unable to open Inspector (no Robot detected in the Workspace)."
+            "Please select the Task or Action Package where the locators should be saved.",
+            "Unable to open Inspector (no Task nor Action Package detected in the Workspace).",
+            {showTaskPackages: true, showActionPackages: true}
         );
         if (!robot) {
             return;

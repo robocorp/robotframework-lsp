@@ -177,8 +177,20 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                         "parent": element,
                     },
                 ];
-            }
-            if (element.type === RobotEntryType.Robot) {
+            } else if (element.type === RobotEntryType.ActionPackage) {
+                // TODO: We need a way to get the actions for the action package.
+                let children = [];
+                children.push({
+                    "label": "Start Action Server",
+                    "uri": element.uri,
+                    "robot": element.robot,
+                    "iconPath": "tools",
+                    "type": RobotEntryType.StartActionServer,
+                    "parent": element,
+                    "tooltip": "Start the Action Server for the actions in the action package",
+                });
+                return children;
+            } else if (element.type === RobotEntryType.Robot) {
                 let yamlContents = element.robot.yamlContents;
                 let robotChildren = [];
                 if (yamlContents) {
@@ -205,8 +217,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                     "parent": element,
                 });
                 return robotChildren;
-            }
-            if (element.type === RobotEntryType.ActionsInRobot) {
+            } else if (element.type === RobotEntryType.ActionsInRobot) {
                 return [
                     {
                         "label": "Upload Task Package to Control Room",
@@ -249,9 +260,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                         "parent": element,
                     },
                 ];
-            }
-
-            if (element.type === RobotEntryType.Error) {
+            } else if (element.type === RobotEntryType.Error) {
                 return [];
             }
 
@@ -358,6 +367,16 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
             treeItem.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
         } else if (element.type === RobotEntryType.Error) {
             treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
+        } else if (element.type === RobotEntryType.StartActionServer) {
+            treeItem.command = {
+                "title": "Start Action Server",
+                "command": roboCommands.ROBOCORP_START_ACTION_SERVER,
+                "arguments": [vscode.Uri.file(element.robot.directory)],
+            };
+            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
+        }
+        if (element.tooltip) {
+            treeItem.tooltip = element.tooltip;
         }
         if (element.iconPath) {
             treeItem.iconPath = new vscode.ThemeIcon(element.iconPath);
