@@ -120,12 +120,14 @@ class InspectorServerManager(object):
                     method = msg.get("method")
 
                     if method in (
+                        # generics
                         "$/customProgress",
                         "window/showMessage",
                         # web
                         "$/webPick",
                         "$/webInspectorState",
                         "$/webURLChange",
+                        "$/webReigniteThread",
                         # windows
                         "$/windowsPick",
                         # image
@@ -142,7 +144,6 @@ class InspectorServerManager(object):
                 api = self._inspector_api_client = InspectorApiClient(
                     w, r, server_process, on_received_message=on_received_message
                 )
-
                 log.debug(
                     "Initializing api... (this pid: %s, api pid: %s).",
                     os.getpid(),

@@ -70,7 +70,9 @@ class PickedLocatorTypedDict(TypedDict):
 
 
 class WebInspector:
-    def __init__(self, endpoint: Optional[IEndPoint] = None) -> None:
+    def __init__(
+        self, endpoint: Optional[IEndPoint] = None, configuration: Optional[dict] = None
+    ) -> None:
         """
         Args:
             endpoint: If given notifications on the state will be given.
@@ -85,6 +87,8 @@ class WebInspector:
         self._looping = False
         self._last_picker_check: int = 0
         self._endpoint = endpoint
+
+        self._configuration = configuration
 
     @property
     def picking(self):
@@ -143,9 +147,18 @@ class WebInspector:
 
             from robocorp_code.playwright import robocorp_browser
 
-            log.debug(f"Page is None or Closed. Creating a new one...")
-            page = robocorp_browser.page()
-            self._page = page
+            try:
+                log.debug(f"Page is None or Closed. Creating a new one...")
+                page = robocorp_browser.page()
+                self._page = page
+            except Exception as e:
+                log.error(f"Exception raised while constructing browser page:", e)
+                # shut down the current thread
+                self._current_thread.shutdown()
+                # make sure we notify the necessary entities that we want to reignite the thread
+                if self._endpoint is not None:
+                    self._endpoint.notify("$/webReigniteThread", self._configuration)
+                return None
 
             if endpoint is not None:
                 endpoint.notify("$/webInspectorState", {"state": STATE_OPENED})
