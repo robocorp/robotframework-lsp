@@ -145,6 +145,7 @@ import {
     ROBOCORP_ROBOTS_VIEW_ACTION_RUN,
     ROBOCORP_ROBOTS_VIEW_ACTION_DEBUG,
     ROBOCORP_ROBOTS_VIEW_ACTION_EDIT_INPUT,
+    ROBOCORP_ROBOTS_VIEW_ACTION_OPEN,
 } from "./robocorpCommands";
 import { installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
@@ -379,6 +380,7 @@ function registerRobocorpCodeCommands(C: CommandRegistry, context: ExtensionCont
     C.register(ROBOCORP_ROBOTS_VIEW_ACTION_RUN, (entry: RobotEntry) => views.runSelectedAction(true, entry));
     C.register(ROBOCORP_ROBOTS_VIEW_ACTION_DEBUG, (entry: RobotEntry) => views.runSelectedAction(false, entry));
     C.register(ROBOCORP_ROBOTS_VIEW_ACTION_EDIT_INPUT, (entry: RobotEntry) => views.editInput(entry));
+    C.register(ROBOCORP_ROBOTS_VIEW_ACTION_OPEN, (entry: RobotEntry) => views.openAction(entry));
     C.register(ROBOCORP_RUN_ROBOCORPS_PYTHON_TASK, (args: string[]) => runRobocorpTasks(true, args));
     C.register(ROBOCORP_DEBUG_ROBOCORPS_PYTHON_TASK, (args: string[]) => runRobocorpTasks(false, args));
     C.register(ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR, (locator?: LocatorEntry): Promise<void> => {

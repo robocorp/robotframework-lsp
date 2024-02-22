@@ -128,6 +128,19 @@ async function createDefaultInputJson(inputUri: vscode.Uri) {
     );
 }
 
+export async function openAction(actionRobotEntry?: RobotEntry) {
+    const range = actionRobotEntry.range;
+    if (range) {
+        const selection: vscode.Range = new vscode.Range(
+            new vscode.Position(range.start.line - 1, range.start.character),
+            new vscode.Position(range.end.line - 1, range.end.character)
+        );
+        await vscode.window.showTextDocument(actionRobotEntry.uri, { selection: selection });
+    } else {
+        await vscode.window.showTextDocument(actionRobotEntry.uri);
+    }
+}
+
 export async function editInput(actionRobotEntry?: RobotEntry) {
     if (!actionRobotEntry) {
         vscode.window.showErrorMessage("Unable to edit input: no target action entry defined for action.");

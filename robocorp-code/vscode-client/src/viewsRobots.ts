@@ -200,7 +200,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                 ];
             } else if (element.type === RobotEntryType.ActionPackage) {
                 // TODO: We need a way to get the actions for the action package.
-                let children = [];
+                let children: RobotEntry[] = [];
                 try {
                     let result: ActionResult<undefined> = await vscode.commands.executeCommand(
                         roboCommands.ROBOCORP_LIST_ACTIONS_INTERNAL,
@@ -221,6 +221,7 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                                 "iconPath": "circle",
                                 "type": RobotEntryType.Action,
                                 "parent": element,
+                                "range": action.range,
                             });
                         }
                     }

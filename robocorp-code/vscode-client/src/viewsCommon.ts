@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { LocalRobotMetadataInfo } from "./protocols";
+import { LocalRobotMetadataInfo, Range } from "./protocols";
 import { getLocatorSingleTreeSelection } from "./viewsResources";
 
 /**
@@ -50,13 +50,19 @@ export interface RobotEntry {
     label: string;
     uri: vscode.Uri | undefined;
     robot: LocalRobotMetadataInfo | undefined;
-    taskName?: string;
-    actionName?: string;
     iconPath: string;
     type: RobotEntryType;
     parent: RobotEntry | undefined;
     collapsed?: boolean | undefined;
     tooltip?: string | undefined;
+
+    // For task
+    taskName?: string;
+
+    // For action
+    action_package_uri?: vscode.Uri | undefined;
+    actionName?: string;
+    range?: Range;
 }
 
 export interface FSEntry {

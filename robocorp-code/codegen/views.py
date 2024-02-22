@@ -58,28 +58,33 @@ TREE_VIEW_CONTAINERS = [
                         # Task run as context menus
                         Menu(
                             "robocorp.robotsViewTaskRun",
-                            MenuGroup.INLINE,
+                            "inline@1",
                             "viewItem == taskItem",
                         ),
                         Menu(
                             "robocorp.robotsViewTaskDebug",
-                            MenuGroup.INLINE,
+                            "inline@2",
                             "viewItem == taskItem",
                         ),
                         # Action run as context menus
                         Menu(
-                            "robocorp.robotsViewActionRun",
-                            MenuGroup.INLINE,
-                            "viewItem == actionItem",
-                        ),
-                        Menu(
-                            "robocorp.robotsViewActionDebug",
-                            MenuGroup.INLINE,
+                            "robocorp.robotsViewActionOpen",
+                            "inline@1",
                             "viewItem == actionItem",
                         ),
                         Menu(
                             "robocorp.robotsViewActionEditInput",
-                            MenuGroup.INLINE,
+                            "inline@2",
+                            "viewItem == actionItem",
+                        ),
+                        Menu(
+                            "robocorp.robotsViewActionRun",
+                            "inline@3",
+                            "viewItem == actionItem",
+                        ),
+                        Menu(
+                            "robocorp.robotsViewActionDebug",
+                            "inline@4",
                             "viewItem == actionItem",
                         ),
                         # Inline in actions
@@ -132,6 +137,11 @@ TREE_VIEW_CONTAINERS = [
                         ),
                         Menu(
                             "robocorp.robotsViewActionEditInput",
+                            MenuGroup.NAVIGATION,
+                            "viewItem == actionItem",
+                        ),
+                        Menu(
+                            "robocorp.robotsViewActionOpen",
                             MenuGroup.NAVIGATION,
                             "viewItem == actionItem",
                         ),

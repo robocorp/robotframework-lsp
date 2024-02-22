@@ -23,6 +23,7 @@ export const ROBOCORP_ROBOTS_VIEW_TASK_DEBUG = "robocorp.robotsViewTaskDebug";  
 export const ROBOCORP_ROBOTS_VIEW_ACTION_RUN = "robocorp.robotsViewActionRun";  // Launch Action
 export const ROBOCORP_ROBOTS_VIEW_ACTION_DEBUG = "robocorp.robotsViewActionDebug";  // Debug Action
 export const ROBOCORP_ROBOTS_VIEW_ACTION_EDIT_INPUT = "robocorp.robotsViewActionEditInput";  // Configure Action Input
+export const ROBOCORP_ROBOTS_VIEW_ACTION_OPEN = "robocorp.robotsViewActionOpen";  // Open Action
 export const ROBOCORP_RUN_ROBOCORPS_PYTHON_TASK = "robocorp.runRobocorpsPythonTask";  // Run Robocorp's Python Task
 export const ROBOCORP_DEBUG_ROBOCORPS_PYTHON_TASK = "robocorp.debugRobocorpsPythonTask";  // Debug Robocorp's Python Task
 export const ROBOCORP_SAVE_IN_DISK_LRU = "robocorp.saveInDiskLRU";  // Saves some data in an LRU in the disk

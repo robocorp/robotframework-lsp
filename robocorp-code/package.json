@@ -42,6 +42,7 @@
         "onCommand:robocorp.robotsViewActionRun",
         "onCommand:robocorp.robotsViewActionDebug",
         "onCommand:robocorp.robotsViewActionEditInput",
+        "onCommand:robocorp.robotsViewActionOpen",
         "onCommand:robocorp.runRobocorpsPythonTask",
         "onCommand:robocorp.debugRobocorpsPythonTask",
         "onCommand:robocorp.saveInDiskLRU",
@@ -369,6 +370,12 @@
                 "title": "Configure Action Input",
                 "category": "Robocorp",
                 "icon": "$(symbol-variable)"
+            },
+            {
+                "command": "robocorp.robotsViewActionOpen",
+                "title": "Open Action",
+                "category": "Robocorp",
+                "icon": "$(go-to-file)"
             },
             {
                 "command": "robocorp.runRobocorpsPythonTask",
@@ -803,27 +810,32 @@
                 {
                     "command": "robocorp.robotsViewTaskRun",
                     "when": "view == robocorp-task-packages-tree && viewItem == taskItem",
-                    "group": "inline"
+                    "group": "inline@1"
                 },
                 {
                     "command": "robocorp.robotsViewTaskDebug",
                     "when": "view == robocorp-task-packages-tree && viewItem == taskItem",
-                    "group": "inline"
+                    "group": "inline@2"
                 },
                 {
-                    "command": "robocorp.robotsViewActionRun",
+                    "command": "robocorp.robotsViewActionOpen",
                     "when": "view == robocorp-task-packages-tree && viewItem == actionItem",
-                    "group": "inline"
-                },
-                {
-                    "command": "robocorp.robotsViewActionDebug",
-                    "when": "view == robocorp-task-packages-tree && viewItem == actionItem",
-                    "group": "inline"
+                    "group": "inline@1"
                 },
                 {
                     "command": "robocorp.robotsViewActionEditInput",
                     "when": "view == robocorp-task-packages-tree && viewItem == actionItem",
-                    "group": "inline"
+                    "group": "inline@2"
+                },
+                {
+                    "command": "robocorp.robotsViewActionRun",
+                    "when": "view == robocorp-task-packages-tree && viewItem == actionItem",
+                    "group": "inline@3"
+                },
+                {
+                    "command": "robocorp.robotsViewActionDebug",
+                    "when": "view == robocorp-task-packages-tree && viewItem == actionItem",
+                    "group": "inline@4"
                 },
                 {
                     "command": "robocorp.openRobotTreeSelection",
@@ -872,6 +884,11 @@
                 },
                 {
                     "command": "robocorp.robotsViewActionEditInput",
+                    "when": "view == robocorp-task-packages-tree && viewItem == actionItem",
+                    "group": "navigation"
+                },
+                {
+                    "command": "robocorp.robotsViewActionOpen",
                     "when": "view == robocorp-task-packages-tree && viewItem == actionItem",
                     "group": "navigation"
                 },
@@ -1040,6 +1057,10 @@
                 },
                 {
                     "command": "robocorp.robotsViewActionEditInput",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.robotsViewActionOpen",
                     "when": "false"
                 },
                 {

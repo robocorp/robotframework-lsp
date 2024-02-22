@@ -201,6 +201,14 @@ COMMANDS = [
         icon="$(symbol-variable)",
     ),
     Command(
+        "robocorp.robotsViewActionOpen",
+        "Open Action",
+        add_to_package_json=True,
+        server_handled=False,
+        hide_from_command_palette=True,
+        icon="$(go-to-file)",
+    ),
+    Command(
         "robocorp.runRobocorpsPythonTask",
         "Run Robocorp's Python Task",
         add_to_package_json=True,
