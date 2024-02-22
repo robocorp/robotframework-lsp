@@ -1,0 +1,12 @@
+message: null
+result:
+- name: my_action
+  range:
+    end:
+      character: 13
+      line: 5
+    start:
+      character: 4
+      line: 5
+  uri: my_action.py
+success: true

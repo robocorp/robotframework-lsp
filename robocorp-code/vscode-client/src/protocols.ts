@@ -31,6 +31,22 @@ export interface IAccountInfo {
     email: string;
 }
 
+export interface Position {
+    line: number; // Use number instead of int for consistency
+    character: number;
+}
+
+export interface Range {
+    start: Position;
+    end: Position;
+}
+
+export interface IActionInfo {
+    uri: string;
+    name: string;
+    range: Range;
+}
+
 export interface ActionResult<T> {
     success: boolean;
     message: string;

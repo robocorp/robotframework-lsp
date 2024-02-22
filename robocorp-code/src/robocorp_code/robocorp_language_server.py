@@ -7,7 +7,7 @@ from functools import partial
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple
 
-from robocorp_ls_core import watchdog_wrapper
+from robocorp_ls_core import uris, watchdog_wrapper
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.cache import CachedFileInfo
 from robocorp_ls_core.command_dispatcher import _CommandDispatcher
@@ -32,6 +32,7 @@ from robocorp_code.protocols import (
     CreateRobotParamsDict,
     IRccRobotMetadata,
     IRccWorkspace,
+    ListActionsParams,
     ListWorkItemsParams,
     ListWorkspacesActionResultDict,
     LocalRobotMetadataInfoDict,
@@ -657,6 +658,42 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
             return dict(success=False, message=str(e), result=None)
         return ret.as_dict()
 
+    @command_dispatcher(commands.ROBOCORP_LIST_ACTIONS_INTERNAL)
+    def _local_list_actions_internal(self, params: Optional[ListActionsParams]):
+        # i.e.: should not block.
+        return partial(self._local_list_actions_internal_impl, params=params)
+
+    def _local_list_actions_internal_impl(
+        self, params: Optional[ListActionsParams]
+    ) -> ActionResultDict:
+        from robocorp_code.robo.collect_actions import iter_actions
+
+        # TODO: We should move this code somewhere else and have a cache of
+        # things so that when the user changes anything the client is notified
+        # about it.
+        if not params:
+            msg = f"Unable to collect actions because the target action package was not given."
+            return dict(success=False, message=msg, result=None)
+
+        action_package_uri = params["action_package"]
+        p = Path(uris.to_fs_path(action_package_uri))
+        if not p.exists():
+            msg = f"Unable to collect actions from: {p} because it does not exist."
+            return dict(success=False, message=msg, result=None)
+
+        if not p.is_dir():
+            p = p.parent
+
+        try:
+            actions = list(iter_actions(p))
+        except Exception as e:
+            log.exception("Error collecting actions.")
+            return dict(
+                success=False, message=f"Error collecting actions: {e}", result=None
+            )
+
+        return dict(success=True, message=None, result=actions)
+
     @command_dispatcher(commands.ROBOCORP_LIST_WORK_ITEMS_INTERNAL)
     def _local_list_work_items_internal(
         self, params: Optional[ListWorkItemsParams] = None
@@ -993,8 +1030,17 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
 
         name: Optional[str] = params.get("name")
         request: Optional[str] = params.get("request")
+
+        # Task package related:
         task: Optional[str] = params.get("task")
         robot: Optional[str] = params.get("robot")
+
+        # Action package related:
+        package: Optional[str] = params.get("package")
+        action_name: Optional[str] = params.get("actionName")
+        uri: Optional[str] = params.get("uri")
+        json_input: Optional[str] = params.get("jsonInput")
+
         additional_pythonpath_entries: Optional[List[str]] = params.get(
             "additionalPythonpathEntries"
         )
@@ -1002,7 +1048,17 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         python_exe: Optional[str] = params.get("pythonExe")
 
         return compute_launch.compute_robot_launch_from_robocorp_code_launch(
-            name, request, task, robot, additional_pythonpath_entries, env, python_exe
+            name=name,
+            request=request,
+            task=task,
+            robot=robot,
+            additional_pythonpath_entries=additional_pythonpath_entries,
+            env=env,
+            python_exe=python_exe,
+            package=package,
+            action_name=action_name,
+            uri=uri,
+            json_input=json_input,
         )
 
     @property
@@ -1017,9 +1073,11 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         )
 
         try:
-            from robocorp_ls_core import uris
-
             target_robot: str = params.get("target_robot")
+            if not target_robot:
+                msg = f"Error resolving interpreter: No 'target_robot' passed. Received: {params}"
+                log.critical(msg)
+                return {"success": False, "message": msg, "result": None}
 
             for ep in self._pm.get_implementations(EPResolveInterpreter):
                 interpreter_info: IInterpreterInfo = (

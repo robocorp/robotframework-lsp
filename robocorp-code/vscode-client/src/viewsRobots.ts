@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
-import { OUTPUT_CHANNEL } from "./channel";
+import { OUTPUT_CHANNEL, logError } from "./channel";
 import { uriExists } from "./files";
-import { LocalRobotMetadataInfo, ActionResult } from "./protocols";
+import { LocalRobotMetadataInfo, ActionResult, IActionInfo } from "./protocols";
 import * as roboCommands from "./robocorpCommands";
 import { basename, getSelectedRobot, RobotEntry, RobotEntryType } from "./viewsCommon";
 import { isActionPackage } from "./common";
@@ -177,19 +177,86 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                         "parent": element,
                     },
                 ];
+            } else if (element.type === RobotEntryType.Action) {
+                return [
+                    {
+                        "label": "Run Action",
+                        "uri": element.uri,
+                        "robot": element.robot,
+                        "actionName": element.actionName,
+                        "iconPath": "run",
+                        "type": RobotEntryType.RunAction,
+                        "parent": element,
+                    },
+                    {
+                        "label": "Debug Action",
+                        "uri": element.uri,
+                        "robot": element.robot,
+                        "actionName": element.actionName,
+                        "iconPath": "debug",
+                        "type": RobotEntryType.DebugAction,
+                        "parent": element,
+                    },
+                ];
             } else if (element.type === RobotEntryType.ActionPackage) {
                 // TODO: We need a way to get the actions for the action package.
                 let children = [];
+                try {
+                    let result: ActionResult<undefined> = await vscode.commands.executeCommand(
+                        roboCommands.ROBOCORP_LIST_ACTIONS_INTERNAL,
+                        {
+                            "action_package": element.uri.toString(),
+                        }
+                    );
+                    if (result.success) {
+                        let actions: IActionInfo[] = result.result;
+                        for (const action of actions) {
+                            const uri = vscode.Uri.parse(action.uri);
+                            children.push({
+                                "label": action.name,
+                                "actionName": action.name,
+                                "robot": element.robot,
+                                "uri": uri,
+                                "action_package_uri": element.uri,
+                                "iconPath": "circle",
+                                "type": RobotEntryType.Action,
+                                "parent": element,
+                            });
+                        }
+                    }
+                } catch (error) {
+                    logError("Error collecting actions.", error, "ACT_COLLECT_ACTIONS");
+                }
+
                 children.push({
-                    "label": "Start Action Server",
+                    "label": "Activities",
                     "uri": element.uri,
                     "robot": element.robot,
                     "iconPath": "tools",
-                    "type": RobotEntryType.StartActionServer,
+                    "type": RobotEntryType.ActionsInActionPackage,
                     "parent": element,
-                    "tooltip": "Start the Action Server for the actions in the action package",
                 });
                 return children;
+            } else if (element.type === RobotEntryType.ActionsInActionPackage) {
+                return [
+                    {
+                        "label": "Start Action Server",
+                        "uri": element.uri,
+                        "robot": element.robot,
+                        "iconPath": "tools",
+                        "type": RobotEntryType.StartActionServer,
+                        "parent": element,
+                        "tooltip": "Start the Action Server for the actions in the action package",
+                    },
+                    {
+                        "label": "Configure Action Package (package.yaml)",
+                        "uri": element.uri,
+                        "robot": element.robot,
+                        "iconPath": "go-to-file",
+                        "type": RobotEntryType.OpenPackageYaml,
+                        "parent": element,
+                    },
+                ];
             } else if (element.type === RobotEntryType.Robot) {
                 let yamlContents = element.robot.yamlContents;
                 let robotChildren = [];
@@ -303,7 +370,6 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
     }
 
     getTreeItem(element: RobotEntry): vscode.TreeItem {
-        const isTask: boolean = element.type === RobotEntryType.Task;
         const treeItem = new vscode.TreeItem(element.label, vscode.TreeItemCollapsibleState.Collapsed);
         if (element.type === RobotEntryType.Run) {
             treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
@@ -321,6 +387,22 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
             };
             treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
             treeItem.contextValue = "taskItemDebug";
+        } else if (element.type === RobotEntryType.RunAction) {
+            treeItem.command = {
+                "title": "Run Action",
+                "command": roboCommands.ROBOCORP_ROBOTS_VIEW_ACTION_RUN,
+                "arguments": [element],
+            };
+            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
+            treeItem.contextValue = "actionItemRun";
+        } else if (element.type === RobotEntryType.DebugAction) {
+            treeItem.command = {
+                "title": "Debug Action",
+                "command": roboCommands.ROBOCORP_ROBOTS_VIEW_ACTION_DEBUG,
+                "arguments": [element],
+            };
+            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
+            treeItem.contextValue = "actionItemDebug";
         } else if (element.type === RobotEntryType.ActionsInRobot) {
             treeItem.contextValue = "actionsInRobotItem";
             treeItem.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
@@ -335,6 +417,13 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
             treeItem.command = {
                 "title": "Configure Dependencies (conda.yaml)",
                 "command": roboCommands.ROBOCORP_OPEN_ROBOT_CONDA_TREE_SELECTION,
+                "arguments": [element],
+            };
+            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
+        } else if (element.type === RobotEntryType.OpenPackageYaml) {
+            treeItem.command = {
+                "title": "Configure Action Package (package.yaml)",
+                "command": roboCommands.ROBOCORP_OPEN_PACKAGE_YAML_TREE_SELECTION,
                 "arguments": [element],
             };
             treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
@@ -362,8 +451,11 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
         } else if (element.type === RobotEntryType.Robot) {
             treeItem.contextValue = "robotItem";
             treeItem.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
-        } else if (isTask) {
+        } else if (element.type === RobotEntryType.Task) {
             treeItem.contextValue = "taskItem";
+            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+        } else if (element.type === RobotEntryType.Action) {
+            treeItem.contextValue = "actionItem";
             treeItem.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
         } else if (element.type === RobotEntryType.Error) {
             treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;

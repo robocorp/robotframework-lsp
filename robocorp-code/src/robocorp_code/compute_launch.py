@@ -1,11 +1,100 @@
 import os
 from typing import Any, Dict, List, Optional
 
+from robocorp_ls_core import uris
 from robocorp_ls_core.robotframework_log import get_logger
 
 from robocorp_code.protocols import ActionResultDictRobotLaunch
 
 log = get_logger(__name__)
+
+
+def _compute_action_package_launch(
+    name: Optional[str],
+    request: Optional[str],
+    additional_pythonpath_entries: Optional[List[str]],
+    env: Optional[Dict[str, str]],
+    python_exe: Optional[str],
+    package: str,
+    action_name: Optional[str],
+    uri: Optional[str],
+    json_input: Optional[str],
+):
+    if not os.path.isfile(package):
+        return {
+            "success": False,
+            "message": f"The specified package.yaml does not exist or is not a file ({package}).",
+            "result": None,
+        }
+    if not action_name:
+        return {
+            "success": False,
+            "message": "'actionName' must be specified to make action launch.",
+            "result": None,
+        }
+
+    if not uri:
+        return {
+            "success": False,
+            "message": "'uri' must be specified to make action launch.",
+            "result": None,
+        }
+
+    if not json_input:
+        return {
+            "success": False,
+            "message": "'jsonInput' must be specified to make action launch.",
+            "result": None,
+        }
+
+    try:
+        from robocorp_ls_core import yaml_wrapper
+
+        with open(package, "r") as stream:
+            yaml_contents = yaml_wrapper.load(stream)
+
+        if not yaml_contents:
+            raise RuntimeError("Empty yaml contents.")
+        if not isinstance(yaml_contents, dict):
+            raise RuntimeError("Expected yaml contents root to be a dict.")
+    except Exception:
+        log.exception("Error loading contents from: %s", package)
+        return {
+            "success": False,
+            "message": f"Unable to load yaml contents from: ({package}).",
+            "result": None,
+        }
+
+    args = [
+        "run",
+        "--action",
+        action_name,
+        "--json-input",
+        json_input,
+        uris.to_fs_path(uri),
+    ]
+    args = [str(c) for c in args]
+    cwd = os.path.dirname(package)
+
+    result: Dict[str, Any]
+    result = {
+        "type": "python",
+        "name": name,
+        "request": request,
+        "cwd": cwd,
+        "module": "robocorp.actions",
+        "args": args,
+        "console": "integratedTerminal",
+        "internalConsoleOptions": "neverOpen",
+    }
+
+    if python_exe:
+        result["python"] = python_exe
+
+    if env:
+        result["env"] = env
+
+    return {"success": True, "message": None, "result": result}
 
 
 def compute_robot_launch_from_robocorp_code_launch(
@@ -16,6 +105,10 @@ def compute_robot_launch_from_robocorp_code_launch(
     additional_pythonpath_entries: Optional[List[str]],
     env: Optional[Dict[str, str]],
     python_exe: Optional[str],
+    package: Optional[str] = None,
+    action_name: Optional[str] = None,
+    uri: Optional[str] = None,
+    json_input: Optional[str] = None,
 ) -> ActionResultDictRobotLaunch:
     if not name:
         return {
@@ -29,6 +122,34 @@ def compute_robot_launch_from_robocorp_code_launch(
             "message": "'request' must be specified to make launch.",
             "result": None,
         }
+
+    if package:
+        return _compute_action_package_launch(
+            name,
+            request,
+            additional_pythonpath_entries,
+            env,
+            python_exe,
+            package,
+            action_name,
+            uri,
+            json_input,
+        )
+    else:
+        return _compute_task_package_launch(
+            name, request, task, robot, additional_pythonpath_entries, env, python_exe
+        )
+
+
+def _compute_task_package_launch(
+    name: Optional[str],
+    request: Optional[str],
+    task: Optional[str],
+    robot: Optional[str],
+    additional_pythonpath_entries: Optional[List[str]],
+    env: Optional[Dict[str, str]],
+    python_exe: Optional[str],
+):
     if not robot:
         return {
             "success": False,
@@ -53,7 +174,7 @@ def compute_robot_launch_from_robocorp_code_launch(
             raise RuntimeError("Empty yaml contents.")
         if not isinstance(yaml_contents, dict):
             raise RuntimeError("Expected yaml contents root to be a dict.")
-    except:
+    except Exception:
         log.exception("Error loading contents from: %s", robot)
         return {
             "success": False,

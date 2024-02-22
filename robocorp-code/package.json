@@ -39,6 +39,9 @@
         "onCommand:robocorp.debugRobotRcc",
         "onCommand:robocorp.robotsViewTaskRun",
         "onCommand:robocorp.robotsViewTaskDebug",
+        "onCommand:robocorp.robotsViewActionRun",
+        "onCommand:robocorp.robotsViewActionDebug",
+        "onCommand:robocorp.robotsViewActionEditInput",
         "onCommand:robocorp.runRobocorpsPythonTask",
         "onCommand:robocorp.debugRobocorpsPythonTask",
         "onCommand:robocorp.saveInDiskLRU",
@@ -69,6 +72,7 @@
         "onCommand:robocorp.copyLocatorToClipboard.internal",
         "onCommand:robocorp.openRobotTreeSelection",
         "onCommand:robocorp.openRobotCondaTreeSelection",
+        "onCommand:robocorp.openPackageYamlTreeSelection",
         "onCommand:robocorp.openExternally",
         "onCommand:robocorp.openInVSCode",
         "onCommand:robocorp.revealInExplorer",
@@ -114,6 +118,7 @@
         "onCommand:robocorp.getPyPiBaseUrls.internal",
         "onCommand:robocorp.startActionServer",
         "onCommand:robocorp.startActionServer.internal",
+        "onCommand:robocorp.listActions.internal",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-task-packages-tree",
@@ -342,6 +347,30 @@
                 }
             },
             {
+                "command": "robocorp.robotsViewActionRun",
+                "title": "Launch Action",
+                "category": "Robocorp",
+                "icon": {
+                    "light": "images/light/run.svg",
+                    "dark": "images/dark/run.svg"
+                }
+            },
+            {
+                "command": "robocorp.robotsViewActionDebug",
+                "title": "Debug Action",
+                "category": "Robocorp",
+                "icon": {
+                    "light": "images/light/debug.svg",
+                    "dark": "images/dark/debug.svg"
+                }
+            },
+            {
+                "command": "robocorp.robotsViewActionEditInput",
+                "title": "Configure Action Input",
+                "category": "Robocorp",
+                "icon": "$(symbol-variable)"
+            },
+            {
                 "command": "robocorp.runRobocorpsPythonTask",
                 "title": "Run Robocorp's Python Task",
                 "category": "Robocorp",
@@ -496,6 +525,12 @@
             {
                 "command": "robocorp.openRobotCondaTreeSelection",
                 "title": "Configure Dependencies (conda.yaml)",
+                "category": "Robocorp",
+                "icon": "$(list-tree)"
+            },
+            {
+                "command": "robocorp.openPackageYamlTreeSelection",
+                "title": "Configure Action Package (package.yaml)",
                 "category": "Robocorp",
                 "icon": "$(list-tree)"
             },
@@ -729,6 +764,11 @@
                 "command": "robocorp.startActionServer.internal",
                 "title": "Start Action Server (internal)",
                 "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.listActions.internal",
+                "title": "Lists the actions available in an action package given a root dir (internal)",
+                "category": "Robocorp"
             }
         ],
         "menus": {
@@ -771,6 +811,21 @@
                     "group": "inline"
                 },
                 {
+                    "command": "robocorp.robotsViewActionRun",
+                    "when": "view == robocorp-task-packages-tree && viewItem == actionItem",
+                    "group": "inline"
+                },
+                {
+                    "command": "robocorp.robotsViewActionDebug",
+                    "when": "view == robocorp-task-packages-tree && viewItem == actionItem",
+                    "group": "inline"
+                },
+                {
+                    "command": "robocorp.robotsViewActionEditInput",
+                    "when": "view == robocorp-task-packages-tree && viewItem == actionItem",
+                    "group": "inline"
+                },
+                {
                     "command": "robocorp.openRobotTreeSelection",
                     "when": "view == robocorp-task-packages-tree && viewItem == actionsInRobotItem",
                     "group": "inline"
@@ -803,6 +858,21 @@
                 {
                     "command": "robocorp.robotsViewTaskDebug",
                     "when": "view == robocorp-task-packages-tree && viewItem == taskItem",
+                    "group": "navigation"
+                },
+                {
+                    "command": "robocorp.robotsViewActionRun",
+                    "when": "view == robocorp-task-packages-tree && viewItem == actionItem",
+                    "group": "navigation"
+                },
+                {
+                    "command": "robocorp.robotsViewActionDebug",
+                    "when": "view == robocorp-task-packages-tree && viewItem == actionItem",
+                    "group": "navigation"
+                },
+                {
+                    "command": "robocorp.robotsViewActionEditInput",
+                    "when": "view == robocorp-task-packages-tree && viewItem == actionItem",
                     "group": "navigation"
                 },
                 {
@@ -961,6 +1031,18 @@
                     "when": "false"
                 },
                 {
+                    "command": "robocorp.robotsViewActionRun",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.robotsViewActionDebug",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.robotsViewActionEditInput",
+                    "when": "false"
+                },
+                {
                     "command": "robocorp.runRobocorpsPythonTask",
                     "when": "false"
                 },
@@ -1018,6 +1100,10 @@
                 },
                 {
                     "command": "robocorp.openRobotCondaTreeSelection",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.openPackageYamlTreeSelection",
                     "when": "false"
                 },
                 {
@@ -1134,6 +1220,10 @@
                 },
                 {
                     "command": "robocorp.startActionServer.internal",
+                    "when": "false"
+                },
+                {
+                    "command": "robocorp.listActions.internal",
                     "when": "false"
                 }
             ]

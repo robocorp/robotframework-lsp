@@ -21,6 +21,9 @@ ROBOCORP_RUN_ROBOT_RCC = "robocorp.runRobotRcc"  # Run Task Package (Robot)
 ROBOCORP_DEBUG_ROBOT_RCC = "robocorp.debugRobotRcc"  # Debug Task Package (Robot)
 ROBOCORP_ROBOTS_VIEW_TASK_RUN = "robocorp.robotsViewTaskRun"  # Launch Task
 ROBOCORP_ROBOTS_VIEW_TASK_DEBUG = "robocorp.robotsViewTaskDebug"  # Debug Task
+ROBOCORP_ROBOTS_VIEW_ACTION_RUN = "robocorp.robotsViewActionRun"  # Launch Action
+ROBOCORP_ROBOTS_VIEW_ACTION_DEBUG = "robocorp.robotsViewActionDebug"  # Debug Action
+ROBOCORP_ROBOTS_VIEW_ACTION_EDIT_INPUT = "robocorp.robotsViewActionEditInput"  # Configure Action Input
 ROBOCORP_RUN_ROBOCORPS_PYTHON_TASK = "robocorp.runRobocorpsPythonTask"  # Run Robocorp's Python Task
 ROBOCORP_DEBUG_ROBOCORPS_PYTHON_TASK = "robocorp.debugRobocorpsPythonTask"  # Debug Robocorp's Python Task
 ROBOCORP_SAVE_IN_DISK_LRU = "robocorp.saveInDiskLRU"  # Saves some data in an LRU in the disk
@@ -51,6 +54,7 @@ ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR = "robocorp.editRobocorpInspectorLocato
 ROBOCORP_COPY_LOCATOR_TO_CLIPBOARD_INTERNAL = "robocorp.copyLocatorToClipboard.internal"  # Copy locator name to clipboard
 ROBOCORP_OPEN_ROBOT_TREE_SELECTION = "robocorp.openRobotTreeSelection"  # Configure Task Package (Robot) (robot.yaml)
 ROBOCORP_OPEN_ROBOT_CONDA_TREE_SELECTION = "robocorp.openRobotCondaTreeSelection"  # Configure Dependencies (conda.yaml)
+ROBOCORP_OPEN_PACKAGE_YAML_TREE_SELECTION = "robocorp.openPackageYamlTreeSelection"  # Configure Action Package (package.yaml)
 ROBOCORP_OPEN_EXTERNALLY = "robocorp.openExternally"  # Open externally
 ROBOCORP_OPEN_IN_VS_CODE = "robocorp.openInVSCode"  # Open in VSCode
 ROBOCORP_REVEAL_IN_EXPLORER = "robocorp.revealInExplorer"  # Reveal in File Explorer
@@ -96,6 +100,7 @@ ROBOCORP_RUN_PRE_RUN_SCRIPTS_INTERNAL = "robocorp.runPreRunScripts.internal"  # 
 ROBOCORP_GET_PY_PI_BASE_URLS_INTERNAL = "robocorp.getPyPiBaseUrls.internal"  # Get PyPi base urls
 ROBOCORP_START_ACTION_SERVER = "robocorp.startActionServer"  # Start Action Server
 ROBOCORP_START_ACTION_SERVER_INTERNAL = "robocorp.startActionServer.internal"  # Start Action Server (internal)
+ROBOCORP_LIST_ACTIONS_INTERNAL = "robocorp.listActions.internal"  # Lists the actions available in an action package given a root dir (internal)
 
 ALL_SERVER_COMMANDS = [
     ROBOCORP_GET_PLUGINS_DIR,
@@ -131,6 +136,7 @@ ALL_SERVER_COMMANDS = [
     ROBOCORP_RUN_PRE_RUN_SCRIPTS_INTERNAL,
     ROBOCORP_GET_PY_PI_BASE_URLS_INTERNAL,
     ROBOCORP_START_ACTION_SERVER_INTERNAL,
+    ROBOCORP_LIST_ACTIONS_INTERNAL,
 ]
 
 # fmt: on

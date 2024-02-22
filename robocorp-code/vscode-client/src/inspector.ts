@@ -156,7 +156,7 @@ export async function _internalOpenRobocorpInspector(
         robot = await listAndAskRobotSelection(
             "Please select the Task or Action Package where the locators should be saved.",
             "Unable to open Inspector (no Task nor Action Package detected in the Workspace).",
-            {showTaskPackages: true, showActionPackages: true}
+            { showTaskPackages: true, showActionPackages: true }
         );
         if (!robot) {
             return;

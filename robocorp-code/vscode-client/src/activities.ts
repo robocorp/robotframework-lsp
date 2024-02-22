@@ -904,9 +904,12 @@ export async function updateLaunchEnvironment(args): Promise<{ [key: string]: st
     try {
         newEnv = await updateLaunchEnvironmentPart0(args);
     } catch (error) {
-        window.showErrorMessage(
-            `It was not properly to build the Robot launch environment for the launch. Error: ${JSON.stringify(error)}`
-        );
+        let msg = "It was not possible to build the Robot launch environment for the launch.";
+        if (error && error.message) {
+            msg += ` (${error.message})`;
+        }
+        msg += "See OUTPUT > Robocorp Code for more details.";
+        window.showErrorMessage(msg);
         logError("Error computing launch env.", error, "ERROR_LAUNCH_ENV");
         throw error;
     }

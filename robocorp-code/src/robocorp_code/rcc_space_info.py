@@ -237,6 +237,28 @@ class RCCSpaceInfo:
         _: IRCCSpaceInfo = check_implements(self)
 
 
+def _remove_pip_special_flags(obj):
+    if isinstance(obj, list):
+        new_lst = []
+        for item in obj:
+            if isinstance(item, (list, dict)):
+                new_lst.append(_remove_pip_special_flags(item))
+
+            elif isinstance(item, str):
+                if "--use-feature" in item:
+                    continue
+                new_lst.append(item)
+        return new_lst
+
+    if isinstance(obj, dict):
+        new_dct = {}
+        for k, v in obj.items():
+            new_dct[k] = _remove_pip_special_flags(v)
+        return new_dct
+
+    return obj
+
+
 @lru_cache(maxsize=50)
 def format_conda_contents_to_compare(contents: str) -> str:
     try:
@@ -244,8 +266,9 @@ def format_conda_contents_to_compare(contents: str) -> str:
 
         load_yaml = yaml_wrapper.load
         loaded = load_yaml(contents)
+        loaded = _remove_pip_special_flags(loaded)
         return repr(loaded)
-    except:
+    except Exception:
         log.info("Unable to parse yaml: %s", contents)
         lst = []
         for line in contents.splitlines(keepends=False):

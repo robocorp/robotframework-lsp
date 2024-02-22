@@ -55,6 +55,7 @@ TREE_VIEW_CONTAINERS = [
                         Menu("robocorp.createRobot", MenuGroup.NAVIGATION),
                     ],
                     "view/item/context": [
+                        # Task run as context menus
                         Menu(
                             "robocorp.robotsViewTaskRun",
                             MenuGroup.INLINE,
@@ -64,6 +65,22 @@ TREE_VIEW_CONTAINERS = [
                             "robocorp.robotsViewTaskDebug",
                             MenuGroup.INLINE,
                             "viewItem == taskItem",
+                        ),
+                        # Action run as context menus
+                        Menu(
+                            "robocorp.robotsViewActionRun",
+                            MenuGroup.INLINE,
+                            "viewItem == actionItem",
+                        ),
+                        Menu(
+                            "robocorp.robotsViewActionDebug",
+                            MenuGroup.INLINE,
+                            "viewItem == actionItem",
+                        ),
+                        Menu(
+                            "robocorp.robotsViewActionEditInput",
+                            MenuGroup.INLINE,
+                            "viewItem == actionItem",
                         ),
                         # Inline in actions
                         Menu(
@@ -91,7 +108,7 @@ TREE_VIEW_CONTAINERS = [
                             MenuGroup.INLINE,
                             "viewItem == actionsInRobotItem",
                         ),
-                        # Needs right click (duplicating above + new actions)
+                        # Tasks: Needs right click (duplicating above + new actions)
                         Menu(
                             "robocorp.robotsViewTaskRun",
                             MenuGroup.NAVIGATION,
@@ -101,6 +118,22 @@ TREE_VIEW_CONTAINERS = [
                             "robocorp.robotsViewTaskDebug",
                             MenuGroup.NAVIGATION,
                             "viewItem == taskItem",
+                        ),
+                        # Actions: Needs right click (duplicating above + new actions)
+                        Menu(
+                            "robocorp.robotsViewActionRun",
+                            MenuGroup.NAVIGATION,
+                            "viewItem == actionItem",
+                        ),
+                        Menu(
+                            "robocorp.robotsViewActionDebug",
+                            MenuGroup.NAVIGATION,
+                            "viewItem == actionItem",
+                        ),
+                        Menu(
+                            "robocorp.robotsViewActionEditInput",
+                            MenuGroup.NAVIGATION,
+                            "viewItem == actionItem",
                         ),
                         # New action: reveal in explorer.
                         Menu(

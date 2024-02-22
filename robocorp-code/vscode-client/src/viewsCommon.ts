@@ -17,18 +17,23 @@ export interface LocatorEntry {
 export const NO_PACKAGE_FOUND_MSG = "No package found in current folder";
 
 export enum RobotEntryType {
-    Robot,
     ActionPackage,
+    Action,
+    ActionsInActionPackage,
+    Robot,
     Task,
     Error,
     Run,
     Debug,
+    RunAction,
+    DebugAction,
     ActionsInRobot,
     OpenFlowExplorer,
     UploadRobot,
     RobotTerminal,
     OpenRobotYaml,
     OpenRobotCondaYaml,
+    OpenPackageYaml,
     StartActionServer,
 }
 
@@ -46,6 +51,7 @@ export interface RobotEntry {
     uri: vscode.Uri | undefined;
     robot: LocalRobotMetadataInfo | undefined;
     taskName?: string;
+    actionName?: string;
     iconPath: string;
     type: RobotEntryType;
     parent: RobotEntry | undefined;

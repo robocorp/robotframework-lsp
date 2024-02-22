@@ -125,6 +125,10 @@ class ListWorkItemsParams(TypedDict):
     increment_output: bool  # Whether a new output folder should be generated (and older ones should be collected).
 
 
+class ListActionsParams(TypedDict):
+    action_package: str  # Path to the action package for which we want the actions (may be just the folder or the package.yaml).
+
+
 class ListWorkspacesActionResultDict(TypedDict):
     success: bool
     message: Optional[

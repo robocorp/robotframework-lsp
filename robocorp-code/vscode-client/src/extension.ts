@@ -141,6 +141,10 @@ import {
     ROBOCORP_INSPECTOR,
     ROBOCORP_INSPECTOR_DUPLICATE,
     ROBOCORP_START_ACTION_SERVER,
+    ROBOCORP_OPEN_PACKAGE_YAML_TREE_SELECTION,
+    ROBOCORP_ROBOTS_VIEW_ACTION_RUN,
+    ROBOCORP_ROBOTS_VIEW_ACTION_DEBUG,
+    ROBOCORP_ROBOTS_VIEW_ACTION_EDIT_INPUT,
 } from "./robocorpCommands";
 import { installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
@@ -372,6 +376,9 @@ function registerRobocorpCodeCommands(C: CommandRegistry, context: ExtensionCont
     C.register(ROBOCORP_REFRESH_CLOUD_VIEW, () => refreshCloudTreeView());
     C.register(ROBOCORP_ROBOTS_VIEW_TASK_RUN, (entry: RobotEntry) => views.runSelectedRobot(true, entry));
     C.register(ROBOCORP_ROBOTS_VIEW_TASK_DEBUG, (entry: RobotEntry) => views.runSelectedRobot(false, entry));
+    C.register(ROBOCORP_ROBOTS_VIEW_ACTION_RUN, (entry: RobotEntry) => views.runSelectedAction(true, entry));
+    C.register(ROBOCORP_ROBOTS_VIEW_ACTION_DEBUG, (entry: RobotEntry) => views.runSelectedAction(false, entry));
+    C.register(ROBOCORP_ROBOTS_VIEW_ACTION_EDIT_INPUT, (entry: RobotEntry) => views.editInput(entry));
     C.register(ROBOCORP_RUN_ROBOCORPS_PYTHON_TASK, (args: string[]) => runRobocorpTasks(true, args));
     C.register(ROBOCORP_DEBUG_ROBOCORPS_PYTHON_TASK, (args: string[]) => runRobocorpTasks(false, args));
     C.register(ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR, (locator?: LocatorEntry): Promise<void> => {
@@ -388,6 +395,7 @@ function registerRobocorpCodeCommands(C: CommandRegistry, context: ExtensionCont
     C.register(ROBOCORP_OPEN_ROBOT_CONDA_TREE_SELECTION, (robot: RobotEntry) =>
         views.openRobotCondaTreeSelection(robot)
     );
+    C.register(ROBOCORP_OPEN_PACKAGE_YAML_TREE_SELECTION, (robot: RobotEntry) => views.openPackageTreeSelection(robot));
     C.register(ROBOCORP_OPEN_LOCATORS_JSON, (locatorRoot) => views.openLocatorsJsonTreeSelection());
     C.register(ROBOCORP_CLOUD_UPLOAD_ROBOT_TREE_SELECTION, (robot: RobotEntry) =>
         views.cloudUploadRobotTreeSelection(robot)

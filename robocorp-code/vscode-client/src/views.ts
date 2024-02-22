@@ -24,7 +24,10 @@ import { CloudTreeDataProvider } from "./viewsRobocorp";
 import { RobotsTreeDataProvider } from "./viewsRobots";
 import { ResourcesTreeDataProvider } from "./viewsResources";
 import * as path from "path";
-import { verifyFileExists } from "./files";
+import { fileExists, makeDirs, uriExists, verifyFileExists } from "./files";
+import { QuickPickItemWithAction, showSelectOneQuickPick } from "./ask";
+import { slugify } from "./slugify";
+import { OUTPUT_CHANNEL } from "./channel";
 
 function empty<T>(array: readonly T[]) {
     return array === undefined || array.length === 0;
@@ -49,7 +52,30 @@ export async function openRobotCondaTreeSelection(robot?: RobotEntry) {
             const condaConfigFile = yamlContents["condaConfigFile"];
             if (condaConfigFile) {
                 vscode.window.showTextDocument(vscode.Uri.file(path.join(robot.robot.directory, condaConfigFile)));
+                return;
             }
+        }
+
+        // It didn't return: let's just check for a conda.yaml.
+        const condaYamlPath = path.join(robot.robot.directory, "conda.yaml");
+        const condaYamlUri = vscode.Uri.file(condaYamlPath);
+        if (await uriExists(condaYamlUri)) {
+            vscode.window.showTextDocument(condaYamlUri);
+            return;
+        }
+    }
+}
+
+export async function openPackageTreeSelection(robot?: RobotEntry) {
+    if (!robot) {
+        robot = getSelectedRobot();
+    }
+    if (robot) {
+        const packageYamlPath = path.join(robot.robot.directory, "package.yaml");
+        const packageYamlUri = vscode.Uri.file(packageYamlPath);
+        if (await uriExists(packageYamlUri)) {
+            vscode.window.showTextDocument(packageYamlUri);
+            return;
         }
     }
 }
@@ -86,11 +112,115 @@ export async function createRccTerminalTreeSelection(robot?: RobotEntry) {
 export async function runSelectedRobot(noDebug: boolean, taskRobotEntry?: RobotEntry) {
     if (!taskRobotEntry) {
         taskRobotEntry = await getSelectedRobot({
-            noSelectionMessage: "Unable to make launch (Robot task not selected in Robots Tree).",
+            noSelectionMessage: "Unable to make launch (Task not selected in Packages Tree).",
             moreThanOneSelectionMessage: "Unable to make launch -- only 1 task must be selected.",
         });
     }
     runRobotRCC(noDebug, taskRobotEntry.robot.filePath, taskRobotEntry.taskName);
+}
+
+async function createDefaultInputJson(inputUri: vscode.Uri) {
+    await vscode.workspace.fs.writeFile(
+        inputUri,
+        Buffer.from(`{
+    "paramName": "paramValue"
+}`)
+    );
+}
+
+export async function editInput(actionRobotEntry?: RobotEntry) {
+    if (!actionRobotEntry) {
+        vscode.window.showErrorMessage("Unable to edit input: no target action entry defined for action.");
+        return;
+    }
+    const targetInput = await getTargetInputJson(actionRobotEntry);
+    const inputUri = vscode.Uri.file(targetInput);
+    if (!(await fileExists(targetInput))) {
+        await createDefaultInputJson(inputUri);
+    }
+    await vscode.window.showTextDocument(inputUri);
+}
+
+export async function getTargetInputJson(actionRobotEntry: RobotEntry): Promise<string> {
+    const nameSlugified = slugify(actionRobotEntry.actionName);
+
+    const dir = actionRobotEntry.robot.directory;
+    const devDataDir = path.join(dir, "devdata");
+    await makeDirs(devDataDir);
+    const targetInput = path.join(devDataDir, `input_${nameSlugified}.json`);
+    return targetInput;
+}
+
+export async function runSelectedAction(noDebug: boolean, actionRobotEntry?: RobotEntry) {
+    if (!actionRobotEntry) {
+        actionRobotEntry = await getSelectedRobot({
+            noSelectionMessage: "Unable to make launch (Action not selected in Packages Tree).",
+            moreThanOneSelectionMessage: "Unable to make launch -- only 1 action must be selected.",
+        });
+        if (!actionRobotEntry) {
+            return;
+        }
+    }
+
+    if (!actionRobotEntry.actionName) {
+        vscode.window.showErrorMessage("actionName not available in entry to launch.");
+        return;
+    }
+
+    // The input must be asked when running actions in this case and it should be
+    // saved in 'devdata/input_xxx.json'
+    const nameSlugified = slugify(actionRobotEntry.actionName);
+    const targetInput = await getTargetInputJson(actionRobotEntry);
+
+    if (!(await fileExists(targetInput))) {
+        let items: QuickPickItemWithAction[] = new Array();
+
+        items.push({
+            "label": `Create "devdata/input_${nameSlugified}.json" to customize action input`,
+            "action": "create",
+            "detail": "Note: Please relaunch after the customization is completed",
+        });
+
+        items.push({
+            "label": `Cancel`,
+            "action": "cancel",
+        });
+
+        let selectedItem: QuickPickItemWithAction | undefined = await showSelectOneQuickPick(
+            items,
+            "Input for the action not defined. How to proceed?",
+            `Customize input for the ${actionRobotEntry.actionName} action`
+        );
+        if (!selectedItem) {
+            return;
+        }
+
+        if (selectedItem.action === "create") {
+            // Create the file and ask the user to fill it and rerun the action
+            // after he finished doing that.
+            const inputUri = vscode.Uri.file(targetInput);
+            await createDefaultInputJson(inputUri);
+            await vscode.window.showTextDocument(inputUri);
+        }
+        // In any case, don't proceed if it wasn't previously created
+        // (so that the user can customize it).
+        return;
+    }
+
+    // Ok, input available. Let's create the launch and run it.
+    let debugConfiguration: vscode.DebugConfiguration = {
+        "name": "Config",
+        "type": "robocorp-code",
+        "request": "launch",
+        "package": actionRobotEntry.robot.filePath,
+        "uri": actionRobotEntry.uri.toString(),
+        "jsonInput": targetInput,
+        "actionName": actionRobotEntry.actionName,
+        "args": [],
+        "noDebug": noDebug,
+    };
+    let debugSessionOptions: vscode.DebugSessionOptions = {};
+    vscode.debug.startDebugging(undefined, debugConfiguration, debugSessionOptions);
 }
 
 async function onChangedRobotSelection(
