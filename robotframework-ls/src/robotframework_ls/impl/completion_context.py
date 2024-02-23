@@ -93,7 +93,6 @@ class BaseContext(object):
 
 
 class CompletionContext(object):
-
     TYPE_TEST_CASE = RobotDocument.TYPE_TEST_CASE
     TYPE_INIT = RobotDocument.TYPE_INIT
     TYPE_RESOURCE = RobotDocument.TYPE_RESOURCE
