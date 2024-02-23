@@ -39,6 +39,7 @@ from robotframework_ls.impl.protocols import (
     IDefinition,
     ICompletionContext,
     IVariablesFromArgumentsFileLoader,
+    IVariablesFromVariablesFileLoader,
     IRobotDocument,
 )
 from robocorp_ls_core.watchdog_wrapper import IFSObserver
@@ -172,6 +173,9 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         self._variables_from_arguments_files_loader: Sequence[
             IVariablesFromArgumentsFileLoader
         ] = []
+        self._variables_from_variables_files_loader: Sequence[
+            IVariablesFromVariablesFileLoader
+        ] = []
 
     @overrides(PythonLanguageServer._create_config)
     def _create_config(self) -> IConfig:
@@ -296,6 +300,59 @@ class RobotFrameworkServerApi(PythonLanguageServer):
         except:
             log.exception(
                 f"Error getting options: {OPTION_ROBOT_VARIABLES_LOAD_FROM_ARGUMENTS_FILE}"
+            )
+
+    @overrides(PythonLanguageServer.m_workspace__did_change_configuration)
+    def m_workspace__did_change_configuration(self, **kwargs):
+        from robotframework_ls.impl.robot_lsp_constants import (
+            OPTION_ROBOT_VARIABLES_LOAD_FROM_VARIABLES_FILE,
+        )
+        from robotframework_ls.impl import robot_localization
+
+        PythonLanguageServer.m_workspace__did_change_configuration(self, **kwargs)
+        self.libspec_manager.config = self.config
+
+        robot_localization.set_global_from_config(self.config)
+
+        try:
+            variables_from_variables_files = self.config.get_setting(
+                OPTION_ROBOT_VARIABLES_LOAD_FROM_VARIABLES_FILE, str, ""
+            ).strip()
+            if not variables_from_variables_files:
+                log.debug(
+                    "%s not specified", OPTION_ROBOT_VARIABLES_LOAD_FROM_VARIABLES_FILE
+                )
+                self._variables_from_variables_files_loader = []
+
+            else:
+                from robotframework_ls.impl.variables_from_variables_file import (
+                    VariablesFromVariablesFileLoader,
+                )
+
+                created_variables_from_variables_files = []
+
+                for v in variables_from_variables_files.split(","):
+                    v = v.strip()
+                    if not v:
+                        continue
+                    created_variables_from_variables_files.append(
+                        VariablesFromVariablesFileLoader(v)
+                    )
+                created_variables_from_variables_files = tuple(
+                    created_variables_from_variables_files
+                )
+                self._variables_from_variables_files_loader = (
+                    created_variables_from_variables_files
+                )
+
+                log.debug(
+                    "%s loaders: %s",
+                    OPTION_ROBOT_VARIABLES_LOAD_FROM_VARIABLES_FILE,
+                    created_variables_from_variables_files,
+                )
+        except:
+            log.exception(
+                f"Error getting options: {OPTION_ROBOT_VARIABLES_LOAD_FROM_VARIABLES_FILE}"
             )
 
     @overrides(PythonLanguageServer.lint)
@@ -858,6 +915,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             config=self.config,
             monitor=monitor,
             variables_from_arguments_files_loader=self._variables_from_arguments_files_loader,
+            variables_from_variables_files_loader=self._variables_from_variables_files_loader,
             lsp_messages=self._lsp_messages,
         )
 
@@ -1152,6 +1210,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
     def _threaded_document_highlight(
         self, doc_uri: str, line, col, monitor: IMonitor
     ) -> Optional[List[DocumentHighlightTypedDict]]:
+
         from robotframework_ls.impl.doc_highlight import doc_highlight
 
         completion_context = self._create_completion_context(
@@ -1172,6 +1231,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
     def _threaded_code_action(
         self, doc_uri: str, params: TextDocumentCodeActionTypedDict, monitor: IMonitor
     ) -> Optional[List[CodeActionTypedDict]]:
+
         end = params["range"]["end"]
         line = end["line"]
         col = end["character"]
