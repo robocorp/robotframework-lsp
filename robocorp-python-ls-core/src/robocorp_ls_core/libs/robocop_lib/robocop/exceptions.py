@@ -27,9 +27,21 @@ class ArgumentFileNotFoundError(RobocopFatalError):
         super().__init__(msg)
 
 
+class VariableFileNotFoundError(RobocopFatalError):
+    def __init__(self, source):
+        msg = f'Variable file "{source}" does not exist'
+        super().__init__(msg)
+
+
 class CircularArgumentFileError(RobocopFatalError):
     def __init__(self, source):
         msg = f'Circular argument file import in "{source}"'
+        super().__init__(msg)
+
+
+class CircularVariableFileError(RobocopFatalError):
+    def __init__(self, source):
+        msg = f'Circular variable file import in "{source}"'
         super().__init__(msg)
 
 
