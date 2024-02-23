@@ -929,7 +929,7 @@ class ICompletionContext(Protocol):
             IVariablesFromArgumentsFileLoader
         ] = (),
         variables_from_variables_files_loader: Sequence[
-            IVariablesFromvariablesFileLoader
+            IVariablesFromVariablesFileLoader
         ] = (),
     ) -> None:
         pass
