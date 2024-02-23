@@ -34,6 +34,11 @@ SETTINGS = {
         "default": "",
         "description": "Load variables for code-completion and code-analysis based on an arguments file. Multiple files accepted by separating with a comma.",
     },
+    "robot.loadVariablesFromVariablesFile": {
+        "type": "string",
+        "default": "",
+        "description": "Load variables for code-completion and code-analysis based on an variables file. Multiple files accepted by separating with a comma.",
+    },
     "robot.pythonpath": {
         "type": "array",
         "default": [],
@@ -258,11 +263,6 @@ SETTINGS = {
         "type": "number",
         "default": 40,
         "description": "This is the timeout used for listing the tests from a robot file. Set to 0 to disable it.",
-    },
-    "robot.testView.enabled": {
-        "type": "boolean",
-        "default": True,
-        "description": "Whether to show robot tests in the test view. You may want to disable this if you are using another test runner (eg. https://github.com/DetachHead/pytest-robotframework)",
     },
 }
 
