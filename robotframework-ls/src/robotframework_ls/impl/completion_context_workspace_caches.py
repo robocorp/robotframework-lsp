@@ -104,6 +104,7 @@ class CompletionContextWorkspaceCaches:
 
             for key, entry in tuple(self._cached.items()):
                 if entry.do_invalidate_on_uri_change(uri):
+
                     uri = entry.get_root_doc().uri
                     if uri not in notified:
                         notified.add(uri)
@@ -193,6 +194,7 @@ class CompletionContextWorkspaceCaches:
 
             if BaseOptions.DEBUG_CACHE_DEPS:
                 if ret is not None:
+
                     log.info(
                         "Cache HIT (%s):\n%s\n",
                         cache_key,
