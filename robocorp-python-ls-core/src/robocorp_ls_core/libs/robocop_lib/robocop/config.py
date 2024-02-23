@@ -13,6 +13,8 @@ from robot.utils import FileReader
 from robocop.exceptions import (
     ArgumentFileNotFoundError,
     CircularArgumentFileError,
+    VariableFileNotFoundError,
+    CircularVariableFileError,
     ConfigGeneralError,
     InvalidArgumentError,
 )
@@ -168,6 +170,83 @@ class ArgumentFileParser:
                 return args
         except FileNotFoundError:
             raise ArgumentFileNotFoundError(argfile) from None
+
+class VariableFileParser:
+    VARIABLE_FILE_OPTIONS = {"--variablefile"}
+    RESOLVE_PATHS_OPTIONS = {"-o", "--output", "-rules", "--ext-rules"}
+    ENSURE_EXIST_PATHS_OPTIONS = {"-rules", "--ext-rules"}
+
+    def __init__(self):
+        self.loaded_variable_files = set()
+        self.config_from = ""
+
+    def expand_variable_files(self, args, config_dir=None):
+        """
+        Find variable files in the argument list and expand argument list with their content.
+        """
+        if not any(arg in self.VARIABLE_FILE_OPTIONS for arg in args):
+            return list(args)
+        parsed_args = []
+        while args:
+            arg = args.pop(0)
+            if arg not in self.VARIABLE_FILE_OPTIONS:
+                parsed_args.append(arg)
+                continue
+            if not args:  # variablefile option declared but filename was not provided
+                raise VariableFileNotFoundError("") from None
+            argfile = args.pop(0)
+            argfile_path = Path(argfile)
+            if argfile_path.is_file():
+                loaded_config_dir = argfile_path.parent
+            else:
+                loaded_config_dir = None
+            file_args = self.load_variable_file(argfile, config_dir)
+            file_args = self.resolve_variables_paths(file_args, config_dir)
+            parsed_args += self.expand_variable_files(file_args, loaded_config_dir)
+        return parsed_args
+
+    def resolve_variables_paths(self, args, root_dir):
+        if root_dir is None:
+            return args
+        prev_option_like = False
+        prev_arg = "option"
+        resolved = []
+        for arg in args:
+            option_like = arg.startswith("-")
+            # resolve path if previous arg was an option that can be path, or the arg is a source
+            if (prev_option_like and prev_arg in self.RESOLVE_PATHS_OPTIONS) or (  # option value that can be path
+                not prev_option_like and not option_like  # source
+            ):
+                ensure_exists = prev_arg in self.ENSURE_EXIST_PATHS_OPTIONS
+                # TODO: If the --rules is provided as comma separated list, it will not resolve paths
+                arg = resolve_relative_path(arg, root_dir, ensure_exists)
+            resolved.append(arg)
+            prev_option_like = option_like
+            prev_arg = arg
+        return resolved
+
+    def load_variable_file(self, argfile, config_dir):
+        if config_dir is not None:
+            argfile = resolve_relative_path(argfile, config_dir, True)
+        if argfile in self.loaded_variable_files:
+            raise CircularVariableFileError(argfile) from None
+        else:
+            self.loaded_variable_files.add(argfile)
+        try:
+            with FileReader(argfile) as arg_f:
+                args = []
+                for line in arg_f.readlines():
+                    if line.strip().startswith("#"):
+                        continue
+                    for arg in line.split(" ", 1):
+                        arg = arg.strip()
+                        if arg:
+                            args.append(arg)
+                if args and not self.config_from:
+                    self.config_from = argfile
+                return args
+        except FileNotFoundError:
+            raise VariableFileNotFoundError(argfile) from None
 
 
 class Config:
@@ -361,6 +440,7 @@ class Config:
             f'{" < ".join(sev.value for sev in RuleSeverity)}',
         )
         optional.add_argument("-A", "--argumentfile", metavar="PATH", help="Path to file with arguments.")
+        optional.add_argument("--variablefile", metavar="PATH", help="Path to file with variables.")
         optional.add_argument(
             "-g",
             "--ignore",
@@ -417,12 +497,21 @@ class Config:
         args = sys.argv[1:]
         if not self.argument_file_in_cli(args):
             self.load_default_config_file()
+        if not self.variable_file_in_cli(args):
+            self.load_default_config_file()
         self.parse_args(args)
 
     def argument_file_in_cli(self, args):
         argument_options = {"-A", "--argumentfile"}
         for arg in args:
             if arg in argument_options:
+                return True
+        return False
+
+    def variable_file_in_cli(self, args):
+        variable_options = {"--variablefile"}
+        for arg in args:
+            if arg in variable_options:
                 return True
         return False
 
@@ -451,10 +540,16 @@ class Config:
         robocop_path = find_file_in_project_root(".robocop", self.root)
         if not robocop_path.is_file():
             return False
-        argument_files_parser = ArgumentFileParser()
-        args = argument_files_parser.load_argument_file(robocop_path, robocop_path.parent)
-        self.config_from = argument_files_parser.config_from
-        self.parse_args(args)
+        if robocop_path[:-3] == ".py":
+            variable_files_parser = VariableFileParser()
+            vars = variable_files_parser.load_variable_file(robocop_path, robocop_path.parent)
+            self.config_from = variable_files_parser.config_from
+            self.parse_vars(vars)
+        else:
+            argument_files_parser = ArgumentFileParser()
+            args = argument_files_parser.load_argument_file(robocop_path, robocop_path.parent)
+            self.config_from = argument_files_parser.config_from
+            self.parse_args(args)
         return True
 
     def load_pyproject_file(self):
@@ -483,6 +578,13 @@ class Config:
         args = argument_files_parser.expand_argument_files(args)
         if argument_files_parser.config_from:
             self.config_from = argument_files_parser.config_from
+        self.parse_args_to_config(args)
+
+    def parse_args(self, args):
+        variable_files_parser = VariableFileParser()
+        args = variable_files_parser.expand_variable_files(args)
+        if variable_files_parser.config_from:
+            self.config_from = variable_files_parser.config_from
         self.parse_args_to_config(args)
 
     @staticmethod
