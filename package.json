@@ -1,0 +1,914 @@
+{
+	"name": "robotframework-lsp",
+	"displayName": "Robot Framework Language Server",
+	"description": "VSCode extension support for Robot Framework",
+	"author": "Fabio Zadrozny",
+	"homepage": "https://github.com/robocorp/robotframework-lsp/blob/robotframework-lsp-1.11.0/robotframework-ls/README.md",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/robocorp/robotframework-lsp.git"
+	},
+	"bugs": {
+		"url": "https://github.com/robocorp/robotframework-lsp/issues"
+	},
+	"license": "Apache 2.0",
+	"version": "1.11.0",
+	"icon": "images/icon.png",
+	"publisher": "robocorp",
+	"categories": [
+		"Linters",
+		"Programming Languages",
+		"Debuggers"
+	],
+	"keywords": [
+		"Robot",
+		"Robot Framework",
+		"multi-root ready"
+	],
+	"activationEvents": [
+		"onLanguage:robotframework",
+		"onDebugInitialConfigurations",
+		"onDebugResolve:robotframework-lsp",
+		"onCommand:robot.addPluginsDir",
+		"onCommand:robot.getLanguageServerVersion",
+		"onCommand:robot.getInternalInfo",
+		"onCommand:robot.resolveInterpreter",
+		"onCommand:robot.listTests",
+		"onView:robot.view.documentation",
+		"onView:robot.view.output",
+		"onCommand:robot.runTest",
+		"onCommand:robot.debugTest",
+		"onCommand:robot.runSuite",
+		"onCommand:robot.debugSuite",
+		"onCommand:robot.interactiveShell",
+		"onCommand:robot.internal.rfinteractive.start",
+		"onCommand:robot.internal.rfinteractive.evaluate",
+		"onCommand:robot.internal.rfinteractive.stop",
+		"onCommand:robot.internal.rfinteractive.semanticTokens",
+		"onCommand:robot.internal.rfinteractive.resolveCompletion",
+		"onCommand:robot.internal.rfinteractive.completions",
+		"onCommand:robot.getRFLSHomeDir",
+		"onCommand:robot.clearCachesAndRestartProcesses",
+		"onCommand:robot.clearCachesAndRestartProcesses.start.internal",
+		"onCommand:robot.clearCachesAndRestartProcesses.finish.internal",
+		"onCommand:robot.startIndexing.internal",
+		"onCommand:robot.waitFullTestCollection.internal",
+		"onCommand:robot.rfInfo.internal",
+		"onCommand:robot.lint.workspace",
+		"onCommand:robot.lint.explorer",
+		"onCommand:robot.openFlowExplorer",
+		"onCommand:robot.openFlowExplorer.internal",
+		"onCommand:robot.generateFlowExplorerModel",
+		"onCommand:robot.collectRobotDocumentation",
+		"onCommand:robot.view.documentation.pin",
+		"onCommand:robot.view.documentation.unpin",
+		"onCommand:robot.convertOutputXMLToRobostream",
+		"onCommand:robot.applyCodeAction"
+	],
+	"galleryBanner": {
+		"theme": "dark",
+		"color": "#000000"
+	},
+	"contributes": {
+		"commands": [
+			{
+				"command": "robot.runTest",
+				"title": "Run Test/Task",
+				"category": "Robot Framework",
+				"icon": "$(play)"
+			},
+			{
+				"command": "robot.debugTest",
+				"title": "Debug Test/Task",
+				"category": "Robot Framework",
+				"icon": "$(debug)"
+			},
+			{
+				"command": "robot.runSuite",
+				"title": "Run Tests/Tasks Suite",
+				"category": "Robot Framework",
+				"icon": "$(run-all)"
+			},
+			{
+				"command": "robot.debugSuite",
+				"title": "Debug Tests/Tasks Suite",
+				"category": "Robot Framework",
+				"icon": "$(debug-alt)"
+			},
+			{
+				"command": "robot.interactiveShell",
+				"title": "Start Interactive Console",
+				"category": "Robot Framework",
+				"icon": "$(terminal-powershell)"
+			},
+			{
+				"command": "robot.internal.rfinteractive.start",
+				"title": "Create Interactive Console",
+				"category": "Robot Framework"
+			},
+			{
+				"command": "robot.internal.rfinteractive.evaluate",
+				"title": "Evaluate in Interactive Console",
+				"category": "Robot Framework"
+			},
+			{
+				"command": "robot.internal.rfinteractive.stop",
+				"title": "Stop Interactive Console",
+				"category": "Robot Framework"
+			},
+			{
+				"command": "robot.internal.rfinteractive.semanticTokens",
+				"title": "Get the semantic tokens based on the code entered.",
+				"category": "Robot Framework"
+			},
+			{
+				"command": "robot.internal.rfinteractive.resolveCompletion",
+				"title": "Resolves the passed completion.",
+				"category": "Robot Framework"
+			},
+			{
+				"command": "robot.internal.rfinteractive.completions",
+				"title": "Get the completions based on the code entered.",
+				"category": "Robot Framework"
+			},
+			{
+				"command": "robot.getRFLSHomeDir",
+				"title": "Provides the directory used to store information (usually ~/.robotframework-ls -- may be configured with `ROBOTFRAMEWORK_LS_USER_HOME` environment variable).",
+				"category": "Robot Framework"
+			},
+			{
+				"command": "robot.clearCachesAndRestartProcesses",
+				"title": "Clear caches and restart Robot Framework Language Server",
+				"category": "Robot Framework"
+			},
+			{
+				"command": "robot.clearCachesAndRestartProcesses.start.internal",
+				"title": "Stops the RFLS and waits for robot.clearCachesAndRestartProcesses.finish.internal to restart",
+				"category": "Robot Framework"
+			},
+			{
+				"command": "robot.clearCachesAndRestartProcesses.finish.internal",
+				"title": "To be used to restart the processes",
+				"category": "Robot Framework"
+			},
+			{
+				"command": "robot.startIndexing.internal",
+				"title": "Starts the indexing service",
+				"category": "Robot Framework"
+			},
+			{
+				"command": "robot.waitFullTestCollection.internal",
+				"title": "Schedules and Waits for a full test collection",
+				"category": "Robot Framework"
+			},
+			{
+				"command": "robot.rfInfo.internal",
+				"title": "Collects information on the Robot Framework version being used.",
+				"category": "Robot Framework"
+			},
+			{
+				"command": "robot.lint.workspace",
+				"title": "Lint all files in the workspace.",
+				"category": "Robot Framework"
+			},
+			{
+				"command": "robot.lint.explorer",
+				"title": "Lint",
+				"category": "Robot Framework"
+			},
+			{
+				"command": "robot.openFlowExplorer",
+				"title": "Open Robot Flow Explorer",
+				"category": "Robot Framework"
+			},
+			{
+				"command": "robot.openFlowExplorer.internal",
+				"title": "Open Robot Flow Explorer Internals",
+				"category": "Robot Framework"
+			},
+			{
+				"command": "robot.generateFlowExplorerModel",
+				"title": "Generate Robot Flow Explorer Model",
+				"category": "Robot Framework"
+			},
+			{
+				"command": "robot.collectRobotDocumentation",
+				"title": "Collect Robot Documentation",
+				"category": "Robot Framework"
+			},
+			{
+				"command": "robot.view.documentation.pin",
+				"title": "Pin Robot Documentation",
+				"category": "Robot Framework",
+				"icon": "$(pin)"
+			},
+			{
+				"command": "robot.view.documentation.unpin",
+				"title": "Unpin Robot Documentation",
+				"category": "Robot Framework",
+				"icon": "$(pinned)"
+			},
+			{
+				"command": "robot.convertOutputXMLToRobostream",
+				"title": "Convert output.xml to robocorp stream",
+				"category": "Robot Framework"
+			},
+			{
+				"command": "robot.applyCodeAction",
+				"title": "Applies some code action",
+				"category": "Robot Framework"
+			}
+		],
+		"submenus": [
+			{
+				"id": "robotsubmenu",
+				"label": "Robot Framework"
+			}
+		],
+		"menus": {
+			"editor/title/run": [
+				{
+					"command": "robot.runSuite",
+					"group": "1_run@robot_run1",
+					"when": "resourceExtname == .robot && !isInDiffEditor"
+				},
+				{
+					"command": "robot.debugSuite",
+					"group": "1_run@robot_run2",
+					"when": "resourceExtname == .robot && !isInDiffEditor"
+				}
+			],
+			"explorer/context": [
+				{
+					"submenu": "robotsubmenu",
+					"group": "9_robot.group"
+				}
+			],
+			"robotsubmenu": [
+				{
+					"command": "robot.runSuite",
+					"group": "1_run@1",
+					"submenu": "robotsubmenu",
+					"when": "resourceExtname == .robot || explorerResourceIsFolder"
+				},
+				{
+					"command": "robot.debugSuite",
+					"group": "1_run@2",
+					"submenu": "robotsubmenu",
+					"when": "resourceExtname == .robot || explorerResourceIsFolder"
+				},
+				{
+					"command": "robot.lint.explorer",
+					"group": "2_analysis",
+					"submenu": "robotsubmenu",
+					"when": "resourceExtname == .robot || resourceExtname == .resource || explorerResourceIsFolder"
+				}
+			],
+			"view/title": [
+				{
+					"command": "robot.view.documentation.pin",
+					"when": "view == robot.view.documentation && !robot.view.documentation.isPinned",
+					"group": "navigation"
+				},
+				{
+					"command": "robot.view.documentation.unpin",
+					"when": "view == robot.view.documentation && robot.view.documentation.isPinned",
+					"group": "navigation"
+				}
+			],
+			"commandPalette": [
+				{
+					"command": "robot.internal.rfinteractive.start",
+					"when": "false"
+				},
+				{
+					"command": "robot.internal.rfinteractive.evaluate",
+					"when": "false"
+				},
+				{
+					"command": "robot.internal.rfinteractive.stop",
+					"when": "false"
+				},
+				{
+					"command": "robot.internal.rfinteractive.semanticTokens",
+					"when": "false"
+				},
+				{
+					"command": "robot.internal.rfinteractive.resolveCompletion",
+					"when": "false"
+				},
+				{
+					"command": "robot.internal.rfinteractive.completions",
+					"when": "false"
+				},
+				{
+					"command": "robot.getRFLSHomeDir",
+					"when": "false"
+				},
+				{
+					"command": "robot.clearCachesAndRestartProcesses.start.internal",
+					"when": "false"
+				},
+				{
+					"command": "robot.clearCachesAndRestartProcesses.finish.internal",
+					"when": "false"
+				},
+				{
+					"command": "robot.startIndexing.internal",
+					"when": "false"
+				},
+				{
+					"command": "robot.waitFullTestCollection.internal",
+					"when": "false"
+				},
+				{
+					"command": "robot.rfInfo.internal",
+					"when": "false"
+				},
+				{
+					"command": "robot.lint.explorer",
+					"when": "false"
+				},
+				{
+					"command": "robot.openFlowExplorer.internal",
+					"when": "false"
+				},
+				{
+					"command": "robot.generateFlowExplorerModel",
+					"when": "false"
+				},
+				{
+					"command": "robot.collectRobotDocumentation",
+					"when": "false"
+				},
+				{
+					"command": "robot.convertOutputXMLToRobostream",
+					"when": "false"
+				},
+				{
+					"command": "robot.applyCodeAction",
+					"when": "false"
+				}
+			]
+		},
+		"semanticTokenScopes": [
+			{
+				"scopes": {
+					"header": [
+						"entity.name.type.class.robot"
+					],
+					"setting": [
+						"storage.type.setting.robot"
+					],
+					"name": [
+						"entity.other.inherited-class.robot"
+					],
+					"variableOperator": [
+						"keyword.operator.variable.robot"
+					],
+					"settingOperator": [
+						"keyword.operator.setting.robot"
+					],
+					"keywordNameDefinition": [
+						"entity.name.function.robot"
+					],
+					"keywordNameCall": [
+						"meta.keyword.call.robot",
+						"meta.support.function.robot",
+						"entity.name.label.robot",
+						"support.function.robot"
+					],
+					"control": [
+						"keyword.control.flow.robot"
+					],
+					"testCaseName": [
+						"entity.name.function.robot"
+					],
+					"parameterName": [
+						"variable.parameter.robot"
+					],
+					"argumentValue": [
+						"string.quoted.single.robot"
+					],
+					"error": [
+						"token.error-token.robot",
+						"invalid.illegal.robot"
+					],
+					"documentation": [
+						"comment.block.documentation.robot",
+						"comment.line.documentation.robot",
+						"meta.documentation.robot"
+					]
+				}
+			}
+		],
+		"configuration": {
+			"title": "Robot Framework Language Server Configuration",
+			"type": "object",
+			"properties": {
+				"robot.language-server.python": {
+					"type": "string",
+					"default": "",
+					"description": "Path to the python executable used to start the Robot Framework Language Server (the default is searching python on the PATH).\nRequires a restart to take effect."
+				},
+				"robot.language-server.args": {
+					"type": "array",
+					"default": [],
+					"description": "Arguments to be passed to the Robot Framework Language Server (i.e.: [\"-vv\", \"--log-file=~/robotframework_ls.log\"]).\nRequires a restart to take effect."
+				},
+				"robot.language-server.tcp-port": {
+					"type": "number",
+					"default": 0,
+					"description": "If the port is specified, connect to the language server previously started at the given port.\nRequires a restart to take effect."
+				},
+				"robot.python.executable": {
+					"type": "string",
+					"default": "",
+					"description": "Secondary python executable used to load user code and dependent libraries (the default is using the same python used for the language server)."
+				},
+				"robot.python.env": {
+					"type": "object",
+					"default": {},
+					"description": "Environment variables used to load user code and dependent libraries.\n(i.e.: {\"MY_ENV_VAR\": \"some_value\"})"
+				},
+				"robot.variables": {
+					"type": "object",
+					"default": {},
+					"description": "Custom variables passed to RobotFramework (used when resolving variables and automatically passed to the launch config as --variable entries).\n(i.e.: {\"EXECDIR\": \"c:/my/proj/src\"})"
+				},
+				"robot.loadVariablesFromArgumentsFile": {
+					"type": "string",
+					"default": "",
+					"description": "Load variables for code-completion and code-analysis based on an arguments file. Multiple files accepted by separating with a comma."
+				},
+				"robot.loadVariablesFromVariablesFile": {
+					"type": "string",
+					"default": "",
+					"description": "Load variables for code-completion and code-analysis based on an variables file. Multiple files accepted by separating with a comma."
+				},
+				"robot.pythonpath": {
+					"type": "array",
+					"default": [],
+					"description": "Entries to be added to the PYTHONPATH (used when resolving resources and imports and automatically passed to the launch config as --pythonpath entries).\n(i.e.: [\"c:/my/pro/src\"])"
+				},
+				"robot.libraries.libdoc.needsArgs": {
+					"type": "array",
+					"default": [
+						"remote",
+						"fakerlib"
+					],
+					"description": "Libraries which will generate a different set of keywords based on the arguments provided.\n(i.e.: [\"remote\", \"fakerlib\"])"
+				},
+				"robot.libraries.libdoc.preGenerate": {
+					"type": "array",
+					"default": [],
+					"description": "List of libraries which should have the libspec pre-generated."
+				},
+				"robot.libraries.blacklist": {
+					"type": "array",
+					"default": [],
+					"description": "List of libraries which should be blacklisted and not shown for code-completion."
+				},
+				"robot.libraries.deprecated": {
+					"type": "array",
+					"default": [
+						{
+							"name": "RPA.Desktop.Windows",
+							"replacement": "RPA.Windows"
+						},
+						{
+							"name": "RPA.Browser",
+							"replacement": "RPA.Browser.Selenium"
+						},
+						{
+							"name": "RPA.Robocloud.Vault",
+							"replacement": "RPA.Robocorp.Vault"
+						},
+						{
+							"name": "RPA.Robocloud.Items",
+							"replacement": "RPA.Robocorp.WorkItems"
+						}
+					],
+					"description": "List of libraries which should be deprecated and not shown for auto-import code-completion."
+				},
+				"robot.codeFormatter": {
+					"type": "string",
+					"default": "builtinTidy",
+					"description": "Allows the configuration of the code-formatter engine to be used.\nOne of: robotidy, builtinTidy.",
+					"enum": [
+						"robotidy",
+						"builtinTidy"
+					]
+				},
+				"robot.flowExplorerTheme": {
+					"type": "string",
+					"default": "dark",
+					"description": "Allows the configuration of the Robot Flow Explorer theme to be used.\nOne of: dark, light.",
+					"enum": [
+						"dark",
+						"light"
+					]
+				},
+				"robot.lint.robocop.enabled": {
+					"type": "boolean",
+					"default": false,
+					"description": "Specifies whether to lint with Robocop."
+				},
+				"robot.lint.enabled": {
+					"type": "boolean",
+					"default": true,
+					"description": "Determines whether linting should be enabled."
+				},
+				"robot.lint.undefinedKeywords": {
+					"type": "boolean",
+					"default": true,
+					"description": "Reports undefined keywords when linting."
+				},
+				"robot.lint.undefinedLibraries": {
+					"type": "boolean",
+					"default": true,
+					"description": "Reports undefined libraries when linting."
+				},
+				"robot.lint.undefinedResources": {
+					"type": "boolean",
+					"default": true,
+					"description": "Reports undefined resources when linting."
+				},
+				"robot.lint.undefinedVariableImports": {
+					"type": "boolean",
+					"default": true,
+					"description": "Reports undefined variable imports when linting."
+				},
+				"robot.lint.keywordCallArguments": {
+					"type": "boolean",
+					"default": true,
+					"description": "Reports issues in keyword call arguments."
+				},
+				"robot.lint.keywordResolvesToMultipleKeywords": {
+					"type": "boolean",
+					"default": true,
+					"description": "Reports whenever a keyword call would resolve to more than one keyword."
+				},
+				"robot.lint.variables": {
+					"type": "boolean",
+					"default": true,
+					"description": "Reports issues in undefined variables."
+				},
+				"robot.lint.ignoreVariables": {
+					"type": "array",
+					"default": [],
+					"description": "Don't report undefined variables for these variables (i.e.: [\"Var1\", \"Var2\"])."
+				},
+				"robot.lint.ignoreEnvironmentVariables": {
+					"type": "array",
+					"default": [],
+					"description": "Don't report undefined environment variables for these variables (i.e.: [\"VAR1\", \"VAR2\"])."
+				},
+				"robot.lint.unusedKeyword": {
+					"type": "boolean",
+					"default": false,
+					"description": "Reports whether a keyword is not used anywhere in the workspace."
+				},
+				"robot.completions.section_headers.form": {
+					"type": "string",
+					"default": "plural",
+					"description": "Defines how completions should be shown for section headers (i.e.: *** Setting(s) ***).\nOne of: plural, singular, both.",
+					"enum": [
+						"plural",
+						"singular",
+						"both"
+					]
+				},
+				"robot.completions.keywordsNotImported.enable": {
+					"type": "boolean",
+					"default": true,
+					"description": "Defines whether to show completions for keywords not currently imported (adds the proper import statement when applied)."
+				},
+				"robot.completions.keywordsNotImported.addImport": {
+					"type": "boolean",
+					"default": true,
+					"description": "Defines whether to actually add the import statement when applying completions showing keywords not currently imported."
+				},
+				"robot.completions.keywords.format": {
+					"type": "string",
+					"default": "",
+					"description": "Defines how keyword completions should be applied.\nOne of: First upper, Title Case, ALL UPPER, all lower.",
+					"enum": [
+						"First upper",
+						"Title Case",
+						"ALL UPPER",
+						"all lower"
+					]
+				},
+				"robot.completions.keywords.prefixImportName": {
+					"type": "boolean",
+					"default": false,
+					"description": "Defines whether completions showing keywords should prefix completions with the module name."
+				},
+				"robot.completions.keywords.prefixImportNameIgnore": {
+					"type": "array",
+					"default": [],
+					"description": "Defines module names for which the name should not be prefixed when applying a completion (i.e.: [\"builtin\"])."
+				},
+				"robot.completions.keywords.argumentsSeparator": {
+					"type": "string",
+					"default": "    ",
+					"description": "Defines the string used to separate arguments when applying a Keyword completion with arguments."
+				},
+				"robot.workspaceSymbolsOnlyForOpenDocs": {
+					"type": "boolean",
+					"default": false,
+					"description": "Collecting workspace symbols can be resource intensive on big projects and may slow down code-completion, in this case, it's possible collect info only for open files on big projects."
+				},
+				"robot.editor.4spacesTab": {
+					"type": "boolean",
+					"default": true,
+					"description": "Replaces the key stroke of tab with 4 spaces. Set to 'false' to use VSCode default."
+				},
+				"robot.quickFix.keywordTemplate": {
+					"type": "string",
+					"default": "$keyword_name$keyword_arguments\n    $cursor\n\n",
+					"description": "The template to be used for keyword creation in quick fixes."
+				},
+				"robot.codeLens.enable": {
+					"type": "boolean",
+					"default": true,
+					"description": "Enables or disables all Robot Framework code-lenses."
+				},
+				"robot.codeLens.run.enable": {
+					"type": "boolean",
+					"default": true,
+					"description": "Enables or disables the Run/Debug code-lenses."
+				},
+				"robot.codeLens.interactiveConsole.enable": {
+					"type": "boolean",
+					"default": true,
+					"description": "Enables or disables the Interactive Console code-lenses."
+				},
+				"robot.interactiveConsole.arguments": {
+					"type": "array",
+					"default": [],
+					"description": "The arguments with the options to be used to start an interactive console. i.e.: [\"--output\", \"${workspaceRoot}/interactive_output.xml\"]"
+				},
+				"robot.language": {
+					"type": "array",
+					"default": [],
+					"description": "Language(s) to be used in Robot Framework (passed as the --language argument for robot when launching)."
+				},
+				"robot.run.peekError.level": {
+					"type": "string",
+					"enum": [
+						"NONE",
+						"INFO",
+						"WARN",
+						"ERROR"
+					],
+					"default": "ERROR",
+					"description": "Defines the log level for the messages shown on the peek error window."
+				},
+				"robot.run.peekError.showSummary": {
+					"type": "boolean",
+					"default": false,
+					"description": "Defines whether a message should be shown at the task/test level with a summary of the errors."
+				},
+				"robot.run.peekError.showErrorsInCallers": {
+					"type": "boolean",
+					"default": true,
+					"description": "Defines whether a message should be shown at each keyword caller when a keyword fails."
+				},
+				"robot.timeout.use": {
+					"type": "boolean",
+					"default": true,
+					"description": "Determines whether timeouts should be used or not in the language server (consider disabling timeouts on really slow machines)."
+				},
+				"robot.timeout.general": {
+					"type": "number",
+					"default": 20,
+					"description": "This is the timeout used for most requests in the language server. Set to 0 to disable it."
+				},
+				"robot.timeout.completions": {
+					"type": "number",
+					"default": 12,
+					"description": "This is the timeout used for code completion requests. Set to 0 to disable it."
+				},
+				"robot.timeout.codeFormatting": {
+					"type": "number",
+					"default": 20,
+					"description": "This is the timeout used for code formatting requests. Set to 0 to disable it."
+				},
+				"robot.timeout.collectDocsTimeout": {
+					"type": "number",
+					"default": 60,
+					"description": "This is the timeout used for collecting documentation to show in the ROBOT DOCUMENTATION view. Set to 0 to disable it."
+				},
+				"robot.timeout.listTestsTimeout": {
+					"type": "number",
+					"default": 40,
+					"description": "This is the timeout used for listing the tests from a robot file. Set to 0 to disable it."
+				}
+			}
+		},
+		"viewsContainers": {
+			"panel": [
+				{
+					"id": "robot-documentation",
+					"title": "Robot Documentation",
+					"icon": "$(notebook)"
+				},
+				{
+					"id": "robot-output",
+					"title": "Robot Output",
+					"icon": "$(output)"
+				}
+			]
+		},
+		"views": {
+			"robot-documentation": [
+				{
+					"type": "webview",
+					"id": "robot.view.documentation",
+					"name": "Robot Documentation",
+					"contextualTitle": "Robot Documentation"
+				}
+			],
+			"robot-output": [
+				{
+					"type": "webview",
+					"id": "robot.view.output",
+					"name": "Robot Output",
+					"contextualTitle": "Robot Output"
+				}
+			]
+		},
+		"languages": [
+			{
+				"id": "robotframework",
+				"aliases": [
+					"Robot Framework",
+					"robotframework"
+				],
+				"extensions": [
+					".robot",
+					".resource"
+				],
+				"configuration": "./language-configuration.json",
+				"icon": {
+					"light": "./images/light.svg",
+					"dark": "./images/dark.svg"
+				}
+			}
+		],
+		"grammars": [
+			{
+				"language": "robotframework",
+				"scopeName": "source.robot",
+				"path": "./syntaxes/robotframework.tmLanguage.json"
+			}
+		],
+		"keybindings": [
+			{
+				"key": "tab",
+				"command": "type",
+				"args": {
+					"text": "    "
+				},
+				"when": "editorTextFocus && editorLangId == robotframework && !editorHasSelection && !inSnippetMode && !suggestWidgetVisible && config.robot.editor.4spacesTab && !inlineSuggestionVisible"
+			}
+		],
+		"breakpoints": [
+			{
+				"language": "robotframework"
+			}
+		],
+		"debuggers": [
+			{
+				"type": "robotframework-lsp",
+				"label": "Robot Framework",
+				"languages": [
+					"robotframework"
+				],
+				"configurationAttributes": {
+					"launch": {
+						"properties": {
+							"target": {
+								"type": [
+									"string",
+									"array"
+								],
+								"description": "The .robot file or a folder containing .robot files to be launched. Note: a suite will be created from suiteTarget or cwd and further filtering is done with the target.",
+								"default": "${file}"
+							},
+							"args": {
+								"type": "array",
+								"description": "The command line arguments passed to the target."
+							},
+							"cwd": {
+								"type": "string",
+								"description": "The working directory for the launch (also used to create suite if suiteTarget is not specified and makeSuite is true).",
+								"default": "${workspaceFolder}"
+							},
+							"env": {
+								"type": "object",
+								"description": "Environment variables to be added to the launch."
+							},
+							"makeSuite": {
+								"type": "boolean",
+								"description": "If specified, creates a suite from suiteTarget or cwd and applies filtering based on the target (to automatically load __init__.robot).",
+								"default": true
+							},
+							"suiteTarget": {
+								"type": [
+									"string",
+									"array"
+								],
+								"description": "If specified, a suite will be created from the given target (by default, if not specified, it will be created from cwd).",
+								"default": ""
+							},
+							"terminal": {
+								"type": "string",
+								"enum": [
+									"none",
+									"integrated",
+									"external"
+								],
+								"enumDescriptions": [
+									"No terminal (pipes the output to the client debug console).",
+									"Use terminal integrated in client.",
+									"External terminal (configured in user settings)."
+								],
+								"description": "The terminal to launch the program.",
+								"default": "integrated"
+							}
+						}
+					}
+				},
+				"configurationSnippets": [
+					{
+						"label": "Robot Framework: Launch .robot file",
+						"description": "Add a new configuration for launching Robot Framework.",
+						"body": {
+							"type": "robotframework-lsp",
+							"name": "Robot Framework: Launch .robot file",
+							"request": "launch",
+							"cwd": "^\"\\${workspaceFolder}\"",
+							"target": "^\"\\${file}\"",
+							"terminal": "integrated",
+							"env": {},
+							"args": []
+						}
+					},
+					{
+						"label": "Robot Framework: Launch template",
+						"description": "This configuration may be used to customize launches which start from a code-lens or command shortcut.",
+						"body": {
+							"type": "robotframework-lsp",
+							"name": "Robot Framework: Launch template",
+							"request": "launch"
+						}
+					}
+				]
+			}
+		]
+	},
+	"main": "./vscode-client/out/extension",
+	"prettier": {
+		"tabWidth": 4,
+		"printWidth": 120,
+		"quoteProps": "preserve"
+	},
+	"scripts": {
+		"vscode:prepublish": "cd vscode-client && npm run compile && cd ..",
+		"compile": "cd vscode-client && tsc -p ./ && cd ..",
+		"watch": "cd vscode-client && tsc -watch -p ./ && cd ..",
+		"prettier": "npx prettier -c vscode-client/**/*.ts",
+		"prettier-fix": "npx prettier -w vscode-client/**/*.ts"
+	},
+	"dependencies": {
+		"jsonc-parser": "^2.0.3",
+		"marked": "^4.1.0",
+		"path-exists": "^4.0.0",
+		"vscode-languageclient": "^8.0.1"
+	},
+	"devDependencies": {
+		"@types/mocha": "^2.2.32",
+		"@types/node": "^13.0.00",
+		"@types/vscode": "1.65.0",
+		"prettier": "2.4.1",
+		"typescript": "^4.5.4",
+		"vscode-test": "1.5.1"
+	},
+	"engines": {
+		"vscode": "^1.65.0"
+	},
+	"__metadata": {
+		"id": "37d53de2-4e1a-4e50-989d-f1c9a6b9f3a6",
+		"publisherId": "0f4160fe-067b-4c44-9418-3331f079bfd1",
+		"publisherDisplayName": "Robocorp",
+		"targetPlatform": "undefined",
+		"updated": false,
+		"isPreReleaseVersion": false,
+		"hasPreReleaseVersion": false,
+		"installedTimestamp": 1707235623929,
+		"pinned": false
+	}
+}
