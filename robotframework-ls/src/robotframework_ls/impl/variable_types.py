@@ -19,7 +19,7 @@ class VariableFoundFromToken(object):
         variable_value,
         variable_name=None,
         variable_kind=VariableKind.VARIABLE,
-        stack: Tuple[INode, ...] = None,
+        stack: Optional[Tuple[INode, ...]] = None,
     ):
         self.completion_context = completion_context
         self.stack = stack
@@ -39,9 +39,7 @@ class VariableFoundFromToken(object):
         self.variable_kind = variable_kind
         self._is_local_variable = self.variable_kind in LOCAL_ASSIGNS_VARIABLE_KIND
         if self._is_local_variable:
-            assert (
-                stack
-            ), f"Stack not available for local variable: {self.variable_name} at line: {self.lineno}"
+            assert stack, f"Stack not available for local variable: {self.variable_name} at line: {self.lineno}"
 
     @property
     def is_local_variable(self):
