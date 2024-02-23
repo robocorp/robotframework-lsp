@@ -262,6 +262,12 @@ class ResolveVariablesContext:
         if found is not None:
             return found.variable_value
 
+        found = completion_context.get_variables_files_normalized_var_name_to_var_found().get(
+            normalized
+        )
+        if found is not None:
+            return found.variable_value
+
         found = completion_context.get_doc_normalized_var_name_to_var_found().get(
             normalized
         )

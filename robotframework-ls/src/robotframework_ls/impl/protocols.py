@@ -884,6 +884,11 @@ class IVariablesFromArgumentsFileLoader(Protocol):
         pass
 
 
+class IVariablesFromVariablesFileLoader(Protocol):
+    def get_variables(self) -> Tuple["IVariableFound", ...]:
+        pass
+
+
 class ILocalizationInfo(Protocol):
     def __init__(self, language_codes: Union[Tuple[str, ...], str]):
         pass
@@ -923,6 +928,9 @@ class ICompletionContext(Protocol):
         variables_from_arguments_files_loader: Sequence[
             IVariablesFromArgumentsFileLoader
         ] = (),
+        variables_from_variables_files_loader: Sequence[
+            IVariablesFromVariablesFileLoader
+        ] = (),
     ) -> None:
         pass
 
@@ -941,6 +949,12 @@ class ICompletionContext(Protocol):
     def variables_from_arguments_files_loader(
         self,
     ) -> Sequence[IVariablesFromArgumentsFileLoader]:
+        pass
+
+    @property
+    def variables_from_variables_files_loader(
+        self,
+    ) -> Sequence[IVariablesFromVariablesFileLoader]:
         pass
 
     @property
@@ -1034,6 +1048,11 @@ class ICompletionContext(Protocol):
     ) -> Dict[str, "IVariableFound"]:
         pass
 
+    def get_variables_files_normalized_var_name_to_var_found(
+        self,
+    ) -> Dict[str, "IVariableFound"]:
+        pass
+
     def get_current_variable(self, section=None) -> Optional[VarTokenInfo]:
         """
         Provides the current variable token. Note that it won't include '{' nor '}'.
@@ -1123,6 +1142,7 @@ class VariableKind:
     PYTHON = "Variable (python)"
     YAML = "Variable (yaml)"
     ARGUMENTS_FILE = "Arguments file"
+    VARIABLES_FILE = "Variables file"
     LOCAL_ASSIGN_VARIABLE = "Variable (local assign)"
     LOCAL_SET_VARIABLE = "Variable (local set)"
     TASK_SET_VARIABLE = "Variable (task set)"
