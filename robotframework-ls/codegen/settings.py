@@ -264,6 +264,11 @@ SETTINGS = {
         "default": 40,
         "description": "This is the timeout used for listing the tests from a robot file. Set to 0 to disable it.",
     },
+    "robot.testView.enabled": {
+        "type": "boolean",
+        "default": True,
+        "description": "Whether to show robot tests in the test view. You may want to disable this if you are using another test runner (eg. https://github.com/DetachHead/pytest-robotframework)",
+    },
 }
 
 
