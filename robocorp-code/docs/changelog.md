@@ -1,3 +1,15 @@
+New in 1.17.0 (2024-02-23)
+-----------------------------
+
+- Support for Action Packages for the [Action Server](https://robocorp.com/docs/action-server)
+    - Expected support with `package.yaml`, available on action server `0.0.21`.
+    - Download and run action server.
+    - List `@action`s (refresh is not automatic at this point).
+    - Open `@action`.
+    - Note: Task Packages (Robots) will still use `robot.yaml` and `conda.yaml`.
+- Improved Image inspector
+- Fixed issue recognizing `--use-feature=trustore` in the validation of `conda.yaml`.
+
 New in 1.16.0 (2024-02-02)
 -----------------------------
 

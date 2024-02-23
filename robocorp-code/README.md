@@ -53,9 +53,11 @@ Find the full installation instructions at [https://robocorp.com/docs/product-ma
 
 During the first activation, the extension will download additional dependencies (such as Conda manager) that are required for it to run.
 
-### Features (1.16.0)
+### Features (1.17.0)
 
--   Preliminary support for [Robo](https://github.com/robocorp/robo) (Robocorp's Python Framework for automation).
+-   Preliminary Support for [Robocorp Action Server](https://github.com/robocorp/robocorp/action_server) (Coding Actions for AIs).
+    -   Packages view supporting Action Packages. 
+-   Support for [Robo](https://github.com/robocorp/robocorp) (Robocorp's Python Framework for automation).
     -   Ctrl+Click on terminal for the 'Robocorp html Log` opens external browser.
     -   Code Lenses to `Run Task` / `Debug Task` for tasks decorated with `@task`.
     -   `ROBO TASKS OUTPUT` which shows the output of tasks run with `@task`.
