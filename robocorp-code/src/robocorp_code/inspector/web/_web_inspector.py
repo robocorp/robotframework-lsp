@@ -71,7 +71,10 @@ class PickedLocatorTypedDict(TypedDict):
 
 class WebInspector:
     def __init__(
-        self, endpoint: Optional[IEndPoint] = None, configuration: Optional[dict] = None
+        self,
+        endpoint: Optional[IEndPoint] = None,
+        configuration: Optional[dict] = None,
+        end_thread: Optional[Callable] = None,
     ) -> None:
         """
         Args:
@@ -89,6 +92,7 @@ class WebInspector:
         self._endpoint = endpoint
 
         self._configuration = configuration
+        self._end_thread = end_thread
 
     @property
     def picking(self):
@@ -125,13 +129,32 @@ class WebInspector:
         finally:
             self._looping = False
 
-    def close_browser(self):
+    def close_browser(self, skip_notify: bool = False):
+        from robocorp_code.playwright import robocorp_browser
+
         self._check_thread()
+
+        if self._endpoint is not None and not skip_notify:
+            self._endpoint.notify("$/webInspectorState", {"state": STATE_CLOSED})
+
         page = self._page
         if page is not None and not page.is_closed():
             page.close()
 
+        # we need to trigger the thread to end when the browser is closed
+        if self._end_thread:
+            self._end_thread()
+
+        # we have to close the browser after we trigger the thread end
+        # as the browser.close seem to do the intended task but it hangs afterwards
+        # issue: https://github.com/microsoft/playwright/issues/5327
+        browser = robocorp_browser.browser()
+        if browser:
+            browser.close()
+
     def page(self, auto_create) -> Optional[Page]:
+        from robocorp_code.inspector.inspector_api import _WebInspectorThread
+
         self._check_thread()
 
         self.loop()
@@ -154,7 +177,11 @@ class WebInspector:
             except Exception as e:
                 log.error(f"Exception raised while constructing browser page:", e)
                 # shut down the current thread
-                self._current_thread.shutdown()
+                if isinstance(self._current_thread, _WebInspectorThread):
+                    # make sure we close the browser first - skip notification because we reignite
+                    self.close_browser(skip_notify=True)
+                    # shutdown the thread
+                    self._current_thread.shutdown()
                 # make sure we notify the necessary entities that we want to reignite the thread
                 if self._endpoint is not None:
                     self._endpoint.notify("$/webReigniteThread", self._configuration)
@@ -169,15 +196,18 @@ class WebInspector:
                 log.debug(f"Mark page closed")
                 s = weak_self()
                 if s is not None:
+                    # make sure we close the browser first
+                    self.close_browser()
+
+                    # nullify zone
                     s._page = None
+                    self._looping = False
                     self._picking = False
                     self._pick_async_code_evaluate_worked = False
 
-                if endpoint is not None:
-                    endpoint.notify("$/webInspectorState", {"state": STATE_CLOSED})
-
                 # shut down the current thread
-                self._current_thread.shutdown()
+                if isinstance(self._current_thread, _WebInspectorThread):
+                    self._current_thread.shutdown()
 
             def mark_url_changed(*args, **kwargs):
                 if self._page_former_url == "":
@@ -384,16 +414,15 @@ class WebInspector:
 
         self._on_picked.clear()
 
-        endpoint = self._endpoint
-        if endpoint is not None:
-            endpoint.notify("$/webInspectorState", {"state": STATE_NOT_PICKING})
-
         page = self.page(False)
         if page is not None:
             try:
                 self.evaluate_in_all_iframes(page, _ASYNC_CANCEL_PICK_CODE)
             except Exception:
                 log.exception("Error evaluating cancel pick code.")
+
+        if self._endpoint is not None:
+            self._endpoint.notify("$/webInspectorState", {"state": STATE_NOT_PICKING})
 
     def is_picker_injected(self, page=None) -> bool:
         self._check_thread()

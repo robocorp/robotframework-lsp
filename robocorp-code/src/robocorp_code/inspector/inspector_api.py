@@ -51,7 +51,7 @@ class _WebInspectorThread(threading.Thread):
         threading.Thread.__init__(self)
         self._endpoint = endpoint
         self.daemon = True
-        self.queue: "Queue[_WebBaseCommand]" = Queue()
+        self.queue: "Queue[Optional[_WebBaseCommand]]" = Queue()
         self._finish = False
         self._web_inspector: Optional[WebInspector] = None
         self._shutdown_callback = shutdown_callback
@@ -73,7 +73,9 @@ class _WebInspectorThread(threading.Thread):
         from concurrent.futures import Future
 
         self._web_inspector = WebInspector(
-            endpoint=self._endpoint, configuration=self._configuration
+            endpoint=self._endpoint,
+            configuration=self._configuration,
+            end_thread=self.shutdown,
         )
 
         loop_timeout: float = _DEFAULT_LOOP_TIMEOUT
@@ -110,6 +112,7 @@ class _WebInspectorThread(threading.Thread):
                     clear_all_callback()
             except Exception as e:
                 log.exception(f"Clearing callbacks raised Exception:", e)
+            log.debug("Exited from Web Inspector Thread!")
 
 
 class _WebBaseCommand:
@@ -652,6 +655,7 @@ class InspectorApi(PythonLanguageServer):
         self.__windows_inspector_thread: Optional[_WindowsInspectorThread] = None
         self.__image_inspector_thread: Optional[_ImageInspectorThread] = None
 
+        # set default configuration for the inspectors
         self.__web_inspector_configuration: dict = {  # configuring the Web Inspector with defaults
             "browser_config": {  # set the default viewport size
                 "viewport_size": (1280, 720),
