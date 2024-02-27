@@ -74,7 +74,7 @@ class WebInspector:
         self,
         endpoint: Optional[IEndPoint] = None,
         configuration: Optional[dict] = None,
-        end_thread: Optional[Callable] = None,
+        callback_end_thread: Optional[Callable] = None,
     ) -> None:
         """
         Args:
@@ -92,7 +92,7 @@ class WebInspector:
         self._endpoint = endpoint
 
         self._configuration = configuration
-        self._end_thread = end_thread
+        self._callback_end_thread = callback_end_thread
 
     @property
     def picking(self):
@@ -142,15 +142,14 @@ class WebInspector:
             page.close()
 
         # we need to trigger the thread to end when the browser is closed
-        if self._end_thread:
-            self._end_thread()
-
-        # we have to close the browser after we trigger the thread end
-        # as the browser.close seem to do the intended task but it hangs afterwards
-        # issue: https://github.com/microsoft/playwright/issues/5327
-        browser = robocorp_browser.browser()
-        if browser:
-            browser.close()
+        if self._callback_end_thread is not None:
+            self._callback_end_thread()
+            # we have to close the browser after we trigger the thread close end
+            # as the browser.close seem to do the intended task but it hangs afterwards
+            # issue: https://github.com/microsoft/playwright/issues/5327
+            browser = robocorp_browser.browser()
+            if browser:
+                browser.close()
 
     def page(self, auto_create) -> Optional[Page]:
         from robocorp_code.inspector.inspector_api import _WebInspectorThread
@@ -182,7 +181,7 @@ class WebInspector:
                     self.close_browser(skip_notify=True)
                     # shutdown the thread
                     self._current_thread.shutdown()
-                # make sure we notify the necessary entities that we want to reignite the thread
+                # # make sure we notify the necessary entities that we want to reignite the thread
                 if self._endpoint is not None:
                     self._endpoint.notify("$/webReigniteThread", self._configuration)
                 return None

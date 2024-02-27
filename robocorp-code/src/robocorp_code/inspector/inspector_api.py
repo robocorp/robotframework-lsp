@@ -75,7 +75,7 @@ class _WebInspectorThread(threading.Thread):
         self._web_inspector = WebInspector(
             endpoint=self._endpoint,
             configuration=self._configuration,
-            end_thread=self.shutdown,
+            callback_end_thread=self.shutdown,
         )
 
         loop_timeout: float = _DEFAULT_LOOP_TIMEOUT
