@@ -23,6 +23,30 @@ class DiagnosticsConfig:
     analyze_rcc = True
 
 
+def collect_package_yaml_diagnostics(
+    pypi_cloud: IPyPiCloud,
+    conda_cloud: ICondaCloud,
+    workspace: IWorkspace,
+    conda_yaml_uri: str,
+    monitor: Optional[IMonitor],
+) -> List[DiagnosticsTypedDict]:
+    from robocorp_code.vendored_deps.package_deps import analyzer
+
+    if not DiagnosticsConfig.analyze_versions:
+        return []
+
+    doc = workspace.get_document(conda_yaml_uri, accept_from_file=True)
+    if doc is None:
+        return []
+    if monitor:
+        monitor.check_cancelled()
+    return list(
+        analyzer.PackageYamlAnalyzer(
+            doc.source, doc.path, conda_cloud, pypi_cloud
+        ).iter_package_yaml_issues()
+    )
+
+
 def collect_conda_yaml_diagnostics(
     pypi_cloud: IPyPiCloud,
     conda_cloud: ICondaCloud,
@@ -41,7 +65,9 @@ def collect_conda_yaml_diagnostics(
     if monitor:
         monitor.check_cancelled()
     return list(
-        analyzer.Analyzer(doc.source, doc.path, conda_cloud, pypi_cloud).iter_issues()
+        analyzer.CondaYamlAnalyzer(
+            doc.source, doc.path, conda_cloud, pypi_cloud
+        ).iter_conda_yaml_issues()
     )
 
 
@@ -151,6 +177,24 @@ class _CurrLintInfo(BaseLintInfo):
 
                         errors = collect_lint_errors(robocorp_language_server.pm, doc)
                 self._lsp_messages.publish_diagnostics(doc_uri, errors)
+            return
+
+        if doc_uri.endswith("package.yaml"):
+            found = []
+            if robocorp_language_server is not None:
+                ws = robocorp_language_server.workspace
+                if ws is not None:
+                    found.extend(
+                        collect_package_yaml_diagnostics(
+                            robocorp_language_server.pypi_cloud,
+                            robocorp_language_server.conda_cloud,
+                            ws,
+                            doc_uri,
+                            self._monitor,
+                        )
+                    )
+
+            self._lsp_messages.publish_diagnostics(doc_uri, found)
             return
 
         if doc_uri.endswith(("conda.yaml", "action-server.yaml")) or doc_uri.endswith(

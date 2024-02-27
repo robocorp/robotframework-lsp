@@ -19,10 +19,10 @@ from robocorp_ls_core.pluginmanager import PluginManager
 from robocorp_ls_core.unittest_tools.cases_fixture import CasesFixture
 
 from robocorp_code.inspector.common import (
-    STATE_PICKING,
     STATE_CLOSED,
     STATE_NOT_PICKING,
     STATE_OPENED,
+    STATE_PICKING,
 )
 from robocorp_code.protocols import (
     ActionResult,
@@ -1091,6 +1091,54 @@ condaConfigFile: conda.yaml
     assert message_matcher.event.wait(TIMEOUT)
     diag = message_matcher.msg["params"]["diagnostics"]
     data_regression.check(sort_diagnostics(diag))
+
+
+def test_lint_action_package_integration_deps(
+    language_server_initialized: IRobocorpLanguageServerClient,
+    tmpdir,
+    data_regression,
+    disable_rcc_diagnostics,
+):
+    from robocorp_ls_core import uris
+    from robocorp_ls_core.unittest_tools.fixtures import TIMEOUT
+
+    conda_yaml = tmpdir.join("package.yaml")
+    conda_yaml_text = """
+# Bad: missing
+# documentation: 
+# version:
+# description:
+
+dependencies:
+  conda-forge:
+  - python=3.10.12
+  - pip=23.2.1
+  - robocorp-truststore=0.8.0
+  pypi:
+  - rpaframework=28.3.0 # https://rpaframework.org/releasenotes.html
+  - robocorp=1.6.2 # https://pypi.org/project/robocorp
+  - robocorp-actions=0.0.7
+  - pandas==2.2.1 # Bad, == not supported.
+  pip: # Bad: pip should not be here.
+  - some-pack=1.1
+    """
+    conda_yaml.write_text(
+        conda_yaml_text,
+        "utf-8",
+    )
+
+    language_server = language_server_initialized
+    conda_yaml_uri = uris.from_fs_path(str(conda_yaml))
+    message_matcher = language_server.obtain_pattern_message_matcher(
+        {"method": "textDocument/publishDiagnostics"}
+    )
+    assert message_matcher
+    language_server.open_doc(conda_yaml_uri, 1, conda_yaml_text)
+
+    assert message_matcher.event.wait(TIMEOUT)
+    diag = message_matcher.msg["params"]["diagnostics"]
+    print(diag)
+    # data_regression.check(sort_diagnostics(diag))
 
 
 class ResolveInterpreterCurrentEnv:

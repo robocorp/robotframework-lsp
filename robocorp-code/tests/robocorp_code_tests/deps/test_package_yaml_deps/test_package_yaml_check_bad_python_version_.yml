@@ -1,0 +1,11 @@
+- message: The official support for versions lower than Python 3.8 has ended.  It
+    is advisable to transition to a newer version (Python 3.9 or newer is recommended).
+  range:
+    end:
+      character: 14
+      line: 13
+    start:
+      character: 4
+      line: 13
+  severity: 2
+  source: robocorp-code

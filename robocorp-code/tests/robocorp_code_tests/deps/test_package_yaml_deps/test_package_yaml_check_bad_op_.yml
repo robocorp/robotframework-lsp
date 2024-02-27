@@ -1,0 +1,22 @@
+- message: 'Error parsing ''foobar>=33'': Error in entry: foobar>=33. Char: ''>''
+    not valid, currently only ''='' is a valid operator.'
+  range:
+    end:
+      character: 14
+      line: 15
+    start:
+      character: 4
+      line: 15
+  severity: 1
+  source: robocorp-code
+- message: 'Error parsing ''another>=33'': Error in entry: another>=33. Char: ''>''
+    not valid, currently only ''='' is a valid operator.'
+  range:
+    end:
+      character: 15
+      line: 17
+    start:
+      character: 4
+      line: 17
+  severity: 1
+  source: robocorp-code

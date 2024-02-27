@@ -1,0 +1,11 @@
+- message: 'Error: expected ''dependencies'' entry to be a dict (with ''conda-forge''
+    and ''pypi'' entries). Found: ''<class ''list''>'''
+  range:
+    end:
+      character: 0
+      line: 1
+    start:
+      character: 0
+      line: 0
+  severity: 1
+  source: robocorp-code
