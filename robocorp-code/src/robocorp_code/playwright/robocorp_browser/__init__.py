@@ -254,27 +254,30 @@ def screenshot(
     Returns:
         The bytes from the screenshot.
     """
-    import base64
+    # ! commented code comes from original implementation - left only necessary bare bones
+    # import base64
 
-    from robocorp import log
+    # from robocorp import log
 
     if element is None:
         from . import _context
 
         element = _context.page()
 
-    with log.suppress():
-        # Suppress log because we don't want the bytes to appear at
-        # the screenshot and then as the final html.
-        in_bytes = element.screenshot(timeout=timeout, type=image_type)
-        in_base64 = base64.b64encode(in_bytes).decode("ascii")
+    # with log.suppress():
+    #     # Suppress log because we don't want the bytes to appear at
+    #     # the screenshot and then as the final html.
+    #     in_bytes = element.screenshot(timeout=timeout, type=image_type)
+    #     in_base64 = base64.b64encode(in_bytes).decode("ascii")
+    in_bytes = element.screenshot(timeout=timeout, type=image_type)
 
-    log.html(
-        f'<img src="data:image/{image_type};base64,{in_base64}"/>', level=log_level
-    )
+    # log.html(
+    #     f'<img src="data:image/{image_type};base64,{in_base64}"/>', level=log_level
+    # )
 
-    with log.suppress():
-        return in_bytes
+    # with log.suppress():
+    #     return in_bytes
+    return in_bytes
 
 
 def install(browser_engine: BrowserEngine, force: bool = False):
