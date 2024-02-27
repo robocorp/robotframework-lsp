@@ -179,8 +179,10 @@ const clientOptions: LanguageClientOptions = {
         { language: "yaml", pattern: "**/conda.yaml" },
         { language: "yaml", pattern: "**/action-server.yaml" },
         { language: "yaml", pattern: "**/robot.yaml" },
+        { language: "yaml", pattern: "**/package.yaml" },
 
         // Needed to detect tasks decorated with @task (from robocorp.tasks).
+        // Needed to detect actions decorated with @action (from robocorp.actions).
         { language: "python", pattern: "**/*.py" },
     ],
     synchronize: {

@@ -1,0 +1,24 @@
+contents:
+  kind: markdown
+  value: '# mu_repo
+
+    Conda-forge information:
+
+
+    Versions released in the last 12 months:
+
+    `1.8.2`
+
+
+    Last release version: `1.8.2` done at: `2022-09-01`.
+
+    ## Requirements (noarch):
+
+    - python'
+range:
+  end:
+    character: 17
+    line: 9
+  start:
+    character: 4
+    line: 9

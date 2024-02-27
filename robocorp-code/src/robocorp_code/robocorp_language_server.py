@@ -1206,8 +1206,6 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         i.e.: Provide the contents in markdown format to show the actual image from the
         locators.json.
         """
-        from robocorp_ls_core import uris
-
         doc_uri = kwargs["textDocument"]["uri"]
         # Note: 0-based
         line: int = kwargs["position"]["line"]
@@ -1221,6 +1219,10 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         if fspath.endswith(("conda.yaml", "action-server.yaml")):
             return require_monitor(
                 partial(self._hover_on_conda_yaml, doc_uri, line, col)
+            )
+        if fspath.endswith("package.yaml"):
+            return require_monitor(
+                partial(self._hover_on_package_yaml, doc_uri, line, col)
             )
         return None
 
@@ -1240,6 +1242,25 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
             return None
 
         return hover_on_conda_yaml(doc, line, col, self._pypi_cloud, self._conda_cloud)
+
+    def _hover_on_package_yaml(
+        self, doc_uri, line, col, monitor: IMonitor
+    ) -> Optional[HoverTypedDict]:
+        from robocorp_ls_core.protocols import IDocument
+
+        from robocorp_code.hover import hover_on_package_yaml
+
+        ws = self._workspace
+        if ws is None:
+            return None
+
+        doc: Optional[IDocument] = ws.get_document(doc_uri, accept_from_file=True)
+        if doc is None:
+            return None
+
+        return hover_on_package_yaml(
+            doc, line, col, self._pypi_cloud, self._conda_cloud
+        )
 
     def _hover_on_locators_json(
         self, doc_uri, line, col, monitor: IMonitor
