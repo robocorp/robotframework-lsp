@@ -1,3 +1,11 @@
+Unreleased
+-----------------------------
+
+- `package.yaml` file is now linted.
+- Hover support to get versions on `package.yaml`.
+- New action to `Run Action (from Action Package)`
+- New action to `Debug Action (from Action Package)`
+
 New in 1.17.0 (2024-02-23)
 -----------------------------
 

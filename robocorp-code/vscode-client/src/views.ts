@@ -24,13 +24,24 @@ import { CloudTreeDataProvider } from "./viewsRobocorp";
 import { RobotsTreeDataProvider } from "./viewsRobots";
 import { ResourcesTreeDataProvider } from "./viewsResources";
 import * as path from "path";
-import { fileExists, makeDirs, uriExists, verifyFileExists } from "./files";
-import { QuickPickItemWithAction, showSelectOneQuickPick } from "./ask";
-import { slugify } from "./slugify";
-import { OUTPUT_CHANNEL } from "./channel";
+import { fileExists, uriExists, verifyFileExists } from "./files";
+import { createDefaultInputJson, getTargetInputJson, runActionFromActionPackage } from "./robo/actionPackage";
 
 function empty<T>(array: readonly T[]) {
     return array === undefined || array.length === 0;
+}
+
+export async function editInput(actionRobotEntry?: RobotEntry) {
+    if (!actionRobotEntry) {
+        vscode.window.showErrorMessage("Unable to edit input: no target action entry defined for action.");
+        return;
+    }
+    const targetInput = await getTargetInputJson(actionRobotEntry.actionName, actionRobotEntry.robot.directory);
+    const inputUri = vscode.Uri.file(targetInput);
+    if (!(await fileExists(targetInput))) {
+        await createDefaultInputJson(inputUri);
+    }
+    await vscode.window.showTextDocument(inputUri);
 }
 
 export async function openRobotTreeSelection(robot?: RobotEntry) {
@@ -119,15 +130,6 @@ export async function runSelectedRobot(noDebug: boolean, taskRobotEntry?: RobotE
     runRobotRCC(noDebug, taskRobotEntry.robot.filePath, taskRobotEntry.taskName);
 }
 
-async function createDefaultInputJson(inputUri: vscode.Uri) {
-    await vscode.workspace.fs.writeFile(
-        inputUri,
-        Buffer.from(`{
-    "paramName": "paramValue"
-}`)
-    );
-}
-
 export async function openAction(actionRobotEntry?: RobotEntry) {
     const range = actionRobotEntry.range;
     if (range) {
@@ -139,29 +141,6 @@ export async function openAction(actionRobotEntry?: RobotEntry) {
     } else {
         await vscode.window.showTextDocument(actionRobotEntry.uri);
     }
-}
-
-export async function editInput(actionRobotEntry?: RobotEntry) {
-    if (!actionRobotEntry) {
-        vscode.window.showErrorMessage("Unable to edit input: no target action entry defined for action.");
-        return;
-    }
-    const targetInput = await getTargetInputJson(actionRobotEntry);
-    const inputUri = vscode.Uri.file(targetInput);
-    if (!(await fileExists(targetInput))) {
-        await createDefaultInputJson(inputUri);
-    }
-    await vscode.window.showTextDocument(inputUri);
-}
-
-export async function getTargetInputJson(actionRobotEntry: RobotEntry): Promise<string> {
-    const nameSlugified = slugify(actionRobotEntry.actionName);
-
-    const dir = actionRobotEntry.robot.directory;
-    const devDataDir = path.join(dir, "devdata");
-    await makeDirs(devDataDir);
-    const targetInput = path.join(devDataDir, `input_${nameSlugified}.json`);
-    return targetInput;
 }
 
 export async function runSelectedAction(noDebug: boolean, actionRobotEntry?: RobotEntry) {
@@ -180,60 +159,13 @@ export async function runSelectedAction(noDebug: boolean, actionRobotEntry?: Rob
         return;
     }
 
-    // The input must be asked when running actions in this case and it should be
-    // saved in 'devdata/input_xxx.json'
-    const nameSlugified = slugify(actionRobotEntry.actionName);
-    const targetInput = await getTargetInputJson(actionRobotEntry);
-
-    if (!(await fileExists(targetInput))) {
-        let items: QuickPickItemWithAction[] = new Array();
-
-        items.push({
-            "label": `Create "devdata/input_${nameSlugified}.json" to customize action input`,
-            "action": "create",
-            "detail": "Note: Please relaunch after the customization is completed",
-        });
-
-        items.push({
-            "label": `Cancel`,
-            "action": "cancel",
-        });
-
-        let selectedItem: QuickPickItemWithAction | undefined = await showSelectOneQuickPick(
-            items,
-            "Input for the action not defined. How to proceed?",
-            `Customize input for the ${actionRobotEntry.actionName} action`
-        );
-        if (!selectedItem) {
-            return;
-        }
-
-        if (selectedItem.action === "create") {
-            // Create the file and ask the user to fill it and rerun the action
-            // after he finished doing that.
-            const inputUri = vscode.Uri.file(targetInput);
-            await createDefaultInputJson(inputUri);
-            await vscode.window.showTextDocument(inputUri);
-        }
-        // In any case, don't proceed if it wasn't previously created
-        // (so that the user can customize it).
-        return;
-    }
-
-    // Ok, input available. Let's create the launch and run it.
-    let debugConfiguration: vscode.DebugConfiguration = {
-        "name": "Config",
-        "type": "robocorp-code",
-        "request": "launch",
-        "package": actionRobotEntry.robot.filePath,
-        "uri": actionRobotEntry.uri.toString(),
-        "jsonInput": targetInput,
-        "actionName": actionRobotEntry.actionName,
-        "args": [],
-        "noDebug": noDebug,
-    };
-    let debugSessionOptions: vscode.DebugSessionOptions = {};
-    vscode.debug.startDebugging(undefined, debugConfiguration, debugSessionOptions);
+    await runActionFromActionPackage(
+        noDebug,
+        actionRobotEntry.actionName,
+        actionRobotEntry.robot.directory,
+        actionRobotEntry.robot.filePath,
+        actionRobotEntry.uri
+    );
 }
 
 async function onChangedRobotSelection(

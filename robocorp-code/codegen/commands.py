@@ -155,8 +155,20 @@ COMMANDS = [
         server_handled=False,
     ),
     Command(
+        "robocorp.runActionFromActionPackage",
+        "Run Action (from Action Package)",
+        add_to_package_json=True,
+        server_handled=False,
+    ),
+    Command(
         "robocorp.debugRobotRcc",
         "Debug Task Package (Robot)",
+        add_to_package_json=True,
+        server_handled=False,
+    ),
+    Command(
+        "robocorp.debugActionFromActionPackage",
+        "Debug Action (from Action Package)",
         add_to_package_json=True,
         server_handled=False,
     ),
