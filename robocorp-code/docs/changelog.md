@@ -9,6 +9,7 @@ Unreleased
 - (Web Inspector) Fixing the issues on MacOS with the browser getting stuck until user restarts VSCode
 - (Web Inspector) New feature of changing the viewport resolution from the Web Inspector UI
 - (Web Inspector) Updated the vendored `robocorp-browser` to the latest version
+- RCC upgraded to to `v17.18.0`.
 
 New in 1.17.0 (2024-02-23)
 -----------------------------
