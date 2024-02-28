@@ -673,9 +673,9 @@ def test_variablefiles_completions_integrated_using_config(
     filename = tmpdir.join("my.txt")
     filename.write_text(
         """
-V_NAME = value
-V_NAME1 = value 1
-var2 = value var2
+V_NAME = "value"
+V_NAME1 = "value 1"
+var2 = "value var2"
 """,
         encoding="utf-8",
     )
