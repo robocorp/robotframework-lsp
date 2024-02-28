@@ -6,6 +6,7 @@ ROBOCORP_GET_LANGUAGE_SERVER_PYTHON_INFO = "robocorp.getLanguageServerPythonInfo
 ROBOCORP_GET_PLUGINS_DIR = "robocorp.getPluginsDir"  # Get the directory for plugins
 ROBOCORP_CREATE_ROBOT = "robocorp.createRobot"  # Create Task Package (Robot)
 ROBOCORP_CREATE_ACTION_PACKAGE = "robocorp.createActionPackage"  # Create Action Package
+ROBOCORP_CREATE_TASK_OR_ACTION_PACKAGE = "robocorp.createTaskOrActionPackage"  # Create Action Package
 ROBOCORP_LIST_ROBOT_TEMPLATES_INTERNAL = "robocorp.listRobotTemplates.internal"  # Provides a list with the available Task Package (Robot) templates
 ROBOCORP_CREATE_ROBOT_INTERNAL = "robocorp.createRobot.internal"  # Actually calls rcc to create the Task Package (Robot)
 ROBOCORP_UPLOAD_ROBOT_TO_CLOUD = "robocorp.uploadRobotToCloud"  # Upload Task Package (Robot) to Control Room

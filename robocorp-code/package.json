@@ -23,6 +23,8 @@
         "onCommand:robocorp.getLanguageServerPythonInfo",
         "onCommand:robocorp.getPluginsDir",
         "onCommand:robocorp.createRobot",
+        "onCommand:robocorp.createActionPackage",
+        "onCommand:robocorp.createTaskOrActionPackage",
         "onCommand:robocorp.listRobotTemplates.internal",
         "onCommand:robocorp.createRobot.internal",
         "onCommand:robocorp.uploadRobotToCloud",
@@ -307,6 +309,18 @@
             {
                 "command": "robocorp.createRobot",
                 "title": "Create Task Package (Robot)",
+                "category": "Robocorp",
+                "icon": "$(add)"
+            },
+            {
+                "command": "robocorp.createActionPackage",
+                "title": "Create Action Package",
+                "category": "Robocorp",
+                "icon": "$(add)"
+            },
+            {
+                "command": "robocorp.createTaskOrActionPackage",
+                "title": "Create Action Package",
                 "category": "Robocorp",
                 "icon": "$(add)"
             },
@@ -798,7 +812,7 @@
                     "group": "navigation"
                 },
                 {
-                    "command": "robocorp.createRobot",
+                    "command": "robocorp.createTaskOrActionPackage",
                     "when": "view == robocorp-task-packages-tree",
                     "group": "navigation"
                 },
@@ -1051,6 +1065,10 @@
                 }
             ],
             "commandPalette": [
+                {
+                    "command": "robocorp.createTaskOrActionPackage",
+                    "when": "false"
+                },
                 {
                     "command": "robocorp.robotsViewTaskRun",
                     "when": "false"

@@ -1,11 +1,15 @@
 import { getActionserverLocation, setActionserverLocation } from "./robocorpSettings";
 import { fileExists, makeDirs } from "./files";
-import { CancellationToken, Progress, ProgressLocation, Terminal, Uri, window } from "vscode";
+import { CancellationToken, Progress, ProgressLocation, Terminal, Uri, window, workspace } from "vscode";
 import { createEnvWithRobocorpHome, download, getRobocorpHome } from "./rcc";
 import path = require("path");
-import { OUTPUT_CHANNEL } from "./channel";
+import { OUTPUT_CHANNEL, logError } from "./channel";
 import * as http from "http";
 import { listAndAskRobotSelection } from "./activities";
+import { ExecFileReturn, execFilePromise } from "./subprocess";
+import { compareVersions } from "./common";
+import { showSelectOneStrQuickPick } from "./ask";
+import { sleep } from "./time";
 
 //Default: Linux
 let DOWNLOAD_URL = "https://downloads.robocorp.com/action-server/releases/latest/linux64/action-server";
@@ -31,13 +35,84 @@ async function downloadActionServer(internalActionServerLocation: string) {
     );
 }
 
-const getInternalActionServerLocation = async () => {
+const getInternalActionServerDirLocation = async (): Promise<string> => {
     const robocorpHome: string = await getRobocorpHome();
-    let binName: string = process.platform === "win32" ? "action-server.exe" : "action-server";
-    return path.join(robocorpHome, "action-server-vscode", binName);
+    return path.join(robocorpHome, "action-server-vscode");
 };
 
-const downloadOrGetActionServerLocation = async (): Promise<string | undefined> => {
+const getInternalActionServerLocation = async (tmpFlag: string = "") => {
+    let binName: string = process.platform === "win32" ? `action-server${tmpFlag}.exe` : `action-server${tmpFlag}`;
+    return path.join(await getInternalActionServerDirLocation(), binName);
+};
+
+const getActionServerVersion = async (actionServerLocation: string): Promise<string | undefined> => {
+    let result: ExecFileReturn;
+    const maxTimes = 4;
+    let lastError = undefined;
+    for (let checkedTimes = 0; checkedTimes < maxTimes; checkedTimes++) {
+        try {
+            result = await execFilePromise(actionServerLocation, ["version"], {});
+            // this is the version
+            return result.stdout.trim();
+        } catch (err) {
+            lastError = err;
+            // In Windows right after downloading the file it may not be executable,
+            // so, retry a few times.
+            await sleep(250);
+        }
+    }
+    const msg = `There was an error running the action server at: ${actionServerLocation}. It may be unusable or you may not have permissions to run it.`;
+    logError(msg, lastError, "ERR_VERIFY_ACTION_SERVER_VERSION");
+    window.showErrorMessage(msg);
+    throw lastError;
+};
+
+let verifiedActionServerVersions: Map<string, boolean> = new Map();
+
+export const downloadLatestActionServer = async (): Promise<string | undefined> => {
+    const tmpLocation = await getInternalActionServerLocation(`-${Date.now()}`);
+    OUTPUT_CHANNEL.appendLine(`Downloading latest Action Server to ${tmpLocation}.`);
+    await makeDirs(path.dirname(tmpLocation));
+    await downloadActionServer(tmpLocation);
+    const version = await getActionServerVersion(tmpLocation);
+    OUTPUT_CHANNEL.appendLine("Checking version of latest Action Server.");
+    const versionedLocation = await getInternalActionServerLocation(`-${version}`);
+    const source = Uri.file(tmpLocation);
+    const target = Uri.file(versionedLocation);
+    OUTPUT_CHANNEL.appendLine(`Putting in final location (${target}).`);
+    await workspace.fs.rename(source, target, { overwrite: true });
+    setActionserverLocation(versionedLocation);
+    return versionedLocation;
+};
+
+export const downloadOrGetActionServerLocation = async (): Promise<string | undefined> => {
+    const location = await internalDownloadOrGetActionServerLocation();
+    if (!location) {
+        return location;
+    }
+    const verifiedAlready = verifiedActionServerVersions.get(location);
+    if (!verifiedAlready) {
+        verifiedActionServerVersions.set(location, true);
+        const actionServerVersion = await getActionServerVersion(location);
+
+        const expected = "0.0.24";
+        const compare = compareVersions(expected, actionServerVersion);
+        if (compare > 0) {
+            const DOWNLOAD = "Download new";
+            const selection = await showSelectOneStrQuickPick(
+                [DOWNLOAD, "Keep current"],
+                "How would you like to proceed.",
+                `Old version of Action Server detected (${actionServerVersion}). Expected '${expected}' or newer.`
+            );
+            if (selection === DOWNLOAD) {
+                return await downloadLatestActionServer();
+            }
+        }
+    }
+    return location;
+};
+
+const internalDownloadOrGetActionServerLocation = async (): Promise<string | undefined> => {
     let actionServerLocationInSettings = getActionserverLocation();
     let message: string | undefined = undefined;
     if (!actionServerLocationInSettings) {
@@ -51,14 +126,6 @@ const downloadOrGetActionServerLocation = async (): Promise<string | undefined> 
         return actionServerLocationInSettings;
     }
 
-    let internalActionServerLocation: string = await getInternalActionServerLocation();
-    if (message) {
-        if (await fileExists(internalActionServerLocation)) {
-            // Ok, found in internal location.
-            return internalActionServerLocation;
-        }
-    }
-
     if (message) {
         const DOWNLOAD_TO_INTERNAL_LOCATION = "Download";
         const SPECIFY_LOCATION = "Specify Location";
@@ -69,9 +136,7 @@ const downloadOrGetActionServerLocation = async (): Promise<string | undefined> 
             SPECIFY_LOCATION
         );
         if (option === DOWNLOAD_TO_INTERNAL_LOCATION) {
-            await makeDirs(path.dirname(internalActionServerLocation));
-            await downloadActionServer(internalActionServerLocation);
-            return internalActionServerLocation;
+            return await downloadLatestActionServer();
         } else if (option === SPECIFY_LOCATION) {
             let uris: Uri[] | undefined = await window.showOpenDialog({
                 "canSelectFolders": false,

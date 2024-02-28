@@ -147,6 +147,8 @@ import {
     ROBOCORP_ROBOTS_VIEW_ACTION_OPEN,
     ROBOCORP_RUN_ACTION_FROM_ACTION_PACKAGE,
     ROBOCORP_DEBUG_ACTION_FROM_ACTION_PACKAGE,
+    ROBOCORP_CREATE_ACTION_PACKAGE,
+    ROBOCORP_CREATE_TASK_OR_ACTION_PACKAGE,
 } from "./robocorpCommands";
 import { installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
@@ -167,7 +169,8 @@ import { setupDebugSessionOutViewIntegration } from "./output/outViewRunIntegrat
 import { showInspectorUI } from "./inspector/inspectorView";
 import { IAppRoutes } from "./inspector/protocols";
 import { startActionServer } from "./actionServer";
-import { askAndRunRobocorpActionFromActionPackage } from "./robo/actionPackage";
+import { askAndRunRobocorpActionFromActionPackage, createActionPackage } from "./robo/actionPackage";
+import { showSelectOneStrQuickPick } from "./ask";
 
 interface InterpreterInfo {
     pythonExe: string;
@@ -372,6 +375,22 @@ function registerRobocorpCodeCommands(C: CommandRegistry, context: ExtensionCont
     C.register(ROBOCORP_GET_LANGUAGE_SERVER_PYTHON, () => getLanguageServerPython());
     C.register(ROBOCORP_GET_LANGUAGE_SERVER_PYTHON_INFO, () => getLanguageServerPythonInfo());
     C.register(ROBOCORP_CREATE_ROBOT, () => createRobot());
+    C.register(ROBOCORP_CREATE_ACTION_PACKAGE, () => createActionPackage());
+    C.register(ROBOCORP_CREATE_TASK_OR_ACTION_PACKAGE, async () => {
+        const TASK_PACKAGE = "Task Package (Robot)";
+        const ACTION_PACKAGE = "Action Package";
+        const packageType = await showSelectOneStrQuickPick(
+            [TASK_PACKAGE, ACTION_PACKAGE],
+            "Which kind of Package would you like to create?"
+        );
+        if (packageType) {
+            if (packageType === TASK_PACKAGE) {
+                createRobot();
+            } else if (packageType === ACTION_PACKAGE) {
+                createActionPackage();
+            }
+        }
+    });
     C.register(ROBOCORP_UPLOAD_ROBOT_TO_CLOUD, () => uploadRobot());
     C.register(ROBOCORP_CONFIGURATION_DIAGNOSTICS, () => rccConfigurationDiagnostics());
     C.register(ROBOCORP_RUN_ROBOT_RCC, () => askAndRunRobotRCC(true));
