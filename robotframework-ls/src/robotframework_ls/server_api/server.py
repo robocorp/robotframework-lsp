@@ -253,6 +253,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
     def m_workspace__did_change_configuration(self, **kwargs):
         from robotframework_ls.impl.robot_lsp_constants import (
             OPTION_ROBOT_VARIABLES_LOAD_FROM_ARGUMENTS_FILE,
+            OPTION_ROBOT_VARIABLES_LOAD_FROM_VARIABLES_FILE,
         )
         from robotframework_ls.impl import robot_localization
 
@@ -301,18 +302,6 @@ class RobotFrameworkServerApi(PythonLanguageServer):
             log.exception(
                 f"Error getting options: {OPTION_ROBOT_VARIABLES_LOAD_FROM_ARGUMENTS_FILE}"
             )
-
-    @overrides(PythonLanguageServer.m_workspace__did_change_configuration)
-    def m_workspace__did_change_configuration(self, **kwargs):
-        from robotframework_ls.impl.robot_lsp_constants import (
-            OPTION_ROBOT_VARIABLES_LOAD_FROM_VARIABLES_FILE,
-        )
-        from robotframework_ls.impl import robot_localization
-
-        PythonLanguageServer.m_workspace__did_change_configuration(self, **kwargs)
-        self.libspec_manager.config = self.config
-
-        robot_localization.set_global_from_config(self.config)
 
         try:
             variables_from_variables_files = self.config.get_setting(
