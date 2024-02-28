@@ -174,5 +174,6 @@ class VariableFoundFromYaml(VariableFoundFromSettings):
 class VariableFoundFromArgumentsFile(VariableFoundFromSettings):
     variable_kind = VariableKind.ARGUMENTS_FILE
 
+
 class VariableFoundFromVariablesFile(VariableFoundFromSettings):
     variable_kind = VariableKind.VARIABLES_FILE
