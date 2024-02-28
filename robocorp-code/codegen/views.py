@@ -52,7 +52,9 @@ TREE_VIEW_CONTAINERS = [
                     # for targets
                     "view/title": [
                         Menu("robocorp.refreshRobotsView", MenuGroup.NAVIGATION),
-                        Menu("robocorp.createRobot", MenuGroup.NAVIGATION),
+                        Menu(
+                            "robocorp.createTaskOrActionPackage", MenuGroup.NAVIGATION
+                        ),
                     ],
                     "view/item/context": [
                         # Task run as context menus

@@ -1,5 +1,5 @@
 import * as roboCommands from "./robocorpCommands";
-import { commands, QuickPickItem, window } from "vscode";
+import { commands, QuickPickItem, window, workspace, WorkspaceFolder } from "vscode";
 import { WorkspaceInfo, IVaultInfo, ListWorkspacesActionResult } from "./protocols";
 
 export interface QuickPickItemWithAction extends QuickPickItem {
@@ -137,3 +137,26 @@ export async function selectWorkspace(title: string, refresh: boolean): Promise<
         }
     } while (true);
 }
+
+export const askForWs = async (): Promise<WorkspaceFolder | undefined> => {
+    let wsFolders: ReadonlyArray<WorkspaceFolder> = workspace.workspaceFolders;
+    if (!wsFolders) {
+        window.showErrorMessage("Unable to do operation (no workspace folder is currently opened).");
+        return undefined;
+    }
+
+    let ws: WorkspaceFolder;
+    if (wsFolders.length == 1) {
+        ws = wsFolders[0];
+    } else {
+        ws = await window.showWorkspaceFolderPick({
+            "placeHolder": "Please select the workspace folder for the operation.",
+            "ignoreFocusOut": true,
+        });
+    }
+    if (!ws) {
+        // Operation cancelled.
+        return undefined;
+    }
+    return ws;
+};
