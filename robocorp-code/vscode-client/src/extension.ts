@@ -37,7 +37,6 @@ import {
 } from "vscode";
 import { LanguageClientOptions, State } from "vscode-languageclient";
 import { LanguageClient, ServerOptions } from "vscode-languageclient/node";
-import * as inspector from "./inspector";
 import * as playwright from "./playwright";
 import { copySelectedToClipboard, removeLocator } from "./locators";
 import * as views from "./views";
@@ -146,6 +145,8 @@ import {
     ROBOCORP_ROBOTS_VIEW_ACTION_DEBUG,
     ROBOCORP_ROBOTS_VIEW_ACTION_EDIT_INPUT,
     ROBOCORP_ROBOTS_VIEW_ACTION_OPEN,
+    ROBOCORP_RUN_ACTION_FROM_ACTION_PACKAGE,
+    ROBOCORP_DEBUG_ACTION_FROM_ACTION_PACKAGE,
 } from "./robocorpCommands";
 import { installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
@@ -166,6 +167,7 @@ import { setupDebugSessionOutViewIntegration } from "./output/outViewRunIntegrat
 import { showInspectorUI } from "./inspector/inspectorView";
 import { IAppRoutes } from "./inspector/protocols";
 import { startActionServer } from "./actionServer";
+import { askAndRunRobocorpActionFromActionPackage } from "./robo/actionPackage";
 
 interface InterpreterInfo {
     pythonExe: string;
@@ -179,8 +181,10 @@ const clientOptions: LanguageClientOptions = {
         { language: "yaml", pattern: "**/conda.yaml" },
         { language: "yaml", pattern: "**/action-server.yaml" },
         { language: "yaml", pattern: "**/robot.yaml" },
+        { language: "yaml", pattern: "**/package.yaml" },
 
         // Needed to detect tasks decorated with @task (from robocorp.tasks).
+        // Needed to detect actions decorated with @action (from robocorp.actions).
         { language: "python", pattern: "**/*.py" },
     ],
     synchronize: {
@@ -372,6 +376,8 @@ function registerRobocorpCodeCommands(C: CommandRegistry, context: ExtensionCont
     C.register(ROBOCORP_CONFIGURATION_DIAGNOSTICS, () => rccConfigurationDiagnostics());
     C.register(ROBOCORP_RUN_ROBOT_RCC, () => askAndRunRobotRCC(true));
     C.register(ROBOCORP_DEBUG_ROBOT_RCC, () => askAndRunRobotRCC(false));
+    C.register(ROBOCORP_RUN_ACTION_FROM_ACTION_PACKAGE, () => askAndRunRobocorpActionFromActionPackage(true));
+    C.register(ROBOCORP_DEBUG_ACTION_FROM_ACTION_PACKAGE, () => askAndRunRobocorpActionFromActionPackage(false));
     C.register(ROBOCORP_SET_PYTHON_INTERPRETER, () => setPythonInterpreterFromRobotYaml());
     C.register(ROBOCORP_REFRESH_ROBOTS_VIEW, () => refreshTreeView(TREE_VIEW_ROBOCORP_TASK_PACKAGES_TREE));
     C.register(ROBOCORP_REFRESH_CLOUD_VIEW, () => refreshCloudTreeView());

@@ -1,0 +1,21 @@
+- message: The official support for versions lower than Python 3.8 has ended.  It
+    is advisable to transition to a newer version (Python 3.9 or newer is recommended).
+  range:
+    end:
+      character: 14
+      line: 13
+    start:
+      character: 4
+      line: 13
+  severity: 2
+  source: robocorp-code
+- message: 'Error parsing ''rpaframework==22 a . 5.3'': invalid requirement: a . 5.3'
+  range:
+    end:
+      character: 27
+      line: 16
+    start:
+      character: 4
+      line: 16
+  severity: 1
+  source: robocorp-code

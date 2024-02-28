@@ -341,8 +341,9 @@ class _CacheInfo(object):
 
         endpoint = pm[EPEndPointProvider].endpoint
 
+        basename = os.path.basename(robot_yaml_file_info.file_path)
         with progress_context(
-            endpoint, "Obtain env for robot.yaml", dir_cache=None, cancellable=True
+            endpoint, f"Obtain env for {basename}", dir_cache=None, cancellable=True
         ):
             # If it got here, it's not cached or the cache doesn't match.
             # This may take a while...

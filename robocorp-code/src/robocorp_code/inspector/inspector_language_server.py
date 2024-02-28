@@ -187,6 +187,15 @@ class InspectorLanguageServer:
             }
             return ret
 
+    def m_web_inspector_configure_browser(
+        self, width: int = 1280, height: int = 720, url: str = ""
+    ):
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        inspector_api_client.send_sync_message(
+            "browserConfigure",
+            {"viewport_size": (width, height), "url": url},
+        )
+
     def m_web_inspector_open_browser(self, url=None):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         if url is None:
@@ -196,7 +205,7 @@ class InspectorLanguageServer:
 
             url = uris.from_fs_path(str(INSPECTOR_GUIDE_PATH))
 
-        inspector_api_client.open_browser(url, wait=True)
+        inspector_api_client.send_sync_message("openBrowser", dict(url=url, wait=True))
 
     def m_web_inspector_close_browser(self, **params) -> None:
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
@@ -204,7 +213,9 @@ class InspectorLanguageServer:
 
     def m_web_inspector_click(self, locator):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
-        inspector_api_client.click(locator, wait=True)
+        inspector_api_client.send_sync_message(
+            "click", dict(locator=locator, wait=True)
+        )
 
     def m_web_inspector_start_pick(self, **params):
         from robocorp_ls_core import uris

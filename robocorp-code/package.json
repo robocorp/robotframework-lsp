@@ -9,7 +9,7 @@
         "url": "https://github.com/robocorp/robotframework-lsp.git"
     },
     "license": "SEE LICENSE IN LICENSE.txt",
-    "version": "1.17.0",
+    "version": "1.17.1",
     "icon": "images/icon.png",
     "publisher": "robocorp",
     "engines": {
@@ -36,7 +36,9 @@
         "onCommand:robocorp.uploadToExistingRobot.internal",
         "onCommand:robocorp.runInRcc.internal",
         "onCommand:robocorp.runRobotRcc",
+        "onCommand:robocorp.runActionFromActionPackage",
         "onCommand:robocorp.debugRobotRcc",
+        "onCommand:robocorp.debugActionFromActionPackage",
         "onCommand:robocorp.robotsViewTaskRun",
         "onCommand:robocorp.robotsViewTaskDebug",
         "onCommand:robocorp.robotsViewActionRun",
@@ -325,8 +327,18 @@
                 "category": "Robocorp"
             },
             {
+                "command": "robocorp.runActionFromActionPackage",
+                "title": "Run Action (from Action Package)",
+                "category": "Robocorp"
+            },
+            {
                 "command": "robocorp.debugRobotRcc",
                 "title": "Debug Task Package (Robot)",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.debugActionFromActionPackage",
+                "title": "Debug Action (from Action Package)",
                 "category": "Robocorp"
             },
             {

@@ -1,3 +1,5 @@
+import { LocalRobotMetadataInfo } from "./protocols";
+
 export const debounce = (func, wait) => {
     let timeout: NodeJS.Timeout;
 
@@ -15,6 +17,7 @@ export const debounce = (func, wait) => {
 export interface PackageEntry {
     filePath: string;
 }
-export const isActionPackage = (entry: PackageEntry) => {
+
+export const isActionPackage = (entry: PackageEntry | LocalRobotMetadataInfo) => {
     return entry.filePath.endsWith("package.yaml");
 };

@@ -1,0 +1,13 @@
+- message: "Syntax error: while parsing a block collection\n  in \".../check_bad_package_yaml/package.yaml\"\
+    , line 8, column 3:\n      - conda-forge\n      ^\nexpected <block end>, but found\
+    \ '<block sequence start>'\n  in \".../check_bad_package_yaml/package.yaml\",\
+    \ line 11, column 4:\n       -\n       ^"
+  range:
+    end:
+      character: 0
+      line: 11
+    start:
+      character: 3
+      line: 10
+  severity: 1
+  source: robocorp-code

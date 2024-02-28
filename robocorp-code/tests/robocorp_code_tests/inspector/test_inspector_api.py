@@ -132,8 +132,8 @@ def test_inspector_url_changing(
     assert inspector_api_client
 
     url = uris.from_fs_path(str(datadir / "page_to_test.html"))
-    inspector_api_client.open_browser(url)
-    inspector_api_client.start_pick()
+    inspector_api_client.send_sync_message("openBrowser", dict(url=url, wait=True))
+    inspector_api_client.send_sync_message("startPick", dict(wait=True))
 
     pick_message_matcher = inspector_api_client.obtain_pattern_message_matcher(
         {"method": "$/webPick"}
@@ -166,16 +166,15 @@ def test_inspector_api_usage(
     inspector_api_client = inspector_server_manager.get_inspector_api_client()
 
     message_matcher = inspector_api_client.send_async_message(
-        "browser_configure", {"headless": True, "wait": True}
+        "browser_configure", {"wait": True}
     )
     assert message_matcher.event.wait(10)
     assert message_matcher.msg["result"] is None
 
     for i in range(2):  # Do 2 runs to check that we can reopen the browser.
         url = uris.from_fs_path(str(datadir / "page_to_test.html"))
-        inspector_api_client.open_browser(url)
-
-        inspector_api_client.start_pick()
+        inspector_api_client.send_sync_message("openBrowser", dict(url=url, wait=True))
+        inspector_api_client.send_sync_message("startPick", dict(wait=True))
 
         pick_message_matcher = inspector_api_client.obtain_pattern_message_matcher(
             {"method": "$/webPick"}
@@ -194,7 +193,7 @@ def test_inspector_api_usage(
         locator = msg["params"]
         data_regression.check(fix_locator(locator), basename="div1Pick")
 
-        inspector_api_client.close_browser()
+        inspector_api_client.send_sync_message("closeBrowser", dict(wait=True))
 
 
 def _manual_test_inspector_repl(
@@ -210,15 +209,15 @@ def _manual_test_inspector_repl(
     def _command_open():
         "Opens Browser"
         url = uris.from_fs_path(str(datadir / "page_to_test.html"))
-        inspector_api_client.open_browser(url)
+        inspector_api_client.send_sync_message("openBrowser", dict(url=url, wait=True))
 
     def _command_pick():
         "Starts Picking"
-        inspector_api_client.start_pick()
+        inspector_api_client.send_sync_message("startPick", dict(wait=True))
 
     def _command_close():
         "Closes Browser"
-        inspector_api_client.close_browser()
+        inspector_api_client.send_sync_message("closeBrowser", dict(wait=True))
 
     commands = []
     for i, (name, val) in enumerate(sorted(sys._getframe().f_locals.items())):

@@ -20,12 +20,14 @@ def get_conda_yaml_doc(datadir, name) -> IDocument:
 @pytest.fixture
 def check_conda_yaml(datadir, data_regression, cached_conda_cloud) -> Iterator:
     def check(name):
-        from robocorp_code.vendored_deps.package_deps.analyzer import Analyzer
+        from robocorp_code.vendored_deps.package_deps.analyzer import CondaYamlAnalyzer
 
         doc = get_conda_yaml_doc(datadir, name)
 
-        analyzer = Analyzer(doc.source, doc.path, conda_cloud=cached_conda_cloud)
-        data_regression.check(list(analyzer.iter_issues()))
+        analyzer = CondaYamlAnalyzer(
+            doc.source, doc.path, conda_cloud=cached_conda_cloud
+        )
+        data_regression.check(list(analyzer.iter_conda_yaml_issues()))
 
     yield check
 
@@ -53,22 +55,22 @@ def test_conda_version_old(check_conda_yaml, patch_pypi_cloud) -> None:
 
 
 def test_hover_conda_yaml_pip_package(datadir, patch_pypi_cloud, cached_conda_cloud):
-    from robocorp_code.vendored_deps.package_deps.analyzer import Analyzer
+    from robocorp_code.vendored_deps.package_deps.analyzer import CondaYamlAnalyzer
 
     doc = get_conda_yaml_doc(datadir, "check_python_version")
 
-    analyzer = Analyzer(doc.source, doc.path, cached_conda_cloud)
+    analyzer = CondaYamlAnalyzer(doc.source, doc.path, cached_conda_cloud)
     pip_dep = analyzer.find_pip_dep_at(14, 17)
     assert pip_dep is not None
     assert pip_dep.name == "rpaframework"
 
 
 def test_hover_conda_yaml_conda_package(datadir, patch_pypi_cloud, cached_conda_cloud):
-    from robocorp_code.vendored_deps.package_deps.analyzer import Analyzer
+    from robocorp_code.vendored_deps.package_deps.analyzer import CondaYamlAnalyzer
 
     doc = get_conda_yaml_doc(datadir, "check_python_version")
 
-    analyzer = Analyzer(doc.source, doc.path, cached_conda_cloud)
+    analyzer = CondaYamlAnalyzer(doc.source, doc.path, cached_conda_cloud)
     conda_dep = analyzer.find_conda_dep_at(10, 7)
     assert conda_dep is not None
     assert conda_dep.name == "python"

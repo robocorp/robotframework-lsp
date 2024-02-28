@@ -27,10 +27,33 @@ def hover_on_conda_yaml(
 ) -> Optional[HoverTypedDict]:
     from robocorp_ls_core.protocols import IDocumentSelection
 
-    from robocorp_code.vendored_deps.package_deps.analyzer import Analyzer
+    from robocorp_code.vendored_deps.package_deps.analyzer import CondaYamlAnalyzer
 
     sel: IDocumentSelection = doc.selection(line, col)
-    analyzer = Analyzer(doc.source, doc.path, conda_cloud, pypi_cloud)
+    analyzer = CondaYamlAnalyzer(doc.source, doc.path, conda_cloud, pypi_cloud)
+    pip_dep = analyzer.find_pip_dep_at(sel.line, sel.col)
+    if pip_dep is not None:
+        return _hover_handle_pip_dep(pypi_cloud, pip_dep)
+
+    conda_dep: Optional[CondaDepInfo] = analyzer.find_conda_dep_at(sel.line, sel.col)
+    if conda_dep is not None:
+        return _hover_handle_conda_dep(conda_cloud, conda_dep)
+    return None
+
+
+def hover_on_package_yaml(
+    doc: IDocument,
+    line: int,
+    col: int,
+    pypi_cloud: IPyPiCloud,
+    conda_cloud: ICondaCloud,
+) -> Optional[HoverTypedDict]:
+    from robocorp_ls_core.protocols import IDocumentSelection
+
+    from robocorp_code.vendored_deps.package_deps.analyzer import PackageYamlAnalyzer
+
+    sel: IDocumentSelection = doc.selection(line, col)
+    analyzer = PackageYamlAnalyzer(doc.source, doc.path, conda_cloud, pypi_cloud)
     pip_dep = analyzer.find_pip_dep_at(sel.line, sel.col)
     if pip_dep is not None:
         return _hover_handle_pip_dep(pypi_cloud, pip_dep)
