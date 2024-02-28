@@ -70,7 +70,12 @@ class PickedLocatorTypedDict(TypedDict):
 
 
 class WebInspector:
-    def __init__(self, endpoint: Optional[IEndPoint] = None) -> None:
+    def __init__(
+        self,
+        endpoint: Optional[IEndPoint] = None,
+        configuration: Optional[dict] = None,
+        callback_end_thread: Optional[Callable] = None,
+    ) -> None:
         """
         Args:
             endpoint: If given notifications on the state will be given.
@@ -85,6 +90,9 @@ class WebInspector:
         self._looping = False
         self._last_picker_check: int = 0
         self._endpoint = endpoint
+
+        self._configuration = configuration
+        self._callback_end_thread = callback_end_thread
 
     @property
     def picking(self):
@@ -121,13 +129,31 @@ class WebInspector:
         finally:
             self._looping = False
 
-    def close_browser(self):
+    def close_browser(self, skip_notify: bool = False):
+        from robocorp_code.playwright import robocorp_browser
+
         self._check_thread()
+
+        if self._endpoint is not None and not skip_notify:
+            self._endpoint.notify("$/webInspectorState", {"state": STATE_CLOSED})
+
         page = self._page
         if page is not None and not page.is_closed():
             page.close()
 
+        # we need to trigger the thread to end when the browser is closed
+        if self._callback_end_thread is not None:
+            self._callback_end_thread()
+            # we have to close the browser after we trigger the thread close end
+            # as the browser.close seem to do the intended task but it hangs afterwards
+            # issue: https://github.com/microsoft/playwright/issues/5327
+            browser = robocorp_browser.browser()
+            if browser:
+                browser.close()
+
     def page(self, auto_create) -> Optional[Page]:
+        from robocorp_code.inspector.inspector_api import _WebInspectorThread
+
         self._check_thread()
 
         self.loop()
@@ -143,9 +169,22 @@ class WebInspector:
 
             from robocorp_code.playwright import robocorp_browser
 
-            log.debug(f"Page is None or Closed. Creating a new one...")
-            page = robocorp_browser.page()
-            self._page = page
+            try:
+                log.debug(f"Page is None or Closed. Creating a new one...")
+                page = robocorp_browser.page()
+                self._page = page
+            except Exception as e:
+                log.error(f"Exception raised while constructing browser page:", e)
+                # shut down the current thread
+                if isinstance(self._current_thread, _WebInspectorThread):
+                    # make sure we close the browser first - skip notification because we reignite
+                    self.close_browser(skip_notify=True)
+                    # shutdown the thread
+                    self._current_thread.shutdown()
+                # # make sure we notify the necessary entities that we want to reignite the thread
+                if self._endpoint is not None:
+                    self._endpoint.notify("$/webReigniteThread", self._configuration)
+                return None
 
             if endpoint is not None:
                 endpoint.notify("$/webInspectorState", {"state": STATE_OPENED})
@@ -156,12 +195,18 @@ class WebInspector:
                 log.debug(f"Mark page closed")
                 s = weak_self()
                 if s is not None:
+                    # make sure we close the browser first
+                    self.close_browser()
+
+                    # nullify zone
                     s._page = None
+                    self._looping = False
                     self._picking = False
                     self._pick_async_code_evaluate_worked = False
 
-                if endpoint is not None:
-                    endpoint.notify("$/webInspectorState", {"state": STATE_CLOSED})
+                # shut down the current thread
+                if isinstance(self._current_thread, _WebInspectorThread):
+                    self._current_thread.shutdown()
 
             def mark_url_changed(*args, **kwargs):
                 if self._page_former_url == "":
@@ -368,16 +413,15 @@ class WebInspector:
 
         self._on_picked.clear()
 
-        endpoint = self._endpoint
-        if endpoint is not None:
-            endpoint.notify("$/webInspectorState", {"state": STATE_NOT_PICKING})
-
         page = self.page(False)
         if page is not None:
             try:
                 self.evaluate_in_all_iframes(page, _ASYNC_CANCEL_PICK_CODE)
             except Exception:
                 log.exception("Error evaluating cancel pick code.")
+
+        if self._endpoint is not None:
+            self._endpoint.notify("$/webInspectorState", {"state": STATE_NOT_PICKING})
 
     def is_picker_injected(self, page=None) -> bool:
         self._check_thread()
@@ -431,63 +475,73 @@ class WebInspector:
         """
         Ensures that the expression is evaluated in the child iFrames if any
         """
-        # we need to wait for the load state before injecting otherwise the evaluation of the picker crashes
-        # not finding the body where to inject the picker in
-        page.wait_for_load_state()
-        page.wait_for_selector("body")
-        page.wait_for_timeout(1)
-        # retrieving only the first layer of iFrames
-        # for additional layers recessiveness is the solution, but doesn't seem necessary right now
-        frames = list(page.frames) + list(page.main_frame.child_frames)
+        try:
+            # we need to wait for the load state before injecting otherwise the evaluation of the picker crashes
+            # not finding the body where to inject the picker in
+            page.wait_for_load_state()
+            page.wait_for_selector("body")
+            page.wait_for_timeout(1)
 
-        for frame in frames:
-            # make sure we wait for the load state to trigger in frames as well
-            frame.wait_for_load_state()
+            # retrieving only the first layer of iFrames
+            # for additional layers recessiveness is the solution, but doesn't seem necessary right now
+            frames = list(page.frames) + list(page.main_frame.child_frames)
 
-            # skipping the detached frames as they are not able to evaluate expressions
-            if frame.is_detached():
-                continue
-
-            props = None
-            if frame != page.main_frame:
-                props = {}
-                props["name"] = frame.frame_element().get_attribute("name")
-                if props["name"] is None:
-                    props["name"] = frame.name
-                props["id"] = frame.frame_element().get_attribute("id")
-                props["cls"] = frame.frame_element().get_attribute("class")
-                props["title"] = frame.frame_element().get_attribute("title")
-                if (props["title"]) is None:
-                    props["title"] = frame.title()
-
-            final_exp = (
-                Template(expression).substitute(
-                    iFrame=json.dumps(
-                        {
-                            "name": frame.name,
-                            "title": frame.title(),
-                            "url": frame.url,
-                            "sourceURL": page.url,
-                            "isMain": frame == page.main_frame,
-                            "props": props,
-                        }
-                    )
-                )
-                if inject_frame_data
-                else expression
-            )
-
-            try:
+            for frame in frames:
                 # make sure we wait for the load state to trigger in frames as well
                 frame.wait_for_load_state()
-                frame.wait_for_timeout(1)
-                # inject the code
-                frame.evaluate(final_exp)
-            except Exception as e:
-                # when we deal with the main frame, raise exception
-                # the iframes (child frames or attached) can cause unexpected behaviors due to their construction
-                # we can try to address them later
-                if frame == page.main_frame:
-                    raise e
-                log.exception(f"Exception occurred inside of an iFrame: {e}")
-                continue
+
+                # skipping the detached frames as they are not able to evaluate expressions
+                if frame.is_detached():
+                    continue
+
+                # returning if page is closed
+                if page.is_closed():
+                    return
+
+                props = None
+                if frame != page.main_frame:
+                    props = {}
+                    props["name"] = frame.frame_element().get_attribute("name")
+                    if props["name"] is None:
+                        props["name"] = frame.name
+                    props["id"] = frame.frame_element().get_attribute("id")
+                    props["cls"] = frame.frame_element().get_attribute("class")
+                    props["title"] = frame.frame_element().get_attribute("title")
+                    if (props["title"]) is None:
+                        props["title"] = frame.title()
+
+                final_exp = (
+                    Template(expression).substitute(
+                        iFrame=json.dumps(
+                            {
+                                "name": frame.name,
+                                "title": frame.title(),
+                                "url": frame.url,
+                                "sourceURL": page.url,
+                                "isMain": frame == page.main_frame,
+                                "props": props,
+                            }
+                        )
+                    )
+                    if inject_frame_data
+                    else expression
+                )
+
+                try:
+                    # make sure we wait for the load state to trigger in frames as well
+                    frame.wait_for_load_state()
+                    frame.wait_for_timeout(1)
+                    # inject the code
+                    frame.evaluate(final_exp)
+                except Exception as e:
+                    # when we deal with the main frame, raise exception
+                    # the iframes (child frames or attached) can cause unexpected behaviors due to their construction
+                    # we can try to address them later
+                    if frame == page.main_frame:
+                        raise e
+                    log.exception(f"Exception occurred inside of an iFrame: {e}")
+                    continue
+
+        except Exception as e:
+            log.exception(f"Exception occurred evaluating code in iFrames: {e}")
+            pass

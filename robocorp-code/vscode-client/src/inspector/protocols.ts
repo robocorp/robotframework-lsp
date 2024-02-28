@@ -38,7 +38,7 @@ export type IManagerCommands =
 
 export type IWebInspectorCommands =
     | { type: "getLocators" }
-    | { type: "startPicking"; url?: string }
+    | { type: "startPicking"; url?: string; viewport_width?: number; viewport_height?: number }
     | { type: "stopPicking" }
     | { type: "validate"; locator: Locator; url?: string };
 

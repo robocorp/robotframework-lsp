@@ -5,6 +5,10 @@ Unreleased
 - Hover support to get versions on `package.yaml`.
 - New action to `Run Action (from Action Package)`
 - New action to `Debug Action (from Action Package)`
+- (Web Inspector) Added the isolated environment to the browser configuration every time the browser is initialized and when it's getting installed
+- (Web Inspector) Fixing the issues on MacOS with the browser getting stuck until user restarts VSCode
+- (Web Inspector) New feature of changing the viewport resolution from the Web Inspector UI
+- (Web Inspector) Updated the vendored `robocorp-browser` to the latest version
 
 New in 1.17.0 (2024-02-23)
 -----------------------------
@@ -29,11 +33,11 @@ New in 1.15.1 (2024-01-25)
 
 - Fixed issue where using `action-server.yaml` for the action server environment
   didn't do the semantic checks done for `conda.yaml`.
-  
+
 New in 1.15.0 (2024-01-24)
 -----------------------------
 
-- Accept`action-server.yaml` for the action server environment bootstrap 
+- Accept`action-server.yaml` for the action server environment bootstrap
   (still requires `robot.yaml` alongside it).
 
 New in 1.14.2 (2024-01-12)

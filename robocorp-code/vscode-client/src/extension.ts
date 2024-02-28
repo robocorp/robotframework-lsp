@@ -37,7 +37,6 @@ import {
 } from "vscode";
 import { LanguageClientOptions, State } from "vscode-languageclient";
 import { LanguageClient, ServerOptions } from "vscode-languageclient/node";
-import * as inspector from "./inspector";
 import * as playwright from "./playwright";
 import { copySelectedToClipboard, removeLocator } from "./locators";
 import * as views from "./views";

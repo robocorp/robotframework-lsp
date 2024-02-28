@@ -27,19 +27,14 @@ import {
 import { langServer } from "../extension";
 import { ActionResult, LocalRobotMetadataInfo } from "../protocols";
 import { ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL } from "../robocorpCommands";
+import { generateID } from "./utils";
 
+// singleton objects
 let ROBOCORP_INSPECTOR_PANEL: vscode.WebviewPanel | undefined = undefined;
 
 let ROBOT_DIRECTORY: string | undefined = undefined;
 
-// eslint-disable-next-line class-methods-use-this
-const generateID = (): string => {
-    const prefix = `${Math.floor(Math.random() * 9000) + 1000}`; // this creates a 4 digit number
-    const middle = `${Date.now()}`.replace(/(.{2})/g, "$1-"); // this will split the number up into groups of two or one
-    const suffix = `${Math.floor(Math.random() * 9000) + 1000}`; // this creates a 4 digit number
-    return `${prefix}-${middle}-${suffix}`;
-};
-
+// showInspectorUI - registered function for opening the Inspector while calling VSCode commands
 export async function showInspectorUI(context: vscode.ExtensionContext, route?: IAppRoutes) {
     if (ROBOCORP_INSPECTOR_PANEL !== undefined) {
         OUTPUT_CHANNEL.appendLine("# Robocorp Inspector is already opened! Thank you!");
@@ -151,6 +146,26 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
             };
             // this is an event - postMessage will update the useLocator hook
             panel.webview.postMessage(response);
+        })
+    );
+    context.subscriptions.push(
+        langServer.onNotification("$/webReigniteThread", async (values) => {
+            OUTPUT_CHANNEL.appendLine(`>>>> Receiving: webReigniteThread: ${JSON.stringify(values)}`);
+            const browserConfig: {
+                browser_config: { viewport_size: [number, number] };
+                url?: string;
+            } = values as {
+                browser_config: { viewport_size: any };
+                url?: string;
+            };
+            await sendRequest("webInspectorConfigureBrowser", {
+                width: browserConfig.browser_config.viewport_size[0],
+                height: browserConfig.browser_config.viewport_size[1],
+                url: browserConfig.url !== "" ? browserConfig.url : undefined,
+            });
+            await sendRequest("webInspectorStartPick", {
+                url_if_new: browserConfig.url !== "" ? browserConfig.url : undefined,
+            });
         })
     );
     // Windows Inspector - Create listeners for BE (Python) messages
@@ -301,8 +316,18 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                         }
                     } else if (message.app === IApps.WEB_INSPECTOR) {
                         if (command["type"] === "startPicking") {
+                            // configure the browser before opening anything
+                            OUTPUT_CHANNEL.appendLine(`> Requesting: Configure Browser: ${JSON.stringify(command)}`);
+                            await sendRequest("webInspectorConfigureBrowser", {
+                                width: command["viewportWidth"],
+                                height: command["viewportHeight"],
+                                url: command["url"],
+                            });
+                            // start picking
                             OUTPUT_CHANNEL.appendLine(`> Requesting: Start Picking: ${JSON.stringify(command)}`);
-                            await sendRequest("webInspectorStartPick", { url_if_new: command["url"] });
+                            await sendRequest("webInspectorStartPick", {
+                                url_if_new: command["url"],
+                            });
                         } else if (command["type"] === "stopPicking") {
                             OUTPUT_CHANNEL.appendLine(`> Requesting: Stop Picking: ${JSON.stringify(command)}`);
                             await sendRequest("webInspectorStopPick");

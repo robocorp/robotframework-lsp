@@ -1,7 +1,7 @@
 import threading
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Tuple
 from queue import Queue
-from typing import Literal, Optional
+from typing import Literal, Optional, Callable
 
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.protocols import ActionResultDict, IConfig, IEndPoint
@@ -42,25 +42,41 @@ class _WebInspectorThread(threading.Thread):
     pick.
     """
 
-    def __init__(self, endpoint: IEndPoint) -> None:
+    def __init__(
+        self,
+        endpoint: IEndPoint,
+        configuration: Optional[dict],
+        shutdown_callback: Optional[Callable],
+    ) -> None:
         threading.Thread.__init__(self)
         self._endpoint = endpoint
         self.daemon = True
-        self.queue: "Queue[_WebBaseCommand]" = Queue()
+        self.queue: "Queue[Optional[_WebBaseCommand]]" = Queue()
         self._finish = False
         self._web_inspector: Optional[WebInspector] = None
+        self._shutdown_callback = shutdown_callback
+
+        self._configuration = configuration
 
     @property
     def web_inspector(self) -> Optional[WebInspector]:
         return self._web_inspector
 
     def shutdown(self) -> None:
+        if self._shutdown_callback is not None:
+            self._shutdown_callback()
+        # signal the run to finish
         self._finish = True
+        self.queue.put(None)
 
     def run(self) -> None:
         from concurrent.futures import Future
 
-        self._web_inspector = WebInspector(self._endpoint)
+        self._web_inspector = WebInspector(
+            endpoint=self._endpoint,
+            configuration=self._configuration,
+            callback_end_thread=self.shutdown,
+        )
 
         loop_timeout: float = _DEFAULT_LOOP_TIMEOUT
         item: Optional[_WebBaseCommand]
@@ -87,11 +103,16 @@ class _WebInspectorThread(threading.Thread):
                     finally:
                         item.handled_event.set()
         finally:
-            from robocorp_code.playwright.robocorp_browser._caches import (
-                clear_all_callback,
-            )
+            try:
+                from robocorp_code.playwright.robocorp_browser._caches import (
+                    clear_all_callback,
+                )
 
-            clear_all_callback()
+                if self._web_inspector.page(auto_create=False):
+                    clear_all_callback()
+            except Exception as e:
+                log.exception(f"Clearing callbacks raised Exception:", e)
+            log.debug("Exited from Web Inspector Thread!")
 
 
 class _WebBaseCommand:
@@ -634,12 +655,32 @@ class InspectorApi(PythonLanguageServer):
         self.__windows_inspector_thread: Optional[_WindowsInspectorThread] = None
         self.__image_inspector_thread: Optional[_ImageInspectorThread] = None
 
+        # set default configuration for the inspectors
+        self.__web_inspector_configuration: dict = {  # configuring the Web Inspector with defaults
+            "browser_config": {  # set the default viewport size
+                "viewport_size": (1280, 720),
+                # if there is an attempted download & install sequence, do it in the isolated env
+                "isolated": True,
+                # always pick chromium
+                "browser_engine": "chromium",
+            },
+            "url": "",
+        }
+
+    def __nullify_web_inspector_thread(self):
+        # make sure we nullify the thread
+        self.__web_inspector_thread = None
+
     @property
     def _web_inspector_thread(self):
         # Lazily-initialize
         ret = self.__web_inspector_thread
         if ret is None:
-            self.__web_inspector_thread = _WebInspectorThread(self._endpoint)
+            self.__web_inspector_thread = _WebInspectorThread(
+                endpoint=self._endpoint,
+                configuration=self.__web_inspector_configuration,
+                shutdown_callback=self.__nullify_web_inspector_thread,
+            )
             self.__web_inspector_thread.start()
 
         return self.__web_inspector_thread
@@ -724,6 +765,12 @@ class InspectorApi(PythonLanguageServer):
         self._enqueue_web(_WebOpenUrlCommand(url), wait)
 
     def m_start_pick(self, url_if_new: str = "", wait: bool = False) -> None:
+        # configure
+        if self.__web_inspector_configuration:
+            self.__web_inspector_configuration["url"] = url_if_new
+        else:
+            self.__web_inspector_configuration = {"url": url_if_new}
+        # command
         self._enqueue_web(_WebAsyncPickCommand(self._endpoint, url_if_new), wait)
 
     def m_stop_pick(self, wait: bool = False) -> None:
@@ -735,8 +782,24 @@ class InspectorApi(PythonLanguageServer):
     def m_click(self, locator: str, wait: bool = False) -> None:
         self._enqueue_web(_WebClickLocatorCommand(locator), wait)
 
-    def m_browser_configure(self, wait=False, **kwargs) -> None:
-        self._enqueue_web(_WebBrowserConfigureCommand(kwargs), wait)
+    def m_browser_configure(
+        self,
+        wait=False,
+        viewport_size: Optional[Tuple] = None,
+        url: Optional[str] = None,
+    ) -> None:
+        # configure
+        self.__web_inspector_configuration["browser_config"][
+            "viewport_size"
+        ] = viewport_size
+        self.__web_inspector_configuration["url"] = url
+        # command
+        self._enqueue_web(
+            _WebBrowserConfigureCommand(
+                self.__web_inspector_configuration["browser_config"]
+            ),
+            wait,
+        )
 
     def m_shutdown(self, **_kwargs) -> None:
         self._enqueue_web(_WebShutdownCommand(), wait=False)

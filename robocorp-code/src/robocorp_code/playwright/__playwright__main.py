@@ -67,7 +67,7 @@ def run_playwright_in_thread(launched_event):
     future = Future()
 
     def in_thread():
-        from robocorp_code.playwright.robocorp_browser._browser_engines import (
+        from robocorp_code.playwright.robocorp_browser._engines import (
             browsers_path,
         )
 
@@ -157,7 +157,7 @@ def launch_playwright() -> None:
 
 
 def launch() -> None:
-    from robocorp_code.playwright.robocorp_browser._browser_engines import (
+    from robocorp_code.playwright.robocorp_browser._engines import (
         BrowserEngine,
         install_browser,
     )

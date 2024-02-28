@@ -13,7 +13,7 @@ from playwright.sync_api import (
 )
 from robocorp_ls_core.robotframework_log import get_logger
 
-from ._browser_engines import (
+from ._engines import (
     ENGINE_TO_ARGS,
     BrowserEngine,
     browsers_path,
