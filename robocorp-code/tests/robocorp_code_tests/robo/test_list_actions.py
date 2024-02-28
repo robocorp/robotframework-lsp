@@ -18,6 +18,7 @@ def test_list_actions(
     result = language_server.execute_command(
         commands.ROBOCORP_LIST_ACTIONS_INTERNAL,
         [{"action_package": uris.from_fs_path(ws_root_path)}],
-    )["result"]
-    result["result"][0]["uri"] = os.path.basename(result["result"][0]["uri"])
+    )["result"]["result"]
+    for entry in result:
+        entry["uri"] = os.path.basename(entry["uri"])
     data_regression.check(result)
