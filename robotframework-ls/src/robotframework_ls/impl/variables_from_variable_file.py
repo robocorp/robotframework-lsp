@@ -18,29 +18,32 @@ class VariablesFromVariablesFileLoader:
     __repr__ = __str__
 
     def _iter_vars(self, content):
+        start_multiline= ["(", "[", "{"]
+        end_multiline= [")", "]", "}"]
+        multiline = ""
+        multiple_lines = 0
         for lineno, line in enumerate(content.splitlines()):
             line = line.strip()
 
-            if line and not line.startswith("#"):
+            if line.startswith("#"):
+                continue
+
+            if "#" in line:
+                line = line.split("#", 1)[0]
+
+            if any(special_character in line for special_character in start_multiline):
+                multiple_lines += 1
+
+            if multiple_lines != 0:
+                multiline += line
+
+            if any(special_character in line for special_character in end_multiline):
+                multiple_lines -= 1
+                if multiple_lines == 0:
+                    line = multiline
+
+            if line and multiple_lines == 0:
                 yield line, lineno
-
-    def _split_option(self, line):
-        separator = self._get_option_separator(line)
-        if not separator:
-            return [line]
-        option, value = line.split(separator, 1)
-        if separator == " ":
-            value = value.strip()
-        return [option, value]
-
-    def _get_option_separator(self, line):
-        if " " not in line and "=" not in line:
-            return None
-        if "=" not in line:
-            return " "
-        if " " not in line:
-            return "="
-        return " " if line.index(" ") < line.index("=") else "="
 
     def get_variables(self) -> Tuple[IVariableFound, ...]:
         from robotframework_ls.impl.variable_types import VariableFoundFromVariablesFile
@@ -64,7 +67,6 @@ class VariablesFromVariablesFileLoader:
                     content = content[1:]
 
                 variables = []
-                last = None
                 for var, lineno in self._iter_vars(content):
                     if "=" not in var:
                         log.info(
@@ -80,7 +82,6 @@ class VariablesFromVariablesFileLoader:
                             variable_name, variable_value, path, lineno
                         )
                     )
-                    last = var
 
                 log.debug("Found variables from %s: %s", path, variables)
                 self._variables = tuple(variables)
