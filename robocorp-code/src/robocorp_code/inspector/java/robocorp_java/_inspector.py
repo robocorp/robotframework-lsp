@@ -98,7 +98,7 @@ class ElementInspector:
         node = match[0] if isinstance(match, List) and len(match) > 0 else match
         if not isinstance(node, ContextNode):
             raise NoMatchingLocatorException(f"No matching locator for {locator}")
-        # TODO: update the ContextNode API to have refresh functiont that takes a new context and the max depth
+        # TODO: update the ContextNode API to have refresh function that takes a new context and the max depth
         node._jab_wrapper = self.jab_wrapper
         node._max_depth = search_depth + node.ancestry
         node.refresh()

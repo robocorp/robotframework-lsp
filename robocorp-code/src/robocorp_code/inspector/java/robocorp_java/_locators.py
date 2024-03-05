@@ -10,9 +10,11 @@ IntegerLocatorTypes = [
     "y",
     "width",
     "height",
+    "row",
+    "col",
     "indexInParent",
+    "childrenCount",
     "ancestry",
-    "childrentCount",
 ]
 
 

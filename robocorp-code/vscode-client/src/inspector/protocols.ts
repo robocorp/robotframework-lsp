@@ -135,17 +135,27 @@ export type ImagePickResponse = {
 export type JavaAppDetails = { pid: number; hwnd: number; title: string };
 export type JavaAppsResponse = JavaAppDetails[];
 export type JavaAppElement = {
-    name: string,
-    role: string,
-    description: string,
-    states: string,
-    indexInParent: number,
-    childrenCount: number,
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    ancestry: number,
+    name: string;
+    role: string;
+    description: string;
+    states: string[];
+    statesString: string;
+    checked: boolean;
+    selected: boolean;
+    visible: boolean;
+    showing: boolean;
+    focusable: boolean;
+    enabled: boolean;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    row: number;
+    col: number;
+    indexInParent: number;
+    childrenCount: number;
+    text: string;
+    ancestry: number;
 };
 export type JavaAppTree = JavaAppElement[];
 export type JavaAppTreeResponse = {
