@@ -2,7 +2,6 @@ from typing import List, Optional, Sequence, Union
 
 from JABWrapper.context_tree import (  # type: ignore
     ContextNode,
-    ContextTree,
     SearchElement,
 )
 
@@ -48,7 +47,7 @@ def _parse_locator(locator: str, strict_default=False):
 
 
 def find_elements_from_tree(
-    context_tree: ContextTree,
+    context_tree: ContextNode,
     locator: str,
     index: Optional[int] = None,
 ) -> Union[ContextNode, List[ContextNode]]:

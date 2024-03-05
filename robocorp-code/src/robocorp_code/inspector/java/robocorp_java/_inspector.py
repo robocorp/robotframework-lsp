@@ -77,8 +77,6 @@ class ElementInspector:
     def _collect_from_context(
         self, jab_wrapper: JavaAccessBridgeWrapper, locator: str, search_depth=1
     ) -> ColletedTreeTypedDict:
-        from threading import RLock
-
         from ._errors import ContextNotAvailable, NoMatchingLocatorException
         from ._locators import find_elements_from_tree
 
@@ -94,20 +92,16 @@ class ElementInspector:
         node = match[0] if isinstance(match, List) and len(match) > 0 else match
         if not isinstance(node, ContextNode):
             raise NoMatchingLocatorException(f"No matching locator for {locator}")
-        self._context = ContextNode(
-            jab_wrapper,
-            node.context,
-            RLock(),
-            node.ancestry,
-            True,
-            search_depth + node.ancestry,
-        )
+        # TODO: update the ContextNode API to have refresh functiont that takes a new context and the max depth
+        node._jab_wrapper = jab_wrapper
+        node._max_depth = search_depth + node.ancestry
+        node.refresh()
         matches: (ContextNode | List[ContextNode]) = []
         try:
             matches = find_elements_from_tree(self._context, locator)
         except AttributeError as e:
             log.error(e)
-        return {"matches": matches, "tree": self._context}
+        return {"matches": matches, "tree": node}
 
     @_start_event_pump
     def collect_tree(
