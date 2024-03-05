@@ -1,12 +1,6 @@
 import threading
-<<<<<<< HEAD
-from typing import TYPE_CHECKING, Tuple
 from queue import Queue
-from typing import Literal, Optional, Callable
-=======
-from queue import Queue
-from typing import Literal, Optional, TYPE_CHECKING
->>>>>>> f5da5c0e ([skip ci] Finished scaffolding for the Java Inspector.)
+from typing import Literal, Optional, TYPE_CHECKING, Callable, Tuple
 
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.protocols import ActionResultDict, IConfig, IEndPoint

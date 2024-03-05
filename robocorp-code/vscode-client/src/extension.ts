@@ -149,6 +149,7 @@ import {
     ROBOCORP_DEBUG_ACTION_FROM_ACTION_PACKAGE,
     ROBOCORP_CREATE_ACTION_PACKAGE,
     ROBOCORP_CREATE_TASK_OR_ACTION_PACKAGE,
+    ROBOCORP_NEW_ROBOCORP_INSPECTOR_JAVA,
 } from "./robocorpCommands";
 import { installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
@@ -678,6 +679,10 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
     C.register(
         ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE,
         async () => await showInspectorUI(context, IAppRoutes.IMAGE_INSPECTOR)
+    );
+    C.register(
+        ROBOCORP_NEW_ROBOCORP_INSPECTOR_JAVA,
+        async () => await showInspectorUI(context, IAppRoutes.JAVA_INSPECTOR)
     );
 
     // i.e.: allow other extensions to also use our submit issue api.

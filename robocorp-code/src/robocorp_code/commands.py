@@ -53,6 +53,7 @@ ROBOCORP_OPEN_CLOUD_HOME = "robocorp.openCloudHome"  # Open cloud home
 ROBOCORP_NEW_ROBOCORP_INSPECTOR_BROWSER = "robocorp.newRobocorpInspectorBrowser"  # Add Web Locator
 ROBOCORP_NEW_ROBOCORP_INSPECTOR_WINDOWS = "robocorp.newRobocorpInspectorWindows"  # Add Windows Locator
 ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE = "robocorp.newRobocorpInspectorImage"  # Add Image Locator
+ROBOCORP_NEW_ROBOCORP_INSPECTOR_JAVA = "robocorp.newRobocorpInspectorJava"  # Add Java Locator
 ROBOCORP_OPEN_PLAYWRIGHT_RECORDER = "robocorp.openPlaywrightRecorder"  # Open Playwright Recorder
 ROBOCORP_OPEN_PLAYWRIGHT_RECORDER_INTERNAL = "robocorp.openPlaywrightRecorder.internal"  # Open Playwright Recorder Internal
 ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR = "robocorp.editRobocorpInspectorLocator"  # Edit locator

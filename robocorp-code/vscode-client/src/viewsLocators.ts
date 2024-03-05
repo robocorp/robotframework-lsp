@@ -89,12 +89,14 @@ export class LocatorsTreeDataProvider
         const type: string = entry instanceof LocatorEntryNode ? entry.locatorType : entry.type;
         // https://microsoft.github.io/vscode-codicons/dist/codicon.html
         let iconPath = "file-media";
-        if (type === InspectorType.Browser) {
+        if (type === InspectorType.WebInspector) {
             iconPath = "globe";
-        } else if (type === InspectorType.Image) {
+        } else if (type === InspectorType.ImageInspector) {
             iconPath = "file-media";
-        } else if (type === InspectorType.Windows) {
+        } else if (type === InspectorType.WindowsInspector) {
             iconPath = "multiple-windows";
+        } else if (type === InspectorType.JavaInspector) {
+            iconPath = "coffee";
         } else if (type === InspectorType.PlaywrightRecorder) {
             iconPath = "browser";
         } else if (type === "error" || type === "info") {
@@ -109,15 +111,15 @@ export class LocatorsTreeDataProvider
             const treeItem = new vscode.TreeItem(node.caption);
             treeItem.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
             treeItem.iconPath = new vscode.ThemeIcon(iconPath);
-            if (entry.locatorType === InspectorType.Browser) {
+            if (entry.locatorType === InspectorType.WebInspector) {
                 treeItem.contextValue = "newBrowserLocator";
                 treeItem.tooltip = "Browser locators saved for future references";
-            } else if (entry.locatorType === InspectorType.Image) {
+            } else if (entry.locatorType === InspectorType.ImageInspector) {
                 treeItem.contextValue = "newImageLocator";
-            } else if (entry.locatorType === InspectorType.Windows) {
+            } else if (entry.locatorType === InspectorType.WindowsInspector) {
                 treeItem.contextValue = "newWindowsLocator";
-            } else if (entry.locatorType === InspectorType.WebRecorder) {
-                treeItem.contextValue = "newWebRecorder";
+            } else if (entry.locatorType === InspectorType.JavaInspector) {
+                treeItem.contextValue = "newJavaLocator";
             }
             return treeItem;
         }
@@ -185,9 +187,10 @@ class LocatorCreationNode {
 function buildTree(entries: LocatorEntry[]): any[] {
     // Roots may mix LocatorEntryNode along with LocatorEntry (if it's an error).
     const roots: any[] = [
-        new LocatorEntryNode(InspectorType.Browser, "Web", true),
-        new LocatorEntryNode(InspectorType.Windows, "Windows", true),
-        new LocatorEntryNode(InspectorType.Image, "Image", true),
+        new LocatorEntryNode(InspectorType.WebInspector, "Web", true),
+        new LocatorEntryNode(InspectorType.WindowsInspector, "Windows", true),
+        new LocatorEntryNode(InspectorType.ImageInspector, "Image", true),
+        new LocatorEntryNode(InspectorType.JavaInspector, "Java", true),
         new LocatorEntryNode(InspectorType.PlaywrightRecorder, "Playwright", true),
     ];
     const typeToElement = {};
