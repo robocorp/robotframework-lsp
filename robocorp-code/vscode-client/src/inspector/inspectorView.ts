@@ -263,6 +263,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
         sendRequest("windowsInspectorStopHighlight", {});
         sendRequest("javaInspectorStopPick", {});
         sendRequest("javaInspectorStopHighlight", {});
+        // TODO: kill all internal threads when the Inspector is closed
         ROBOCORP_INSPECTOR_PANEL = undefined;
     });
 
@@ -502,7 +503,6 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                             const actionResult: ActionResult<any> = await sendRequest("javaInspectorStartHighlight", {
                                 locator: command["locator"],
                                 search_depth: command["depth"] || 8,
-                                search_strategy: command["strategy"] || "all",
                             });
                             OUTPUT_CHANNEL.appendLine(`> Result: Start Highlighting: ${JSON.stringify(actionResult)}`);
                             panel.webview.postMessage(

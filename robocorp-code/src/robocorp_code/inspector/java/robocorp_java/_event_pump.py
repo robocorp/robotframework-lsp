@@ -40,8 +40,6 @@ class EventPumpThread(threading.Thread):
                 return True
         except Exception as err:
             log.error(f"Pump error: {err}")
-        finally:
-            log.info("Stopped processing events")
         return False
 
     def run(self) -> None:

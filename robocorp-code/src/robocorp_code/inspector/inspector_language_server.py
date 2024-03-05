@@ -6,6 +6,8 @@ from typing import Literal, Optional
 from robocorp_ls_core.protocols import ActionResultDict
 from robocorp_ls_core.robotframework_log import get_logger
 
+from robocorp_code.inspector.common import LogLevel, log_call
+
 log = get_logger(__name__)
 
 
@@ -386,9 +388,8 @@ class InspectorLanguageServer:
             {"root_directory": root_directory, "image_base64": image_base64},
         )
 
+    @log_call(log_level=LogLevel.INFO)
     def m_java_inspector_parse_locator(self, locator: str):
-        log.info("=== LS: JAVA INSPECTOR - parse locator:", locator)
-
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         # Not blocking (return callback to run in thread).
         return partial(
@@ -397,9 +398,8 @@ class InspectorLanguageServer:
             {"locator": locator},
         )
 
+    @log_call(log_level=LogLevel.INFO)
     def m_java_inspector_set_window_locator(self, locator: str):
-        log.info("=== LS: JAVA INSPECTOR - set window locator:", locator)
-
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         # Not blocking (return callback to run in thread).
         return partial(
@@ -408,9 +408,8 @@ class InspectorLanguageServer:
             {"locator": locator},
         )
 
+    @log_call(log_level=LogLevel.INFO)
     def m_java_inspector_list_windows(self):
-        log.info("=== LS: JAVA INSPECTOR - list windows")
-
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         # Not blocking (return callback to run in thread).
         return partial(
@@ -419,9 +418,8 @@ class InspectorLanguageServer:
             {},
         )
 
+    @log_call(log_level=LogLevel.INFO)
     def m_java_inspector_start_pick(self):
-        log.info("=== LS: JAVA INSPECTOR - start pick")
-
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         # Not blocking (return callback to run in thread).
         return partial(
@@ -430,9 +428,8 @@ class InspectorLanguageServer:
             {},
         )
 
+    @log_call(log_level=LogLevel.INFO)
     def m_java_inspector_stop_pick(self):
-        log.info("=== LS: JAVA INSPECTOR - stop pick")
-
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         # Not blocking (return callback to run in thread).
         return partial(
@@ -441,14 +438,12 @@ class InspectorLanguageServer:
             {},
         )
 
+    @log_call(log_level=LogLevel.INFO)
     def m_java_inspector_start_highlight(
         self,
         locator: str,
         search_depth: int = 8,
-        search_strategy: Literal["siblings", "all"] = "all",
     ):
-        log.info("=== LS: JAVA INSPECTOR - start highlight")
-
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         # Not blocking (return callback to run in thread).
         return partial(
@@ -457,17 +452,15 @@ class InspectorLanguageServer:
             dict(
                 locator=locator,
                 search_depth=search_depth,
-                search_strategy=search_strategy,
             ),
         )
 
+    @log_call(log_level=LogLevel.INFO)
     def m_java_inspector_collect_tree(
         self,
         locator: str,
         search_depth: int = 8,
     ):
-        log.info("=== LS: JAVA INSPECTOR - collect tree")
-
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         # Not blocking (return callback to run in thread).
         return partial(
@@ -479,9 +472,8 @@ class InspectorLanguageServer:
             ),
         )
 
+    @log_call(log_level=LogLevel.INFO)
     def m_java_inspector_stop_highlight(self):
-        log.info("=== LS: JAVA INSPECTOR - stop highlight")
-
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         # Not blocking (return callback to run in thread).
         return partial(

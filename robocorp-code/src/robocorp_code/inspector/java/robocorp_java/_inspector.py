@@ -1,5 +1,4 @@
-from functools import wraps
-from typing import Any, Callable, List, Optional, TypedDict, TypeVar, Union, cast
+from typing import Any, Callable, List, Optional, TypedDict, TypeVar, Union
 
 from JABWrapper.context_tree import ContextNode, ContextTree  # type: ignore
 from JABWrapper.jab_wrapper import JavaAccessBridgeWrapper, JavaWindow  # type: ignore
@@ -22,48 +21,55 @@ TFun = TypeVar("TFun", bound=Callable[..., Any])
 class ElementInspector:
     def __init__(self) -> None:
         # TODO: the context now stores only the latest searched ContextNode and it's children
-        # to the given search depth. When user traveres back up the tree we would need to have
+        # to the given search depth. When user traverses back up the tree we would need to have
         # the cached snapshot of all the previous searches in store.
         #
         # We need to store the whole tree here and always just update the tree from the locator
         # the user is picking and update the matched node and it's children.
         #
         # This will also need an update to the JavaAccessBridgeWrapper to have an API to update only
-        # it and it's childen (refresh is there, but does it respect search depth?).
+        # it and it's children (refresh is there, but does it respect search depth?).
+        from ._event_pump import EventPumpThread
+
         self._context: Optional[ContextNode] = None
         self._selected_window: Optional[str] = None
+        self._event_pump_thread: Optional[EventPumpThread] = None
+        self._jab_wrapper: Optional[JavaAccessBridgeWrapper] = None
 
-    @staticmethod
-    def _start_event_pump(func: TFun) -> TFun:
-        @wraps(func)
-        def wrapper(self: "ElementInspector", *args, **kwargs):
+    @property
+    def event_pump_thread(self):
+        if not self._event_pump_thread:
             from ._event_pump import EventPumpThread
 
-            event_pump_thread = EventPumpThread()
-            event_pump_thread.start()
-            try:
-                jab_wrapper = event_pump_thread.get_wrapper()
-                ret = func(self, jab_wrapper, *args, **kwargs)
-            finally:
-                event_pump_thread.stop()
-            return ret
+            self._event_pump_thread = EventPumpThread()
+            self._event_pump_thread.start()
 
-        return cast(TFun, wrapper)
+        return self._event_pump_thread
 
-    @_start_event_pump
-    def list_windows(self, jab_wrapper: JavaAccessBridgeWrapper) -> List[JavaWindow]:
-        return jab_wrapper.get_windows()
+    @property
+    def jab_wrapper(self):
+        try:
+            if not self._jab_wrapper:
+                self._jab_wrapper = self.event_pump_thread.get_wrapper()
+            return self._jab_wrapper
+        except Exception as e:
+            log.error(e)
+            self.event_pump_thread.stop()
+            self._event_pump_thread = None
+            self._jab_wrapper = None
+
+    def list_windows(self) -> List[JavaWindow]:
+        return self.jab_wrapper.get_windows()
 
     def set_window(self, window: str) -> None:
         self._selected_window = window
 
     def _collect_from_root(
         self,
-        jab_wrapper: JavaAccessBridgeWrapper,
         locator: Optional[str],
         search_depth=1,
     ) -> ColletedTreeTypedDict:
-        self._context = ContextTree(jab_wrapper, search_depth).root
+        self._context = ContextTree(self.jab_wrapper, search_depth).root
         matches: Union[ContextNode, List[ContextNode]] = []
         if locator:
             from ._locators import find_elements_from_tree
@@ -75,7 +81,7 @@ class ElementInspector:
         return {"matches": matches, "tree": self._context}
 
     def _collect_from_context(
-        self, jab_wrapper: JavaAccessBridgeWrapper, locator: str, search_depth=1
+        self, locator: str, search_depth=1
     ) -> ColletedTreeTypedDict:
         from ._errors import ContextNotAvailable, NoMatchingLocatorException
         from ._locators import find_elements_from_tree
@@ -87,15 +93,16 @@ class ElementInspector:
             raise ContextNotAvailable(
                 "Cannot search from context as it hasn't been created yet"
             )
-        self._context._jab_wrapper = jab_wrapper
         match = find_elements_from_tree(self._context, locator)
+
         node = match[0] if isinstance(match, List) and len(match) > 0 else match
         if not isinstance(node, ContextNode):
             raise NoMatchingLocatorException(f"No matching locator for {locator}")
         # TODO: update the ContextNode API to have refresh functiont that takes a new context and the max depth
-        node._jab_wrapper = jab_wrapper
+        node._jab_wrapper = self.jab_wrapper
         node._max_depth = search_depth + node.ancestry
         node.refresh()
+
         matches: (ContextNode | List[ContextNode]) = []
         try:
             matches = find_elements_from_tree(self._context, locator)
@@ -103,25 +110,19 @@ class ElementInspector:
             log.error(e)
         return {"matches": matches, "tree": node}
 
-    @_start_event_pump
     def collect_tree(
         self,
-        jab_wrapper: JavaAccessBridgeWrapper,
         search_depth: int,
         locator: Optional[str] = None,
     ) -> ColletedTreeTypedDict:
-        from ._errors import LocatorNotProvidedException, NoWindowSelected
+        from ._errors import NoWindowSelected
 
         if not self._selected_window:
             raise NoWindowSelected("Select window first")
 
-        jab_wrapper.switch_window_by_title(self._selected_window)
+        self.jab_wrapper.switch_window_by_title(self._selected_window)
 
-        if not self._context:
-            return self._collect_from_root(jab_wrapper, locator, search_depth)
+        if not self._context or not locator:
+            return self._collect_from_root(locator, search_depth)
         else:
-            if not locator:
-                raise LocatorNotProvidedException(
-                    "Locator needs to be provided to search the context"
-                )
-            return self._collect_from_context(jab_wrapper, locator, search_depth)
+            return self._collect_from_context(locator, search_depth)

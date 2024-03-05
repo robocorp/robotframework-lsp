@@ -140,9 +140,8 @@ class JavaInspector:
             jabswitch = os.path.join(java_home, "jre", "bin", "jabswitch.exe")
             if not os.path.exists(jabswitch):
                 raise Exception("Could not find the jabswitch")
-            log.info("=== JAVA: jabswitch:", jabswitch)
             output = subprocess.check_output([jabswitch, "-enable"])
-            log.info("=== JAVA: jabswitch cmd:", output)
+            log.info("=== JAVA: enabling jabswitch:", output)
         except Exception as e:
             log.info("=== JAVA: jabswitch exception:", e)
             pass
@@ -151,16 +150,14 @@ class JavaInspector:
         """
         List all available Java applications.
         """
-        log.info(f"=== JAVA: list_windows")
         windows = self._inspector.list_windows()
-        log.info(f"=== JAVA: list_windows: wins:", windows)
         return [to_window_info(window) for window in windows]
 
     def set_window_locator(self, window: str) -> None:
         """
         Set the current Java window user chose.
         """
-        log.info(f"Selected window: {window}")
+        log.info(f"=== JAVA: Selected window: {window}")
         self._inspector.set_window(window)
 
     def collect_tree(
@@ -169,8 +166,6 @@ class JavaInspector:
         """
         Collect the app element hierarchy from the locator match with given search depth.
         """
-        log.info(f"=== JAVA: collect_tree: {locator}")
-
         matches_and_hierarchy = self._inspector.collect_tree(search_depth, locator)
         log.info(
             f"=== JAVA: collect_tree: matches_and_hierarchy:", matches_and_hierarchy
@@ -183,7 +178,11 @@ class JavaInspector:
     def stop_pick(self) -> None:
         pass
 
-    def start_highlight(self) -> None:
+    def start_highlight(
+        self,
+        locator: str,
+        search_depth: int = 8,
+    ) -> None:
         """
         Can we use the same Windows highlight implementation?
 
@@ -195,6 +194,6 @@ class JavaInspector:
 
     def stop_highlight(self) -> None:
         """
-        Dispose the highligth thread.
+        Dispose the highlight thread.
         """
         pass
