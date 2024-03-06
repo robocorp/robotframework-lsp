@@ -1,10 +1,12 @@
 ## Robocorp VS Code extension
 
-The Robocorp extension makes it easy to create Python based automation projects.
+The Robocorp extension makes it easy to create Python based automation projects and AI Actions.
 
-You can use this extension as part of the [Robocorp Automation Stack](https://github.com/robocorp/rcc), which has been optimized for tasks such as robotic process automation (RPA), web scraping and IT automation. It scales up from simple image fetching or API calling all the way to complex process automation workflows.
+You can use this extension as part of the [Robocorp Automation Stack](https://github.com/robocorp/rcc), which has been optimized for Python Automation and creating AI actions. It scales up from simple image fetching or API calling all the way to complex process enterprise automation workflows.
 
 Main features include:
+
+-   **Create, run and debug AI Actions** - Robocorp AI Actions provide end-to-end stack supporting every type of connection between AI and your apps and data. You are in control where to run the code and everything is built for easiness, security, and scalability. 
 
 -   **Automatic configuration of dependencies** - Every Python oriented project uses its own lightweight virtual environment and runs in isolation.
 
@@ -12,9 +14,9 @@ Main features include:
 
 -   **Create, run and debug projects** - Do these with ease while developing Tasks to automate applications
 
--   **Deploy projects to Robocorp Cloud** - Run unattended automation in a safe, reliable and easy to use Cloud Platform.
+-   **Deploy projects to Robocorp Control Room** - Run unattended automation in a safe, reliable and easy to use Cloud Platform.
 
-> Note: the use of cloud-based orchestration in [Robocorp Cloud](https://robocorp.com/robocorp-cloud) requires a free account.
+> Note: the use of cloud-based orchestration in [Robocorp Control Room](https://cloud.robocorp.com/) requires a free account.
 
 ![Example of a Robot running with the extension](images/gif_run.gif)
 
@@ -24,7 +26,7 @@ Main features include:
 
 2. Open the command palette - (Windows, Linux): `CTRL-SHIFT-P` (macOS): `CMD-SHIFT-P`
 
-3. Select the command `Robocorp: Run Robot`
+3. Select the command `Robocorp: Run Task Package (Robot)`
 
 ![image of command palette](images/command-palette.png)
 
@@ -33,21 +35,19 @@ Main features include:
 > Note: You can do the same actions from the side bar after opening the Extension tab in VS Code.
 
 Find more examples and tutorials at the [Robocorp Portal](https://robocorp.com/robots/).
-You can also find helpful videos on the [YouTube Robocorp channel](https://youtu.be/zQQl8xZkGko?list=PLfXJKwwF049DIZxvwYuBgahHcDDGPpfN6).
+You can also find helpful videos on the [YouTube Robocorp channel](https://www.youtube.com/watch?v=FaN7IUA8a0w&list=PLfXJKwwF049Dpl35x7i6sTTvIzlUaMChU).
 
 Full instructions are available at the [Product Manual](https://robocorp.com/docs/product-manuals/robocorp-code) for the VS Code Extension.
 
-This is under active development, so please [contact us](#Reporting-Issues) for issues and feature requests.
+This is under active development, so please [contact us](https://robocorp.com/contact-us) for issues and feature requests.
 
 ### Requirements
 
 Supported operating systems: Windows 10, Linux or Mac OS.
 
-The [Robot Framework Language Server](https://marketplace.visualstudio.com/items?itemName=robocorp.robotframework-lsp) extension provides extra Robot Framework related capabilities, including code completion and formatting, as well as syntax validation and highlighting. It is highly recommended to install it alongside this Robocorp Code extension.
-
 ### Installation
 
-Find the full installation instructions at [https://robocorp.com/docs/product-manuals/robocorp-code](https://robocorp.com/docs/product-manuals/robocorp-code).
+Find the full installation instructions at [https://robocorp.com/docs/visual-studio-code/extension-features](https://robocorp.com/docs/visual-studio-code/extension-features).
 
 ### Configuration
 
@@ -65,15 +65,14 @@ During the first activation, the extension will download additional dependencies
     -   Code Lenses to `Run Task` / `Debug Task` for tasks decorated with `@task`.
     -   `ROBO TASKS OUTPUT` which shows the output of tasks run with `@task`.
 -   Support for [Work Items](https://robocorp.com/docs/developer-tools/visual-studio-code/extension-features#using-work-items).
--   Automatic bootstrapping of the Python environment for the `Robot Framework Language Server`.
--   Create a Robot from a pre-configured template using the `Robocorp: Create Robot` action.
--   Upload a Robot to the cloud with the `Robocorp: Upload Robot to the Robocorp Cloud` action.
--   Link to the cloud with the `Robocorp: Link to Robocorp Cloud` action.
--   Unlink from the cloud with the `Robocorp: Unlink and remove credentials from Robocorp Cloud` action.
+-   Create a Task Package from a pre-configured template using the `Robocorp: Create Task Package (Robot)` action.
+-   Upload a Robot to the cloud with the `Robocorp: Upload Task Package (Robot) to Control Room` action.
+-   Link to the cloud with the `Robocorp: Link to Control Room` action.
+-   Unlink from the cloud with the `Robocorp: Unlink and remove credentials from Control Room` action.
 -   Verify Robot for inconsistencies with `Robocorp: Robot Configuration Diagnostics` action.
--   Create a terminal with a Robot environment through the `Robocorp: Terminal with Robot environment` action.
--   Run a Robot with the `Robocorp: Run Robot` action.
--   Debug a Robot with the `Robocorp: Debug Robot` action. - It's possible to debug plain Python tasks using the Python extension or Robot Framework tasks using the Robot Framework Language Server (in which case the task must start with `python -m robot` and finish with the folder/filename to be run).
+-   Create a terminal with a Robot environment through the `Robocorp: Terminal with Task Package (Robot) environment` action.
+-   Run a Robot with the `Robocorp: Run Task Package (Robot)` action.
+-   Debug a Robot with the `Robocorp: Debug Task Package (Robot)` action. - It's possible to debug plain Python tasks using the Python extension or Robot Framework tasks using the Robot Framework Language Server (in which case the task must start with `python -m robot` and finish with the folder/filename to be run).
 -   When a [robot.yaml](https://robocorp.com/docs/setup/robot-yaml-format) is found, it utilises the related Python environment when running/debugging `.robot` files using the RobotFramework Language Server.
 -   Set the pythonPath configuration to get code completion in the Python extension through the `Set pythonPath based on robot.yaml` action.
 -   View, launch and debug Robots from the `Robots` view.
