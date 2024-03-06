@@ -733,42 +733,16 @@ class _JavaParseLocator(_JavaBaseCommand):
 
     def __call__(self, java_inspector_thread: _JavaInspectorThread) -> ActionResultDict:
         locator = self.locator
-        from typing import List
 
-        from robocorp_code.inspector.windows.robocorp_windows._errors import (
-            InvalidLocatorError,
-        )
-        from robocorp_code.inspector.windows.robocorp_windows._match_ast import (
-            OrSearchParams,
-            SearchParams,
-            _build_locator_match,
-        )
+        from robocorp_code.inspector.java.robocorp_java._locators import parse_locator
 
         try:
-            locator_match = _build_locator_match(locator)
-            only_ors: List[OrSearchParams] = []
-            for params in locator_match.flattened:
-                if isinstance(params, OrSearchParams):
-                    only_ors.append(params)
-                else:
-                    if not isinstance(params, SearchParams):
-                        raise InvalidLocatorError(
-                            "Unable to flatten the or/and conditions as expected in the "
-                            "locator.\nPlease report this as an error to robocorp-code."
-                            f"\nLocator: {locator}"
-                        )
-                    if params.empty():
-                        raise InvalidLocatorError(
-                            "Unable to flatten the or/and conditions as expected in the "
-                            "locator.\nPlease report this as an error to robocorp-code."
-                            f"\nLocator: {locator}"
-                        )
-                    only_ors.append(OrSearchParams(params))
-
-            # It worked (although it may still have warnings to the user).
+            matches = parse_locator(locator)
             return {
                 "success": True,
-                "message": "\n".join(locator_match.warnings),
+                "message": None
+                if len(matches) > 0
+                else "Locator could not be validated correctly. Please make sure the syntax is correct.",
                 "result": None,
             }
         except Exception as e:

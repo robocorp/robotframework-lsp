@@ -18,7 +18,7 @@ IntegerLocatorTypes = [
 ]
 
 
-def _parse_locator(locator: str, strict_default=False):
+def parse_locator(locator: str, strict_default=False):
     # TODO: from rpaframework, refactor if needed
     levels = locator.split(">")
     levels = [lvl.strip() for lvl in levels]
@@ -54,7 +54,7 @@ def find_elements_from_tree(
     index: Optional[int] = None,
 ) -> Union[ContextNode, List[ContextNode]]:
     # TODO: from rpaframework, refactor if needed
-    searches = _parse_locator(locator)
+    searches = parse_locator(locator)
     elements = []
     for lvl, search_elements in enumerate(searches):
         if lvl == 0:
