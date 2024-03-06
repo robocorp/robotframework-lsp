@@ -1,10 +1,12 @@
 ## Robocorp VS Code extension
 
-The Robocorp extension makes it easy to create Python based automation projects.
+The Robocorp extension makes it easy to create Python based automation projects and AI Actions.
 
-You can use this extension as part of the [Robocorp Automation Stack](https://github.com/robocorp/rcc), which has been optimized for web scraping, IT automation and AI actions. It scales up from simple image fetching or API calling all the way to complex process automation workflows.
+You can use this extension as part of the [Robocorp Automation Stack](https://github.com/robocorp/rcc), which has been optimized for Python Automation and creating AI actions. It scales up from simple image fetching or API calling all the way to complex process enterprise automation workflows.
 
 Main features include:
+
+-   **Create, run and debug AI Actions** - Robocorp AI Actions provide end-to-end stack supporting every type of connection between AI and your apps and data. You are in control where to run the code and everything is built for easiness, security, and scalability. 
 
 -   **Automatic configuration of dependencies** - Every Python oriented project uses its own lightweight virtual environment and runs in isolation.
 
@@ -12,7 +14,7 @@ Main features include:
 
 -   **Create, run and debug projects** - Do these with ease while developing Tasks to automate applications
 
--   **Deploy projects to Robocorp Cloud** - Run unattended automation in a safe, reliable and easy to use Cloud Platform.
+-   **Deploy projects to Robocorp Control Room** - Run unattended automation in a safe, reliable and easy to use Cloud Platform.
 
 > Note: the use of cloud-based orchestration in [Robocorp Control Room](https://cloud.robocorp.com/) requires a free account.
 
@@ -63,7 +65,7 @@ During the first activation, the extension will download additional dependencies
     -   Code Lenses to `Run Task` / `Debug Task` for tasks decorated with `@task`.
     -   `ROBO TASKS OUTPUT` which shows the output of tasks run with `@task`.
 -   Support for [Work Items](https://robocorp.com/docs/developer-tools/visual-studio-code/extension-features#using-work-items).
--   Create a Robot from a pre-configured template using the `Robocorp: Create Task Package (Robot)` action.
+-   Create a Task Package from a pre-configured template using the `Robocorp: Create Task Package (Robot)` action.
 -   Upload a Robot to the cloud with the `Robocorp: Upload Task Package (Robot) to Control Room` action.
 -   Link to the cloud with the `Robocorp: Link to Control Room` action.
 -   Unlink from the cloud with the `Robocorp: Unlink and remove credentials from Control Room` action.
