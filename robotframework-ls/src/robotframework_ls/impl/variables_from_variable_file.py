@@ -18,8 +18,8 @@ class VariablesFromVariablesFileLoader:
     __repr__ = __str__
 
     def _iter_vars(self, content):
-        start_multiline= ["(", "[", "{"]
-        end_multiline= [")", "]", "}"]
+        start_multiline = ["(", "[", "{"]
+        end_multiline = [")", "]", "}"]
         multiline = ""
         multiple_lines = 0
         for lineno, line in enumerate(content.splitlines()):
