@@ -1,5 +1,3 @@
-message: null
-result:
 - name: my_action
   range:
     end:
@@ -9,4 +7,12 @@ result:
       character: 4
       line: 5
   uri: my_action.py
-success: true
+- name: my_action_2
+  range:
+    end:
+      character: 15
+      line: 10
+    start:
+      character: 4
+      line: 10
+  uri: my_action.py

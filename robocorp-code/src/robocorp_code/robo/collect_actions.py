@@ -66,6 +66,11 @@ def _collect_actions_from_file(p: Path) -> Iterator[ast_module.FunctionDef]:
     for _stack, node in _iter_nodes(ast, recursive=False):
         if isinstance(node, ast_module.FunctionDef):
             for decorator in node.decorator_list:
+                if isinstance(decorator, ast_module.Call):
+                    # Case for @action(is_consequential=True)
+                    decorator = decorator.func
+
+                # Case for @action
                 if isinstance(decorator, ast_module.Name) and decorator.id == "action":
                     yield node
 

@@ -23,6 +23,7 @@ import {
     getWorkspaceDescription,
     selectWorkspace,
     showSelectOneStrQuickPick,
+    askForWs,
 } from "./ask";
 import { feedback, feedbackRobocorpCodeError, getEndpointUrl } from "./rcc";
 import { refreshCloudTreeView } from "./viewsRobocorp";
@@ -40,7 +41,12 @@ import {
 } from "./protocols";
 import { envVarsForOutViewIntegration } from "./output/outViewRunIntegration";
 import { connectWorkspace } from "./vault";
-import { isActionPackage } from "./common";
+import {
+    areThereRobotsInWorkspace,
+    isActionPackage,
+    isDirectoryAPackageDirectory,
+    verifyIfPathOkToCreatePackage,
+} from "./common";
 
 export interface ListOpts {
     showTaskPackages: boolean;
@@ -701,65 +707,20 @@ export async function runRobotRCC(noDebug: boolean, robotYaml: string, taskName:
 }
 
 export async function createRobot() {
-    let wsFolders: ReadonlyArray<WorkspaceFolder> = workspace.workspaceFolders;
-    if (!wsFolders) {
-        window.showErrorMessage("Unable to create Task Package (Robot) (no workspace folder is currently opened).");
-        return;
-    }
-
     // Start up async calls.
     let asyncListRobotTemplates: Thenable<ActionResult<RobotTemplate[]>> = commands.executeCommand(
         roboCommands.ROBOCORP_LIST_ROBOT_TEMPLATES_INTERNAL
     );
 
-    let asyncListLocalRobots: Thenable<ActionResult<LocalRobotMetadataInfo[]>> = commands.executeCommand(
-        roboCommands.ROBOCORP_LOCAL_LIST_ROBOTS_INTERNAL
-    );
-
-    let ws: WorkspaceFolder;
-    if (wsFolders.length == 1) {
-        ws = wsFolders[0];
-    } else {
-        ws = await window.showWorkspaceFolderPick({
-            "placeHolder": "Please select the workspace folder to create the Task Package (Robot).",
-            "ignoreFocusOut": true,
-        });
-    }
+    const robotsInWorkspacePromise: Promise<boolean> = areThereRobotsInWorkspace();
+    let ws: WorkspaceFolder | undefined = await askForWs();
     if (!ws) {
         // Operation cancelled.
         return;
     }
 
-    // Check if we still don't have a Robot in this folder (i.e.: if we have a Robot in the workspace
-    // root already, we shouldn't create another Robot inside it).
-    try {
-        let dirContents: [string, FileType][] = await vscode.workspace.fs.readDirectory(ws.uri);
-        for (const element of dirContents) {
-            if (element[0] === "robot.yaml") {
-                window.showErrorMessage(
-                    "It's not possible to create a Task Package in: " +
-                        ws.uri.fsPath +
-                        " because this workspace folder is already a Task or Action Package (nested Packages are not allowed)."
-                );
-                return;
-            }
-        }
-    } catch (error) {
-        logError("Error reading contents of: " + ws.uri.fsPath, error, "ACT_CREATE_ROBOT");
-    }
-
-    let actionResultListLocalRobots: ActionResult<LocalRobotMetadataInfo[]> = await asyncListLocalRobots;
-
-    let robotsInWorkspace = false;
-    if (!actionResultListLocalRobots.success) {
-        feedbackRobocorpCodeError("ACT_LIST_ROBOT");
-        window.showErrorMessage(
-            "Error listing robots: " + actionResultListLocalRobots.message + " (Robot creation will proceed)."
-        );
-        // This shouldn't happen, but let's proceed as if there were no Robots in the workspace.
-    } else {
-        let robotsInfo: LocalRobotMetadataInfo[] = actionResultListLocalRobots.result;
-        robotsInWorkspace = robotsInfo && robotsInfo.length > 0;
+    if (await isDirectoryAPackageDirectory(ws.uri)) {
+        return;
     }
 
     // Unfortunately vscode does not have a good way to request multiple inputs at once,
@@ -798,12 +759,13 @@ export async function createRobot() {
         return;
     }
 
+    const robotsInWorkspace: boolean = await robotsInWorkspacePromise;
     let useWorkspaceFolder: boolean;
     if (robotsInWorkspace) {
         // i.e.: if we already have robots, this is a multi-Robot workspace.
         useWorkspaceFolder = false;
     } else {
-        const USE_WORKSPACE_FOLDER_LABEL = "Use workspace folder";
+        const USE_WORKSPACE_FOLDER_LABEL = "Use workspace folder (recommended)";
         let target = await window.showQuickPick(
             [
                 {
@@ -811,7 +773,7 @@ export async function createRobot() {
                     "detail": "The workspace will only have a single Task Package.",
                 },
                 {
-                    "label": "Use child folder in workspace",
+                    "label": "Use child folder in workspace (advanced)",
                     "detail": "Multiple Task Packages can be created in this workspace.",
                 },
             ],
@@ -843,68 +805,19 @@ export async function createRobot() {
     }
 
     // Now, let's validate if we can indeed create a Robot in the given folder.
-    let dirUri = vscode.Uri.file(targetDir);
-    let directoryExists = true;
-    try {
-        let stat = await vscode.workspace.fs.stat(dirUri); // this will raise if the directory doesn't exist.
-        if (stat.type == FileType.File) {
-            window.showErrorMessage(
-                "It's not possible to create a Task Package in: " +
-                    ws.uri.fsPath +
-                    " because this points to a file which already exists (please erase this file and retry)."
-            );
-            return;
-        }
-    } catch (err) {
-        // ok, directory does not exist
-        directoryExists = false;
-    }
-    let force: boolean = false;
-    if (directoryExists) {
-        let isEmpty: boolean = true;
-        try {
-            // The directory already exists, let's see if it's empty (if it's not we need to check
-            // whether to force the creation of the Robot).
-            let dirContents: [string, FileType][] = await vscode.workspace.fs.readDirectory(dirUri);
-            for (const element of dirContents) {
-                if (element[0] != ".vscode") {
-                    // If there's just a '.vscode', proceed, otherwise,
-                    // we need to ask the user about overwriting it.
-                    isEmpty = false;
-                    break;
-                } else {
-                    force = true;
-                }
-            }
-        } catch (error) {
-            logError("Error reading contents of directory: " + dirUri, error, "ACT_CREATE_ROBOT_LIST_TARGET");
-        }
-        if (!isEmpty) {
-            const CANCEL = "Cancel Task Package (Robot) Creation";
-            // Check if the user wants to override the contents.
-            let target = await window.showQuickPick(
-                [
-                    {
-                        "label": "Create Task Package (Robot) anyways",
-                        "detail": "The Task Package (Robot) will be created and conflicting files will be overwritten.",
-                    },
-                    {
-                        "label": CANCEL,
-                        "detail": "No changes will be done.",
-                    },
-                ],
-                {
-                    "placeHolder": "The directory is not empty. How do you want to proceed?",
-                    "ignoreFocusOut": true,
-                }
-            );
-
-            if (!target || target["label"] == CANCEL) {
-                // Operation cancelled.
-                return;
-            }
+    const op = await verifyIfPathOkToCreatePackage(targetDir);
+    let force: boolean;
+    switch (op) {
+        case "force":
             force = true;
-        }
+            break;
+        case "empty":
+            force = false;
+            break;
+        case "cancel":
+            return;
+        default:
+            throw Error("Unexpected result: " + op);
     }
 
     OUTPUT_CHANNEL.appendLine("Creating Task Package (Robot) at: " + targetDir);
@@ -919,7 +832,7 @@ export async function createRobot() {
         } catch (error) {
             logError("Error refreshing file explorer.", error, "ACT_REFRESH_FILE_EXPLORER");
         }
-        window.showInformationMessage("Robot successfully created in:\n" + targetDir);
+        window.showInformationMessage("Task Package (Robot) successfully created in:\n" + targetDir);
     } else {
         OUTPUT_CHANNEL.appendLine("Error creating Task Package (Robot) at: " + targetDir);
         window.showErrorMessage(createRobotResult.message);

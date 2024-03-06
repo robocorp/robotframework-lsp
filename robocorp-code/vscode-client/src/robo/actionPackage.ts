@@ -1,13 +1,22 @@
-import { QuickPickItem, commands, window } from "vscode";
+import { QuickPickItem, WorkspaceFolder, commands, window } from "vscode";
 import * as vscode from "vscode";
+import { join, dirname } from "path";
 import * as roboCommands from "../robocorpCommands";
 import { ActionResult, IActionInfo, LocalRobotMetadataInfo } from "../protocols";
-import { isActionPackage } from "../common";
+import {
+    areThereRobotsInWorkspace,
+    isActionPackage,
+    isDirectoryAPackageDirectory,
+    verifyIfPathOkToCreatePackage,
+} from "../common";
 import { slugify } from "../slugify";
 import { fileExists, makeDirs } from "../files";
-import { QuickPickItemWithAction, showSelectOneQuickPick } from "../ask";
+import { QuickPickItemWithAction, askForWs, showSelectOneQuickPick } from "../ask";
 import * as path from "path";
-import { logError } from "../channel";
+import { OUTPUT_CHANNEL, logError } from "../channel";
+import { downloadOrGetActionServerLocation } from "../actionServer";
+import { createEnvWithRobocorpHome, getRobocorpHome } from "../rcc";
+import { execFilePromise } from "../subprocess";
 
 export interface QuickPickItemAction extends QuickPickItem {
     actionPackageUri: vscode.Uri;
@@ -202,4 +211,104 @@ export async function runActionFromActionPackage(
     };
     let debugSessionOptions: vscode.DebugSessionOptions = {};
     vscode.debug.startDebugging(undefined, debugConfiguration, debugSessionOptions);
+}
+
+export async function createActionPackage() {
+    const robotsInWorkspacePromise: Promise<boolean> = areThereRobotsInWorkspace();
+    const actionServerLocation = await downloadOrGetActionServerLocation();
+    if (!actionServerLocation) {
+        return;
+    }
+
+    let ws: WorkspaceFolder | undefined = await askForWs();
+    if (!ws) {
+        // Operation cancelled.
+        return;
+    }
+
+    if (await isDirectoryAPackageDirectory(ws.uri)) {
+        return;
+    }
+
+    const robotsInWorkspace: boolean = await robotsInWorkspacePromise;
+    let useWorkspaceFolder: boolean;
+    if (robotsInWorkspace) {
+        // i.e.: if we already have robots, this is a multi-Robot workspace.
+        useWorkspaceFolder = false;
+    } else {
+        const USE_WORKSPACE_FOLDER_LABEL = "Use workspace folder (recommended)";
+        let target = await window.showQuickPick(
+            [
+                {
+                    "label": USE_WORKSPACE_FOLDER_LABEL,
+                    "detail": "The workspace will only have a single Action Package.",
+                },
+                {
+                    "label": "Use child folder in workspace (advanced)",
+                    "detail": "Multiple Action Packages can be created in this workspace.",
+                },
+            ],
+            {
+                "placeHolder": "Where do you want to create the Action Package?",
+                "ignoreFocusOut": true,
+            }
+        );
+
+        if (!target) {
+            // Operation cancelled.
+            return;
+        }
+        useWorkspaceFolder = target["label"] == USE_WORKSPACE_FOLDER_LABEL;
+    }
+
+    let targetDir = ws.uri.fsPath;
+    if (!useWorkspaceFolder) {
+        let name: string = await window.showInputBox({
+            "value": "Example",
+            "prompt": "Please provide the name for the Action Package folder name.",
+            "ignoreFocusOut": true,
+        });
+        if (!name) {
+            // Operation cancelled.
+            return;
+        }
+        targetDir = join(targetDir, name);
+    }
+
+    // Now, let's validate if we can indeed create an Action Package in the given folder.
+    const op = await verifyIfPathOkToCreatePackage(targetDir);
+    let force: boolean;
+    switch (op) {
+        case "force":
+            force = true;
+            break;
+        case "empty":
+            force = false;
+            break;
+        case "cancel":
+            return;
+        default:
+            throw Error("Unexpected result: " + op);
+    }
+
+    const robocorpHome = await getRobocorpHome();
+    const env = createEnvWithRobocorpHome(robocorpHome);
+
+    const cwd = dirname(targetDir);
+    const useName = path.basename(targetDir);
+
+    try {
+        await execFilePromise(actionServerLocation, ["new", "--name", useName], { "env": env, "cwd": cwd });
+        try {
+            commands.executeCommand("workbench.files.action.refreshFilesExplorer");
+        } catch (error) {
+            logError("Error refreshing file explorer.", error, "ACT_REFRESH_FILE_EXPLORER");
+        }
+        window.showInformationMessage("Action Package successfully created in:\n" + targetDir);
+    } catch (err) {
+        const errorMsg = "Error creating Action Package at: " + targetDir;
+        logError(errorMsg, err, "ERR_CREATE_ACTION_PACKAGE");
+        OUTPUT_CHANNEL.appendLine(errorMsg);
+        window.showErrorMessage(errorMsg + " (see `OUTPUT > Robocorp Code` for more details).");
+    }
 }

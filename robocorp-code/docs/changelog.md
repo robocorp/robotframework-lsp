@@ -1,14 +1,18 @@
-Unreleased
+New in 1.18.0 (2024-02-29)
 -----------------------------
 
-- `package.yaml` file is now linted.
-- Hover support to get versions on `package.yaml`.
-- New action to `Run Action (from Action Package)`
-- New action to `Debug Action (from Action Package)`
+- (Action Package support) `package.yaml` file is now linted.
+- (Action Package support) Hover support to get versions on `package.yaml`.
+- (Action Package support) New action to `Run Action (from Action Package)`
+- (Action Package support) New action to `Debug Action (from Action Package)`
+- (Action Package support) Fixed issue collecting actions as `@action(is_consequential=True)`
+- (Action Package support) It's now possible to create a new Action Package directly from VSCode 
+- (Action Package support) Suggests the download of a newer version of the Action Server
 - (Web Inspector) Added the isolated environment to the browser configuration every time the browser is initialized and when it's getting installed
 - (Web Inspector) Fixing the issues on MacOS with the browser getting stuck until user restarts VSCode
 - (Web Inspector) New feature of changing the viewport resolution from the Web Inspector UI
 - (Web Inspector) Updated the vendored `robocorp-browser` to the latest version
+- RCC upgraded to to `v17.18.0`.
 
 New in 1.17.0 (2024-02-23)
 -----------------------------

@@ -73,6 +73,19 @@ COMMANDS = [
         server_handled=False,
         icon="$(add)",
     ),
+    Command(
+        "robocorp.createActionPackage",
+        "Create Action Package",
+        server_handled=False,
+        icon="$(add)",
+    ),
+    Command(
+        "robocorp.createTaskOrActionPackage",
+        "Create Action Package",
+        server_handled=False,
+        hide_from_command_palette=True,
+        icon="$(add)",
+    ),
     # Internal commands for robocorp.createRobot.
     Command(
         "robocorp.listRobotTemplates.internal",

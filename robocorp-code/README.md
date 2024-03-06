@@ -53,10 +53,13 @@ Find the full installation instructions at [https://robocorp.com/docs/product-ma
 
 During the first activation, the extension will download additional dependencies (such as Conda manager) that are required for it to run.
 
-### Features (1.17.0)
+### Features (1.18.0)
 
 -   Preliminary Support for [Robocorp Action Server](https://github.com/robocorp/robocorp/action_server) (Coding Actions for AIs).
-    -   Packages view supporting Action Packages. 
+    - Packages view supporting Action Packages.
+    - Create Action Package.
+    - Run/Debug Action from Action Package.
+    - Validation for [package.yaml](https://github.com/robocorp/robocorp/blob/master/action_server/docs/guides/01-package-yaml.md).
 -   Support for [Robo](https://github.com/robocorp/robocorp) (Robocorp's Python Framework for automation).
     -   Ctrl+Click on terminal for the 'Robocorp html Log` opens external browser.
     -   Code Lenses to `Run Task` / `Debug Task` for tasks decorated with `@task`.
