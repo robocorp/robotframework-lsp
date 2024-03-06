@@ -314,7 +314,7 @@ class RobotFrameworkServerApi(PythonLanguageServer):
                 self._variables_from_variables_files_loader = []
 
             else:
-                from robotframework_ls.impl.variables_from_variables_file import (
+                from robotframework_ls.impl.variables_from_variable_file import (
                     VariablesFromVariablesFileLoader,
                 )
 
