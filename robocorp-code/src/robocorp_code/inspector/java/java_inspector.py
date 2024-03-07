@@ -1,14 +1,24 @@
-import typing
-from typing import Any, Callable, List, Optional, TypedDict, cast
+import re
+import threading
+from typing import Any, Callable, List, Optional, Tuple, TypedDict, cast, Protocol
 
 from JABWrapper.context_tree import ContextNode  # type: ignore
 from JABWrapper.jab_wrapper import JavaWindow  # type: ignore
+
 from robocorp_ls_core.callbacks import Callback
 from robocorp_ls_core.robotframework_log import get_logger
 
 from robocorp_code.inspector.java.robocorp_java._inspector import ColletedTreeTypedDict
 
+# !!! BAD IMPORT
+# !!! please remove thiss
+from robocorp_code.inspector.windows.robocorp_windows._vendored.uiautomation import (
+    uiautomation,
+)
+
 log = get_logger(__name__)
+
+MAX_ELEMENTS_TO_HIGHLIGHT = 20
 
 JavaWindowInfoTypedDict = TypedDict(
     "JavaWindowInfoTypedDict",
@@ -46,7 +56,7 @@ class MatchesAndHierarchyTypedDict(TypedDict):
     hierarchy: List[LocatorNodeInfoTypedDict]
 
 
-class IOnPickCallback(typing.Protocol):
+class IOnPickCallback(Protocol):
     def __call__(self, locator_info_tree: List[dict]):
         pass
 
@@ -86,13 +96,35 @@ def to_matches_and_hierarchy(
     return {"matched_paths": matches, "hierarchy": hierarchy}
 
 
+def to_geometry(match_string: str) -> Optional[Tuple[int, int, int, int]]:
+    pattern = (
+        r"x:(?P<x>-?\d+)\s+y:(?P<y>-?\d+).+width:(?P<width>\d+).+height:(?P<height>\d+)"
+    )
+    values = re.search(pattern, match_string)
+    if values:
+        left = int(values.group("x"))
+        top = int(values.group("y"))
+        right = int(values.group("width")) + left
+        bottom = int(values.group("height")) + top
+        return left, top, right, bottom
+    else:
+        return None
+
+
 class JavaInspector:
     def __init__(self):
+        import threading
         from robocorp_code.inspector.java.robocorp_java._inspector import (
             ElementInspector,
         )
+        from robocorp_code.inspector.java.highlighter import TkHandlerThread
 
         self._inspector = ElementInspector()
+        self._tk_handler_thread: TkHandlerThread = TkHandlerThread()
+        self._tk_handler_thread.start()
+
+        self._timer_thread: Optional[threading.Timer] = None
+
         self.on_pick: IOnPickCallback = Callback()
         # make sure we have the access bridge dll inside the environment
         self.__inject_access_bridge_path()
@@ -183,17 +215,59 @@ class JavaInspector:
         locator: str,
         search_depth: int = 8,
     ) -> None:
-        """
-        Can we use the same Windows highlight implementation?
+        # import win32gui
 
-        This API should get the locator and find the element based on that locator.
-        The found element has x, y coordinates plus the width and the heigth fields
-        that we can use to calculate the borders for the highlited area.
-        """
-        pass
+        # handle = self.jab_wrapper.get_current_windows_handle()
+        # # pylint: disable=c-extension-no-member
+        # win32gui.ShowWindow(handle, win32con.SW_SHOW)
+        # # pylint: disable=c-extension-no-member
+        # win32gui.SetForegroundWindow(handle)
+
+        # kill the TK thread
+        self._tk_handler_thread.quitloop()
+        self._tk_handler_thread.destroy_tk_handler()
+        # recreate the TK thread
+        self._tk_handler_thread.create()
+        self._tk_handler_thread.loop()
+
+        try:
+            matches_and_hierarchy = self.collect_tree(
+                search_depth=search_depth, locator=locator
+            )
+        except Exception:
+            matches_and_hierarchy = {"hierarchy": [], "matched_paths": []}
+
+        matches = matches_and_hierarchy["matched_paths"]
+
+        # skipping displaying highlights if number of matches exceeds limit
+        if len(matches) > MAX_ELEMENTS_TO_HIGHLIGHT:
+            return matches_and_hierarchy
+
+        rects = []
+        for control_element in matches:
+            geometry = to_geometry(control_element)
+            if geometry:
+                left, top, right, bottom = geometry
+                rects.append((left, top, right, bottom))
+
+        self._tk_handler_thread.set_rects(rects)
+
+        # killing the highlight after a period of time
+        # TODO: this might be
+        def kill_highlight():
+            self._tk_handler_thread.set_rects([])
+            if self._timer_thread:
+                self._timer_thread.cancel()
+                self._timer_thread = None
+
+        self._timer_thread = threading.Timer(2, kill_highlight)
+        self._timer_thread.start()
 
     def stop_highlight(self) -> None:
         """
         Dispose the highlight thread.
         """
-        pass
+        self._tk_handler_thread.set_rects([])
+        if self._timer_thread:
+            self._timer_thread.cancel()
+            self._timer_thread = None
