@@ -20,6 +20,8 @@ TFun = TypeVar("TFun", bound=Callable[..., Any])
 
 class ElementInspector:
     def __init__(self) -> None:
+        from robocorp_code.inspector.windows.robocorp_windows import WindowElement
+
         # TODO: the context now stores only the latest searched ContextNode and it's children
         # to the given search depth. When user traverses back up the tree we would need to have
         # the cached snapshot of all the previous searches in store.
@@ -35,6 +37,7 @@ class ElementInspector:
         self._selected_window: Optional[str] = None
         self._event_pump_thread: Optional[EventPumpThread] = None
         self._jab_wrapper: Optional[JavaAccessBridgeWrapper] = None
+        self._window_obj: Optional[WindowElement] = None
 
     @property
     def event_pump_thread(self):
@@ -62,7 +65,27 @@ class ElementInspector:
         return self.jab_wrapper.get_windows()
 
     def set_window(self, window: str) -> None:
+        from robocorp_code.inspector.windows.robocorp_windows import desktop
+
         self._selected_window = window
+        self.jab_wrapper.switch_window_by_title(self._selected_window)
+        self._window_obj = desktop().find_window(
+            f"{window}",
+            search_depth=1,
+            foreground=True,
+            move_cursor_to_center=False,
+        )
+
+    def bring_app_to_frontend(self):
+        import time
+
+        self._window_obj.update_geometry()
+        if not self._window_obj.has_valid_geometry():
+            self._window_obj.restore_window()
+            # compensating because of Windows animations
+            time.sleep(0.25)
+        self._window_obj.foreground_window(move_cursor_to_center=False)
+        time.sleep(0.2)
 
     def _collect_from_root(
         self,

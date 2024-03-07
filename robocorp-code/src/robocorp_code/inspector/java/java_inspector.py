@@ -10,15 +10,12 @@ from robocorp_ls_core.robotframework_log import get_logger
 
 from robocorp_code.inspector.java.robocorp_java._inspector import ColletedTreeTypedDict
 
-# !!! BAD IMPORT
-# !!! please remove thiss
-from robocorp_code.inspector.windows.robocorp_windows._vendored.uiautomation import (
-    uiautomation,
-)
 
 log = get_logger(__name__)
 
 MAX_ELEMENTS_TO_HIGHLIGHT = 20
+
+RESOLUTION_PIXEL_RATIO = 2
 
 JavaWindowInfoTypedDict = TypedDict(
     "JavaWindowInfoTypedDict",
@@ -106,7 +103,12 @@ def to_geometry(match_string: str) -> Optional[Tuple[int, int, int, int]]:
         top = int(values.group("y"))
         right = int(values.group("width")) + left
         bottom = int(values.group("height")) + top
-        return left, top, right, bottom
+        return (
+            left * RESOLUTION_PIXEL_RATIO,
+            top * RESOLUTION_PIXEL_RATIO,
+            right * RESOLUTION_PIXEL_RATIO,
+            bottom * RESOLUTION_PIXEL_RATIO,
+        )
     else:
         return None
 
@@ -119,7 +121,7 @@ class JavaInspector:
         )
         from robocorp_code.inspector.java.highlighter import TkHandlerThread
 
-        self._inspector = ElementInspector()
+        self._element_inspector = ElementInspector()
         self._tk_handler_thread: TkHandlerThread = TkHandlerThread()
         self._tk_handler_thread.start()
 
@@ -182,7 +184,7 @@ class JavaInspector:
         """
         List all available Java applications.
         """
-        windows = self._inspector.list_windows()
+        windows = self._element_inspector.list_windows()
         return [to_window_info(window) for window in windows]
 
     def set_window_locator(self, window: str) -> None:
@@ -190,7 +192,8 @@ class JavaInspector:
         Set the current Java window user chose.
         """
         log.info(f"=== JAVA: Selected window: {window}")
-        self._inspector.set_window(window)
+        self._element_inspector.set_window(window)
+        self._element_inspector.bring_app_to_frontend()
 
     def collect_tree(
         self, search_depth=1, locator: Optional[str] = None
@@ -198,7 +201,9 @@ class JavaInspector:
         """
         Collect the app element hierarchy from the locator match with given search depth.
         """
-        matches_and_hierarchy = self._inspector.collect_tree(search_depth, locator)
+        matches_and_hierarchy = self._element_inspector.collect_tree(
+            search_depth, locator
+        )
         log.info(
             f"=== JAVA: collect_tree: matches_and_hierarchy:", matches_and_hierarchy
         )
@@ -215,13 +220,7 @@ class JavaInspector:
         locator: str,
         search_depth: int = 8,
     ) -> None:
-        # import win32gui
-
-        # handle = self.jab_wrapper.get_current_windows_handle()
-        # # pylint: disable=c-extension-no-member
-        # win32gui.ShowWindow(handle, win32con.SW_SHOW)
-        # # pylint: disable=c-extension-no-member
-        # win32gui.SetForegroundWindow(handle)
+        self._element_inspector.bring_app_to_frontend()
 
         # kill the TK thread
         self._tk_handler_thread.quitloop()
@@ -260,7 +259,7 @@ class JavaInspector:
                 self._timer_thread.cancel()
                 self._timer_thread = None
 
-        self._timer_thread = threading.Timer(2, kill_highlight)
+        self._timer_thread = threading.Timer(3, kill_highlight)
         self._timer_thread.start()
 
     def stop_highlight(self) -> None:
