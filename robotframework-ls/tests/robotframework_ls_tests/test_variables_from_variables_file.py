@@ -1,5 +1,5 @@
 def test_variables_from_variables_file(tmpdir):
-    from robotframework_ls.impl.variables_from_variables_file import (
+    from robotframework_ls.impl.variables_from_variable_file import (
         VariablesFromVariablesFileLoader,
     )
 
