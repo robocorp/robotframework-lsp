@@ -670,7 +670,7 @@ List Variable
 def test_variablefiles_completions_integrated_using_config(
     language_server_tcp: ILanguageServerClient, ws_root_path, data_regression, tmpdir
 ):
-    filename = tmpdir.join("my.txt")
+    filename = tmpdir.join("my.py")
     filename.write_text(
         """
 V_NAME = 'value'
