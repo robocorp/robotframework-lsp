@@ -1,8 +1,10 @@
-from typing import Any, Callable, List, Optional, TypedDict, TypeVar, Union
+from typing import Any, Callable, List, Optional, Tuple, TypedDict, TypeVar, Union
 
 from JABWrapper.context_tree import ContextNode, ContextTree  # type: ignore
 from JABWrapper.jab_wrapper import JavaAccessBridgeWrapper, JavaWindow  # type: ignore
 from robocorp_ls_core.robotframework_log import get_logger
+
+from robocorp_code.inspector.java.highlighter import TkHandlerThread
 
 log = get_logger(__name__)
 
@@ -21,6 +23,7 @@ TFun = TypeVar("TFun", bound=Callable[..., Any])
 class ElementInspector:
     def __init__(self) -> None:
         from robocorp_code.inspector.windows.robocorp_windows import WindowElement
+        from robocorp_code.inspector.java.picker import CursorListenerThread
 
         # TODO: the context now stores only the latest searched ContextNode and it's children
         # to the given search depth. When user traverses back up the tree we would need to have
@@ -38,6 +41,7 @@ class ElementInspector:
         self._event_pump_thread: Optional[EventPumpThread] = None
         self._jab_wrapper: Optional[JavaAccessBridgeWrapper] = None
         self._window_obj: Optional[WindowElement] = None
+        self._picker_thread: Optional[CursorListenerThread] = None
 
     @property
     def event_pump_thread(self):
@@ -150,3 +154,39 @@ class ElementInspector:
             return self._collect_from_root(locator, search_depth)
         else:
             return self._collect_from_context(locator, search_depth)
+
+    def collect_tree_from_root(
+        self,
+        search_depth: int,
+        locator: Optional[str] = None,
+    ) -> ColletedTreeTypedDict:
+        from ._errors import NoWindowSelected
+
+        if not self._selected_window:
+            raise NoWindowSelected("Select window first")
+
+        self.jab_wrapper.switch_window_by_title(self._selected_window)
+
+        return self._collect_from_root(locator, search_depth)
+
+    def start_picker(
+        self,
+        tk_handler_thread: Optional[TkHandlerThread],
+        tree_geometries: List[Tuple],
+        on_pick: Callable,
+    ):
+        from robocorp_code.inspector.java.picker import CursorListenerThread
+
+        if not self._picker_thread:
+            self._picker_thread = CursorListenerThread(
+                log=log,
+                tk_handler_thread=tk_handler_thread,
+                tree_geometries=tree_geometries,
+                on_pick=on_pick,
+            )
+            self._picker_thread.start()
+
+    def stop_picker(self):
+        if self._picker_thread:
+            self._picker_thread.stop()
+            self._picker_thread = None

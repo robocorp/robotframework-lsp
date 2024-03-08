@@ -113,6 +113,42 @@ def to_geometry(match_string: str) -> Optional[Tuple[int, int, int, int]]:
         return None
 
 
+def to_element_history(matches_and_hierarchy: MatchesAndHierarchyTypedDict):
+    current_number_of_children = 0
+    root_index = -1
+    reconstructed_tree: List[List[dict]] = []
+    for index, elem in enumerate(matches_and_hierarchy["hierarchy"]):
+        # print("-" * 75)
+        # print("Index:", index + 1)
+        # print("Elem:", elem)
+
+        if current_number_of_children == 0:
+            root_index += 1
+            current_number_of_children = 0
+            for ind in range(root_index, len(matches_and_hierarchy["hierarchy"])):
+                current_number_of_children = matches_and_hierarchy["hierarchy"][ind][
+                    "childrenCount"
+                ]
+                if current_number_of_children > 0:
+                    root_index = ind
+                    break
+
+            if index > 0:
+                current_number_of_children -= 1
+
+        else:
+            current_number_of_children -= 1
+
+        ls = []
+        if len(reconstructed_tree) > root_index:
+            ls.extend(reconstructed_tree[root_index])
+        ls.append(elem)
+        reconstructed_tree.append(ls)
+        # print("Tree:", (index + 1, ls))
+
+    return reconstructed_tree
+
+
 class JavaInspector:
     def __init__(self):
         import threading
@@ -209,11 +245,61 @@ class JavaInspector:
         )
         return to_matches_and_hierarchy(matches_and_hierarchy)
 
+    def collect_tree_from_root(
+        self, search_depth=1, locator: Optional[str] = None
+    ) -> MatchesAndHierarchyTypedDict:
+        """
+        Collect the app element hierarchy from the locator match with given search depth.
+        """
+        matches_and_hierarchy = self._element_inspector.collect_tree_from_root(
+            search_depth, locator
+        )
+        log.info(
+            f"=== JAVA: collect_tree_from_root: matches_and_hierarchy:",
+            matches_and_hierarchy,
+        )
+        return to_matches_and_hierarchy(matches_and_hierarchy)
+
     def start_pick(self) -> None:
-        pass
+        try:
+            app_tree = self.collect_tree(search_depth=12, locator="role:.*")
+            if not len(app_tree["matched_paths"]):
+                raise ValueError()
+        except Exception:
+            raise Exception("Could not collect the tree elements. Rejecting picker!")
+
+        log.info("@@@@@@ Matches:", len(app_tree["matched_paths"]))
+        # tree_geometries = [ (node_index, (left, top, right, bottom) ) ]
+        tree_geometries: List[Tuple[int, Tuple]] = []
+        for node_index, match in enumerate(app_tree["matched_paths"]):
+            geometry = to_geometry(match_string=match)
+            if geometry is not None:
+                tree_geometries.append((node_index, geometry))
+
+        app_tree_nodes_with_ancestries = to_element_history(app_tree)
+        log.info("@@@@@@ APP TREE:", app_tree_nodes_with_ancestries)
+
+        def on_pick_wrapper(elem: Tuple[int, Tuple]):
+            return_ancestry = []
+            try:
+                node_index, _ = elem
+                for index, node_ancestry in enumerate(app_tree_nodes_with_ancestries):
+                    if index == node_index:
+                        return_ancestry = node_ancestry
+                        break
+                log.info("@@@@@@ RETURNING ANCESTRY:", return_ancestry)
+            except Exception:
+                return_ancestry = []
+            self.on_pick(return_ancestry)
+
+        self._element_inspector.start_picker(
+            tk_handler_thread=self._tk_handler_thread,
+            tree_geometries=tree_geometries,
+            on_pick=on_pick_wrapper,
+        )
 
     def stop_pick(self) -> None:
-        pass
+        self._element_inspector.stop_picker()
 
     def start_highlight(
         self,
@@ -243,8 +329,8 @@ class JavaInspector:
             return matches_and_hierarchy
 
         rects = []
-        for control_element in matches:
-            geometry = to_geometry(control_element)
+        for element in matches:
+            geometry = to_geometry(element)
             if geometry:
                 left, top, right, bottom = geometry
                 rects.append((left, top, right, bottom))
