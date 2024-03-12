@@ -122,6 +122,7 @@
         "onCommand:robocorp.runPreRunScripts.internal",
         "onCommand:robocorp.getPyPiBaseUrls.internal",
         "onCommand:robocorp.startActionServer",
+        "onCommand:robocorp.downloadActionServer",
         "onCommand:robocorp.startActionServer.internal",
         "onCommand:robocorp.listActions.internal",
         "onDebugInitialConfigurations",
@@ -791,6 +792,11 @@
             {
                 "command": "robocorp.startActionServer",
                 "title": "Start Action Server",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.downloadActionServer",
+                "title": "Download Action Server",
                 "category": "Robocorp"
             },
             {

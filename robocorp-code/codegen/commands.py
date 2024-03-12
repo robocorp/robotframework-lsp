@@ -760,6 +760,12 @@ COMMANDS = [
         server_handled=False,
     ),
     Command(
+        "robocorp.downloadActionServer",
+        "Download Action Server",
+        add_to_package_json=True,
+        server_handled=False,
+    ),
+    Command(
         "robocorp.startActionServer.internal",
         "Start Action Server (internal)",
         add_to_package_json=True,

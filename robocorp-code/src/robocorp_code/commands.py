@@ -104,6 +104,7 @@ ROBOCORP_HAS_PRE_RUN_SCRIPTS_INTERNAL = "robocorp.hasPreRunScripts.internal"  # 
 ROBOCORP_RUN_PRE_RUN_SCRIPTS_INTERNAL = "robocorp.runPreRunScripts.internal"  # Run Pre Run Scripts
 ROBOCORP_GET_PY_PI_BASE_URLS_INTERNAL = "robocorp.getPyPiBaseUrls.internal"  # Get PyPi base urls
 ROBOCORP_START_ACTION_SERVER = "robocorp.startActionServer"  # Start Action Server
+ROBOCORP_DOWNLOAD_ACTION_SERVER = "robocorp.downloadActionServer"  # Download Action Server
 ROBOCORP_START_ACTION_SERVER_INTERNAL = "robocorp.startActionServer.internal"  # Start Action Server (internal)
 ROBOCORP_LIST_ACTIONS_INTERNAL = "robocorp.listActions.internal"  # Lists the actions available in an action package given a root dir (internal)
 
