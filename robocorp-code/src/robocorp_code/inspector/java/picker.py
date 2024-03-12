@@ -39,9 +39,9 @@ class CursorListenerThread(threading.Thread):
         self,
         log: ILog,
         tk_handler_thread: TkHandlerThread,
-        # tree_geometries = [ (node_index, (left, top, right, bottom) ) ]
-        tree_geometries: List[Tuple[int, Tuple]],
-        # on_pick = func( (node_index, (left, top, right, bottom) ) )
+        # tree_geometries = [ (node_index, (left, top, right, bottom), node ) ]
+        tree_geometries: List[Tuple[int, Tuple, dict]],
+        # on_pick = func( (node_index, (left, top, right, bottom), node ) )
         on_pick: Callable,
     ) -> None:
         threading.Thread.__init__(self)
@@ -52,7 +52,9 @@ class CursorListenerThread(threading.Thread):
         self._tree_geometries = tree_geometries
         self._on_pick = on_pick
 
+        # _element_hit = (node_index, (left, top, right, bottom) )
         self._element_hit: Optional[Tuple[int, Tuple]] = None
+        self._timer: Optional[threading.Timer] = None
 
     def run(self) -> None:
         try:
@@ -75,14 +77,13 @@ class CursorListenerThread(threading.Thread):
                     return
 
                 cursor_pos = CursorPos(*GetCursorPos())
-                # self.log.info("@@@@@ Cursor position:", cursor_pos)
-
                 time.sleep(0.1)
                 if not self._is_cursor_still_on_element(cursor_pos.x, cursor_pos.y):
                     self._find_element_based_on_cursor(cursor_pos.x, cursor_pos.y)
-                    time.sleep(0.1)
                     if self._element_hit:
-                        _, geometry = self._element_hit
+                        if self._timer:
+                            self._timer.cancel()
+                        _, geometry, _ = self._element_hit
                         # draw the highlight
                         self._highlighter_draw(rects=[geometry])
                         self.log.info(
@@ -90,9 +91,11 @@ class CursorListenerThread(threading.Thread):
                         )
                         self._on_pick(self._element_hit)
                 else:
-                    time.sleep(0.5)
-                    self._highlighter_clear()
-                time.sleep(0.1)
+                    if self._timer:
+                        self._timer.cancel()
+                    self._timer = threading.Timer(3, self._highlighter_clear)
+                    self._timer.start()
+                time.sleep(0.2)
 
     def _highlighter_start(self):
         self._highlighter_clear()
@@ -114,7 +117,7 @@ class CursorListenerThread(threading.Thread):
 
     def _find_element_based_on_cursor(self, x: int, y: int):
         for elem in reversed(self._tree_geometries):
-            _, geometry = elem
+            _, geometry, _ = elem
             left, top, right, bottom = geometry
             if x >= left and x <= right and y >= top and y <= bottom:
                 self._element_hit = elem
@@ -124,7 +127,7 @@ class CursorListenerThread(threading.Thread):
     def _is_cursor_still_on_element(self, x: int, y: int):
         if self._element_hit is None:
             return False
-        _, geometry = self._element_hit
+        _, geometry, _ = self._element_hit
         left, top, right, bottom = geometry
         if x >= left and x <= right and y >= top and y <= bottom:
             return True

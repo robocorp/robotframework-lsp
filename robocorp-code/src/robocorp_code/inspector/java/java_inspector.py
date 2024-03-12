@@ -1,3 +1,4 @@
+import time
 import re
 import threading
 from typing import Any, Callable, List, Optional, Tuple, TypedDict, cast, Protocol
@@ -93,7 +94,7 @@ def to_matches_and_hierarchy(
     return {"matched_paths": matches, "hierarchy": hierarchy}
 
 
-def to_geometry(match_string: str) -> Optional[Tuple[int, int, int, int]]:
+def to_geometry_str(match_string: str) -> Optional[Tuple[int, int, int, int]]:
     pattern = (
         r"x:(?P<x>-?\d+)\s+y:(?P<y>-?\d+).+width:(?P<width>\d+).+height:(?P<height>\d+)"
     )
@@ -113,22 +114,31 @@ def to_geometry(match_string: str) -> Optional[Tuple[int, int, int, int]]:
         return None
 
 
-def to_element_history(matches_and_hierarchy: MatchesAndHierarchyTypedDict):
+def to_geometry_node(node: LocatorNodeInfoTypedDict):
+    left = int(node["x"])
+    top = int(node["y"])
+    right = int(node["width"]) + left
+    bottom = int(node["height"]) + top
+    return (
+        left * RESOLUTION_PIXEL_RATIO,
+        top * RESOLUTION_PIXEL_RATIO,
+        right * RESOLUTION_PIXEL_RATIO,
+        bottom * RESOLUTION_PIXEL_RATIO,
+    )
+
+
+def to_element_history_filtered(hierarchy: list):
+    # deal only with the remaining elements
     current_number_of_children = 0
     root_index = -1
     reconstructed_tree: List[List[dict]] = []
-    for index, elem in enumerate(matches_and_hierarchy["hierarchy"]):
-        # print("-" * 75)
-        # print("Index:", index + 1)
-        # print("Elem:", elem)
 
+    for index, elem in enumerate(hierarchy):
         if current_number_of_children == 0:
             root_index += 1
             current_number_of_children = 0
-            for ind in range(root_index, len(matches_and_hierarchy["hierarchy"])):
-                current_number_of_children = matches_and_hierarchy["hierarchy"][ind][
-                    "childrenCount"
-                ]
+            for ind in range(root_index, len(hierarchy)):
+                current_number_of_children = hierarchy[ind]["childrenCount"]
                 if current_number_of_children > 0:
                     root_index = ind
                     break
@@ -144,9 +154,30 @@ def to_element_history(matches_and_hierarchy: MatchesAndHierarchyTypedDict):
             ls.extend(reconstructed_tree[root_index])
         ls.append(elem)
         reconstructed_tree.append(ls)
-        # print("Tree:", (index + 1, ls))
-
     return reconstructed_tree
+
+
+def to_unique_locator(elem: LocatorNodeInfoTypedDict):
+    locator = f"role:{elem['role']}"
+    if elem["name"]:
+        locator += f' and name:{elem["name"]}'
+    if elem["description"]:
+        locator += f' and description:{elem["description"]}'
+    if elem["indexInParent"]:
+        locator += f' and indexInParent:{elem["indexInParent"]}'
+    if elem["childrenCount"]:
+        locator += f' and childrenCount:{elem["childrenCount"]}'
+    if elem["states"]:
+        locator += f' and states:{elem["states"]}'
+    if elem["x"]:
+        locator += f' and x:{elem["x"]}'
+    if elem["y"]:
+        locator += f' and y:{elem["y"]}'
+    if elem["width"]:
+        locator += f' and width:{elem["width"]}'
+    if elem["height"]:
+        locator += f' and height:{elem["height"]}'
+    return locator
 
 
 class JavaInspector:
@@ -221,7 +252,13 @@ class JavaInspector:
         List all available Java applications.
         """
         windows = self._element_inspector.list_windows()
-        return [to_window_info(window) for window in windows]
+        windows_list = []
+        for window in windows:
+            win = to_window_info(window)
+            if not win["title"]:
+                continue
+            windows_list.append(win)
+        return windows_list
 
     def set_window_locator(self, window: str) -> None:
         """
@@ -260,31 +297,97 @@ class JavaInspector:
         )
         return to_matches_and_hierarchy(matches_and_hierarchy)
 
+    # search_tree_for_element - elem as param - (node_index, (left, top, right, bottom))
+    def search_tree_for_element(
+        self,
+        elem_to_find: Tuple,
+        locator: str,
+        ancestry: list,
+        depth: int,
+    ) -> list:
+        _, geometry = elem_to_find
+        left, top, _, _ = geometry
+        try:
+            if depth >= 3:
+                log.info("######## HIT DEPTH !!!")
+                return
+
+            log.info("######## TESTING LOCATOR:", locator)
+            log.info("######## TESTING DEPTH:", depth)
+            tree = self.collect_tree(search_depth=1, locator=locator)
+            log.info("######## LOCATOR TREE:", tree)
+            time.sleep(2)
+
+            if not len(tree["hierarchy"]):
+                return
+            for elem in reversed(tree["hierarchy"]):
+                if str(elem["x"]) == str(left) and str(elem["y"]) == str(top):
+                    log.info("@@@@@@@@ FOUND ELEMENT !!!", elem)
+                    log.info("@@@@@@@@ FOUND ANCESTRY !!!", ancestry)
+                    return
+                locator = to_unique_locator(elem)
+                ancestry.append(elem)
+                depth = depth + 1
+                self.search_tree_for_element(
+                    elem_to_find=elem_to_find,
+                    locator=locator,
+                    ancestry=ancestry,
+                    depth=depth,
+                )
+            return
+        except Exception:
+            return
+
     def start_pick(self) -> None:
         try:
-            app_tree = self.collect_tree(search_depth=12, locator="role:.*")
+            app_tree = self.collect_tree_from_root(search_depth=200, locator="role:.*")
             if not len(app_tree["matched_paths"]):
                 raise ValueError()
         except Exception:
             raise Exception("Could not collect the tree elements. Rejecting picker!")
 
-        log.info("@@@@@@ Matches:", len(app_tree["matched_paths"]))
+        # log.info("@@@@@@ Matches:", len(app_tree["matched_paths"]))
+        # for index, hist in enumerate(app_tree["hierarchy"]):
+        #     log.info("@@@@@@ Hist:", index, hist)
+
         # tree_geometries = [ (node_index, (left, top, right, bottom) ) ]
         tree_geometries: List[Tuple[int, Tuple]] = []
-        for node_index, match in enumerate(app_tree["matched_paths"]):
-            geometry = to_geometry(match_string=match)
+        for node_index, node in enumerate(app_tree["hierarchy"]):
+            geometry = to_geometry_node(node)
             if geometry is not None:
-                tree_geometries.append((node_index, geometry))
+                tree_geometries.append((node_index, geometry, node))
 
-        app_tree_nodes_with_ancestries = to_element_history(app_tree)
-        log.info("@@@@@@ APP TREE:", app_tree_nodes_with_ancestries)
-
-        def on_pick_wrapper(elem: Tuple[int, Tuple]):
+        # on_pick_wrapper - callback function that has the elem as param - (node_index, (left, top, right, bottom), node)
+        def on_pick_wrapper(picked_elem: Tuple[int, Tuple, dict]):
             return_ancestry = []
             try:
-                node_index, _ = elem
-                for index, node_ancestry in enumerate(app_tree_nodes_with_ancestries):
-                    if index == node_index:
+                ######################################### ORIGINAL
+                # node_index, _ = elem
+                # for index, node_ancestry in enumerate(app_tree_nodes_with_ancestries):
+                #     if index == node_index:
+                #         return_ancestry = node_ancestry
+                #         break
+                #########################################
+                picked_node_index, _, picked_node = picked_elem
+                log.info("@@@@@@ NODE TO TEST:", picked_node)
+                # filter out not needed elements from the hierarchy based on ancestry
+                filtered_tree = []
+                for node in app_tree["hierarchy"]:
+                    if node["ancestry"] <= picked_node["ancestry"]:
+                        log.info("@@@@@@ Adding:", node)
+                        filtered_tree.append(node)
+                log.info("@@@@@@ FILTERED TREE:", filtered_tree)
+                for i, node in enumerate(filtered_tree):
+                    log.info("@@@@@@ --- NODE:", i, node)
+                    if node == picked_node:
+                        # changing the index based on the filtered elements
+                        picked_node_index = i
+                log.info("@@@@@@ --- PICKED INDEX:", picked_node_index)
+                # create the ancestries
+                nodes_with_ancestries = to_element_history_filtered(filtered_tree)
+                for index, node_ancestry in enumerate(nodes_with_ancestries):
+                    log.info("@@@@@@ NODE W/ ANCESTRY:", index, node_ancestry)
+                    if index == picked_node_index:
                         return_ancestry = node_ancestry
                         break
                 log.info("@@@@@@ RETURNING ANCESTRY:", return_ancestry)
@@ -322,15 +425,15 @@ class JavaInspector:
         except Exception:
             matches_and_hierarchy = {"hierarchy": [], "matched_paths": []}
 
-        matches = matches_and_hierarchy["matched_paths"]
+        nodes = matches_and_hierarchy["hierarchy"]
 
         # skipping displaying highlights if number of matches exceeds limit
-        if len(matches) > MAX_ELEMENTS_TO_HIGHLIGHT:
+        if len(nodes) > MAX_ELEMENTS_TO_HIGHLIGHT:
             return matches_and_hierarchy
 
         rects = []
-        for element in matches:
-            geometry = to_geometry(element)
+        for element in nodes:
+            geometry = to_geometry_node(element)
             if geometry:
                 left, top, right, bottom = geometry
                 rects.append((left, top, right, bottom))
