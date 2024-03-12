@@ -1,4 +1,4 @@
-Unreleased
+New in 1.19.0 (2024-03-12)
 -----------------------------
 
 - New action: `Robocorp Code: Download Action Server` (downloads the latest version of the Action Server).
