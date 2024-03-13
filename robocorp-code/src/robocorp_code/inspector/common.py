@@ -18,6 +18,7 @@ class LogLevel(enum.Enum):
     ERROR = 3
 
 
+# log_call - decorator created to log a function's call and return value
 def log_call(log_level: Optional[LogLevel] = None):
     logger = log.info
     if log_level:
@@ -38,7 +39,16 @@ def log_call(log_level: Optional[LogLevel] = None):
                 "[kwargs]",
                 kwargs,
             )
-            return func(*args, **kwargs)
+            ret = func(*args, **kwargs)
+            logger(
+                f"::: Returning for {func.__name__} with: [args]",
+                args,
+                "[kwargs]",
+                kwargs,
+                "::: value :::",
+                ret,
+            )
+            return ret
 
         return wrapper
 

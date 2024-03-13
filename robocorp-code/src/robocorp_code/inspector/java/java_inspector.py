@@ -1,4 +1,3 @@
-import time
 import re
 import threading
 from typing import Any, Callable, List, Optional, Tuple, TypedDict, cast, Protocol
@@ -16,7 +15,9 @@ log = get_logger(__name__)
 
 MAX_ELEMENTS_TO_HIGHLIGHT = 20
 
-RESOLUTION_PIXEL_RATIO = 2
+# ! The RESOLUTION_PIXEL_RATIO differs based on the type of used screen
+# ! For example - on Retina displays, the RESOLUTION_PIXEL_RATIO is 2
+RESOLUTION_PIXEL_RATIO = 1
 
 JavaWindowInfoTypedDict = TypedDict(
     "JavaWindowInfoTypedDict",
@@ -117,6 +118,8 @@ def to_geometry_str(match_string: str) -> Optional[Tuple[int, int, int, int]]:
 def to_geometry_node(node: LocatorNodeInfoTypedDict):
     left = int(node["x"])
     top = int(node["y"])
+    if left == -1 and top == -1:
+        return None
     right = int(node["width"]) + left
     bottom = int(node["height"]) + top
     return (
@@ -297,60 +300,17 @@ class JavaInspector:
         )
         return to_matches_and_hierarchy(matches_and_hierarchy)
 
-    # search_tree_for_element - elem as param - (node_index, (left, top, right, bottom))
-    def search_tree_for_element(
-        self,
-        elem_to_find: Tuple,
-        locator: str,
-        ancestry: list,
-        depth: int,
-    ) -> list:
-        _, geometry = elem_to_find
-        left, top, _, _ = geometry
+    def start_pick(self, search_depth: int = 200) -> None:
         try:
-            if depth >= 3:
-                log.info("######## HIT DEPTH !!!")
-                return
-
-            log.info("######## TESTING LOCATOR:", locator)
-            log.info("######## TESTING DEPTH:", depth)
-            tree = self.collect_tree(search_depth=1, locator=locator)
-            log.info("######## LOCATOR TREE:", tree)
-            time.sleep(2)
-
-            if not len(tree["hierarchy"]):
-                return
-            for elem in reversed(tree["hierarchy"]):
-                if str(elem["x"]) == str(left) and str(elem["y"]) == str(top):
-                    log.info("@@@@@@@@ FOUND ELEMENT !!!", elem)
-                    log.info("@@@@@@@@ FOUND ANCESTRY !!!", ancestry)
-                    return
-                locator = to_unique_locator(elem)
-                ancestry.append(elem)
-                depth = depth + 1
-                self.search_tree_for_element(
-                    elem_to_find=elem_to_find,
-                    locator=locator,
-                    ancestry=ancestry,
-                    depth=depth,
-                )
-            return
-        except Exception:
-            return
-
-    def start_pick(self) -> None:
-        try:
-            app_tree = self.collect_tree_from_root(search_depth=200, locator="role:.*")
-            if not len(app_tree["matched_paths"]):
+            app_tree = self.collect_tree_from_root(
+                search_depth=search_depth, locator="role:.*"
+            )
+            if not len(app_tree["hierarchy"]):
                 raise ValueError()
         except Exception:
             raise Exception("Could not collect the tree elements. Rejecting picker!")
 
-        # log.info("@@@@@@ Matches:", len(app_tree["matched_paths"]))
-        # for index, hist in enumerate(app_tree["hierarchy"]):
-        #     log.info("@@@@@@ Hist:", index, hist)
-
-        # tree_geometries = [ (node_index, (left, top, right, bottom) ) ]
+        # tree_geometries = [ (node_index, (left, top, right, bottom), node ) ]
         tree_geometries: List[Tuple[int, Tuple]] = []
         for node_index, node in enumerate(app_tree["hierarchy"]):
             geometry = to_geometry_node(node)
@@ -358,43 +318,23 @@ class JavaInspector:
                 tree_geometries.append((node_index, geometry, node))
 
         # on_pick_wrapper - callback function that has the elem as param - (node_index, (left, top, right, bottom), node)
-        def on_pick_wrapper(picked_elem: Tuple[int, Tuple, dict]):
+        def on_pick_wrapper(picked_elem: Tuple[int, Tuple, LocatorNodeInfoTypedDict]):
             return_ancestry = []
             try:
-                ######################################### ORIGINAL
-                # node_index, _ = elem
-                # for index, node_ancestry in enumerate(app_tree_nodes_with_ancestries):
-                #     if index == node_index:
-                #         return_ancestry = node_ancestry
-                #         break
-                #########################################
-                picked_node_index, _, picked_node = picked_elem
-                log.info("@@@@@@ NODE TO TEST:", picked_node)
-                # filter out not needed elements from the hierarchy based on ancestry
-                filtered_tree = []
-                for node in app_tree["hierarchy"]:
-                    if node["ancestry"] <= picked_node["ancestry"]:
-                        log.info("@@@@@@ Adding:", node)
-                        filtered_tree.append(node)
-                log.info("@@@@@@ FILTERED TREE:", filtered_tree)
-                for i, node in enumerate(filtered_tree):
-                    log.info("@@@@@@ --- NODE:", i, node)
-                    if node == picked_node:
-                        # changing the index based on the filtered elements
-                        picked_node_index = i
-                log.info("@@@@@@ --- PICKED INDEX:", picked_node_index)
-                # create the ancestries
-                nodes_with_ancestries = to_element_history_filtered(filtered_tree)
-                for index, node_ancestry in enumerate(nodes_with_ancestries):
-                    log.info("@@@@@@ NODE W/ ANCESTRY:", index, node_ancestry)
-                    if index == picked_node_index:
-                        return_ancestry = node_ancestry
-                        break
-                log.info("@@@@@@ RETURNING ANCESTRY:", return_ancestry)
-            except Exception:
+                _, _, picked_node = picked_elem
+                locator = to_unique_locator(picked_node)
+                log.info("Finding ancestry for:", locator)
+                return_ancestry = self._element_inspector.collect_node_ancestry(
+                    locator=locator, search_depth=search_depth
+                )
+                return_ancestry = [to_locator_info(node) for node in return_ancestry]
+            except Exception as e:
+                log.error(f"Exception was raised while calculating node ancestry: {e}")
                 return_ancestry = []
+            log.info("Element ancestry:", return_ancestry)
             self.on_pick(return_ancestry)
 
+        log.info("Starting picker...")
         self._element_inspector.start_picker(
             tk_handler_thread=self._tk_handler_thread,
             tree_geometries=tree_geometries,
@@ -402,6 +342,7 @@ class JavaInspector:
         )
 
     def stop_pick(self) -> None:
+        log.info("Stopping picker...")
         self._element_inspector.stop_picker()
 
     def start_highlight(

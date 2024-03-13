@@ -41,8 +41,8 @@ comtypes = "^1.2"
 pyscreeze = "^0.1.30"
 mss = "^9.0.1"
 
-java-access-bridge-wrapper = "^1.1.0"
-ruff = "^0.2.1"
+java-access-bridge-wrapper = "^1.2.0"
+ruff = "^0.1.14"
 
 [tool.poetry.group.dev.dependencies]
 robocorp-python-ls-core = {path = "../robocorp-python-ls-core/", develop = true}

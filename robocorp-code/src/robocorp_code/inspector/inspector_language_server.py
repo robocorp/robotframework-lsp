@@ -22,6 +22,7 @@ class InspectorLanguageServer:
     def get_locators_json_path(self, directory: str) -> Path:
         return Path(directory) / "locators.json"
 
+    @log_call(log_level=LogLevel.INFO)
     def m_manager_save_locator(
         self,
         locator: dict,
@@ -86,6 +87,7 @@ class InspectorLanguageServer:
         }
         return ret
 
+    @log_call(log_level=LogLevel.INFO)
     def m_manager_delete_locators(
         self,
         directory: str,
@@ -137,6 +139,7 @@ class InspectorLanguageServer:
         }
         return ret
 
+    @log_call(log_level=LogLevel.INFO)
     def m_manager_load_locators(self, directory: str) -> ActionResultDict:
         import json
 
@@ -189,6 +192,7 @@ class InspectorLanguageServer:
             }
             return ret
 
+    @log_call(log_level=LogLevel.INFO)
     def m_web_inspector_configure_browser(
         self, width: int = 1280, height: int = 720, url: str = ""
     ):
@@ -198,6 +202,7 @@ class InspectorLanguageServer:
             {"viewport_size": (width, height), "url": url},
         )
 
+    @log_call(log_level=LogLevel.INFO)
     def m_web_inspector_open_browser(self, url=None):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         if url is None:
@@ -209,16 +214,19 @@ class InspectorLanguageServer:
 
         inspector_api_client.send_sync_message("openBrowser", dict(url=url, wait=True))
 
+    @log_call(log_level=LogLevel.INFO)
     def m_web_inspector_close_browser(self, **params) -> None:
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         inspector_api_client.send_sync_message("closeBrowser", {})
 
+    @log_call(log_level=LogLevel.INFO)
     def m_web_inspector_click(self, locator):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         inspector_api_client.send_sync_message(
             "click", dict(locator=locator, wait=True)
         )
 
+    @log_call(log_level=LogLevel.INFO)
     def m_web_inspector_start_pick(self, **params):
         from robocorp_ls_core import uris
 
@@ -234,10 +242,12 @@ class InspectorLanguageServer:
             "startPick", {"url_if_new": url, "wait": True}
         )
 
+    @log_call(log_level=LogLevel.INFO)
     def m_web_inspector_stop_pick(self, **params):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         inspector_api_client.send_sync_message("stopPick", {"wait": True})
 
+    @log_call(log_level=LogLevel.INFO)
     def m_web_inspector_validate_locator(self, **params):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         return partial(
@@ -246,6 +256,7 @@ class InspectorLanguageServer:
             {"locator": params["locator"], "url": params["url"], "wait": True},
         )
 
+    @log_call(log_level=LogLevel.INFO)
     def m_windows_inspector_parse_locator(self, locator: str):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         # Not blocking (return callback to run in thread).
@@ -255,6 +266,7 @@ class InspectorLanguageServer:
             {"locator": locator},
         )
 
+    @log_call(log_level=LogLevel.INFO)
     def m_windows_inspector_set_window_locator(self, locator: str):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         # Not blocking (return callback to run in thread).
@@ -264,6 +276,7 @@ class InspectorLanguageServer:
             {"locator": locator},
         )
 
+    @log_call(log_level=LogLevel.INFO)
     def m_windows_inspector_list_windows(self):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         # Not blocking (return callback to run in thread).
@@ -273,6 +286,7 @@ class InspectorLanguageServer:
             {},
         )
 
+    @log_call(log_level=LogLevel.INFO)
     def m_windows_inspector_start_pick(self):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         # Not blocking (return callback to run in thread).
@@ -282,16 +296,17 @@ class InspectorLanguageServer:
             {},
         )
 
+    @log_call(log_level=LogLevel.INFO)
     def m_windows_inspector_stop_pick(self):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         # Not blocking (return callback to run in thread).
-        log.info("LS-Win-StopPick")
         return partial(
             inspector_api_client.send_sync_message,
             "windowsStopPick",
             {},
         )
 
+    @log_call(log_level=LogLevel.INFO)
     def m_windows_inspector_start_highlight(
         self,
         locator: str,
@@ -310,6 +325,7 @@ class InspectorLanguageServer:
             ),
         )
 
+    @log_call(log_level=LogLevel.INFO)
     def m_windows_inspector_collect_tree(
         self,
         locator: str,
@@ -328,6 +344,7 @@ class InspectorLanguageServer:
             ),
         )
 
+    @log_call(log_level=LogLevel.INFO)
     def m_windows_inspector_stop_highlight(self):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         # Not blocking (return callback to run in thread).
@@ -337,15 +354,10 @@ class InspectorLanguageServer:
             {},
         )
 
+    @log_call(log_level=LogLevel.INFO)
     def m_image_inspector_start_pick(
         self, minimize: Optional[bool], confidence_level: Optional[int]
     ):
-        log.info(
-            "### Image ### Start Pick: minimize",
-            minimize,
-            "confidence_level",
-            confidence_level,
-        )
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         return partial(
             inspector_api_client.send_sync_message,
@@ -353,35 +365,25 @@ class InspectorLanguageServer:
             {"minimize": minimize, "confidence_level": confidence_level},
         )
 
+    @log_call(log_level=LogLevel.INFO)
     def m_image_inspector_stop_pick(self):
-        log.info("### Image ### Stop Pick")
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         return partial(inspector_api_client.send_sync_message, "imageStopPick", {})
 
+    @log_call(log_level=LogLevel.INFO)
     def m_image_inspector_validate_locator(
         self, locator: dict, confidence_level: Optional[bool]
     ):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
-        log.info(
-            "### Image ### Validate: locator:",
-            locator,
-            "confidence_level",
-            confidence_level,
-        )
         return partial(
             inspector_api_client.send_sync_message,
             "imageValidateLocator",
             {"locator": locator, "confidence_level": confidence_level},
         )
 
+    @log_call(log_level=LogLevel.INFO)
     def m_image_inspector_save_image(self, root_directory: str, image_base64: str):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
-        log.info(
-            "### Image ### Validate: root_directory:",
-            root_directory,
-            "image_base64",
-            image_base64,
-        )
         return partial(
             inspector_api_client.send_sync_message,
             "imageSaveImage",

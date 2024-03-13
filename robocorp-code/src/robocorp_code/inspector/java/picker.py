@@ -6,8 +6,6 @@ from typing import Callable, List, Optional, Tuple
 from robocorp_code.inspector.java.highlighter import TkHandlerThread
 from robocorp_ls_core.robotframework_log import ILog
 
-from robocorp_code.inspector.java.java_inspector import RESOLUTION_PIXEL_RATIO
-
 
 class CursorPos:
     def __init__(self, x, y):
@@ -54,7 +52,7 @@ class CursorListenerThread(threading.Thread):
 
         # _element_hit = (node_index, (left, top, right, bottom) )
         self._element_hit: Optional[Tuple[int, Tuple]] = None
-        self._timer: Optional[threading.Timer] = None
+        self._timer_highlight_clear: Optional[threading.Timer] = None
 
     def run(self) -> None:
         try:
@@ -81,20 +79,22 @@ class CursorListenerThread(threading.Thread):
                 if not self._is_cursor_still_on_element(cursor_pos.x, cursor_pos.y):
                     self._find_element_based_on_cursor(cursor_pos.x, cursor_pos.y)
                     if self._element_hit:
-                        if self._timer:
-                            self._timer.cancel()
+                        if self._timer_highlight_clear:
+                            self._timer_highlight_clear.cancel()
                         _, geometry, _ = self._element_hit
                         # draw the highlight
                         self._highlighter_draw(rects=[geometry])
                         self.log.info(
-                            f"@@@@@@ Calling on pick with:   {self._element_hit}"
+                            f"Picked element (on_pick callback): {self._element_hit}"
                         )
                         self._on_pick(self._element_hit)
                 else:
-                    if self._timer:
-                        self._timer.cancel()
-                    self._timer = threading.Timer(3, self._highlighter_clear)
-                    self._timer.start()
+                    if self._timer_highlight_clear:
+                        self._timer_highlight_clear.cancel()
+                    self._timer_highlight_clear = threading.Timer(
+                        3, self._highlighter_clear
+                    )
+                    self._timer_highlight_clear.start()
                 time.sleep(0.2)
 
     def _highlighter_start(self):

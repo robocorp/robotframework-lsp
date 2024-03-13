@@ -131,7 +131,7 @@ class ElementInspector:
         node._max_depth = search_depth + node.ancestry
         node.refresh()
 
-        matches: (ContextNode | List[ContextNode]) = []
+        matches: ContextNode | List[ContextNode] = []
         try:
             matches = find_elements_from_tree(self._context, locator)
         except AttributeError as e:
@@ -168,6 +168,40 @@ class ElementInspector:
         self.jab_wrapper.switch_window_by_title(self._selected_window)
 
         return self._collect_from_root(locator, search_depth)
+
+    def _collect_node(
+        self, locator: str, search_depth: int = 200
+    ) -> Optional[ContextNode]:
+        context = ContextTree(self.jab_wrapper, search_depth).root
+        from ._locators import find_elements_from_tree
+
+        try:
+            matches: Union[ContextNode, List[ContextNode]] = find_elements_from_tree(
+                context, locator
+            )
+            node = (
+                matches[0]
+                if isinstance(matches, List) and len(matches) > 0
+                else matches
+            )
+            log.info("Found node:", node)
+            return node
+        except Exception as e:
+            log.error(e)
+        return None
+
+    def _collect_node_ancestry(self, node: ContextNode) -> List[ContextNode]:
+        ancestry: List[ContextNode] = []
+        if node.parent is None:
+            ancestry.append(node)
+            return ancestry
+        ancestry = self._collect_node_ancestry(node.parent)
+        ancestry.append(node)
+        return ancestry
+
+    def collect_node_ancestry(self, locator: str, search_depth: int = 200) -> List[ContextNode]:
+        node = self._collect_node(locator=locator, search_depth=search_depth)
+        return self._collect_node_ancestry(node) if node else []
 
     def start_picker(
         self,
