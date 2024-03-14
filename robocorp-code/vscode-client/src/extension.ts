@@ -150,6 +150,7 @@ import {
     ROBOCORP_CREATE_ACTION_PACKAGE,
     ROBOCORP_CREATE_TASK_OR_ACTION_PACKAGE,
     ROBOCORP_NEW_ROBOCORP_INSPECTOR_JAVA,
+    ROBOCORP_DOWNLOAD_ACTION_SERVER,
 } from "./robocorpCommands";
 import { installPythonInterpreterCheck } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
@@ -169,7 +170,7 @@ import { RobotOutputViewProvider } from "./output/outView";
 import { setupDebugSessionOutViewIntegration } from "./output/outViewRunIntegration";
 import { showInspectorUI } from "./inspector/inspectorView";
 import { IAppRoutes } from "./inspector/protocols";
-import { startActionServer } from "./actionServer";
+import { downloadLatestActionServer, startActionServer } from "./actionServer";
 import { askAndRunRobocorpActionFromActionPackage, createActionPackage } from "./robo/actionPackage";
 import { showSelectOneStrQuickPick } from "./ask";
 
@@ -390,6 +391,17 @@ function registerRobocorpCodeCommands(C: CommandRegistry, context: ExtensionCont
             } else if (packageType === ACTION_PACKAGE) {
                 createActionPackage();
             }
+        }
+    });
+    C.register(ROBOCORP_DOWNLOAD_ACTION_SERVER, async () => {
+        try {
+            const location = await downloadLatestActionServer();
+            window.showInformationMessage(`The latest action server was downloaded to: ${location}`);
+        } catch (error) {
+            logError("Error downloading latest action server", error, "ERR_DOWNLOAD_ACTION_SERVER");
+            window.showErrorMessage(
+                "There was an error downloading the action server. See `OUTPUT > Robocorp Code` for more information."
+            );
         }
     });
     C.register(ROBOCORP_UPLOAD_ROBOT_TO_CLOUD, () => uploadRobot());

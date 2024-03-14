@@ -103,9 +103,6 @@ export function computeUriTestId(uri: string): string {
     if (uri.startsWith("id:")) {
         throw new Error("It seems that this uri is actually a test id already.");
     }
-    if (process.platform == "win32") {
-        uri = uri.toLowerCase();
-    }
     return "id:" + uri;
 }
 
@@ -161,10 +158,6 @@ function removeTreeStructure(uri: vscode.Uri) {
 function addTreeStructure(workspaceFolder: vscode.WorkspaceFolder, uri: vscode.Uri): vscode.TestItem {
     let workspaceFolderPath = workspaceFolder.uri.path;
     let uriPath = uri.path;
-    if (process.platform == "win32") {
-        workspaceFolderPath = workspaceFolderPath.toLowerCase();
-        uriPath = uriPath.toLowerCase();
-    }
     const path = posixPath.relative(workspaceFolderPath, uriPath);
     const parts = path.split("/");
 
