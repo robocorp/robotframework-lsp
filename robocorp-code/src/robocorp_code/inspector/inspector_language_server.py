@@ -23,6 +23,13 @@ class InspectorLanguageServer:
         return Path(directory) / "locators.json"
 
     @log_call(log_level=LogLevel.INFO)
+    def m_kill_inspectors(self, inspector: Optional[str]) -> None:
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        inspector_api_client.send_sync_message(
+            "killInspectors", dict(inspector=inspector)
+        )
+
+    @log_call(log_level=LogLevel.INFO)
     def m_manager_save_locator(
         self,
         locator: dict,

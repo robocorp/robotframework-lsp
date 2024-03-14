@@ -545,3 +545,6 @@ class WebInspector:
         except Exception as e:
             log.exception(f"Exception occurred evaluating code in iFrames: {e}")
             pass
+
+    def shutdown(self):
+        self._looping = False

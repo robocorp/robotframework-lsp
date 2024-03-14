@@ -343,3 +343,7 @@ class WindowsInspector:
         return to_matches_and_hierarchy(
             self._element_inspector.control_element, matched_controls
         )
+
+    def shutdown(self):
+        if self._element_inspector:
+            self._element_inspector.shutdown()

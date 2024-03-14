@@ -224,3 +224,9 @@ class ElementInspector:
         if self._picker_thread:
             self._picker_thread.stop()
             self._picker_thread = None
+
+    def shutdown(self):
+        if self._picker_thread:
+            self._picker_thread.stop()
+        if self._jab_wrapper:
+            self._jab_wrapper.shutdown()

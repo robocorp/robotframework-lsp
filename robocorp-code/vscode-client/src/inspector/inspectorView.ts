@@ -10,7 +10,7 @@ import * as vscode from "vscode";
 import { getExtensionRelativeFile, verifyFileExists } from "../files";
 import { OUTPUT_CHANNEL, buildErrorStr, logError } from "../channel";
 import { getSelectedRobot } from "../viewsCommon";
-import { BrowserLocator, ImageLocator, LocatorType, LocatorsMap } from "./types";
+import { BrowserLocator, ImageLocator, LocatorsMap, LocatorType } from "./types";
 import {
     ReportedStates,
     IApps,
@@ -103,7 +103,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
     context.subscriptions.push(
         langServer.onNotification("$/webPick", (values) => {
             const pickedLocator: BrowserLocator = JSON.stringify(values) as unknown as BrowserLocator;
-            OUTPUT_CHANNEL.appendLine(`> Receiving: picked.element: ${pickedLocator}`);
+            OUTPUT_CHANNEL.appendLine(`[Web] > Receiving: picked.element: ${pickedLocator}`);
             const response: IEventMessage = {
                 id: generateID(),
                 type: IMessageType.EVENT,
@@ -119,7 +119,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
     );
     context.subscriptions.push(
         langServer.onNotification("$/webInspectorState", (state) => {
-            OUTPUT_CHANNEL.appendLine(`> Receiving: webInspectorState: ${JSON.stringify(state)}`);
+            OUTPUT_CHANNEL.appendLine(`[Web] > Receiving: webInspectorState: ${JSON.stringify(state)}`);
             const response: IEventMessage = {
                 id: generateID(),
                 type: IMessageType.EVENT,
@@ -135,7 +135,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
     );
     context.subscriptions.push(
         langServer.onNotification("$/webURLChange", (url) => {
-            OUTPUT_CHANNEL.appendLine(`> Receiving: webURLChange: ${JSON.stringify(url)}`);
+            OUTPUT_CHANNEL.appendLine(`[Web] > Receiving: webURLChange: ${JSON.stringify(url)}`);
             const response: IEventMessage = {
                 id: generateID(),
                 type: IMessageType.EVENT,
@@ -151,7 +151,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
     );
     context.subscriptions.push(
         langServer.onNotification("$/webReigniteThread", async (values) => {
-            OUTPUT_CHANNEL.appendLine(`>>>> Receiving: webReigniteThread: ${JSON.stringify(values)}`);
+            OUTPUT_CHANNEL.appendLine(`[Web] > Receiving: webReigniteThread: ${JSON.stringify(values)}`);
             const browserConfig: {
                 browser_config: { viewport_size: [number, number] };
                 url?: string;
@@ -173,7 +173,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
     context.subscriptions.push(
         langServer.onNotification("$/windowsPick", (values) => {
             const pickedLocator: WindowsAppTree = JSON.stringify(values["picked"]) as unknown as WindowsAppTree;
-            OUTPUT_CHANNEL.appendLine(`> Receiving: picked.element: ${pickedLocator}`);
+            OUTPUT_CHANNEL.appendLine(`[Windows] > Receiving: picked.element: ${pickedLocator}`);
             const response: IEventMessage = {
                 id: generateID(),
                 type: IMessageType.EVENT,
@@ -191,7 +191,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
     context.subscriptions.push(
         langServer.onNotification("$/imagePick", (values) => {
             const pickedLocator: ImagePickResponse = JSON.stringify(values["picked"]) as unknown as ImagePickResponse;
-            OUTPUT_CHANNEL.appendLine(`> Receiving: picked.element: ${pickedLocator}`);
+            OUTPUT_CHANNEL.appendLine(`[Image] > Receiving: picked.element: ${pickedLocator}`);
             const response: IEventMessage = {
                 id: generateID(),
                 type: IMessageType.EVENT,
@@ -208,7 +208,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
     context.subscriptions.push(
         langServer.onNotification("$/imageValidation", (values) => {
             const matches: number = JSON.stringify(values["matches"]) as unknown as number;
-            OUTPUT_CHANNEL.appendLine(`> Receiving: matches: ${matches}`);
+            OUTPUT_CHANNEL.appendLine(`[Image] > Receiving: matches: ${matches}`);
             const response: IEventMessage = {
                 id: generateID(),
                 type: IMessageType.EVENT,
@@ -224,7 +224,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
     );
     context.subscriptions.push(
         langServer.onNotification("$/imageInspectorState", (state) => {
-            OUTPUT_CHANNEL.appendLine(`> Receiving: imageInspectorState: ${JSON.stringify(state)}`);
+            OUTPUT_CHANNEL.appendLine(`[Image] > Receiving: imageInspectorState: ${JSON.stringify(state)}`);
             const response: IEventMessage = {
                 id: generateID(),
                 type: IMessageType.EVENT,
@@ -242,7 +242,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
     context.subscriptions.push(
         langServer.onNotification("$/javaPick", (values) => {
             const pickedLocator: JavaAppTree = JSON.stringify(values["picked"]) as unknown as JavaAppTree;
-            OUTPUT_CHANNEL.appendLine(`> Receiving: picked.element: ${pickedLocator}`);
+            OUTPUT_CHANNEL.appendLine(`[Java] > Receiving: picked.element: ${pickedLocator}`);
             const response: IEventMessage = {
                 id: generateID(),
                 type: IMessageType.EVENT,
@@ -258,12 +258,8 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
     );
 
     panel.onDidDispose(() => {
-        sendRequest("webInspectorCloseBrowser", {});
-        sendRequest("windowsInspectorStopPick", {});
-        sendRequest("windowsInspectorStopHighlight", {});
-        sendRequest("javaInspectorStopPick", {});
-        sendRequest("javaInspectorStopHighlight", {});
-        // TODO: kill all internal threads when the Inspector is closed
+        OUTPUT_CHANNEL.appendLine(`> Killing all Inspectors...`);
+        sendRequest("killInspectors", { inspector: null });
         ROBOCORP_INSPECTOR_PANEL = undefined;
     });
 
@@ -315,13 +311,13 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                         const actionResult: ActionResult<LocatorsMap> = await sendRequest("managerLoadLocators", {
                             directory: directory,
                         });
-                        OUTPUT_CHANNEL.appendLine(`> Requesting: Response: ${JSON.stringify(actionResult)}`);
+                        OUTPUT_CHANNEL.appendLine(`[Manager] > Requesting: Response: ${JSON.stringify(actionResult)}`);
                         panel.webview.postMessage(
                             buildProtocolResponseFromActionResponse(message, actionResult, "locatorsMap")
                         );
                     } else if (message.app === IApps.LOCATORS_MANAGER) {
                         if (command["type"] === "delete") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Delete Locators: ${command["ids"]}`);
+                            OUTPUT_CHANNEL.appendLine(`[Manager] > Requesting: Delete Locators: ${command["ids"]}`);
                             const actionResult: ActionResult<any> = await sendRequest("managerDeleteLocators", {
                                 directory: directory,
                                 ids: command["ids"],
@@ -329,7 +325,9 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                             panel.webview.postMessage(buildProtocolResponseFromActionResponse(message, actionResult));
                         } else if (command["type"] === "save") {
                             const locator = message["command"]["locator"];
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Save Locator: ${JSON.stringify(locator)}`);
+                            OUTPUT_CHANNEL.appendLine(
+                                `[Manager] > Requesting: Save Locator: ${JSON.stringify(locator)}`
+                            );
                             const actionResult: ActionResult<any> = await sendRequest("managerSaveLocator", {
                                 locator: locator,
                                 directory: directory,
@@ -339,22 +337,24 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                     } else if (message.app === IApps.WEB_INSPECTOR) {
                         if (command["type"] === "startPicking") {
                             // configure the browser before opening anything
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Configure Browser: ${JSON.stringify(command)}`);
+                            OUTPUT_CHANNEL.appendLine(
+                                `[Web] > Requesting: Configure Browser: ${JSON.stringify(command)}`
+                            );
                             await sendRequest("webInspectorConfigureBrowser", {
                                 width: command["viewportWidth"],
                                 height: command["viewportHeight"],
                                 url: command["url"],
                             });
                             // start picking
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Start Picking: ${JSON.stringify(command)}`);
+                            OUTPUT_CHANNEL.appendLine(`[Web] > Requesting: Start Picking: ${JSON.stringify(command)}`);
                             await sendRequest("webInspectorStartPick", {
                                 url_if_new: command["url"],
                             });
                         } else if (command["type"] === "stopPicking") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Stop Picking: ${JSON.stringify(command)}`);
+                            OUTPUT_CHANNEL.appendLine(`[Web] > Requesting: Stop Picking: ${JSON.stringify(command)}`);
                             await sendRequest("webInspectorStopPick");
                         } else if (command["type"] === "validate") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Validate: ${JSON.stringify(command)}`);
+                            OUTPUT_CHANNEL.appendLine(`[Web] > Requesting: Validate: ${JSON.stringify(command)}`);
                             const actionResult = await sendRequest("webInspectorValidateLocator", {
                                 locator: command["locator"],
                                 url: command["url"],
@@ -362,22 +362,30 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                             panel.webview.postMessage(
                                 buildProtocolResponseFromActionResponse(message, actionResult.result, "locatorMatches")
                             );
+                        } else if (command["type"] === "killMe") {
+                            await sendRequest("killInspectors", { inspector: LocatorType.Browser });
                         }
                     } else if (message.app === IApps.WINDOWS_INSPECTOR) {
                         if (command["type"] === "startPicking") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Start Picking: ${JSON.stringify(command)}`);
+                            OUTPUT_CHANNEL.appendLine(
+                                `[Windows] > Requesting: Start Picking: ${JSON.stringify(command)}`
+                            );
                             await sendRequest("windowsInspectorStartPick");
                         } else if (command["type"] === "stopPicking") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Stop Picking: ${JSON.stringify(command)}`);
+                            OUTPUT_CHANNEL.appendLine(
+                                `[Windows] > Requesting: Stop Picking: ${JSON.stringify(command)}`
+                            );
                             await sendRequest("windowsInspectorStopPick");
                         } else if (command["type"] === "getAppWindows") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Get Apps: ${JSON.stringify(command)}`);
+                            OUTPUT_CHANNEL.appendLine(`[Windows] > Requesting: Get Apps: ${JSON.stringify(command)}`);
                             const actionResult: ActionResult<any> = await sendRequest("windowsInspectorListWindows");
                             panel.webview.postMessage(
                                 buildProtocolResponseFromActionResponse(message, actionResult.result, "winApps")
                             );
                         } else if (command["type"] === "setSelectedApp") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Set Selected App: ${JSON.stringify(command)}`);
+                            OUTPUT_CHANNEL.appendLine(
+                                `[Windows] > Requesting: Set Selected App: ${JSON.stringify(command)}`
+                            );
                             const actionResult: ActionResult<any> = await sendRequest(
                                 "windowsInspectorSetWindowLocator",
                                 { locator: `handle:${command["handle"]}` }
@@ -386,7 +394,9 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                                 buildProtocolResponseFromActionResponse(message, actionResult.result)
                             );
                         } else if (command["type"] === "collectAppTree") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Collect App Tree: ${JSON.stringify(command)}`);
+                            OUTPUT_CHANNEL.appendLine(
+                                `[Windows] > Requesting: Collect App Tree: ${JSON.stringify(command)}`
+                            );
                             const actionResult: ActionResult<any> = await sendRequest("windowsInspectorCollectTree", {
                                 locator: command["locator"],
                                 search_depth: command["depth"] || 8,
@@ -397,7 +407,7 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                             );
                         } else if (command["type"] === "validateLocatorSyntax") {
                             OUTPUT_CHANNEL.appendLine(
-                                `> Requesting: Validate Locator Syntax: ${JSON.stringify(command)}`
+                                `[Windows] > Requesting: Validate Locator Syntax: ${JSON.stringify(command)}`
                             );
                             const actionResult: ActionResult<any> = await sendRequest("windowsInspectorParseLocator", {
                                 locator: command["locator"],
@@ -406,7 +416,9 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                                 buildProtocolResponseFromActionResponse(message, actionResult.result, "locator")
                             );
                         } else if (command["type"] === "startHighlighting") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Start Highlighting: ${JSON.stringify(command)}`);
+                            OUTPUT_CHANNEL.appendLine(
+                                `[Windows] > Requesting: Start Highlighting: ${JSON.stringify(command)}`
+                            );
                             const actionResult: ActionResult<any> = await sendRequest(
                                 "windowsInspectorStartHighlight",
                                 {
@@ -419,102 +431,128 @@ export async function showInspectorUI(context: vscode.ExtensionContext, route?: 
                                 buildProtocolResponseFromActionResponse(message, actionResult.result, "locator")
                             );
                         } else if (command["type"] === "stopHighlighting") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Stop Highlighting: ${JSON.stringify(command)}`);
+                            OUTPUT_CHANNEL.appendLine(
+                                `[Windows] > Requesting: Stop Highlighting: ${JSON.stringify(command)}`
+                            );
                             const actionResult: ActionResult<any> = await sendRequest("windowsInspectorStopHighlight");
                             panel.webview.postMessage(
                                 buildProtocolResponseFromActionResponse(message, actionResult.result, "locator")
                             );
+                        } else if (command["type"] === "killMe") {
+                            await sendRequest("killInspectors", { inspector: LocatorType.Windows });
                         }
                     } else if (message.app === IApps.IMAGE_INSPECTOR) {
                         if (command["type"] === "startPicking") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Start Picking: ${JSON.stringify(command)}`);
+                            OUTPUT_CHANNEL.appendLine(
+                                `[Image] > Requesting: Start Picking: ${JSON.stringify(command)}`
+                            );
                             await sendRequest("imageInspectorStartPick", {
                                 minimize: command["minimize"],
                                 confidence_level: command["confidenceLevel"],
                             });
                         } else if (command["type"] === "stopPicking") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Stop Picking: ${JSON.stringify(command)}`);
+                            OUTPUT_CHANNEL.appendLine(`[Image] > Requesting: Stop Picking: ${JSON.stringify(command)}`);
                             await sendRequest("imageInspectorStopPick");
                         } else if (command["type"] === "validate") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Validate: ${JSON.stringify(command)}`);
+                            OUTPUT_CHANNEL.appendLine(`[Image] > Requesting: Validate: ${JSON.stringify(command)}`);
                             await sendRequest("imageInspectorValidateLocator", {
                                 locator: command["locator"],
                                 confidence_level: (command["locator"] as ImageLocator).confidence,
                             });
                         } else if (command["type"] === "saveImage") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: SaveImage: ${JSON.stringify(command)}`);
+                            OUTPUT_CHANNEL.appendLine(`[Image] > Requesting: SaveImage: ${JSON.stringify(command)}`);
                             const actionResult = await sendRequest("imageInspectorSaveImage", {
                                 root_directory: ROBOT_DIRECTORY,
                                 image_base64: command["imageBase64"],
                             });
-                            OUTPUT_CHANNEL.appendLine(`> Result: SaveImage: ${JSON.stringify(actionResult)}`);
+                            OUTPUT_CHANNEL.appendLine(`[Image] > Result: SaveImage: ${JSON.stringify(actionResult)}`);
                             panel.webview.postMessage(
                                 buildProtocolResponseFromActionResponse(message, actionResult.result, "imagePath")
                             );
+                        } else if (command["type"] === "killMe") {
+                            await sendRequest("killInspectors", { inspector: LocatorType.Image });
                         }
                     } else if (message.app === IApps.JAVA_INSPECTOR) {
                         if (command["type"] === "startPicking") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Start Picking: ${JSON.stringify(command)}`);
+                            OUTPUT_CHANNEL.appendLine(`[Java] > Requesting: Start Picking: ${JSON.stringify(command)}`);
                             await sendRequest("javaInspectorStartPick");
                         } else if (command["type"] === "stopPicking") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Stop Picking: ${JSON.stringify(command)}`);
+                            OUTPUT_CHANNEL.appendLine(`[Java] > Requesting: Stop Picking: ${JSON.stringify(command)}`);
                             await sendRequest("javaInspectorStopPick");
                         } else if (command["type"] === "getAppJava") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Get Apps: ${JSON.stringify(command)}`);
+                            OUTPUT_CHANNEL.appendLine(`[Java] > Requesting: Get Apps: ${JSON.stringify(command)}`);
                             const actionResult: ActionResult<any> = await sendRequest("javaInspectorListWindows");
-                            OUTPUT_CHANNEL.appendLine(`> Result: Get Apps: ${JSON.stringify(actionResult)}`);
+                            OUTPUT_CHANNEL.appendLine(`[Java] > Result: Get Apps: ${JSON.stringify(actionResult)}`);
                             panel.webview.postMessage(
                                 buildProtocolResponseFromActionResponse(message, actionResult.result, "javaApps")
                             );
                         } else if (command["type"] === "setSelectedApp") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Set Selected App: ${JSON.stringify(command)}`);
+                            OUTPUT_CHANNEL.appendLine(
+                                `[Java] > Requesting: Set Selected App: ${JSON.stringify(command)}`
+                            );
                             const actionResult: ActionResult<any> = await sendRequest("javaInspectorSetWindowLocator", {
                                 locator: `${command["handle"]}`,
                             });
-                            OUTPUT_CHANNEL.appendLine(`> Result: Set Selected Apps: ${JSON.stringify(actionResult)}`);
+                            OUTPUT_CHANNEL.appendLine(
+                                `[Java] > Result: Set Selected Apps: ${JSON.stringify(actionResult)}`
+                            );
                             panel.webview.postMessage(
                                 buildProtocolResponseFromActionResponse(message, actionResult.result)
                             );
                         } else if (command["type"] === "collectAppTree") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Collect App Tree: ${JSON.stringify(command)}`);
+                            OUTPUT_CHANNEL.appendLine(
+                                `[Java] > Requesting: Collect App Tree: ${JSON.stringify(command)}`
+                            );
                             const actionResult: ActionResult<any> = await sendRequest("javaInspectorCollectTree", {
                                 locator: command["locator"],
                                 search_depth: command["depth"] || 8,
                             });
-                            OUTPUT_CHANNEL.appendLine(`> Result: Collect App Apps: ${JSON.stringify(actionResult)}`);
+                            OUTPUT_CHANNEL.appendLine(
+                                `[Java] > Result: Collect App Apps: ${JSON.stringify(actionResult)}`
+                            );
                             panel.webview.postMessage(
                                 buildProtocolResponseFromActionResponse(message, actionResult.result, "javaAppTree")
                             );
                         } else if (command["type"] === "validateLocatorSyntax") {
                             OUTPUT_CHANNEL.appendLine(
-                                `> Requesting: Validate Locator Syntax: ${JSON.stringify(command)}`
+                                `[Java] > Requesting: Validate Locator Syntax: ${JSON.stringify(command)}`
                             );
                             const actionResult: ActionResult<any> = await sendRequest("javaInspectorParseLocator", {
                                 locator: command["locator"],
                             });
                             OUTPUT_CHANNEL.appendLine(
-                                `> Result: Validate Locator Apps: ${JSON.stringify(actionResult)}`
+                                `[Java] > Result: Validate Locator Apps: ${JSON.stringify(actionResult)}`
                             );
                             panel.webview.postMessage(
                                 buildProtocolResponseFromActionResponse(message, actionResult.result, "locator")
                             );
                         } else if (command["type"] === "startHighlighting") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Start Highlighting: ${JSON.stringify(command)}`);
+                            OUTPUT_CHANNEL.appendLine(
+                                `[Java] > Requesting: Start Highlighting: ${JSON.stringify(command)}`
+                            );
                             const actionResult: ActionResult<any> = await sendRequest("javaInspectorStartHighlight", {
                                 locator: command["locator"],
                                 search_depth: command["depth"] || 8,
                             });
-                            OUTPUT_CHANNEL.appendLine(`> Result: Start Highlighting: ${JSON.stringify(actionResult)}`);
+                            OUTPUT_CHANNEL.appendLine(
+                                `[Java] > Result: Start Highlighting: ${JSON.stringify(actionResult)}`
+                            );
                             panel.webview.postMessage(
                                 buildProtocolResponseFromActionResponse(message, actionResult.result, "locator")
                             );
                         } else if (command["type"] === "stopHighlighting") {
-                            OUTPUT_CHANNEL.appendLine(`> Requesting: Stop Highlighting: ${JSON.stringify(command)}`);
+                            OUTPUT_CHANNEL.appendLine(
+                                `[Java] > Requesting: Stop Highlighting: ${JSON.stringify(command)}`
+                            );
                             const actionResult: ActionResult<any> = await sendRequest("javaInspectorStopHighlight");
-                            OUTPUT_CHANNEL.appendLine(`> Result: Stop Highlighting: ${JSON.stringify(actionResult)}`);
+                            OUTPUT_CHANNEL.appendLine(
+                                `[Java] > Result: Stop Highlighting: ${JSON.stringify(actionResult)}`
+                            );
                             panel.webview.postMessage(
                                 buildProtocolResponseFromActionResponse(message, actionResult.result, "locator")
                             );
+                        } else if (command["type"] === "killMe") {
+                            await sendRequest("killInspectors", { inspector: LocatorType.Java });
                         }
                     }
                     return;

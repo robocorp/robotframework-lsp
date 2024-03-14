@@ -44,9 +44,10 @@ export type IManagerCommands =
 
 export type IWebInspectorCommands =
     | { type: "getLocators" }
-    | { type: "startPicking"; url?: string; viewport_width?: number; viewport_height?: number }
+    | { type: "startPicking"; url?: string; viewportWidth?: number; viewportHeight?: number }
     | { type: "stopPicking" }
-    | { type: "validate"; locator: Locator; url?: string };
+    | { type: "validate"; locator: Locator; url?: string }
+    | { type: "killMe" };
 
 export type IWindowsInspectorCommands =
     | { type: "getLocators" }
@@ -58,13 +59,15 @@ export type IWindowsInspectorCommands =
     | { type: "stopPicking" }
     | { type: "startHighlighting"; locator: string; depth?: number; strategy?: "all" | "siblings" }
     | { type: "stopHighlighting" }
-    | { type: "validate"; locator: Locator };
+    | { type: "validate"; locator: Locator }
+    | { type: "killMe" };
 
 export type IImageInspectorCommands =
     | { type: "startPicking"; minimize?: boolean; confidenceLevel?: number }
     | { type: "stopPicking" }
     | { type: "validate"; locator: Locator }
-    | { type: "saveImage"; imageBase64: string };
+    | { type: "saveImage"; imageBase64: string }
+    | { type: "killMe" };
 
 export type IJavaInspectorCommands =
     | { type: "getLocators" }
@@ -74,9 +77,10 @@ export type IJavaInspectorCommands =
     | { type: "validateLocatorSyntax"; locator: string }
     | { type: "startPicking" }
     | { type: "stopPicking" }
-    | { type: "startHighlighting"; locator: string; depth?: number; strategy?: "all" | "siblings" }
+    | { type: "startHighlighting"; locator: string; depth?: number }
     | { type: "stopHighlighting" }
-    | { type: "validate"; locator: Locator };
+    | { type: "validate"; locator: Locator }
+    | { type: "killMe" };
 
 // IResponseMessage - should be sent with an expectation of Response
 export interface IRequestMessage {

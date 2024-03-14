@@ -67,6 +67,7 @@ class _WebInspectorThread(threading.Thread):
         # signal the run to finish
         self._finish = True
         self.queue.put(None)
+        self._web_inspector.shutdown()
 
     def run(self) -> None:
         from concurrent.futures import Future
@@ -299,6 +300,7 @@ class _WindowsInspectorThread(threading.Thread):
     def shutdown(self) -> None:
         self._finish = True
         self.queue.put(None)
+        self._windows_inspector.shutdown()
 
     def run(self) -> None:
         from concurrent.futures import Future
@@ -527,6 +529,7 @@ class _ImageInspectorThread(threading.Thread):
     def shutdown(self) -> None:
         self._finish = True
         self.queue.put(None)
+        self._image_inspector.shutdown()
 
     def run(self) -> None:
         from concurrent.futures import Future
@@ -657,6 +660,7 @@ class _JavaInspectorThread(threading.Thread):
     def shutdown(self) -> None:
         self._finish = True
         self.queue.put(None)
+        self._java_inspector.shutdown()
 
     def run(self) -> None:
         from concurrent.futures import Future
@@ -906,6 +910,33 @@ class InspectorApi(PythonLanguageServer):
 
     def m_echo(self, arg):
         return "echo", arg
+
+    def m_kill_inspectors(self, inspector: Optional[str]):
+        log.info(
+            "@@@ Will kill inspector:", inspector if inspector is not None else "ALL"
+        )
+        if self.__web_inspector_thread and (
+            inspector == "browser" or inspector is None
+        ):
+            self.__web_inspector_thread.shutdown()
+            self.__web_inspector_thread = None
+            log.info("@@@ Killed Web Inspector!")
+        if self.__windows_inspector_thread and (
+            inspector == "windows" or inspector is None
+        ):
+            self.__windows_inspector_thread.shutdown()
+            self.__windows_inspector_thread = None
+            log.info("@@@ Killed Windows Inspector!")
+        if self.__java_inspector_thread and (inspector == "java" or inspector is None):
+            self.__java_inspector_thread.shutdown()
+            self.__java_inspector_thread = None
+            log.info("@@@ Killed Java Inspector!")
+        if self.__image_inspector_thread and (
+            inspector == "image" or inspector is None
+        ):
+            self.__image_inspector_thread.shutdown()
+            self.__image_inspector_thread = None
+            log.info("@@@ Killed Image Inspector!")
 
     ####
     #### ENQUEUE COMMANDS TO THREAD WORKERS

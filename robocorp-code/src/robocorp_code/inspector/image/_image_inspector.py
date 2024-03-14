@@ -138,3 +138,11 @@ class ImageInspector:
         return self._image_bridge.save_image(
             root_directory=root_directory, image_base64=image_base64
         )
+
+    def shutdown(self):
+        if self._image_bridge:
+            self._image_bridge.stop()
+        if self._picker_thread:
+            self._picker_thread._stop_event.set()
+        if self._validate_thread:
+            self._validate_thread._stop_event.set()

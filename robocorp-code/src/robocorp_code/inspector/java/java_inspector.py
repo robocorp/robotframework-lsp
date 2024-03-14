@@ -400,3 +400,13 @@ class JavaInspector:
         if self._timer_thread:
             self._timer_thread.cancel()
             self._timer_thread = None
+
+    def shutdown(self) -> None:
+        if self._timer_thread:
+            self._timer_thread.cancel()
+        if self._tk_handler_thread:
+            self._tk_handler_thread.quitloop()
+            self._tk_handler_thread.dispose()
+            self._tk_handler_thread.destroy_tk_handler()
+        if self._element_inspector:
+            self._element_inspector.shutdown()
