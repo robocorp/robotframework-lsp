@@ -2,9 +2,10 @@ from typing import Any, Callable, List, Optional, Tuple, TypedDict, TypeVar, Uni
 
 from JABWrapper.context_tree import ContextNode, ContextTree  # type: ignore
 from JABWrapper.jab_wrapper import JavaAccessBridgeWrapper, JavaWindow  # type: ignore
-from robocorp_ls_core.robotframework_log import get_logger
 
-from robocorp_code.inspector.java.highlighter import TkHandlerThread
+from robocorp_ls_core.robotframework_log import get_logger  # type: ignore
+
+from robocorp_code.inspector.java.highlighter import TkHandlerThread  # type: ignore
 
 log = get_logger(__name__)
 
@@ -104,7 +105,7 @@ class ElementInspector:
             try:
                 matches = find_elements_from_tree(self._context, locator)
             except AttributeError as e:
-                log.error(e)
+                log.error("Finding elements from tree failed:", e)
         return {"matches": matches, "tree": self._context}
 
     def _collect_from_context(
@@ -135,7 +136,7 @@ class ElementInspector:
         try:
             matches = find_elements_from_tree(self._context, locator)
         except AttributeError as e:
-            log.error(e)
+            log.error("Finding elements from tree failed:", e)
         return {"matches": matches, "tree": node}
 
     def collect_tree(
@@ -187,7 +188,7 @@ class ElementInspector:
             log.info("Found node:", node)
             return node
         except Exception as e:
-            log.error(e)
+            log.error("Finding elements from tree failed:", e)
         return None
 
     def _collect_node_ancestry(self, node: ContextNode) -> List[ContextNode]:

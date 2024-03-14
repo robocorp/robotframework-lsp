@@ -7,12 +7,12 @@ from pathlib import Path
 from typing import Optional
 from uuid import uuid4
 
-from robocorp_code.inspector.common import (
+from robocorp_code.inspector.common import (  # type: ignore
     STATE_CLOSED,
     STATE_INITIALIZING,
     STATE_PICKING,
 )
-from robocorp_ls_core.protocols import IEndPoint
+from robocorp_ls_core.protocols import IEndPoint  # type: ignore
 
 DEFAULT_CONFIDENCE = 80
 

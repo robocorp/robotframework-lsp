@@ -1,22 +1,22 @@
 import threading
 from queue import Queue
-from typing import Literal, Optional, TYPE_CHECKING, Callable, Tuple
+from typing import Literal, Optional, TYPE_CHECKING, Callable, Tuple, Any
 
-from robocorp_ls_core.basic import overrides
-from robocorp_ls_core.protocols import ActionResultDict, IConfig, IEndPoint
-from robocorp_ls_core.python_ls import PythonLanguageServer
-from robocorp_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.basic import overrides  # type: ignore
+from robocorp_ls_core.protocols import ActionResultDict, IConfig, IEndPoint  # type: ignore
+from robocorp_ls_core.python_ls import PythonLanguageServer  # type: ignore
+from robocorp_ls_core.robotframework_log import get_logger  # type: ignore
 
-from robocorp_code.inspector.common import LogLevel, log_call
-from robocorp_code.inspector.web._web_inspector import (
+from robocorp_code.inspector.common import LogLevel, log_call  # type: ignore
+from robocorp_code.inspector.web._web_inspector import (  # type: ignore
     PickedLocatorTypedDict,
     WebInspector,
 )
 
 if TYPE_CHECKING:
-    from robocorp_code.inspector.windows.windows_inspector import WindowsInspector
-    from robocorp_code.inspector.image._image_inspector import ImageInspector
-    from robocorp_code.inspector.java.java_inspector import JavaInspector
+    from robocorp_code.inspector.windows.windows_inspector import WindowsInspector  # type: ignore
+    from robocorp_code.inspector.image._image_inspector import ImageInspector  # type: ignore
+    from robocorp_code.inspector.java.java_inspector import JavaInspector  # type: ignore
 
 log = get_logger(__name__)
 
@@ -67,7 +67,8 @@ class _WebInspectorThread(threading.Thread):
         # signal the run to finish
         self._finish = True
         self.queue.put(None)
-        self._web_inspector.shutdown()
+        if self._web_inspector:
+            self._web_inspector.shutdown()
 
     def run(self) -> None:
         from concurrent.futures import Future
@@ -300,7 +301,8 @@ class _WindowsInspectorThread(threading.Thread):
     def shutdown(self) -> None:
         self._finish = True
         self.queue.put(None)
-        self._windows_inspector.shutdown()
+        if self._windows_inspector:
+            self._windows_inspector.shutdown()
 
     def run(self) -> None:
         from concurrent.futures import Future
@@ -529,7 +531,8 @@ class _ImageInspectorThread(threading.Thread):
     def shutdown(self) -> None:
         self._finish = True
         self.queue.put(None)
-        self._image_inspector.shutdown()
+        if self._image_inspector:
+            self._image_inspector.shutdown()
 
     def run(self) -> None:
         from concurrent.futures import Future
@@ -660,7 +663,8 @@ class _JavaInspectorThread(threading.Thread):
     def shutdown(self) -> None:
         self._finish = True
         self.queue.put(None)
-        self._java_inspector.shutdown()
+        if self._java_inspector:
+            self._java_inspector.shutdown()
 
     def run(self) -> None:
         from concurrent.futures import Future
@@ -671,7 +675,7 @@ class _JavaInspectorThread(threading.Thread):
 
         endpoint = self._endpoint
 
-        def _on_pick(picked: any):
+        def _on_pick(picked: Any):
             endpoint.notify("$/javaPick", {"picked": picked})
 
         self._java_inspector = JavaInspector()

@@ -5,10 +5,10 @@ from typing import Any, Callable, List, Optional, Tuple, TypedDict, cast, Protoc
 from JABWrapper.context_tree import ContextNode  # type: ignore
 from JABWrapper.jab_wrapper import JavaWindow  # type: ignore
 
-from robocorp_ls_core.callbacks import Callback
-from robocorp_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.callbacks import Callback  # type: ignore
+from robocorp_ls_core.robotframework_log import get_logger  # type: ignore
 
-from robocorp_code.inspector.java.robocorp_java._inspector import ColletedTreeTypedDict
+from robocorp_code.inspector.java.robocorp_java._inspector import ColletedTreeTypedDict  # type: ignore
 
 
 log = get_logger(__name__)
@@ -311,7 +311,7 @@ class JavaInspector:
             raise Exception("Could not collect the tree elements. Rejecting picker!")
 
         # tree_geometries = [ (node_index, (left, top, right, bottom), node ) ]
-        tree_geometries: List[Tuple[int, Tuple]] = []
+        tree_geometries: List[Tuple[int, Tuple, LocatorNodeInfoTypedDict]] = []
         for node_index, node in enumerate(app_tree["hierarchy"]):
             geometry = to_geometry_node(node)
             if geometry is not None:
@@ -349,7 +349,7 @@ class JavaInspector:
         self,
         locator: str,
         search_depth: int = 8,
-    ) -> None:
+    ) -> MatchesAndHierarchyTypedDict:
         self._element_inspector.bring_app_to_frontend()
 
         # kill the TK thread
@@ -391,6 +391,7 @@ class JavaInspector:
 
         self._timer_thread = threading.Timer(3, kill_highlight)
         self._timer_thread.start()
+        return matches_and_hierarchy
 
     def stop_highlight(self) -> None:
         """

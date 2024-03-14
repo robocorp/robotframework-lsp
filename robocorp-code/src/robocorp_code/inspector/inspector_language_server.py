@@ -3,10 +3,10 @@ from functools import partial
 from pathlib import Path
 from typing import Literal, Optional
 
-from robocorp_ls_core.protocols import ActionResultDict
-from robocorp_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.protocols import ActionResultDict  # type: ignore
+from robocorp_ls_core.robotframework_log import get_logger  # type: ignore
 
-from robocorp_code.inspector.common import LogLevel, log_call
+from robocorp_code.inspector.common import LogLevel, log_call  # type: ignore
 
 log = get_logger(__name__)
 
@@ -213,7 +213,7 @@ class InspectorLanguageServer:
     def m_web_inspector_open_browser(self, url=None):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         if url is None:
-            from robocorp_ls_core import uris
+            from robocorp_ls_core import uris  # type: ignore
 
             from robocorp_code.inspector.web import INSPECTOR_GUIDE_PATH
 

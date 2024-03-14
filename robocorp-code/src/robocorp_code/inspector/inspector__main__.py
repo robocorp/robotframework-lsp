@@ -12,7 +12,7 @@ _critical_error_log_file = os.path.join(
 
 
 def _stderr_reader(stream):
-    from robocorp_ls_core.robotframework_log import get_logger
+    from robocorp_ls_core.robotframework_log import get_logger  # type: ignore
 
     log = get_logger(__name__)
 
@@ -39,8 +39,8 @@ def start_server_process(args=(), python_exe=None, env=None):
     """
     import threading
 
-    from robocorp_ls_core.robotframework_log import get_logger
-    from robocorp_ls_core.subprocess_wrapper import subprocess
+    from robocorp_ls_core.robotframework_log import get_logger  # type: ignore
+    from robocorp_ls_core.subprocess_wrapper import subprocess  # type: ignore
 
     log = get_logger(__name__)
 

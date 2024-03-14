@@ -5,14 +5,14 @@ import threading
 from functools import partial
 from typing import Optional
 
-from robocorp_ls_core.basic import (
+from robocorp_ls_core.basic import (  # type: ignore
     is_process_alive,
     kill_process_and_subprocesses,
     log_and_silence_errors,
 )
-from robocorp_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.robotframework_log import get_logger  # type: ignore
 
-from robocorp_code.inspector.client import InspectorApiClient
+from robocorp_code.inspector.client import InspectorApiClient  # type: ignore
 
 log = get_logger(__name__)
 
@@ -63,9 +63,9 @@ class InspectorServerManager(object):
         return self._language_server_ref()
 
     def get_inspector_api_client(self) -> Optional[InspectorApiClient]:
-        from robocorp_code.inspector.inspector__main__ import start_server_process
-        from robocorp_code.options import Setup
-        from robocorp_code.robocorp_language_server import RobocorpLanguageServer
+        from robocorp_code.inspector.inspector__main__ import start_server_process  # type: ignore
+        from robocorp_code.options import Setup  # type: ignore
+        from robocorp_code.robocorp_language_server import RobocorpLanguageServer  # type: ignore
 
         self._check_in_main_thread()
         server_process = self._server_process
@@ -79,7 +79,7 @@ class InspectorServerManager(object):
 
         if server_process is None:
             try:
-                from robocorp_ls_core.jsonrpc.streams import (
+                from robocorp_ls_core.jsonrpc.streams import (  # type: ignore
                     JsonRpcStreamReader,
                     JsonRpcStreamWriter,
                 )

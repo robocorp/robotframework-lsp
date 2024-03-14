@@ -8,9 +8,9 @@ from string import Template
 from playwright.sync_api import ElementHandle
 from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import Page
-from robocorp_ls_core.callbacks import Callback
-from robocorp_ls_core.protocols import IEndPoint, TypedDict
-from robocorp_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.callbacks import Callback  # type: ignore
+from robocorp_ls_core.protocols import IEndPoint, TypedDict  # type: ignore
+from robocorp_ls_core.robotframework_log import get_logger  # type: ignore
 
 from robocorp_code.inspector.common import (
     STATE_CLOSED,

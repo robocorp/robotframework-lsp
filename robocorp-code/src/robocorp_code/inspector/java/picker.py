@@ -3,8 +3,8 @@ import threading
 import time
 from typing import Callable, List, Optional, Tuple
 
-from robocorp_code.inspector.java.highlighter import TkHandlerThread
-from robocorp_ls_core.robotframework_log import ILog
+from robocorp_code.inspector.java.highlighter import TkHandlerThread  # type: ignore
+from robocorp_ls_core.robotframework_log import ILog  # type: ignore
 
 
 class CursorPos:
@@ -36,7 +36,7 @@ class CursorListenerThread(threading.Thread):
     def __init__(
         self,
         log: ILog,
-        tk_handler_thread: TkHandlerThread,
+        tk_handler_thread: Optional[TkHandlerThread],
         # tree_geometries = [ (node_index, (left, top, right, bottom), node ) ]
         tree_geometries: List[Tuple[int, Tuple, dict]],
         # on_pick = func( (node_index, (left, top, right, bottom), node ) )
@@ -51,7 +51,7 @@ class CursorListenerThread(threading.Thread):
         self._on_pick = on_pick
 
         # _element_hit = (node_index, (left, top, right, bottom) )
-        self._element_hit: Optional[Tuple[int, Tuple]] = None
+        self._element_hit: Optional[Tuple[int, Tuple, dict]] = None
         self._timer_highlight_clear: Optional[threading.Timer] = None
 
     def run(self) -> None:
@@ -101,19 +101,23 @@ class CursorListenerThread(threading.Thread):
         self._highlighter_clear()
         self._highlighter_stop()
         # recreate the TK thread
-        self._tk_handler_thread.create()
-        self._tk_handler_thread.loop()
+        if self._tk_handler_thread:
+            self._tk_handler_thread.create()
+            self._tk_handler_thread.loop()
 
     def _highlighter_stop(self):
         # kill the TK thread
-        self._tk_handler_thread.quitloop()
-        self._tk_handler_thread.destroy_tk_handler()
+        if self._tk_handler_thread:
+            self._tk_handler_thread.quitloop()
+            self._tk_handler_thread.destroy_tk_handler()
 
     def _highlighter_clear(self):
-        self._tk_handler_thread.set_rects(rects=[])
+        if self._tk_handler_thread:
+            self._tk_handler_thread.set_rects(rects=[])
 
     def _highlighter_draw(self, rects: List[Tuple]):
-        self._tk_handler_thread.set_rects(rects=rects)
+        if self._tk_handler_thread:
+            self._tk_handler_thread.set_rects(rects=rects)
 
     def _find_element_based_on_cursor(self, x: int, y: int):
         for elem in reversed(self._tree_geometries):

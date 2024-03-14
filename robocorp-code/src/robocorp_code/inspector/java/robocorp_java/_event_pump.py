@@ -5,7 +5,7 @@ import time
 from concurrent import futures
 
 from JABWrapper.jab_wrapper import JavaAccessBridgeWrapper  # type: ignore
-from robocorp_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.robotframework_log import get_logger  # type: ignore
 
 log = get_logger(__name__)
 
