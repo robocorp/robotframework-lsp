@@ -6,9 +6,9 @@ def test_variables_from_variables_file(tmpdir):
     filename = tmpdir.join("my.txt")
     filename.write_text(
         """
-V_NAME = 'value'
-V_NAME1 = 'value 1'
-var2 = 'value var2'
+V_NAME='value'
+V_NAME1='value 1'
+var2='value var2'
 """,
         encoding="utf-8",
     )
