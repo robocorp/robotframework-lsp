@@ -199,7 +199,9 @@ class ElementInspector:
         ancestry.append(node)
         return ancestry
 
-    def collect_node_ancestry(self, locator: str, search_depth: int = 200) -> List[ContextNode]:
+    def collect_node_ancestry(
+        self, locator: str, search_depth: int = 200
+    ) -> List[ContextNode]:
         node = self._collect_node(locator=locator, search_depth=search_depth)
         return self._collect_node_ancestry(node) if node else []
 

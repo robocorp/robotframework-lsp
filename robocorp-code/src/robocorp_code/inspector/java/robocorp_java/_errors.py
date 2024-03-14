@@ -9,5 +9,6 @@ class ContextNotAvailable(Exception):
 class LocatorNotProvidedException(Exception):
     """Locator not provided."""
 
+
 class NoWindowSelected(Exception):
     """Window not selected yet."""
