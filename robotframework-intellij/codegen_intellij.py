@@ -318,7 +318,8 @@ def main():
         os.path.join(this_dir, "..", "robotframework-ls", "package.json")
     ) as stream:
         package_json = json.load(stream)
-        properties = package_json["contributes"]["configuration"]["properties"]
+        categories = package_json["contributes"]["configuration"]
+        properties = {k: v for cat in categories for k, v in cat["properties"].items()}
         for prop_name, prop_value in properties.items():
             if prop_name in IGNORE_PREFERENCES_NOT_APPLICABLE_TO_INTELLIJ:
                 continue

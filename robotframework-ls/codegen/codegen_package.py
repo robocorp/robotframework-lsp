@@ -165,11 +165,7 @@ def get_json_contents():
                     }
                 }
             ],
-            "configuration": {
-                "title": "Robot Framework Language Server Configuration",
-                "type": "object",
-                "properties": get_settings_for_json(),
-            },
+            "configuration": get_settings_for_json(),
             "viewsContainers": collect_views_containers(),
             "views": collect_views(),
             "languages": [
@@ -367,7 +363,7 @@ def write_py_settings():
     setting_constant_template = '%s = "%s"'
 
     # Create the constants
-    for setting_name in settings.SETTINGS.keys():
+    for setting_name in [key for category in settings.SETTINGS for key in category.keys()]:
         settings_template.append(
             setting_constant_template
             % ("OPTION_" + convert_case_to_constant(setting_name), setting_name)
@@ -379,7 +375,7 @@ ALL_ROBOT_OPTIONS = frozenset(
     ("""
     )
 
-    for setting_name in settings.SETTINGS.keys():
+    for setting_name in [key for category in settings.SETTINGS for key in category.keys()]:
         settings_template.append(
             f"        OPTION_{convert_case_to_constant(setting_name)},"
         )
