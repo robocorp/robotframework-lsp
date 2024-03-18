@@ -1002,6 +1002,11 @@
                     "group": "inline"
                 },
                 {
+                    "command": "robocorp.newRobocorpInspectorJava",
+                    "when": "view == robocorp-package-resources-tree && robocorp-code:single-robot-selected && viewItem == newJavaLocator",
+                    "group": "inline"
+                },
+                {
                     "command": "robocorp.openLocatorsJson",
                     "when": "view == robocorp-package-resources-tree && viewItem == locatorsRoot",
                     "group": "inline"

@@ -1,3 +1,4 @@
+import sys
 import threading
 from queue import Queue
 from typing import Literal, Optional, TYPE_CHECKING, Callable, Tuple, Any
@@ -19,6 +20,8 @@ if TYPE_CHECKING:
     from robocorp_code.inspector.java.java_inspector import JavaInspector  # type: ignore
 
 log = get_logger(__name__)
+
+is_windows = sys.platform.startswith("win")
 
 _DEFAULT_LOOP_TIMEOUT = 5
 
@@ -873,7 +876,7 @@ class InspectorApi(PythonLanguageServer):
     def _windows_inspector_thread(self):
         # Lazily-initialize
         ret = self.__windows_inspector_thread
-        if ret is None:
+        if ret is None and is_windows:
             self.__windows_inspector_thread = _WindowsInspectorThread(self._endpoint)
             self.__windows_inspector_thread.start()
 
@@ -893,7 +896,7 @@ class InspectorApi(PythonLanguageServer):
     def _java_inspector_thread(self):
         # Lazily-initialize
         ret = self.__java_inspector_thread
-        if ret is None:
+        if ret is None and is_windows:
             self.__java_inspector_thread = _JavaInspectorThread(self._endpoint)
             self.__java_inspector_thread.start()
 
@@ -946,48 +949,53 @@ class InspectorApi(PythonLanguageServer):
     #### ENQUEUE COMMANDS TO THREAD WORKERS
     ####
     def _enqueue_web(self, cmd: _WebBaseCommand, wait: bool):
-        self._web_inspector_thread.queue.put(cmd)
-        if wait:
-            cmd.handled_event.wait(20)
-            try:
-                return cmd.future.result()
-            except Exception as e:
-                return {"success": False, "message": str(e), "result": None}
+        if self._web_inspector_thread:
+            self._web_inspector_thread.queue.put(cmd)
+            if wait:
+                cmd.handled_event.wait(20)
+                try:
+                    return cmd.future.result()
+                except Exception as e:
+                    return {"success": False, "message": str(e), "result": None}
+
         return {"success": True, "message": None, "result": None}
 
     def _enqueue_windows(
         self, cmd: _WindowsBaseCommand, wait: bool = True
     ) -> ActionResultDict:
-        self._windows_inspector_thread.queue.put(cmd)
-        if wait:
-            try:
-                return cmd.future.result()
-            except Exception as e:
-                return {"success": False, "message": str(e), "result": None}
+        if self._windows_inspector_thread:
+            self._windows_inspector_thread.queue.put(cmd)
+            if wait:
+                try:
+                    return cmd.future.result()
+                except Exception as e:
+                    return {"success": False, "message": str(e), "result": None}
 
         return {"success": True, "message": None, "result": None}
 
     def _enqueue_image(
         self, cmd: _ImageBaseCommand, wait: bool = True
     ) -> ActionResultDict:
-        self._image_inspector_thread.queue.put(cmd)
-        if wait:
-            try:
-                return cmd.future.result()
-            except Exception as e:
-                return {"success": False, "message": str(e), "result": None}
+        if self._image_inspector_thread:
+            self._image_inspector_thread.queue.put(cmd)
+            if wait:
+                try:
+                    return cmd.future.result()
+                except Exception as e:
+                    return {"success": False, "message": str(e), "result": None}
 
         return {"success": True, "message": None, "result": None}
 
     def _enqueue_java(
         self, cmd: _JavaBaseCommand, wait: bool = True
     ) -> ActionResultDict:
-        self._java_inspector_thread.queue.put(cmd)
-        if wait:
-            try:
-                return cmd.future.result()
-            except Exception as e:
-                return {"success": False, "message": str(e), "result": None}
+        if self._java_inspector_thread:
+            self._java_inspector_thread.queue.put(cmd)
+            if wait:
+                try:
+                    return cmd.future.result()
+                except Exception as e:
+                    return {"success": False, "message": str(e), "result": None}
 
         return {"success": True, "message": None, "result": None}
 
@@ -1028,9 +1036,9 @@ class InspectorApi(PythonLanguageServer):
         url: Optional[str] = None,
     ) -> None:
         # configure
-        self.__web_inspector_configuration["browser_config"][
-            "viewport_size"
-        ] = viewport_size
+        self.__web_inspector_configuration["browser_config"]["viewport_size"] = (
+            viewport_size
+        )
         self.__web_inspector_configuration["url"] = url
         # command
         self._enqueue_web(
