@@ -229,7 +229,7 @@ class WebInspector:
             page.on("framenavigated", mark_url_changed)
 
             def on_picked(*args, **kwargs):
-                log.info(f"## Picked item: {args}")
+                log.debug(f"Web:: Picked item: {args}")
                 s = weak_self()
                 if s is not None:
                     s._on_picked(*args, **kwargs)

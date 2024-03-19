@@ -139,7 +139,7 @@ async function downloadRcc(
 
 // Note: python tests scan this file and get these constants, so, if the format
 // changes the (failing) test also needs to change.
-const BASENAME_PREBUILT_WIN_AMD64 = "7f0efd4617716058_windows_amd64.zip";
+const BASENAME_PREBUILT_WIN_AMD64 = "2195c38e27a4ceb6_windows_amd64.zip";
 const BASENAME_PREBUILT_DARWIN = "5522648f69edb3e4_darwin_amd64.zip";
 const BASENAME_PREBUILT_LINUX_AMD64 = "e9c56273fd47ede1_linux_amd64.zip";
 

@@ -185,10 +185,10 @@ class ElementInspector:
                 if isinstance(matches, List) and len(matches) > 0
                 else matches
             )
-            log.info("Found node:", node)
+            log.debug("Java:: Found node:", node)
             return node
         except Exception as e:
-            log.error("Finding elements from tree failed:", e)
+            log.error("Java:: Finding elements from tree failed:", e)
         return None
 
     def _collect_node_ancestry(self, node: ContextNode) -> List[ContextNode]:

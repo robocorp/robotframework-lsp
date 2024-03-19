@@ -84,8 +84,8 @@ class CursorListenerThread(threading.Thread):
                         _, geometry, _ = self._element_hit
                         # draw the highlight
                         self._highlighter_draw(rects=[geometry])
-                        self.log.info(
-                            f"Picked element (on_pick callback): {self._element_hit}"
+                        self.log.debug(
+                            f"Java:: Picked element (on_pick callback): {self._element_hit}"
                         )
                         self._on_pick(self._element_hit)
                 else:

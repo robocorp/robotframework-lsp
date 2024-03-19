@@ -224,9 +224,7 @@ class JavaInspector:
                 # good
                 # inject env variable
                 os.environ["RC_JAVA_ACCESS_BRIDGE_DLL"] = java_access_bridge_path
-                log.info(
-                    "=== JAVA: RC_JAVA_ACCESS_BRIDGE_DLL:", java_access_bridge_path
-                )
+                log.debug("JAVA: RC_JAVA_ACCESS_BRIDGE_DLL:", java_access_bridge_path)
                 return
             raise Exception("Java Access DLL was not found")
 
@@ -245,9 +243,9 @@ class JavaInspector:
             if not os.path.exists(jabswitch):
                 raise Exception("Could not find the jabswitch")
             output = subprocess.check_output([jabswitch, "-enable"])
-            log.info("=== JAVA: enabling jabswitch:", output)
+            log.debug("JAVA: enabling jabswitch:", output)
         except Exception as e:
-            log.info("=== JAVA: jabswitch exception:", e)
+            log.debug("JAVA: jabswitch exception:", e)
             pass
 
     def list_opened_applications(self) -> List[JavaWindowInfoTypedDict]:
@@ -267,7 +265,7 @@ class JavaInspector:
         """
         Set the current Java window user chose.
         """
-        log.info(f"=== JAVA: Selected window: {window}")
+        log.debug(f"JAVA: Selected window: {window}")
         self._element_inspector.set_window(window)
         self._element_inspector.bring_app_to_frontend()
 
@@ -280,9 +278,7 @@ class JavaInspector:
         matches_and_hierarchy = self._element_inspector.collect_tree(
             search_depth, locator
         )
-        log.info(
-            f"=== JAVA: collect_tree: matches_and_hierarchy:", matches_and_hierarchy
-        )
+        log.debug(f"JAVA: collect_tree: matches_and_hierarchy:", matches_and_hierarchy)
         return to_matches_and_hierarchy(matches_and_hierarchy)
 
     def collect_tree_from_root(
@@ -294,8 +290,8 @@ class JavaInspector:
         matches_and_hierarchy = self._element_inspector.collect_tree_from_root(
             search_depth, locator
         )
-        log.info(
-            f"=== JAVA: collect_tree_from_root: matches_and_hierarchy:",
+        log.debug(
+            f"JAVA: collect_tree_from_root: matches_and_hierarchy:",
             matches_and_hierarchy,
         )
         return to_matches_and_hierarchy(matches_and_hierarchy)
@@ -323,7 +319,7 @@ class JavaInspector:
             try:
                 _, _, picked_node = picked_elem
                 locator = to_unique_locator(picked_node)
-                log.info("Finding ancestry for:", locator)
+                log.debug("Finding ancestry for:", locator)
                 return_ancestry = self._element_inspector.collect_node_ancestry(
                     locator=locator, search_depth=search_depth
                 )
@@ -331,10 +327,10 @@ class JavaInspector:
             except Exception as e:
                 log.error(f"Exception was raised while calculating node ancestry: {e}")
                 return_ancestry = []
-            log.info("Element ancestry:", return_ancestry)
+            log.debug("Element ancestry:", return_ancestry)
             self.on_pick(return_ancestry)
 
-        log.info("Starting picker...")
+        log.debug("Starting picker...")
         self._element_inspector.start_picker(
             tk_handler_thread=self._tk_handler_thread,
             tree_geometries=tree_geometries,
@@ -342,7 +338,7 @@ class JavaInspector:
         )
 
     def stop_pick(self) -> None:
-        log.info("Stopping picker...")
+        log.debug("Stopping picker...")
         self._element_inspector.stop_picker()
 
     def start_highlight(

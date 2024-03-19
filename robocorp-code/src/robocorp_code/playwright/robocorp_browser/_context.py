@@ -207,7 +207,7 @@ def browser(**kwargs) -> Iterator[Browser]:
     # Note: one per session (must be tear-down).
     config = _browser_config()
     if config.install:
-        log.info("Installing browsers (config.install==True).")
+        log.debug("Web:: Installing browsers (config.install==True).")
         install_browser(config.browser_engine)
 
     launcher = _browser_launcher()

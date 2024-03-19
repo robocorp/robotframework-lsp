@@ -118,12 +118,12 @@ class SnippingTool:
         return max(min(value, self.screen_width), 0)
 
     def _on_timeout(self, _):
-        self.logger.warning("@@@ Timeout reached (%d seconds)", self.timeout)
+        self.logger.warning("Image:: Timeout reached (%d seconds)", self.timeout)
         self.error = "Timeout reached"
         self.quit()
 
     def _on_escape(self, _):
-        self.logger.warning("@@@ Aborted by user")
+        self.logger.warning("Image:: Aborted by user")
         self.error = "Aborted by user"
         self.quit()
 
@@ -164,7 +164,7 @@ class SnippingTool:
             )
 
         scale_factor = height_scale
-        self.logger.debug("@@@ Calculated scale factor: %f", scale_factor)
+        self.logger.debug("Image:: Calculated scale factor: %f", scale_factor)
 
         #: Save dimensions to result
         self.result.screen_resolution_width = self.screen_width
@@ -180,7 +180,7 @@ class SnippingTool:
         )
 
         #: Crop the snipped value from the
-        self.logger.info("@@@ Snip coordinates: %s", coordinates)
+        self.logger.debug("Image:: Snip coordinates: %s", coordinates)
         snip = self.screenshot_image.crop(coordinates)
 
         stream = BytesIO()

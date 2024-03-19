@@ -131,14 +131,14 @@ class ControlElement:
 
         root = self._wrapped
 
-        self.logger.info("Getting element with locator: %s", locator)
+        self.logger.debug("Win:: Getting element with locator: %s", locator)
         if not locator:
             return root
 
         element = find_ui_automation_wrapper(
             locator, search_depth, timeout=timeout, root_element=root
         )
-        self.logger.info("Returning element: %s", element)
+        self.logger.debug("Win:: Returning element: %s", element)
         return element
 
     @property
@@ -1231,7 +1231,7 @@ class ControlElement:
         if hasattr(control, "SendKeys"):
             if wait_time is None:
                 wait_time = _wait_time()
-            cls.logger.info("Sending keys %r to control: %s", keys, control)
+            cls.logger.debug("Win:: Sending keys %r to control: %s", keys, control)
             if keys:
                 control.SendKeys(text=keys, interval=interval, waitTime=wait_time)
             if send_enter:
@@ -1350,8 +1350,8 @@ class ControlElement:
 
         if get_value_pattern:
             func_name = get_value_pattern.__name__
-            self.logger.info(
-                "Retrieving the element value with the %r method.", func_name
+            self.logger.debug(
+                "Win:: Retrieving the element value with the %r method.", func_name
             )
             value_pattern = get_value_pattern()
             return value_pattern.Value if value_pattern else None
@@ -1371,7 +1371,9 @@ class ControlElement:
         validator: Optional[Callable],
     ):
         func_name = get_value_pattern.__name__
-        self.logger.info("%s the element value with the %r method.", action, func_name)
+        self.logger.debug(
+            "Win:: %s the element value with the %r method.", action, func_name
+        )
         value_pattern = get_value_pattern()
         current_value = value_pattern.Value if append else ""
         expected_value = f"{current_value}{value}{newline_string}"
@@ -1394,8 +1396,8 @@ class ControlElement:
         locator: Optional[Locator],
         validator: Optional[Callable],
     ):
-        self.logger.info(
-            "%s the element value with `Send Keys`. (no patterns found)", action
+        self.logger.debug(
+            "Win:: %s the element value with `Send Keys`. (no patterns found)", action
         )
         if newline_string or re.search("[\r\n]", value):
             self.logger.warning(
@@ -1563,7 +1565,7 @@ class ControlElement:
             )
 
         if enter:
-            self.logger.info("Inserting a new line by sending the *Enter* key.")
+            self.logger.debug("Win:: Inserting a new line by sending the *Enter* key.")
             self._send_keys_to_element(
                 element.ui_automation_control,
                 "{Ctrl}{End}{Enter}",

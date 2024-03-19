@@ -28,7 +28,6 @@ def _base64_to_image(img: str):
 
 
 class ImageBridge:
-
     """Javascript API bridge for image template locators."""
 
     def __init__(self, endpoint: Optional[IEndPoint] = None, logger=None) -> None:
@@ -87,18 +86,18 @@ class ImageBridge:
                 self.endpoint.notify("$/imageInspectorState", {"state": STATE_CLOSED})
             raise RuntimeError(result["error"])
 
-        self.logger.info("=== Snapshot taken!")
+        self.logger.debug("Image:: Snapshot taken!")
         if self.endpoint is not None:
             self.endpoint.notify("$/imageInspectorState", {"state": STATE_CLOSED})
         return result
 
     def pick(self, confidence: Optional[int] = None):
-        self.logger.info("=== Starting interactive picker")
+        self.logger.debug("Image:: Starting interactive picker")
         if self.endpoint is not None:
             self.endpoint.notify("$/imageInspectorState", {"state": STATE_INITIALIZING})
         result = self._launch_snipper()
 
-        self.logger.info("=== Snapshot Result:", result)
+        self.logger.debug("Image:: Snapshot Result:", result)
 
         return {
             "screenshot": f"data:image/png;base64,{result['screenshot']}",
@@ -109,11 +108,11 @@ class ImageBridge:
         }
 
     def stop(self):
-        self.logger.info("=== Stopping interactive picker...")
+        self.logger.debug("Image:: Stopping interactive picker...")
         if self.snipping_process is not None:
             self.snipping_process.terminate()
             self.snipping_process.kill()
-        self.logger.info("=== Process stopped")
+        self.logger.debug("Image:: Process stopped")
 
     # TODO: replace this implementation when the robocorp library has image recognition
     def validate(
@@ -127,7 +126,7 @@ class ImageBridge:
         return len(matches)
 
     def _find_matches(self, needle, confidence=None):
-        self.logger.info("=== Finding matches...")
+        self.logger.debug("Image:: Finding matches...")
 
         import mss  # type: ignore
         import pyscreeze  # type: ignore
@@ -144,8 +143,8 @@ class ImageBridge:
             )
 
         try:
-            self.logger.info(
-                "=== Finding template matches (confidence: %s)", confidence
+            self.logger.debug(
+                "Image:: Finding template matches (confidence: %s)", confidence
             )
             box = pyscreeze.locate(
                 needleImage=needle,
@@ -157,8 +156,8 @@ class ImageBridge:
             self.logger.debug(str(err))
             matches = []
 
-        self.logger.info(
-            "Found %d match%s", len(matches), "" if len(matches) == 1 else "es"
+        self.logger.debug(
+            "Image:: Found %d match%s", len(matches), "" if len(matches) == 1 else "es"
         )
 
         return matches
@@ -171,7 +170,7 @@ class ImageBridge:
         image_name = f"{uuid4()}.png"
         image_root = os.path.join(root_directory, images_folder_name)
         image_path = os.path.join(image_root, image_name)
-        self.logger.info("=== Will save to:", image_path)
+        self.logger.debug("Image:: Will save to:", image_path)
 
         try:
             # making sure that the image directory exists
@@ -180,9 +179,9 @@ class ImageBridge:
             pass
 
         try:
-            self.logger.info("=== Saving IMAGE to file:", image_path)
+            self.logger.debug("Image:: Saving IMAGE to file:", image_path)
             img.save(image_path)
         except Exception as e:
-            self.logger.info("=== Saving IMAGE to file failed:", e)
+            self.logger.debug("Image:: Saving IMAGE to file failed:", e)
 
         return os.path.join(images_folder_name, image_name)
