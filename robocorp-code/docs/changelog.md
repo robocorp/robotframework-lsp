@@ -1,3 +1,8 @@
+New in 1.20.0 (2024-03-19)
+-----------------------------
+
+- New Java Inspector available!
+
 New in 1.19.0 (2024-03-12)
 -----------------------------
 
@@ -11,7 +16,7 @@ New in 1.18.0 (2024-02-29)
 - (Action Package support) New action to `Run Action (from Action Package)`
 - (Action Package support) New action to `Debug Action (from Action Package)`
 - (Action Package support) Fixed issue collecting actions as `@action(is_consequential=True)`
-- (Action Package support) It's now possible to create a new Action Package directly from VSCode 
+- (Action Package support) It's now possible to create a new Action Package directly from VSCode
 - (Action Package support) Suggests the download of a newer version of the Action Server
 - (Web Inspector) Added the isolated environment to the browser configuration every time the browser is initialized and when it's getting installed
 - (Web Inspector) Fixing the issues on MacOS with the browser getting stuck until user restarts VSCode
