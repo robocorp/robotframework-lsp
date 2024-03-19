@@ -316,13 +316,13 @@ class WindowsInspector:
             raise RuntimeError(
                 "Unable to collect tree because `set_window_locator` was not previously used to set the window of interest."
             )
-        matched_controls: List["ControlElement"] = (
-            self._element_inspector.control_element.find_many(
-                locator,
-                search_depth=search_depth,
-                search_strategy=search_strategy,
-                timeout=0,
-            )
+        matched_controls: List[
+            "ControlElement"
+        ] = self._element_inspector.control_element.find_many(
+            locator,
+            search_depth=search_depth,
+            search_strategy=search_strategy,
+            timeout=0,
         )
         return to_matches_and_hierarchy(
             self._element_inspector.control_element, matched_controls

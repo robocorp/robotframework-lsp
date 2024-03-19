@@ -33,9 +33,9 @@ class WindowElement(ControlElement):
 
     def __init__(self, wrapped: "_UIAutomationControlWrapper"):
         super().__init__(wrapped)
-        self._executable: Union[_ExecutableNotSetSentinel, Optional[str]] = (
-            _ExecutableNotSetSentinel()
-        )
+        self._executable: Union[
+            _ExecutableNotSetSentinel, Optional[str]
+        ] = _ExecutableNotSetSentinel()
 
     def __str__(self) -> str:
         # Print what can be used to build a locator.
