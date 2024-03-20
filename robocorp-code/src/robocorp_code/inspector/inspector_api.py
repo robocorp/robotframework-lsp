@@ -8,7 +8,6 @@ from robocorp_ls_core.protocols import ActionResultDict, IConfig, IEndPoint  # t
 from robocorp_ls_core.python_ls import PythonLanguageServer  # type: ignore
 from robocorp_ls_core.robotframework_log import get_logger  # type: ignore
 
-from robocorp_code.inspector.common import LogLevel, log_call  # type: ignore
 from robocorp_code.inspector.web._web_inspector import (  # type: ignore
     PickedLocatorTypedDict,
     WebInspector,
@@ -1002,11 +1001,10 @@ class InspectorApi(PythonLanguageServer):
     ####
     #### WEB RELATED APIs
     ####
-    @log_call(log_level=LogLevel.DEBUG)
+
     def m_open_browser(self, url: str, wait: bool = False) -> None:
         self._enqueue_web(_WebOpenUrlCommand(url), wait)
 
-    @log_call(log_level=LogLevel.DEBUG)
     def m_start_pick(self, url_if_new: str = "", wait: bool = False) -> None:
         # configure
         if self.__web_inspector_configuration:
@@ -1016,19 +1014,15 @@ class InspectorApi(PythonLanguageServer):
         # command
         self._enqueue_web(_WebAsyncPickCommand(self._endpoint, url_if_new), wait)
 
-    @log_call(log_level=LogLevel.DEBUG)
     def m_stop_pick(self, wait: bool = False) -> None:
         self._enqueue_web(_WebAsyncStopCommand(), wait)
 
-    @log_call(log_level=LogLevel.DEBUG)
     def m_close_browser(self, wait: bool = False) -> None:
         self._enqueue_web(_WebCloseBrowserCommand(), wait)
 
-    @log_call(log_level=LogLevel.DEBUG)
     def m_click(self, locator: str, wait: bool = False) -> None:
         self._enqueue_web(_WebClickLocatorCommand(locator), wait)
 
-    @log_call(log_level=LogLevel.DEBUG)
     def m_browser_configure(
         self,
         wait=False,
@@ -1036,9 +1030,9 @@ class InspectorApi(PythonLanguageServer):
         url: Optional[str] = None,
     ) -> None:
         # configure
-        self.__web_inspector_configuration["browser_config"][
-            "viewport_size"
-        ] = viewport_size
+        self.__web_inspector_configuration["browser_config"]["viewport_size"] = (
+            viewport_size
+        )
         self.__web_inspector_configuration["url"] = url
         # command
         self._enqueue_web(
@@ -1048,12 +1042,10 @@ class InspectorApi(PythonLanguageServer):
             wait,
         )
 
-    @log_call(log_level=LogLevel.DEBUG)
     def m_shutdown(self, **_kwargs) -> None:
         self._enqueue_web(_WebShutdownCommand(), wait=False)
         PythonLanguageServer.m_shutdown(self, **_kwargs)
 
-    @log_call(log_level=LogLevel.DEBUG)
     def m_validate_locator(
         self, locator: dict, url: Optional[str], wait: bool = False
     ) -> int:
@@ -1062,23 +1054,19 @@ class InspectorApi(PythonLanguageServer):
     ####
     #### WINDOWS RELATED APIs
     ####
-    @log_call(log_level=LogLevel.DEBUG)
+
     def m_windows_parse_locator(self, locator: str) -> ActionResultDict:
         return self._enqueue_windows(_WindowsParseLocator(locator))
 
-    @log_call(log_level=LogLevel.DEBUG)
     def m_windows_set_window_locator(self, locator: str) -> ActionResultDict:
         return self._enqueue_windows(_WindowsSetWindowLocator(locator))
 
-    @log_call(log_level=LogLevel.DEBUG)
     def m_windows_start_pick(self) -> ActionResultDict:
         return self._enqueue_windows(_WindowsStartPick())
 
-    @log_call(log_level=LogLevel.DEBUG)
     def m_windows_stop_pick(self) -> ActionResultDict:
         return self._enqueue_windows(_WindowsStopPick())
 
-    @log_call(log_level=LogLevel.DEBUG)
     def m_windows_start_highlight(
         self,
         locator,
@@ -1089,7 +1077,6 @@ class InspectorApi(PythonLanguageServer):
             _WindowsStartHighlight(locator, search_depth, search_strategy)
         )
 
-    @log_call(log_level=LogLevel.DEBUG)
     def m_windows_collect_tree(
         self,
         locator,
@@ -1100,20 +1087,18 @@ class InspectorApi(PythonLanguageServer):
             _WindowsCollectTree(locator, search_depth, search_strategy)
         )
 
-    @log_call(log_level=LogLevel.DEBUG)
     def m_windows_list_windows(
         self,
     ) -> ActionResultDict:
         return self._enqueue_windows(_WindowsList())
 
-    @log_call(log_level=LogLevel.DEBUG)
     def m_windows_stop_highlight(self) -> ActionResultDict:
         return self._enqueue_windows(_WindowsStopHighlight())
 
     ####
     #### IMAGE RELATED APIs
     ####
-    @log_call(log_level=LogLevel.DEBUG)
+
     def m_image_start_pick(
         self, minimize: Optional[bool] = None, confidence_level: Optional[int] = None
     ):
@@ -1121,11 +1106,9 @@ class InspectorApi(PythonLanguageServer):
             _ImageStartPick(confidence_level=confidence_level, minimize=minimize)
         )
 
-    @log_call(log_level=LogLevel.DEBUG)
     def m_image_stop_pick(self):
         return self._enqueue_image(_ImageStopPick())
 
-    @log_call(log_level=LogLevel.DEBUG)
     def m_image_validate_locator(
         self, locator: dict, confidence_level: Optional[int] = None
     ):
@@ -1135,30 +1118,25 @@ class InspectorApi(PythonLanguageServer):
         #     _ImageValidateLocator(locator=locator, confidence_level=confidence_level)
         # )
 
-    @log_call(log_level=LogLevel.DEBUG)
     def m_image_save_image(self, root_directory: str, image_base64: str):
         return self._enqueue_image(_ImageSaveImage(root_directory, image_base64))
 
     ####
     #### JAVA RELATED APIs
     ####
-    @log_call(log_level=LogLevel.DEBUG)
+
     def m_java_parse_locator(self, locator: str) -> ActionResultDict:
         return self._enqueue_java(_JavaParseLocator(locator))
 
-    @log_call(log_level=LogLevel.DEBUG)
     def m_java_set_window_locator(self, locator: str) -> ActionResultDict:
         return self._enqueue_java(_JavaSetWindowLocator(locator))
 
-    @log_call(log_level=LogLevel.DEBUG)
     def m_java_start_pick(self) -> ActionResultDict:
         return self._enqueue_java(_JavaStartPick())
 
-    @log_call(log_level=LogLevel.DEBUG)
     def m_java_stop_pick(self) -> ActionResultDict:
         return self._enqueue_java(_JavaStopPick())
 
-    @log_call(log_level=LogLevel.DEBUG)
     def m_java_start_highlight(
         self,
         locator,
@@ -1166,7 +1144,6 @@ class InspectorApi(PythonLanguageServer):
     ) -> ActionResultDict:
         return self._enqueue_java(_JavaStartHighlight(locator, search_depth))
 
-    @log_call(log_level=LogLevel.DEBUG)
     def m_java_collect_tree(
         self,
         locator,
@@ -1174,12 +1151,10 @@ class InspectorApi(PythonLanguageServer):
     ) -> ActionResultDict:
         return self._enqueue_java(_JavaCollectTree(locator, search_depth))
 
-    @log_call(log_level=LogLevel.DEBUG)
     def m_java_list_windows(
         self,
     ) -> ActionResultDict:
         return self._enqueue_java(_JavaListApplications())
 
-    @log_call(log_level=LogLevel.DEBUG)
     def m_java_stop_highlight(self) -> ActionResultDict:
         return self._enqueue_java(_JavaStopHighlight())

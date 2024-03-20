@@ -2,6 +2,7 @@ New in 1.20.0 (2024-03-19)
 -----------------------------
 
 - New Java Inspector available!
+    - The Java Inspector will be supported only on Windows OS.
 
 New in 1.19.0 (2024-03-12)
 -----------------------------
