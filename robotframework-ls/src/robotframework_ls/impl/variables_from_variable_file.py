@@ -1,54 +1,31 @@
 from typing import Optional, Tuple
 import os
-from robotframework_ls.impl.protocols import IVariableFound
+import typing
+from robotframework_ls.impl.protocols import (
+    IVariableFound,
+    IVariablesCollector,
+)
+
 from robocorp_ls_core.robotframework_log import get_logger
 
 log = get_logger(__name__)
 
 
 class VariablesFromVariablesFileLoader:
-    def __init__(self, path: str):
+    def __init__(self, path, robot_document):
         self._path = path
+        self._robot_document = robot_document
         self._mtime: Optional[float] = None
         self._variables: Tuple[IVariableFound, ...] = ()
 
     def __str__(self):
-        return f"[VariablesFromVariablesFileLoader({self._path})]"
+        return f"[VariablesFromVariablesFileLoader({self._path, self._robot_document})]"
 
     __repr__ = __str__
 
-    def _iter_vars(self, content):
-        start_multiline = ["(", "[", "{"]
-        end_multiline = [")", "]", "}"]
-        multiline = ""
-        multiple_lines = 0
-        for lineno, line in enumerate(content.splitlines()):
-            line = line.strip()
-
-            if line.startswith("#"):
-                continue
-
-            if "#" in line:
-                line = line.split("#", 1)[0]
-
-            if any(special_character in line for special_character in start_multiline):
-                multiple_lines += 1
-
-            if multiple_lines != 0:
-                multiline += line
-
-            if any(special_character in line for special_character in end_multiline):
-                multiple_lines -= 1
-                if multiple_lines == 0:
-                    line = multiline
-
-            if line and multiple_lines == 0:
-                yield line, lineno
-
     def get_variables(self) -> Tuple[IVariableFound, ...]:
-        from robotframework_ls.impl.variable_types import VariableFoundFromVariablesFile
-
         path = self._path
+        robot_document = self._robot_document
         try:
             try:
                 mtime = os.path.getmtime(path)
@@ -60,28 +37,17 @@ class VariablesFromVariablesFileLoader:
             if mtime != self._mtime:
                 log.debug("Loading variables from: %s", path)
                 self._mtime = mtime
-                with open(path, encoding="utf-8") as stream:
-                    content = stream.read()
+                python_ast = robot_document.get_python_ast()
 
-                if content.startswith("\ufeff"):
-                    content = content[1:]
+                collector = _VariablesCollector()
 
-                variables = []
-                for var, lineno in self._iter_vars(content):
-                    if "=" not in var:
-                        log.info(
-                            '"=" not found in: %s when reading variables from: %s',
-                            var,
-                            path,
-                        )
-                        continue
+                from robotframework_ls.impl.variable_completions_from_py import (
+                    collect_variables_from_python_ast,
+                )
 
-                    variable_name, variable_value = var.split("=", 1)
-                    variables.append(
-                        VariableFoundFromVariablesFile(
-                            variable_name, variable_value, path, lineno
-                        )
-                    )
+                collect_variables_from_python_ast(python_ast, robot_document, collector)
+
+                variables = collector.get_variables()
 
                 log.debug("Found variables from %s: %s", path, variables)
                 self._variables = tuple(variables)
@@ -89,3 +55,26 @@ class VariablesFromVariablesFileLoader:
             log.exception(f"Error getting variables from {path}")
 
         return self._variables
+
+
+class _VariablesCollector(IVariablesCollector):
+    def __init__(self):
+        self.variables = []
+
+    def accepts(self, variable_name: str) -> bool:
+        return True
+
+    def get_variables(self):
+        return self.variables
+
+    def on_variable(self, variable_found: IVariableFound):
+        from robotframework_ls.impl.variable_types import VariableFoundFromVariablesFile
+
+        self.variables.append(
+            VariableFoundFromVariablesFile(
+                variable_found.variable_name,
+                variable_found.variable_value,
+                variable_found.source,
+                variable_found.lineno,
+            )
+        )
