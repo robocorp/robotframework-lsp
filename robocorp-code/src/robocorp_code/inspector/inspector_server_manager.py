@@ -10,7 +10,7 @@ from robocorp_ls_core.basic import (  # type: ignore
     kill_process_and_subprocesses,
     log_and_silence_errors,
 )
-from robocorp_ls_core.robotframework_log import get_logger  # type: ignore
+from robocorp_ls_core.robotframework_log import get_logger
 
 from robocorp_code.inspector.client import InspectorApiClient  # type: ignore
 

@@ -1,6 +1,6 @@
 import enum
 from typing import Optional
-from robocorp_ls_core.robotframework_log import get_logger  # type: ignore
+from robocorp_ls_core.robotframework_log import get_logger
 
 log = get_logger("Inspector")
 

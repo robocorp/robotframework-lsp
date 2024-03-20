@@ -3,7 +3,7 @@ from typing import Any, Callable, List, Optional, Tuple, TypedDict, TypeVar, Uni
 from JABWrapper.context_tree import ContextNode, ContextTree  # type: ignore
 from JABWrapper.jab_wrapper import JavaAccessBridgeWrapper, JavaWindow  # type: ignore
 
-from robocorp_ls_core.robotframework_log import get_logger  # type: ignore
+from robocorp_ls_core.robotframework_log import get_logger
 
 from robocorp_code.inspector.java.highlighter import TkHandlerThread  # type: ignore
 
