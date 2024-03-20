@@ -1,9 +1,9 @@
 import sys
 from typing import Dict, Optional, Union
 
-from robocorp_ls_core.basic import implements  # type: ignore
-from robocorp_ls_core.client_base import LanguageServerClientBase  # type: ignore
-from robocorp_ls_core.protocols import (  # type: ignore
+from robocorp_ls_core.basic import implements
+from robocorp_ls_core.client_base import LanguageServerClientBase
+from robocorp_ls_core.protocols import (
     IErrorMessage,
     IIdMessageMatcher,
     ILanguageServerClientBase,
@@ -61,7 +61,7 @@ class InspectorApiClient(LanguageServerClientBase):
         return True
 
     def initialize(self, process_id=None):
-        from robocorp_ls_core.options import NO_TIMEOUT, USE_TIMEOUTS  # type: ignore
+        from robocorp_ls_core.options import NO_TIMEOUT, USE_TIMEOUTS
 
         self._check_process_alive()
         msg_id = self.next_id()

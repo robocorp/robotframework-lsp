@@ -4,7 +4,7 @@ import time
 from typing import Callable, List, Optional, Tuple
 
 from robocorp_code.inspector.java.highlighter import TkHandlerThread  # type: ignore
-from robocorp_ls_core.robotframework_log import ILog  # type: ignore
+from robocorp_ls_core.robotframework_log import ILog
 
 
 class CursorPos:

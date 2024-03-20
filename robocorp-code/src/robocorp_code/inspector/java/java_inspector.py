@@ -5,7 +5,7 @@ from typing import Any, Callable, List, Optional, Tuple, TypedDict, cast, Protoc
 from JABWrapper.context_tree import ContextNode  # type: ignore
 from JABWrapper.jab_wrapper import JavaWindow  # type: ignore
 
-from robocorp_ls_core.callbacks import Callback  # type: ignore
+from robocorp_ls_core.callbacks import Callback
 from robocorp_ls_core.robotframework_log import get_logger
 
 from robocorp_code.inspector.java.robocorp_java._inspector import ColletedTreeTypedDict  # type: ignore

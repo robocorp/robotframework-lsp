@@ -5,7 +5,7 @@ import threading
 from functools import partial
 from typing import Optional
 
-from robocorp_ls_core.basic import (  # type: ignore
+from robocorp_ls_core.basic import (
     is_process_alive,
     kill_process_and_subprocesses,
     log_and_silence_errors,
@@ -79,7 +79,7 @@ class InspectorServerManager(object):
 
         if server_process is None:
             try:
-                from robocorp_ls_core.jsonrpc.streams import (  # type: ignore
+                from robocorp_ls_core.jsonrpc.streams import (
                     JsonRpcStreamReader,
                     JsonRpcStreamWriter,
                 )

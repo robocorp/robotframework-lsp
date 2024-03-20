@@ -40,7 +40,7 @@ def start_server_process(args=(), python_exe=None, env=None):
     import threading
 
     from robocorp_ls_core.robotframework_log import get_logger
-    from robocorp_ls_core.subprocess_wrapper import subprocess  # type: ignore
+    from robocorp_ls_core.subprocess_wrapper import subprocess
 
     log = get_logger(__name__)
 

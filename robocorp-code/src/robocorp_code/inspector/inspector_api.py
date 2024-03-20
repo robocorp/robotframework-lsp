@@ -2,9 +2,9 @@ import threading
 from queue import Queue
 from typing import Literal, Optional, TYPE_CHECKING, Callable, Tuple, Any
 
-from robocorp_ls_core.basic import overrides  # type: ignore
-from robocorp_ls_core.protocols import ActionResultDict, IConfig, IEndPoint  # type: ignore
-from robocorp_ls_core.python_ls import PythonLanguageServer  # type: ignore
+from robocorp_ls_core.basic import overrides
+from robocorp_ls_core.protocols import ActionResultDict, IConfig, IEndPoint
+from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.constants import IS_WIN
 
@@ -1028,9 +1028,9 @@ class InspectorApi(PythonLanguageServer):
         url: Optional[str] = None,
     ) -> None:
         # configure
-        self.__web_inspector_configuration["browser_config"][
-            "viewport_size"
-        ] = viewport_size
+        self.__web_inspector_configuration["browser_config"]["viewport_size"] = (
+            viewport_size
+        )
         self.__web_inspector_configuration["url"] = url
         # command
         self._enqueue_web(

@@ -12,7 +12,7 @@ from robocorp_code.inspector.common import (  # type: ignore
     STATE_INITIALIZING,
     STATE_PICKING,
 )
-from robocorp_ls_core.protocols import IEndPoint  # type: ignore
+from robocorp_ls_core.protocols import IEndPoint
 
 DEFAULT_CONFIDENCE = 80
 

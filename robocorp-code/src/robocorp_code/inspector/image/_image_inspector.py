@@ -2,8 +2,8 @@ import threading
 import typing
 from typing import Any, Callable, Optional, List
 
-from robocorp_ls_core.protocols import IEndPoint  # type: ignore
-from robocorp_ls_core.callbacks import Callback  # type: ignore
+from robocorp_ls_core.protocols import IEndPoint
+from robocorp_ls_core.callbacks import Callback
 from robocorp_ls_core.robotframework_log import get_logger
 
 from ._bridge import ImageBridge  # type: ignore
