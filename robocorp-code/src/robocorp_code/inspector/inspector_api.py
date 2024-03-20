@@ -1030,9 +1030,9 @@ class InspectorApi(PythonLanguageServer):
         url: Optional[str] = None,
     ) -> None:
         # configure
-        self.__web_inspector_configuration["browser_config"]["viewport_size"] = (
-            viewport_size
-        )
+        self.__web_inspector_configuration["browser_config"][
+            "viewport_size"
+        ] = viewport_size
         self.__web_inspector_configuration["url"] = url
         # command
         self._enqueue_web(
