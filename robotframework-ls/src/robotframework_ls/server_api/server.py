@@ -319,14 +319,18 @@ class RobotFrameworkServerApi(PythonLanguageServer):
                 )
 
                 created_variables_from_variables_files = []
-
+                ws = self._workspace
                 for v in variables_from_variables_files.split(","):
                     v = v.strip()
                     if not v:
                         continue
-                    created_variables_from_variables_files.append(
-                        VariablesFromVariablesFileLoader(v)
-                    )
+                    doc_uri = uris.from_fs_path(v)
+                    resource_doc = ws.get_document(doc_uri, accept_from_file=True)
+                    if resource_doc is not None:
+                        robot_doc = typing.cast(IRobotDocument, resource_doc)
+                        created_variables_from_variables_files.append(
+                            VariablesFromVariablesFileLoader(v, robot_doc)
+                        )
                 created_variables_from_variables_files = tuple(
                     created_variables_from_variables_files
                 )
