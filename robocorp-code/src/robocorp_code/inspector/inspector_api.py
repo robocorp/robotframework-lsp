@@ -1,4 +1,3 @@
-import sys
 import threading
 from queue import Queue
 from typing import Literal, Optional, TYPE_CHECKING, Callable, Tuple, Any
@@ -7,6 +6,7 @@ from robocorp_ls_core.basic import overrides  # type: ignore
 from robocorp_ls_core.protocols import ActionResultDict, IConfig, IEndPoint  # type: ignore
 from robocorp_ls_core.python_ls import PythonLanguageServer  # type: ignore
 from robocorp_ls_core.robotframework_log import get_logger
+from robocorp_ls_core.constants import IS_WIN
 
 from robocorp_code.inspector.web._web_inspector import (  # type: ignore
     PickedLocatorTypedDict,
@@ -19,8 +19,6 @@ if TYPE_CHECKING:
     from robocorp_code.inspector.java.java_inspector import JavaInspector  # type: ignore
 
 log = get_logger(__name__)
-
-is_windows = sys.platform.startswith("win")
 
 _DEFAULT_LOOP_TIMEOUT = 5
 
@@ -875,7 +873,7 @@ class InspectorApi(PythonLanguageServer):
     def _windows_inspector_thread(self):
         # Lazily-initialize
         ret = self.__windows_inspector_thread
-        if ret is None and is_windows:
+        if ret is None and IS_WIN:
             self.__windows_inspector_thread = _WindowsInspectorThread(self._endpoint)
             self.__windows_inspector_thread.start()
 
@@ -895,7 +893,7 @@ class InspectorApi(PythonLanguageServer):
     def _java_inspector_thread(self):
         # Lazily-initialize
         ret = self.__java_inspector_thread
-        if ret is None and is_windows:
+        if ret is None and IS_WIN:
             self.__java_inspector_thread = _JavaInspectorThread(self._endpoint)
             self.__java_inspector_thread.start()
 
@@ -1030,9 +1028,9 @@ class InspectorApi(PythonLanguageServer):
         url: Optional[str] = None,
     ) -> None:
         # configure
-        self.__web_inspector_configuration["browser_config"]["viewport_size"] = (
-            viewport_size
-        )
+        self.__web_inspector_configuration["browser_config"][
+            "viewport_size"
+        ] = viewport_size
         self.__web_inspector_configuration["url"] = url
         # command
         self._enqueue_web(
