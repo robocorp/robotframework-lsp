@@ -3,7 +3,7 @@ import os
 import typing
 from robotframework_ls.impl.protocols import (
     IVariableFound,
-    IVariablesCollector,
+    AbstractVariablesCollector,
 )
 
 from robocorp_ls_core.robotframework_log import get_logger
@@ -57,7 +57,7 @@ class VariablesFromVariablesFileLoader:
         return self._variables
 
 
-class _VariablesCollector(IVariablesCollector):
+class _VariablesCollector(AbstractVariablesCollector):
     def __init__(self):
         self.variables = []
 
