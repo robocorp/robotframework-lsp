@@ -10,7 +10,7 @@ def test_variables_from_variables_file(tmpdir):
     from robocorp_ls_core.watchdog_wrapper import create_observer
     from robocorp_ls_core.workspace import Workspace
 
-    filename = tmpdir.join("my.txt")
+    filename = tmpdir.join("my.py")
     filename.write_text(
         """
 V_NAME='value'
@@ -20,7 +20,14 @@ var2='value var2'
         encoding="utf-8",
     )
 
-    ws = Workspace(str(filename), create_observer("dummy", None))
+    ws_root_path = str(tmpdir)
+    root_uri = uris.from_fs_path(ws_root_path)
+    ws = Workspace(
+        root_uri,
+        fs_observer=create_observer("dummy", ()),
+        workspace_folders=[],
+        track_file_extensions=(".py", ".txt"),
+    )
 
     doc_uri = uris.from_fs_path(str(filename))
     resource_doc = ws.get_document(doc_uri, accept_from_file=True)
