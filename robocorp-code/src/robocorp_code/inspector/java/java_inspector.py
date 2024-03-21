@@ -207,26 +207,26 @@ class JavaInspector:
         # TODO: change the Exceptions to something more specific
         import os
 
-        # check if RC_JAVA_ACCESS_BRIDGE_DLL is set
+        # check if RC_JAVA_ACCESS_BRIDGE_DLL is set & use it as such
         java_access_bridge_path = os.environ.get("RC_JAVA_ACCESS_BRIDGE_DLL", None)
         if not java_access_bridge_path:
-            # if not 2 check the JAVA_HOME is set
+            # if not, check if the JAVA_HOME is set
             java_home = os.environ.get("JAVA_HOME", None)
             if not java_home:
-                # this would be bad
                 raise Exception(
                     "Java wasn't detected. JAVA_HOME environment variable is not set."
                 )
+            # automatically construct the path to the bridge
             java_access_bridge_path = os.path.join(
                 java_home, "jre", "bin", "WindowsAccessBridge-64.dll"
             )
             if os.path.exists(java_access_bridge_path):
-                # good
-                # inject env variable
                 os.environ["RC_JAVA_ACCESS_BRIDGE_DLL"] = java_access_bridge_path
                 log.debug("JAVA: RC_JAVA_ACCESS_BRIDGE_DLL:", java_access_bridge_path)
                 return
-            raise Exception("Java Access DLL was not found")
+            raise Exception(
+                "Path to Java Access Bridge DLL (RC_JAVA_ACCESS_BRIDGE_DLL) was not found. Please check Java installation or set the environment variable properly and try again."
+            )
 
     @staticmethod
     def __enable_switch():
@@ -245,8 +245,8 @@ class JavaInspector:
             output = subprocess.check_output([jabswitch, "-enable"])
             log.debug("JAVA: enabling jabswitch:", output)
         except Exception as e:
-            log.critical("JAVA: jabswitch exception:", e)
-            pass
+            log.critical("JAVA: Enabling jabswitch raised an exception:", e)
+            raise e
 
     def list_opened_applications(self) -> List[JavaWindowInfoTypedDict]:
         """
