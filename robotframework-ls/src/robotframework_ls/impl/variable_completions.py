@@ -444,6 +444,10 @@ def _collect_global_static_variables(
         if collector.accepts(var_found.variable_name):
             collector.on_variable(var_found)
 
+    for var_found in completion_context.get_variables_files_normalized_var_name_to_var_found().values():
+        if collector.accepts(var_found.variable_name):
+            collector.on_variable(var_found)
+
 
 def collect_global_variables(
     completion_context: ICompletionContext,

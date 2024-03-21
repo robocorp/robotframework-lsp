@@ -34,6 +34,11 @@ SETTINGS = {
         "default": "",
         "description": "Load variables for code-completion and code-analysis based on an arguments file. Multiple files accepted by separating with a comma.",
     },
+    "robot.loadVariablesFromVariablesFile": {
+        "type": "string",
+        "default": "",
+        "description": "Load variables for code-completion and code-analysis based on an variables file. Multiple files accepted by separating with a comma.",
+    },
     "robot.pythonpath": {
         "type": "array",
         "default": [],
