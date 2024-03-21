@@ -1,6 +1,6 @@
 from typing import List, Optional, Sequence, Union
 
-from JABWrapper.context_tree import (  # type: ignore
+from JABWrapper.context_tree import (
     ContextNode,
     SearchElement,
 )

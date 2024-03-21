@@ -67,8 +67,8 @@ class CursorListenerThread(threading.Thread):
         )
 
         with UIAutomationInitializerInThread(debug=True):
-            DEFAULT_TIME_FOR_HOVER = 2  # expressed in seconds
-            time_spent_on_element = DEFAULT_TIME_FOR_HOVER
+            DEFAULT_TIME_FOR_HOVER: float = 2  # expressed in seconds
+            time_spent_on_element: float = DEFAULT_TIME_FOR_HOVER
 
             while True:
                 if self._stop_event.wait(0.2):
