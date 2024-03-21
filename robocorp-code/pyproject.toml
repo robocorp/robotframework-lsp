@@ -113,6 +113,9 @@ ignore_missing_imports = true
 module = "JABWrapper.*"
 ignore_missing_imports = true
 
+[mypy-JABWrapper.*]
+ignore_missing_imports = True
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
