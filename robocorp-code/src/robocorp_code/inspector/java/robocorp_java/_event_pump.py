@@ -52,7 +52,8 @@ class EventPumpThread(threading.Thread):
         while not self._quit_event_loop.is_set():
             # The pump is non blocking. If the is no message in the queue
             # wait for 10 milliseconds until check again to prevent too
-            # fast loop.
+            # fast loop. The pump needs time to recover, otherwise it gets cluttered and hangs.
+            # Possibly a limitation in the Java Access Bridge that needs investigating.
             # TODO: add backoff timer
             if not self._pump_background():
                 time.sleep(0.1)
