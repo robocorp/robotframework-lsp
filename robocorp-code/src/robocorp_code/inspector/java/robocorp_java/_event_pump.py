@@ -4,7 +4,7 @@ import threading
 import time
 from concurrent import futures
 
-from JABWrapper.jab_wrapper import JavaAccessBridgeWrapper  # type: ignore
+from JABWrapper.jab_wrapper import JavaAccessBridgeWrapper
 from robocorp_ls_core.robotframework_log import get_logger
 
 log = get_logger(__name__)
@@ -55,7 +55,7 @@ class EventPumpThread(threading.Thread):
             # fast loop.
             # TODO: add backoff timer
             if not self._pump_background():
-                time.sleep(0.01)
+                time.sleep(0.1)
 
     def stop(self):
         self._quit_event_loop.set()
@@ -64,5 +64,4 @@ class EventPumpThread(threading.Thread):
             self._future.cancel()
 
     def get_wrapper(self) -> JavaAccessBridgeWrapper:
-        time.sleep(0.1)
         return self._future.result()

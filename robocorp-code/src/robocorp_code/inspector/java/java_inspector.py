@@ -2,13 +2,13 @@ import re
 import threading
 from typing import Any, Callable, List, Optional, Tuple, TypedDict, cast, Protocol
 
-from JABWrapper.context_tree import ContextNode  # type: ignore
-from JABWrapper.jab_wrapper import JavaWindow  # type: ignore
+from JABWrapper.context_tree import ContextNode
+from JABWrapper.jab_wrapper import JavaWindow
 
 from robocorp_ls_core.callbacks import Callback
 from robocorp_ls_core.robotframework_log import get_logger
 
-from robocorp_code.inspector.java.robocorp_java._inspector import ColletedTreeTypedDict  # type: ignore
+from robocorp_code.inspector.java.robocorp_java._inspector import ColletedTreeTypedDict
 
 
 log = get_logger(__name__)
@@ -245,7 +245,7 @@ class JavaInspector:
             output = subprocess.check_output([jabswitch, "-enable"])
             log.debug("JAVA: enabling jabswitch:", output)
         except Exception as e:
-            log.debug("JAVA: jabswitch exception:", e)
+            log.critical("JAVA: jabswitch exception:", e)
             pass
 
     def list_opened_applications(self) -> List[JavaWindowInfoTypedDict]:
@@ -377,8 +377,6 @@ class JavaInspector:
 
         self._tk_handler_thread.set_rects(rects)
 
-        # killing the highlight after a period of time
-        # TODO: this might be
         def kill_highlight():
             self._tk_handler_thread.set_rects([])
             if self._timer_thread:

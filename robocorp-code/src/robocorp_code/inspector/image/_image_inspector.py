@@ -6,7 +6,7 @@ from robocorp_ls_core.protocols import IEndPoint
 from robocorp_ls_core.callbacks import Callback
 from robocorp_ls_core.robotframework_log import get_logger
 
-from ._bridge import ImageBridge  # type: ignore
+from ._bridge import ImageBridge
 
 log = get_logger(__name__)
 

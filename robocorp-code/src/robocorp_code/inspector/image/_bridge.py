@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Optional
 from uuid import uuid4
 
-from robocorp_code.inspector.common import (  # type: ignore
+from robocorp_code.inspector.common import (
     STATE_CLOSED,
     STATE_INITIALIZING,
     STATE_PICKING,

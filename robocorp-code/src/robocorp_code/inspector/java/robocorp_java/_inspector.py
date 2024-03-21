@@ -1,11 +1,11 @@
 from typing import Any, Callable, List, Optional, Tuple, TypedDict, TypeVar, Union
 
-from JABWrapper.context_tree import ContextNode, ContextTree  # type: ignore
-from JABWrapper.jab_wrapper import JavaAccessBridgeWrapper, JavaWindow  # type: ignore
+from JABWrapper.context_tree import ContextNode, ContextTree
+from JABWrapper.jab_wrapper import JavaAccessBridgeWrapper, JavaWindow
 
 from robocorp_ls_core.robotframework_log import get_logger
 
-from robocorp_code.inspector.java.highlighter import TkHandlerThread  # type: ignore
+from robocorp_code.inspector.java.highlighter import TkHandlerThread
 
 log = get_logger(__name__)
 
@@ -87,10 +87,11 @@ class ElementInspector:
         self._window_obj.update_geometry()
         if not self._window_obj.has_valid_geometry():
             self._window_obj.restore_window()
-            # compensating because of Windows animations
+            # compensating the restore_window because of Windows animations
             time.sleep(0.25)
         self._window_obj.foreground_window(move_cursor_to_center=False)
-        time.sleep(0.2)
+        # compensating foreground_window because of Windows animations
+        time.sleep(0.25)
 
     def _collect_from_root(
         self,

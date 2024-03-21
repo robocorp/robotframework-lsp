@@ -3,7 +3,7 @@ import threading
 import time
 from typing import Callable, List, Optional, Tuple
 
-from robocorp_code.inspector.java.highlighter import TkHandlerThread  # type: ignore
+from robocorp_code.inspector.java.highlighter import TkHandlerThread
 from robocorp_ls_core.robotframework_log import ILog
 
 
@@ -50,18 +50,15 @@ class CursorListenerThread(threading.Thread):
         self._tree_geometries = tree_geometries
         self._on_pick = on_pick
 
-        # _element_hit = (node_index, (left, top, right, bottom) )
+        # _element_hit = ( node_index, (left, top, right, bottom), node )
         self._element_hit: Optional[Tuple[int, Tuple, dict]] = None
-        self._timer_highlight_clear: Optional[threading.Timer] = None
 
     def run(self) -> None:
         try:
             self._highlighter_start()
             self._run()
-        except Exception:
-            import traceback
-
-            traceback.print_exc()
+        except Exception as e:
+            self.log.exception("Exception raised while running:", e)
 
     def _run(self) -> None:
         from robocorp_code.inspector.windows.robocorp_windows._vendored.uiautomation.uiautomation import (
@@ -70,32 +67,31 @@ class CursorListenerThread(threading.Thread):
         )
 
         with UIAutomationInitializerInThread(debug=True):
+            DEFAULT_TIME_FOR_HOVER = 2  # expressed in seconds
+            time_spent_on_element = DEFAULT_TIME_FOR_HOVER
+
             while True:
                 if self._stop_event.wait(0.2):
                     return
 
                 cursor_pos = CursorPos(*GetCursorPos())
-                time.sleep(0.1)
+
                 if not self._is_cursor_still_on_element(cursor_pos.x, cursor_pos.y):
-                    self._find_element_based_on_cursor(cursor_pos.x, cursor_pos.y)
-                    if self._element_hit:
-                        if self._timer_highlight_clear:
-                            self._timer_highlight_clear.cancel()
-                        _, geometry, _ = self._element_hit
-                        # draw the highlight
-                        self._highlighter_draw(rects=[geometry])
-                        self.log.debug(
-                            f"Java:: Picked element (on_pick callback): {self._element_hit}"
-                        )
-                        self._on_pick(self._element_hit)
-                else:
-                    if self._timer_highlight_clear:
-                        self._timer_highlight_clear.cancel()
-                    self._timer_highlight_clear = threading.Timer(
-                        3, self._highlighter_clear
-                    )
-                    self._timer_highlight_clear.start()
-                time.sleep(0.2)
+                    if time_spent_on_element <= 0:
+                        self._highlighter_clear()
+                        self._find_element_based_on_cursor(cursor_pos.x, cursor_pos.y)
+                        time_spent_on_element = DEFAULT_TIME_FOR_HOVER
+
+                        if self._element_hit:
+                            _, geometry, _ = self._element_hit
+                            # draw the highlight & send the element to middleware
+                            self._highlighter_draw(rects=[geometry])
+                            self.log.debug(
+                                f"Java:: Picked element (on_pick callback): {self._element_hit}"
+                            )
+                            self._on_pick(self._element_hit)
+                    else:
+                        time_spent_on_element -= 0.2
 
     def _highlighter_start(self):
         self._highlighter_clear()

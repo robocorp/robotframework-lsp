@@ -8,16 +8,15 @@ from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.robotframework_log import get_logger
 from robocorp_ls_core.constants import IS_WIN
 
-from robocorp_code.inspector.web._web_inspector import (  # type: ignore
+from robocorp_code.inspector.web._web_inspector import (
     PickedLocatorTypedDict,
     WebInspector,
 )
 
 if TYPE_CHECKING:
-    from robocorp_code.inspector.windows.windows_inspector import WindowsInspector  # type: ignore
-    from robocorp_code.inspector.image._image_inspector import ImageInspector  # type: ignore
-    from robocorp_code.inspector.java.java_inspector import JavaInspector  # type: ignore
-
+    from robocorp_code.inspector.windows.windows_inspector import WindowsInspector
+    from robocorp_code.inspector.image._image_inspector import ImageInspector
+    from robocorp_code.inspector.java.java_inspector import JavaInspector
 log = get_logger(__name__)
 
 _DEFAULT_LOOP_TIMEOUT = 5
