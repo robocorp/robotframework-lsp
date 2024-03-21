@@ -109,15 +109,6 @@ ignore_missing_imports = true
 module = "pytest_timeout.*"
 ignore_missing_imports = true
 
-[[tool.mypy.overrides]]
-module = "JABWrapper.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "JABWrapper"
-ignore_missing_imports = true
-
-
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
