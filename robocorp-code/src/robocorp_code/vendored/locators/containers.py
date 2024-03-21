@@ -108,12 +108,23 @@ class ImageLocator(Locator):
     """Image-based locator for template matching."""
 
     path: str
+    screenResolutionWidth: Optional[int] = None
+    screenResolutionHeight: Optional[int] = None
+    screenPixelRatio: Optional[float] = None
     confidence: Optional[float] = None
-    source: Optional[str] = None  # TODO: Remove when crop is implemented
+    screenshot: Optional[str] = None
+    name: Optional[str] = None
+    element: Optional[dict] = None
 
     def __post_init__(self):
         if self.confidence is not None:
             self.confidence = float(self.confidence)
+        if self.screenResolutionWidth is not None:
+            self.screenResolutionWidth = int(self.screenResolutionWidth)
+        if self.screenResolutionHeight is not None:
+            self.screenResolutionHeight = int(self.screenResolutionHeight)
+        if self.screenPixelRatio is not None:
+            self.screenPixelRatio = float(self.screenPixelRatio)
 
 
 @dataclass
@@ -139,6 +150,10 @@ class BrowserLocator(Locator):
     value: str
     source: Optional[str] = None
     screenshot: Optional[str] = None
+    name: Optional[str] = None
+    alternatives: Optional[dict] = None
+    element: Optional[dict] = None
+    frame: Optional[dict] = None
 
 
 @dataclass
@@ -149,6 +164,20 @@ class WindowsLocator(Locator):
     value: str
     version: float
     screenshot: Optional[str] = None
+    name: Optional[str] = None
+    element: Optional[dict] = None
+
+
+@dataclass
+class JavaLocator(Locator):
+    """Java-based locator for Java Applications UI elements"""
+
+    window: str
+    value: str
+    version: float
+    screenshot: Optional[str] = None
+    name: Optional[str] = None
+    element: Optional[dict] = None
 
 
 # Aliases for backwards compatibility, just in case.
@@ -156,6 +185,7 @@ Offset = OffsetLocator
 BrowserDOM = BrowserLocator
 ImageTemplate = ImageLocator
 Coordinates = PointLocator
+JavaDOM = JavaLocator
 
 # Mapping of supported locator typenames to classes.
 # Used for parsing locator literals.
@@ -169,6 +199,7 @@ TYPES = {
     "browser": BrowserLocator,
     "coordinates": PointLocator,  # Backwards compatibility
     "windows": WindowsLocator,
+    "java": JavaLocator,
 }
 
 # Above mapping but in reverse direction.
@@ -181,4 +212,5 @@ NAMES = {
     OcrLocator: "ocr",
     BrowserLocator: "browser",
     WindowsLocator: "windows",
+    JavaLocator: "java",
 }

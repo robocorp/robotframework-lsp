@@ -58,4 +58,6 @@ ignore_missing_imports = true
 module = "playwright.*"
 ignore_missing_imports = true
 
-
+[[tool.mypy.overrides]]
+module = "JABWrapper.*"
+ignore_missing_imports = true

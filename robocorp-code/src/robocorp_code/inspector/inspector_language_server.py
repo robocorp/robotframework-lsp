@@ -6,6 +6,7 @@ from typing import Literal, Optional
 from robocorp_ls_core.protocols import ActionResultDict
 from robocorp_ls_core.robotframework_log import get_logger
 
+
 log = get_logger(__name__)
 
 
@@ -19,6 +20,12 @@ class InspectorLanguageServer:
 
     def get_locators_json_path(self, directory: str) -> Path:
         return Path(directory) / "locators.json"
+
+    def m_kill_inspectors(self, inspector: Optional[str]) -> None:
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        inspector_api_client.send_sync_message(
+            "killInspectors", dict(inspector=inspector)
+        )
 
     def m_manager_save_locator(
         self,
@@ -283,7 +290,6 @@ class InspectorLanguageServer:
     def m_windows_inspector_stop_pick(self):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         # Not blocking (return callback to run in thread).
-        log.info("LS-Win-StopPick")
         return partial(
             inspector_api_client.send_sync_message,
             "windowsStopPick",
@@ -338,12 +344,6 @@ class InspectorLanguageServer:
     def m_image_inspector_start_pick(
         self, minimize: Optional[bool], confidence_level: Optional[int]
     ):
-        log.info(
-            "### Image ### Start Pick: minimize",
-            minimize,
-            "confidence_level",
-            confidence_level,
-        )
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         return partial(
             inspector_api_client.send_sync_message,
@@ -352,7 +352,6 @@ class InspectorLanguageServer:
         )
 
     def m_image_inspector_stop_pick(self):
-        log.info("### Image ### Stop Pick")
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
         return partial(inspector_api_client.send_sync_message, "imageStopPick", {})
 
@@ -360,12 +359,6 @@ class InspectorLanguageServer:
         self, locator: dict, confidence_level: Optional[bool]
     ):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
-        log.info(
-            "### Image ### Validate: locator:",
-            locator,
-            "confidence_level",
-            confidence_level,
-        )
         return partial(
             inspector_api_client.send_sync_message,
             "imageValidateLocator",
@@ -374,14 +367,94 @@ class InspectorLanguageServer:
 
     def m_image_inspector_save_image(self, root_directory: str, image_base64: str):
         inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
-        log.info(
-            "### Image ### Validate: root_directory:",
-            root_directory,
-            "image_base64",
-            image_base64,
-        )
         return partial(
             inspector_api_client.send_sync_message,
             "imageSaveImage",
             {"root_directory": root_directory, "image_base64": image_base64},
+        )
+
+    def m_java_inspector_parse_locator(self, locator: str):
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        # Not blocking (return callback to run in thread).
+        return partial(
+            inspector_api_client.send_sync_message,
+            "javaParseLocator",
+            {"locator": locator},
+        )
+
+    def m_java_inspector_set_window_locator(self, locator: str):
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        # Not blocking (return callback to run in thread).
+        return partial(
+            inspector_api_client.send_sync_message,
+            "javaSetWindowLocator",
+            {"locator": locator},
+        )
+
+    def m_java_inspector_list_windows(self):
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        # Not blocking (return callback to run in thread).
+        return partial(
+            inspector_api_client.send_sync_message,
+            "javaListWindows",
+            {},
+        )
+
+    def m_java_inspector_start_pick(self):
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        # Not blocking (return callback to run in thread).
+        return partial(
+            inspector_api_client.send_sync_message,
+            "javaStartPick",
+            {},
+        )
+
+    def m_java_inspector_stop_pick(self):
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        # Not blocking (return callback to run in thread).
+        return partial(
+            inspector_api_client.send_sync_message,
+            "javaStopPick",
+            {},
+        )
+
+    def m_java_inspector_start_highlight(
+        self,
+        locator: str,
+        search_depth: int = 8,
+    ):
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        # Not blocking (return callback to run in thread).
+        return partial(
+            inspector_api_client.send_sync_message,
+            "javaStartHighlight",
+            dict(
+                locator=locator,
+                search_depth=search_depth,
+            ),
+        )
+
+    def m_java_inspector_collect_tree(
+        self,
+        locator: str,
+        search_depth: int = 8,
+    ):
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        # Not blocking (return callback to run in thread).
+        return partial(
+            inspector_api_client.send_sync_message,
+            "javaCollectTree",
+            dict(
+                locator=locator,
+                search_depth=search_depth,
+            ),
+        )
+
+    def m_java_inspector_stop_highlight(self):
+        inspector_api_client = self._inspector_server_manager.get_inspector_api_client()
+        # Not blocking (return callback to run in thread).
+        return partial(
+            inspector_api_client.send_sync_message,
+            "javaStopHighlight",
+            {},
         )

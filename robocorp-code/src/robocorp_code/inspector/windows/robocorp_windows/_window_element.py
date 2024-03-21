@@ -355,6 +355,8 @@ class WindowElement(ControlElement):
             return False
         from ._processes import kill_process_and_subprocesses
 
-        self.logger.info("Closing window with name: %s (PID: %d)", self.name, pid)
+        self.logger.debug(
+            "Win:: Closing window with name: %s (PID: %d)", self.name, pid
+        )
         kill_process_and_subprocesses(pid)
         return True

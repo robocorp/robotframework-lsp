@@ -241,7 +241,6 @@ class WindowsInspector:
             ElementNotFound if the window matching the given locator wasn't found.
         """
 
-        log.info("Win - Starting pick...")
         if self._element_inspector is None:
             return
 
@@ -254,7 +253,6 @@ class WindowsInspector:
         Stops picking.
         """
 
-        log.info("Win - Stopping pick...")
         if self._state == _State.picking:
             if self._element_inspector is not None:
                 self._element_inspector.stop_picking()
@@ -298,15 +296,9 @@ class WindowsInspector:
         Stops highlighting matches.
         """
         if self._state == _State.highlighting:
-            log.info("Win-WinInsp-StopHighlight:stopping...")
             if self._element_inspector is not None:
                 self._element_inspector.stop_highlight()
             self._state = _State.default
-        else:
-            log.info(
-                "Win-WinInsp-StopHighlight:nothing done (state=%s is not highlight)",
-                self._state,
-            )
 
     def list_windows(self) -> List[WindowLocatorInfoTypedDict]:
         from robocorp_code.inspector.windows import robocorp_windows
@@ -324,14 +316,6 @@ class WindowsInspector:
             raise RuntimeError(
                 "Unable to collect tree because `set_window_locator` was not previously used to set the window of interest."
             )
-
-        log.info(
-            "Win-WinInsp-CollectTree: locator: %s, search_depth: %s, search_strategy: %s",
-            locator,
-            search_depth,
-            search_strategy,
-        )
-
         matched_controls: List[
             "ControlElement"
         ] = self._element_inspector.control_element.find_many(
@@ -343,3 +327,7 @@ class WindowsInspector:
         return to_matches_and_hierarchy(
             self._element_inspector.control_element, matched_controls
         )
+
+    def shutdown(self):
+        if self._element_inspector:
+            self._element_inspector.shutdown()

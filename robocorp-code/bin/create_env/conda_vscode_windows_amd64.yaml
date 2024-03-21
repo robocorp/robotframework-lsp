@@ -14,6 +14,7 @@ dependencies:
     - python-mss==9.0.1 # VSCode Image Inspector dependency
     - comtypes==1.2.1 # VSCode Windows Inspector dependency
     - psutil==5.9.8 # VSCode Windows Inspector dependency
+    - java-access-bridge-wrapper==1.2.0 # VSCode Java Inspector dependency
     - pip:
           - --use-feature=truststore
           - robotframework==5.0.1 # https://github.com/robotframework/robotframework/blob/master/doc/releasenotes/rf-5.0.1.rst

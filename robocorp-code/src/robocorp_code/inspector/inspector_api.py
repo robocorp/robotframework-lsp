@@ -1,13 +1,12 @@
 import threading
-from typing import TYPE_CHECKING, Tuple
 from queue import Queue
-from typing import Literal, Optional, Callable
+from typing import Literal, Optional, TYPE_CHECKING, Callable, Tuple, Any
 
 from robocorp_ls_core.basic import overrides
 from robocorp_ls_core.protocols import ActionResultDict, IConfig, IEndPoint
 from robocorp_ls_core.python_ls import PythonLanguageServer
 from robocorp_ls_core.robotframework_log import get_logger
-
+from robocorp_ls_core.constants import IS_WIN
 
 from robocorp_code.inspector.web._web_inspector import (
     PickedLocatorTypedDict,
@@ -17,8 +16,7 @@ from robocorp_code.inspector.web._web_inspector import (
 if TYPE_CHECKING:
     from robocorp_code.inspector.windows.windows_inspector import WindowsInspector
     from robocorp_code.inspector.image._image_inspector import ImageInspector
-
-
+    from robocorp_code.inspector.java.java_inspector import JavaInspector
 log = get_logger(__name__)
 
 _DEFAULT_LOOP_TIMEOUT = 5
@@ -68,6 +66,8 @@ class _WebInspectorThread(threading.Thread):
         # signal the run to finish
         self._finish = True
         self.queue.put(None)
+        if self._web_inspector:
+            self._web_inspector.shutdown()
 
     def run(self) -> None:
         from concurrent.futures import Future
@@ -300,6 +300,8 @@ class _WindowsInspectorThread(threading.Thread):
     def shutdown(self) -> None:
         self._finish = True
         self.queue.put(None)
+        if self._windows_inspector:
+            self._windows_inspector.shutdown()
 
     def run(self) -> None:
         from concurrent.futures import Future
@@ -528,6 +530,8 @@ class _ImageInspectorThread(threading.Thread):
     def shutdown(self) -> None:
         self._finish = True
         self.queue.put(None)
+        if self._image_inspector:
+            self._image_inspector.shutdown()
 
     def run(self) -> None:
         from concurrent.futures import Future
@@ -640,6 +644,184 @@ class _ImageSaveImage(_ImageBaseCommand):
 
 
 ####
+#### JAVA COMMANDS
+####
+class _JavaInspectorThread(threading.Thread):
+    def __init__(self, endpoint: IEndPoint) -> None:
+        threading.Thread.__init__(self)
+        self._endpoint = endpoint
+        self.daemon = True
+        self.queue: "Queue[Optional[_JavaBaseCommand]]" = Queue()
+        self._finish = False
+        self._java_inspector: Optional["JavaInspector"] = None
+
+    @property
+    def java_inspector(self) -> Optional["JavaInspector"]:
+        return self._java_inspector
+
+    def shutdown(self) -> None:
+        self._finish = True
+        self.queue.put(None)
+        if self._java_inspector:
+            self._java_inspector.shutdown()
+
+    def run(self) -> None:
+        from concurrent.futures import Future
+
+        from robocorp_code.inspector.java.java_inspector import (
+            JavaInspector,
+        )
+
+        endpoint = self._endpoint
+
+        def _on_pick(picked: Any):
+            endpoint.notify("$/javaPick", {"picked": picked})
+
+        self._java_inspector = JavaInspector()
+        self._java_inspector.on_pick.register(_on_pick)
+
+        item: Optional[_JavaBaseCommand]
+
+        while not self._finish:
+            try:
+                item = self.queue.get()
+            except Exception:
+                continue
+
+            if item is not None:
+                future: Future = item.future
+                try:
+                    log.debug("JavaInspectorThread: Start handling command: %s", item)
+                    result = item(self)
+                    log.debug("JavaInspectorThread: End handling command: %s", item)
+                except Exception as e:
+                    log.exception(f"Error handling {item}.")
+                    future.set_exception(e)
+                else:
+                    future.set_result(result)
+
+
+class _JavaBaseCommand:
+    def __init__(self):
+        from concurrent.futures import Future
+
+        self.future = Future()
+
+    def __call__(self, java_inspector_thread: _JavaInspectorThread) -> ActionResultDict:
+        raise NotImplementedError()
+
+
+class _JavaSetWindowLocator(_JavaBaseCommand):
+    def __init__(self, locator):
+        super().__init__()
+        self.locator = locator
+
+    def __call__(self, java_inspector_thread: _JavaInspectorThread) -> ActionResultDict:
+        if not java_inspector_thread.java_inspector:
+            raise RuntimeError("java_inspector not initialized.")
+        java_inspector_thread.java_inspector.set_window_locator(self.locator)
+
+        return {"success": True, "message": None, "result": None}
+
+
+class _JavaStartPick(_JavaBaseCommand):
+    def __call__(self, java_inspector_thread: _JavaInspectorThread) -> ActionResultDict:
+        if not java_inspector_thread.java_inspector:
+            raise RuntimeError("java_inspector not initialized.")
+        java_inspector_thread.java_inspector.start_pick()
+
+        return {"success": True, "message": None, "result": None}
+
+
+class _JavaParseLocator(_JavaBaseCommand):
+    def __init__(self, locator):
+        super().__init__()
+        self.locator = locator
+
+    def __call__(self, java_inspector_thread: _JavaInspectorThread) -> ActionResultDict:
+        locator = self.locator
+
+        from robocorp_code.inspector.java.robocorp_java._locators import parse_locator
+
+        try:
+            matches = parse_locator(locator)
+            return {
+                "success": True,
+                "message": None
+                if len(matches) > 0
+                else "Locator could not be validated correctly. Please make sure the syntax is correct.",
+                "result": None,
+            }
+        except Exception as e:
+            # It failed
+            return {"success": False, "message": str(e), "result": None}
+
+
+class _JavaStopPick(_JavaBaseCommand):
+    def __call__(self, java_inspector_thread: _JavaInspectorThread) -> ActionResultDict:
+        if not java_inspector_thread.java_inspector:
+            raise RuntimeError("java_inspector not initialized.")
+        java_inspector_thread.java_inspector.stop_pick()
+        return {"success": True, "message": None, "result": None}
+
+
+class _JavaStartHighlight(_JavaBaseCommand):
+    def __init__(
+        self,
+        locator: str,
+        search_depth: int = 8,
+    ):
+        super().__init__()
+        self.locator = locator
+        self.search_depth = search_depth
+
+    def __call__(self, java_inspector_thread: _JavaInspectorThread) -> ActionResultDict:
+        if not java_inspector_thread.java_inspector:
+            raise RuntimeError("java_inspector not initialized.")
+        result = java_inspector_thread.java_inspector.start_highlight(
+            locator=self.locator,
+            search_depth=self.search_depth,
+        )
+        return {"success": True, "message": None, "result": result}
+
+
+class _JavaCollectTree(_JavaBaseCommand):
+    def __init__(
+        self,
+        locator: str,
+        search_depth: int = 8,
+    ):
+        super().__init__()
+        self.locator = locator
+        self.search_depth = search_depth
+
+    def __call__(self, java_inspector_thread: _JavaInspectorThread) -> ActionResultDict:
+        if not java_inspector_thread.java_inspector:
+            raise RuntimeError("java_inspector not initialized.")
+        result = java_inspector_thread.java_inspector.collect_tree(
+            locator=self.locator,
+            search_depth=self.search_depth,
+        )
+        return {"success": True, "message": None, "result": result}
+
+
+class _JavaListApplications(_JavaBaseCommand):
+    def __call__(self, java_inspector_thread: _JavaInspectorThread) -> ActionResultDict:
+        if not java_inspector_thread.java_inspector:
+            raise RuntimeError("java_inspector not initialized.")
+        result = java_inspector_thread.java_inspector.list_opened_applications()
+        return {"success": True, "message": None, "result": result}
+
+
+class _JavaStopHighlight(_JavaBaseCommand):
+    def __call__(self, java_inspector_thread: _JavaInspectorThread) -> ActionResultDict:
+        if not java_inspector_thread.java_inspector:
+            raise RuntimeError("java_inspector not initialized.")
+        java_inspector_thread.java_inspector.stop_highlight()
+        return {"success": True, "message": None, "result": None}
+
+
+####
 #### INSPECTOR API
 ####
 class InspectorApi(PythonLanguageServer):
@@ -654,6 +836,7 @@ class InspectorApi(PythonLanguageServer):
         self.__web_inspector_thread: Optional[_WebInspectorThread] = None
         self.__windows_inspector_thread: Optional[_WindowsInspectorThread] = None
         self.__image_inspector_thread: Optional[_ImageInspectorThread] = None
+        self.__java_inspector_thread: Optional[_JavaInspectorThread] = None
 
         # set default configuration for the inspectors
         self.__web_inspector_configuration: dict = {  # configuring the Web Inspector with defaults
@@ -689,7 +872,7 @@ class InspectorApi(PythonLanguageServer):
     def _windows_inspector_thread(self):
         # Lazily-initialize
         ret = self.__windows_inspector_thread
-        if ret is None:
+        if ret is None and IS_WIN:
             self.__windows_inspector_thread = _WindowsInspectorThread(self._endpoint)
             self.__windows_inspector_thread.start()
 
@@ -704,6 +887,16 @@ class InspectorApi(PythonLanguageServer):
             self.__image_inspector_thread.start()
 
         return self.__image_inspector_thread
+
+    @property
+    def _java_inspector_thread(self):
+        # Lazily-initialize
+        ret = self.__java_inspector_thread
+        if ret is None and IS_WIN:
+            self.__java_inspector_thread = _JavaInspectorThread(self._endpoint)
+            self.__java_inspector_thread.start()
+
+        return self.__java_inspector_thread
 
     def _create_config(self) -> IConfig:
         from robocorp_code.robocorp_config import RobocorpConfig
@@ -721,46 +914,91 @@ class InspectorApi(PythonLanguageServer):
     def m_echo(self, arg):
         return "echo", arg
 
+    def m_kill_inspectors(self, inspector: Optional[str]):
+        log.debug(
+            "Man:: Will kill inspector:", inspector if inspector is not None else "ALL"
+        )
+        if self.__web_inspector_thread and (
+            inspector == "browser" or inspector is None
+        ):
+            self.__web_inspector_thread.shutdown()
+            self.__web_inspector_thread = None
+            log.debug("Man:: Killed Web Inspector!")
+        if self.__windows_inspector_thread and (
+            inspector == "windows" or inspector is None
+        ):
+            self.__windows_inspector_thread.shutdown()
+            self.__windows_inspector_thread = None
+            log.debug("Man:: Killed Windows Inspector!")
+        if self.__java_inspector_thread and (inspector == "java" or inspector is None):
+            self.__java_inspector_thread.shutdown()
+            self.__java_inspector_thread = None
+            log.debug("Man:: Killed Java Inspector!")
+        if self.__image_inspector_thread and (
+            inspector == "image" or inspector is None
+        ):
+            self.__image_inspector_thread.shutdown()
+            self.__image_inspector_thread = None
+            log.debug("Man:: Killed Image Inspector!")
+
     ####
     #### ENQUEUE COMMANDS TO THREAD WORKERS
     ####
     def _enqueue_web(self, cmd: _WebBaseCommand, wait: bool):
-        self._web_inspector_thread.queue.put(cmd)
-        if wait:
-            cmd.handled_event.wait(20)
-            try:
-                return cmd.future.result()
-            except Exception as e:
-                return {"success": False, "message": str(e), "result": None}
+        if self._web_inspector_thread:
+            self._web_inspector_thread.queue.put(cmd)
+            if wait:
+                cmd.handled_event.wait(20)
+                try:
+                    return cmd.future.result()
+                except Exception as e:
+                    return {"success": False, "message": str(e), "result": None}
+
         return {"success": True, "message": None, "result": None}
 
     def _enqueue_windows(
         self, cmd: _WindowsBaseCommand, wait: bool = True
     ) -> ActionResultDict:
-        self._windows_inspector_thread.queue.put(cmd)
-        if wait:
-            try:
-                return cmd.future.result()
-            except Exception as e:
-                return {"success": False, "message": str(e), "result": None}
+        if self._windows_inspector_thread:
+            self._windows_inspector_thread.queue.put(cmd)
+            if wait:
+                try:
+                    return cmd.future.result()
+                except Exception as e:
+                    return {"success": False, "message": str(e), "result": None}
 
         return {"success": True, "message": None, "result": None}
 
     def _enqueue_image(
         self, cmd: _ImageBaseCommand, wait: bool = True
     ) -> ActionResultDict:
-        self._image_inspector_thread.queue.put(cmd)
-        if wait:
-            try:
-                return cmd.future.result()
-            except Exception as e:
-                return {"success": False, "message": str(e), "result": None}
+        if self._image_inspector_thread:
+            self._image_inspector_thread.queue.put(cmd)
+            if wait:
+                try:
+                    return cmd.future.result()
+                except Exception as e:
+                    return {"success": False, "message": str(e), "result": None}
+
+        return {"success": True, "message": None, "result": None}
+
+    def _enqueue_java(
+        self, cmd: _JavaBaseCommand, wait: bool = True
+    ) -> ActionResultDict:
+        if self._java_inspector_thread:
+            self._java_inspector_thread.queue.put(cmd)
+            if wait:
+                try:
+                    return cmd.future.result()
+                except Exception as e:
+                    return {"success": False, "message": str(e), "result": None}
 
         return {"success": True, "message": None, "result": None}
 
     ####
     #### WEB RELATED APIs
     ####
+
     def m_open_browser(self, url: str, wait: bool = False) -> None:
         self._enqueue_web(_WebOpenUrlCommand(url), wait)
 
@@ -813,6 +1051,7 @@ class InspectorApi(PythonLanguageServer):
     ####
     #### WINDOWS RELATED APIs
     ####
+
     def m_windows_parse_locator(self, locator: str) -> ActionResultDict:
         return self._enqueue_windows(_WindowsParseLocator(locator))
 
@@ -856,31 +1095,20 @@ class InspectorApi(PythonLanguageServer):
     ####
     #### IMAGE RELATED APIs
     ####
+
     def m_image_start_pick(
         self, minimize: Optional[bool] = None, confidence_level: Optional[int] = None
     ):
-        log.info("### Image ### Start Pick: minimize:", minimize)
-        log.info(
-            "### Image ### Start Pick: confidenceLevel:",
-            confidence_level,
-        )
         return self._enqueue_image(
             _ImageStartPick(confidence_level=confidence_level, minimize=minimize)
         )
 
     def m_image_stop_pick(self):
-        log.info("### Image ### Stop Pick")
         return self._enqueue_image(_ImageStopPick())
 
     def m_image_validate_locator(
         self, locator: dict, confidence_level: Optional[int] = None
     ):
-        log.info(
-            "### Image ### Validate: locator:",
-            locator,
-            "confidenceLevel",
-            confidence_level,
-        )
         return {"success": True, "message": None, "result": None}
         # TODO: replace this implementation when the robocorp library has image recognition
         # return self._enqueue_image(
@@ -888,5 +1116,42 @@ class InspectorApi(PythonLanguageServer):
         # )
 
     def m_image_save_image(self, root_directory: str, image_base64: str):
-        log.info("### Image ### Save Image: root_directory:", root_directory)
         return self._enqueue_image(_ImageSaveImage(root_directory, image_base64))
+
+    ####
+    #### JAVA RELATED APIs
+    ####
+
+    def m_java_parse_locator(self, locator: str) -> ActionResultDict:
+        return self._enqueue_java(_JavaParseLocator(locator))
+
+    def m_java_set_window_locator(self, locator: str) -> ActionResultDict:
+        return self._enqueue_java(_JavaSetWindowLocator(locator))
+
+    def m_java_start_pick(self) -> ActionResultDict:
+        return self._enqueue_java(_JavaStartPick())
+
+    def m_java_stop_pick(self) -> ActionResultDict:
+        return self._enqueue_java(_JavaStopPick())
+
+    def m_java_start_highlight(
+        self,
+        locator,
+        search_depth: int = 8,
+    ) -> ActionResultDict:
+        return self._enqueue_java(_JavaStartHighlight(locator, search_depth))
+
+    def m_java_collect_tree(
+        self,
+        locator,
+        search_depth: int = 8,
+    ) -> ActionResultDict:
+        return self._enqueue_java(_JavaCollectTree(locator, search_depth))
+
+    def m_java_list_windows(
+        self,
+    ) -> ActionResultDict:
+        return self._enqueue_java(_JavaListApplications())
+
+    def m_java_stop_highlight(self) -> ActionResultDict:
+        return self._enqueue_java(_JavaStopHighlight())

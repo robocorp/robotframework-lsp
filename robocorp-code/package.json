@@ -9,7 +9,7 @@
         "url": "https://github.com/robocorp/robotframework-lsp.git"
     },
     "license": "SEE LICENSE IN LICENSE.txt",
-    "version": "1.19.0",
+    "version": "1.20.0",
     "icon": "images/icon.png",
     "publisher": "robocorp",
     "engines": {
@@ -71,6 +71,7 @@
         "onCommand:robocorp.newRobocorpInspectorBrowser",
         "onCommand:robocorp.newRobocorpInspectorWindows",
         "onCommand:robocorp.newRobocorpInspectorImage",
+        "onCommand:robocorp.newRobocorpInspectorJava",
         "onCommand:robocorp.openPlaywrightRecorder",
         "onCommand:robocorp.openPlaywrightRecorder.internal",
         "onCommand:robocorp.editRobocorpInspectorLocator",
@@ -517,6 +518,12 @@
             {
                 "command": "robocorp.newRobocorpInspectorImage",
                 "title": "Add Image Locator",
+                "category": "Robocorp",
+                "icon": "$(add)"
+            },
+            {
+                "command": "robocorp.newRobocorpInspectorJava",
+                "title": "Add Java Locator",
                 "category": "Robocorp",
                 "icon": "$(add)"
             },
@@ -992,6 +999,11 @@
                 {
                     "command": "robocorp.newRobocorpInspectorImage",
                     "when": "view == robocorp-package-resources-tree && robocorp-code:single-robot-selected && viewItem == newImageLocator",
+                    "group": "inline"
+                },
+                {
+                    "command": "robocorp.newRobocorpInspectorJava",
+                    "when": "view == robocorp-package-resources-tree && robocorp-code:single-robot-selected && viewItem == newJavaLocator",
                     "group": "inline"
                 },
                 {

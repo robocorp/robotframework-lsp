@@ -1108,3 +1108,15 @@ class ElementInspector:
 
             finally:
                 queue.task_done()
+
+    def shutdown(self):
+        if self._picker_thread:
+            self._picker_thread.stop()
+            self._picker_thread.join()
+            self._picker_thread = None
+        if self._tk_handler_thread:
+            self._tk_handler_thread.quitloop()
+            self._tk_handler_thread.dispose()
+            self._tk_handler_thread.destroy_tk_handler()
+        if self._cursor_thread:
+            self._cursor_thread.stop()
