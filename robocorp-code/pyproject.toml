@@ -99,22 +99,20 @@ ignore = [
 
 [[tool.mypy.overrides]]
 module = "setuptools.*"
-ignore_missing_imports = true
+ignore_missing_imports = True
 
 [[tool.mypy.overrides]]
 module = "pytest_timeout.*"
-ignore_missing_imports = true
+ignore_missing_imports = True
 
 [[tool.mypy.overrides]]
 module = "pytest_timeout.*"
-ignore_missing_imports = true
+ignore_missing_imports = True
 
 [[tool.mypy.overrides]]
 module = "JABWrapper.*"
-ignore_missing_imports = true
-
-[mypy-JABWrapper.*]
 ignore_missing_imports = True
+disable_error_code = import-untyped
 
 [build-system]
 requires = ["poetry-core"]
