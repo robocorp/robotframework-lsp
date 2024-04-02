@@ -7,8 +7,8 @@
         "build-prod": "webpack --env production",
         "build-dev": "webpack --env development",
         "watch-build-dev": "webpack --watch --env development",
-        "build": "webpack",
-        "start": "webpack serve --hot --inline --progress --port 8886"
+        "build": "webpack --env development",
+        "start": "webpack serve --hot --progress --port 8886 --env development"
     },
     "scriptsComments": {
         "Comment1": "To develop the library run `yarn install`/`yarn watch-build-dev` to automatically",
@@ -29,13 +29,14 @@
         "css-loader": "^6.10.0",
         "html-webpack-plugin": "^5.5.0",
         "monaco-editor-webpack-plugin": "^3.1.0",
+        "prettier": "2.4.1",
+        "semver": "^7.6.0",
         "style-loader": "^2.0.0",
         "ts-loader": "^9.5.1",
         "typescript": "^4.3.2",
         "webpack": "^5.76.0",
         "webpack-cli": "^4.10.0",
-        "webpack-dev-server": "^4.15.2",
-        "prettier": "2.4.1"
+        "webpack-dev-server": "^4.15.2"
     },
     "dependencies": {
         "react": "^17.0.2",
