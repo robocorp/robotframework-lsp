@@ -34,7 +34,7 @@ tomli = { version = "^2.0.1", python = "<3.11" }
 msgspec = "^0.18"
 pyyaml = "^6"
 playwright = "<2"
-pillow = "^9.0"
+pillow = "^10.2.0"
 pywin32 = { version = ">=300,<304", platform = "win32", python = "!=3.8.1" }
 psutil = "^5.9.0"
 comtypes = "^1.2"
@@ -55,7 +55,7 @@ robotremoteserver = "*"
 robocorp-actions = "^0.0.7" # Just needed for testing.
 
 numpy = "<2"
-black = "^23.1.0"
+black = "^24.3.0"
 ruff = "^0.1.14"
 mypy = "^1.1.1"
 isort = { version = "^5.12.0", python = "^3.8" }
@@ -78,7 +78,7 @@ types-mock = "*"
 types-PyYAML = "*"
 robocorp-log-pytest = "*"
 types-docutils = "*"
-types-Pillow = "^9.0"
+types-Pillow = "^10.2.0"
 types-pywin32 = "304.0.0.6"
 
 [tool.mypy]
