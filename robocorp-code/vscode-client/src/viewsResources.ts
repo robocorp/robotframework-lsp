@@ -58,8 +58,14 @@ export class ResourcesTreeDataProvider extends RobotSelectionTreeDataProviderBas
                         "Inspectors which output code and locators (which identify how to locate a specific element in a given library).",
                 },
             ];
-            if (robotEntry.type === RobotEntryType.Robot) {
+            if (
+                robotEntry.type !== RobotEntryType.Action &&
+                robotEntry.type !== RobotEntryType.ActionPackage &&
+                robotEntry.type !== RobotEntryType.ActionsInActionPackage &&
+                robotEntry.type !== RobotEntryType.ActionsInRobot
+            ) {
                 // No work items unless it's a task package (i.e.: Robot)
+                // Using reverse logic because we need to keep showing the Work Items in cases like RobotEntryType == Error
                 ret.push({
                     name: "Work Items",
                     resourcesTreeType: ROOT_TYPE,
