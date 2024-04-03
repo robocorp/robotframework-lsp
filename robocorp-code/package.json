@@ -9,7 +9,7 @@
         "url": "https://github.com/robocorp/robotframework-lsp.git"
     },
     "license": "SEE LICENSE IN LICENSE.txt",
-    "version": "1.18.0",
+    "version": "1.20.0",
     "icon": "images/icon.png",
     "publisher": "robocorp",
     "engines": {
@@ -71,6 +71,7 @@
         "onCommand:robocorp.newRobocorpInspectorBrowser",
         "onCommand:robocorp.newRobocorpInspectorWindows",
         "onCommand:robocorp.newRobocorpInspectorImage",
+        "onCommand:robocorp.newRobocorpInspectorJava",
         "onCommand:robocorp.openPlaywrightRecorder",
         "onCommand:robocorp.openPlaywrightRecorder.internal",
         "onCommand:robocorp.editRobocorpInspectorLocator",
@@ -122,6 +123,7 @@
         "onCommand:robocorp.runPreRunScripts.internal",
         "onCommand:robocorp.getPyPiBaseUrls.internal",
         "onCommand:robocorp.startActionServer",
+        "onCommand:robocorp.downloadActionServer",
         "onCommand:robocorp.startActionServer.internal",
         "onCommand:robocorp.listActions.internal",
         "onDebugInitialConfigurations",
@@ -520,6 +522,12 @@
                 "icon": "$(add)"
             },
             {
+                "command": "robocorp.newRobocorpInspectorJava",
+                "title": "Add Java Locator",
+                "category": "Robocorp",
+                "icon": "$(add)"
+            },
+            {
                 "command": "robocorp.openPlaywrightRecorder",
                 "title": "Open Playwright Recorder",
                 "category": "Robocorp",
@@ -794,6 +802,11 @@
                 "category": "Robocorp"
             },
             {
+                "command": "robocorp.downloadActionServer",
+                "title": "Download Action Server",
+                "category": "Robocorp"
+            },
+            {
                 "command": "robocorp.startActionServer.internal",
                 "title": "Start Action Server (internal)",
                 "category": "Robocorp"
@@ -986,6 +999,11 @@
                 {
                     "command": "robocorp.newRobocorpInspectorImage",
                     "when": "view == robocorp-package-resources-tree && robocorp-code:single-robot-selected && viewItem == newImageLocator",
+                    "group": "inline"
+                },
+                {
+                    "command": "robocorp.newRobocorpInspectorJava",
+                    "when": "view == robocorp-package-resources-tree && robocorp-code:single-robot-selected && viewItem == newJavaLocator",
                     "group": "inline"
                 },
                 {

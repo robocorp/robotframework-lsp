@@ -51,15 +51,21 @@ export class ResourcesTreeDataProvider extends RobotSelectionTreeDataProviderBas
         if (!element) {
             const ret: any[] = [
                 {
-                    name: "Recorders / Locators",
+                    name: "Inspectors / Locators",
                     resourcesTreeType: ROOT_TYPE,
                     subTree: SUBTREE_LOCATORS,
                     tooltip:
-                        "Recorders which output code and locators (which identify how to locate a specific element in a given library).",
+                        "Inspectors which output code and locators (which identify how to locate a specific element in a given library).",
                 },
             ];
-            if (robotEntry.type === RobotEntryType.Robot) {
+            if (
+                robotEntry.type !== RobotEntryType.Action &&
+                robotEntry.type !== RobotEntryType.ActionPackage &&
+                robotEntry.type !== RobotEntryType.ActionsInActionPackage &&
+                robotEntry.type !== RobotEntryType.ActionsInRobot
+            ) {
                 // No work items unless it's a task package (i.e.: Robot)
+                // Using reverse logic because we need to keep showing the Work Items in cases like RobotEntryType == Error
                 ret.push({
                     name: "Work Items",
                     resourcesTreeType: ROOT_TYPE,

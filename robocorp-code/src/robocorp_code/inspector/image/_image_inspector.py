@@ -101,7 +101,7 @@ class ImageInspector:
 
     def start_pick(self, confidence: Optional[int] = None) -> None:
         self._check_thread()
-        log.info(">>> Image - Start pick...")
+        log.debug("Image:: Start pick...")
 
         self._picker_thread = _PickerThread(
             bridge=self._image_bridge,
@@ -112,7 +112,7 @@ class ImageInspector:
 
     def stop_pick(self) -> None:
         self._check_thread()
-        log.info(">>> Image - Stop pick...")
+        log.debug("Image:: Stop pick...")
         if self._picker_thread:
             self._picker_thread._stop_event.set()
         if self._validate_thread:
@@ -122,7 +122,7 @@ class ImageInspector:
     # TODO: replace this implementation when the robocorp library has image recognition
     def validate(self, image_base64: str, confidence: Optional[int] = None) -> None:
         self._check_thread()
-        log.info(">>> Image - Validate pick...")
+        log.debug("Image:: Validate pick...")
 
         self._validate_thread = _ValidateThread(
             bridge=self._image_bridge,
@@ -134,7 +134,15 @@ class ImageInspector:
 
     def save_image(self, root_directory: str, image_base64: str) -> str:
         self._check_thread()
-        log.info(">>> Image - Save image...")
+        log.debug("Image:: Save image...")
         return self._image_bridge.save_image(
             root_directory=root_directory, image_base64=image_base64
         )
+
+    def shutdown(self):
+        if self._image_bridge:
+            self._image_bridge.stop()
+        if self._picker_thread:
+            self._picker_thread._stop_event.set()
+        if self._validate_thread:
+            self._validate_thread._stop_event.set()

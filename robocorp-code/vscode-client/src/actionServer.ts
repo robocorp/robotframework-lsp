@@ -19,6 +19,9 @@ if (process.platform === "win32") {
     DOWNLOAD_URL = "https://downloads.robocorp.com/action-server/releases/latest/macos64/action-server";
 }
 
+// Update so that Robocorp Code requests the latest version of the action server.
+const LATEST_ACTION_SERVER_VERSION = "0.0.28";
+
 async function downloadActionServer(internalActionServerLocation: string) {
     await window.withProgress(
         {
@@ -95,7 +98,7 @@ export const downloadOrGetActionServerLocation = async (): Promise<string | unde
         verifiedActionServerVersions.set(location, true);
         const actionServerVersion = await getActionServerVersion(location);
 
-        const expected = "0.0.24";
+        const expected = LATEST_ACTION_SERVER_VERSION;
         const compare = compareVersions(expected, actionServerVersion);
         if (compare > 0) {
             const DOWNLOAD = "Download new";

@@ -53,6 +53,7 @@ ROBOCORP_OPEN_CLOUD_HOME = "robocorp.openCloudHome"  # Open cloud home
 ROBOCORP_NEW_ROBOCORP_INSPECTOR_BROWSER = "robocorp.newRobocorpInspectorBrowser"  # Add Web Locator
 ROBOCORP_NEW_ROBOCORP_INSPECTOR_WINDOWS = "robocorp.newRobocorpInspectorWindows"  # Add Windows Locator
 ROBOCORP_NEW_ROBOCORP_INSPECTOR_IMAGE = "robocorp.newRobocorpInspectorImage"  # Add Image Locator
+ROBOCORP_NEW_ROBOCORP_INSPECTOR_JAVA = "robocorp.newRobocorpInspectorJava"  # Add Java Locator
 ROBOCORP_OPEN_PLAYWRIGHT_RECORDER = "robocorp.openPlaywrightRecorder"  # Open Playwright Recorder
 ROBOCORP_OPEN_PLAYWRIGHT_RECORDER_INTERNAL = "robocorp.openPlaywrightRecorder.internal"  # Open Playwright Recorder Internal
 ROBOCORP_EDIT_ROBOCORP_INSPECTOR_LOCATOR = "robocorp.editRobocorpInspectorLocator"  # Edit locator
@@ -104,6 +105,7 @@ ROBOCORP_HAS_PRE_RUN_SCRIPTS_INTERNAL = "robocorp.hasPreRunScripts.internal"  # 
 ROBOCORP_RUN_PRE_RUN_SCRIPTS_INTERNAL = "robocorp.runPreRunScripts.internal"  # Run Pre Run Scripts
 ROBOCORP_GET_PY_PI_BASE_URLS_INTERNAL = "robocorp.getPyPiBaseUrls.internal"  # Get PyPi base urls
 ROBOCORP_START_ACTION_SERVER = "robocorp.startActionServer"  # Start Action Server
+ROBOCORP_DOWNLOAD_ACTION_SERVER = "robocorp.downloadActionServer"  # Download Action Server
 ROBOCORP_START_ACTION_SERVER_INTERNAL = "robocorp.startActionServer.internal"  # Start Action Server (internal)
 ROBOCORP_LIST_ACTIONS_INTERNAL = "robocorp.listActions.internal"  # Lists the actions available in an action package given a root dir (internal)
 

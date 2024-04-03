@@ -21,7 +21,9 @@ def screenshot(control: "Control") -> Optional["Image"]:
     try:
         bitmap = control.ToBitmap()
     except AttributeError:
-        log.info(f"Unable to take screenshot of {control} (ToBitmap not available).")
+        log.debug(
+            "Image:: Unable to take screenshot of {control} (ToBitmap not available)."
+        )
         return None
     if bitmap is None:
         return None

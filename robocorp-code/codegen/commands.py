@@ -406,6 +406,13 @@ COMMANDS = [
         icon="$(add)",
     ),
     Command(
+        "robocorp.newRobocorpInspectorJava",
+        "Add Java Locator",
+        add_to_package_json=True,
+        server_handled=False,
+        icon="$(add)",
+    ),
+    Command(
         "robocorp.openPlaywrightRecorder",
         "Open Playwright Recorder",
         add_to_package_json=True,
@@ -756,6 +763,12 @@ COMMANDS = [
     Command(
         "robocorp.startActionServer",
         "Start Action Server",
+        add_to_package_json=True,
+        server_handled=False,
+    ),
+    Command(
+        "robocorp.downloadActionServer",
+        "Download Action Server",
         add_to_package_json=True,
         server_handled=False,
     ),

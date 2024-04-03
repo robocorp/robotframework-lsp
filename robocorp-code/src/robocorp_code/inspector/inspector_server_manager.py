@@ -134,6 +134,8 @@ class InspectorServerManager(object):
                         "$/imagePick",
                         "$/imageValidation",
                         "$/imageInspectorState",
+                        # windows
+                        "$/javaPick",
                     ):
                         robocorp_code_language_server: Optional[
                             RobocorpLanguageServer
