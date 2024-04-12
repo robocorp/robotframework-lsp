@@ -288,18 +288,18 @@ def get_json_contents():
             "prettier-fix": "npx prettier -w vscode-client/**/*.ts",
         },
         "dependencies": {
-            "path-exists": "^4.0.0",
-            "vscode-languageclient": "^8.0.1",
             "jsonc-parser": "^2.0.3",
             "marked": "^4.1.0",
+            "path-exists": "^4.0.0",
+            "vscode-languageclient": "^8.0.1",
         },
         "devDependencies": {
             "@types/mocha": "^2.2.32",
             "@types/node": "^13.0.00",
             "@types/vscode": "1.65.0",
             "prettier": "2.4.1",
-            "vscode-test": "1.5.1",
             "typescript": "^4.5.4",
+            "vscode-test": "1.5.1",
         },
         "engines": {"vscode": f"^1.65.0"},
     }

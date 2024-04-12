@@ -27,6 +27,7 @@ class RobotPreferencesComponent {
     private final JBTextField robotPythonEnv = new JBTextField();
     private final JBTextField robotVariables = new JBTextField();
     private final JBTextField robotLoadVariablesFromArgumentsFile = new JBTextField();
+    private final JBTextField robotLoadVariablesFromVariablesFile = new JBTextField();
     private final JBTextField robotPythonpath = new JBTextField();
     private final JBTextField robotLibrariesLibdocNeedsArgs = new JBTextField();
     private final JBTextField robotLibrariesLibdocPreGenerate = new JBTextField();
@@ -62,6 +63,7 @@ class RobotPreferencesComponent {
     private final JBTextField robotTimeoutCodeFormatting = new JBTextField();
     private final JBTextField robotTimeoutCollectDocsTimeout = new JBTextField();
     private final JBTextField robotTimeoutListTestsTimeout = new JBTextField();
+    private final JBTextField robotTestViewEnabled = new JBTextField();
 
     public RobotPreferencesComponent() {
         panel = FormBuilder.createFormBuilder()
@@ -79,6 +81,8 @@ class RobotPreferencesComponent {
                 .addComponent(createJTextArea("Custom variables passed to RobotFramework\n(used when resolving variables and automatically passed to the launch config as --variable entries).\n(i.e.: {\"EXECDIR\": \"c:/my/proj/src\"})\nNote: expected format: JSON Object\n"))
                 .addLabeledComponent(new JBLabel("Load Variables From Arguments File"), robotLoadVariablesFromArgumentsFile, 1, false)
                 .addComponent(createJTextArea("Load variables for code-completion and code-analysis based on an arguments file. Multiple files\naccepted by separating with a comma.\n"))
+                .addLabeledComponent(new JBLabel("Load Variables From Variables File"), robotLoadVariablesFromVariablesFile, 1, false)
+                .addComponent(createJTextArea("Load variables for code-completion and code-analysis based on an variables file. Multiple files\naccepted by separating with a comma.\n"))
                 .addLabeledComponent(new JBLabel("Pythonpath"), robotPythonpath, 1, false)
                 .addComponent(createJTextArea("Entries to be added to the PYTHONPATH\n(used when resolving resources and imports and automatically passed to the launch config as\n--pythonpath entries).\n(i.e.: [\"c:/my/pro/src\"])\nNote: expected format: JSON Array\n"))
                 .addLabeledComponent(new JBLabel("Libraries Libdoc Needs Args"), robotLibrariesLibdocNeedsArgs, 1, false)
@@ -149,6 +153,8 @@ class RobotPreferencesComponent {
                 .addComponent(createJTextArea("This is the timeout used for collecting documentation to show in the ROBOT DOCUMENTATION view. Set\nto 0 to disable it.\n"))
                 .addLabeledComponent(new JBLabel("Timeout List Tests Timeout"), robotTimeoutListTestsTimeout, 1, false)
                 .addComponent(createJTextArea("This is the timeout used for listing the tests from a robot file. Set to 0 to disable it.\n"))
+                .addLabeledComponent(new JBLabel("Test View Enabled"), robotTestViewEnabled, 1, false)
+                .addComponent(createJTextArea("Whether to show robot tests in the test view. You may want to disable this if you are using another\ntest runner\n(eg. https://github.com/DetachHead/pytest-robotframework)\nNote: expected 'true' or 'false'\n"))
                 
                 .addComponentFillVertically(new JPanel(), 0)
                 .getPanel();
@@ -234,6 +240,15 @@ class RobotPreferencesComponent {
 
     public void setRobotLoadVariablesFromArgumentsFile (@NotNull String newText) {
         robotLoadVariablesFromArgumentsFile.setText(newText);
+    }
+    
+    @NotNull
+    public String getRobotLoadVariablesFromVariablesFile() {
+        return robotLoadVariablesFromVariablesFile.getText();
+    }
+
+    public void setRobotLoadVariablesFromVariablesFile (@NotNull String newText) {
+        robotLoadVariablesFromVariablesFile.setText(newText);
     }
     
     @NotNull
@@ -551,6 +566,15 @@ class RobotPreferencesComponent {
         robotTimeoutListTestsTimeout.setText(newText);
     }
     
+    @NotNull
+    public String getRobotTestViewEnabled() {
+        return robotTestViewEnabled.getText();
+    }
+
+    public void setRobotTestViewEnabled (@NotNull String newText) {
+        robotTestViewEnabled.setText(newText);
+    }
+    
 
 }
 
@@ -609,6 +633,10 @@ public class RobotPreferencesPage implements Configurable {
         }
         
         if(!settings.getRobotLoadVariablesFromArgumentsFile().equals(component.getRobotLoadVariablesFromArgumentsFile())){
+            return true;
+        }
+        
+        if(!settings.getRobotLoadVariablesFromVariablesFile().equals(component.getRobotLoadVariablesFromVariablesFile())){
             return true;
         }
         
@@ -752,6 +780,10 @@ public class RobotPreferencesPage implements Configurable {
             return true;
         }
         
+        if(!settings.getRobotTestViewEnabled().equals(component.getRobotTestViewEnabled())){
+            return true;
+        }
+        
         return false;
     }
 
@@ -771,6 +803,7 @@ public class RobotPreferencesPage implements Configurable {
         component.setRobotPythonEnv(settings.getRobotPythonEnv());
         component.setRobotVariables(settings.getRobotVariables());
         component.setRobotLoadVariablesFromArgumentsFile(settings.getRobotLoadVariablesFromArgumentsFile());
+        component.setRobotLoadVariablesFromVariablesFile(settings.getRobotLoadVariablesFromVariablesFile());
         component.setRobotPythonpath(settings.getRobotPythonpath());
         component.setRobotLibrariesLibdocNeedsArgs(settings.getRobotLibrariesLibdocNeedsArgs());
         component.setRobotLibrariesLibdocPreGenerate(settings.getRobotLibrariesLibdocPreGenerate());
@@ -806,6 +839,7 @@ public class RobotPreferencesPage implements Configurable {
         component.setRobotTimeoutCodeFormatting(settings.getRobotTimeoutCodeFormatting());
         component.setRobotTimeoutCollectDocsTimeout(settings.getRobotTimeoutCollectDocsTimeout());
         component.setRobotTimeoutListTestsTimeout(settings.getRobotTimeoutListTestsTimeout());
+        component.setRobotTestViewEnabled(settings.getRobotTestViewEnabled());
     }
 
     @Override
@@ -845,6 +879,10 @@ public class RobotPreferencesPage implements Configurable {
         s = settings.validateRobotLoadVariablesFromArgumentsFile(component.getRobotLoadVariablesFromArgumentsFile());
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Load Variables From Arguments File:\n" + s);
+        }
+        s = settings.validateRobotLoadVariablesFromVariablesFile(component.getRobotLoadVariablesFromVariablesFile());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Load Variables From Variables File:\n" + s);
         }
         s = settings.validateRobotPythonpath(component.getRobotPythonpath());
         if(!s.isEmpty()) {
@@ -986,6 +1024,10 @@ public class RobotPreferencesPage implements Configurable {
         if(!s.isEmpty()) {
             throw new ConfigurationException("Error in Timeout List Tests Timeout:\n" + s);
         }
+        s = settings.validateRobotTestViewEnabled(component.getRobotTestViewEnabled());
+        if(!s.isEmpty()) {
+            throw new ConfigurationException("Error in Test View Enabled:\n" + s);
+        }
         
         settings.setRobotLanguageServerPython(component.getRobotLanguageServerPython());
         settings.setRobotLanguageServerArgs(component.getRobotLanguageServerArgs());
@@ -994,6 +1036,7 @@ public class RobotPreferencesPage implements Configurable {
         settings.setRobotPythonEnv(component.getRobotPythonEnv());
         settings.setRobotVariables(component.getRobotVariables());
         settings.setRobotLoadVariablesFromArgumentsFile(component.getRobotLoadVariablesFromArgumentsFile());
+        settings.setRobotLoadVariablesFromVariablesFile(component.getRobotLoadVariablesFromVariablesFile());
         settings.setRobotPythonpath(component.getRobotPythonpath());
         settings.setRobotLibrariesLibdocNeedsArgs(component.getRobotLibrariesLibdocNeedsArgs());
         settings.setRobotLibrariesLibdocPreGenerate(component.getRobotLibrariesLibdocPreGenerate());
@@ -1029,5 +1072,6 @@ public class RobotPreferencesPage implements Configurable {
         settings.setRobotTimeoutCodeFormatting(component.getRobotTimeoutCodeFormatting());
         settings.setRobotTimeoutCollectDocsTimeout(component.getRobotTimeoutCollectDocsTimeout());
         settings.setRobotTimeoutListTestsTimeout(component.getRobotTimeoutListTestsTimeout());
+        settings.setRobotTestViewEnabled(component.getRobotTestViewEnabled());
     }
 }
