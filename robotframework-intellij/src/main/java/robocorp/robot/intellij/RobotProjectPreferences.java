@@ -26,12 +26,16 @@ class RobotProjectState {
     public String robotVariables = "";
     public String robotLoadVariablesFromArgumentsFile = "";
     public String robotPythonpath = "";
+    public String robotCodeFormatter = "";
+    public String robotFlowExplorerTheme = "";
+    public String robotWorkspaceSymbolsOnlyForOpenDocs = "";
+    public String robotQuickFixKeywordTemplate = "";
+    public String robotLanguage = "";
+    public String robotTestViewEnabled = "";
     public String robotLibrariesLibdocNeedsArgs = "";
     public String robotLibrariesLibdocPreGenerate = "";
     public String robotLibrariesBlacklist = "";
     public String robotLibrariesDeprecated = "";
-    public String robotCodeFormatter = "";
-    public String robotFlowExplorerTheme = "";
     public String robotLintRobocopEnabled = "";
     public String robotLintEnabled = "";
     public String robotLintUndefinedKeywords = "";
@@ -51,9 +55,6 @@ class RobotProjectState {
     public String robotCompletionsKeywordsPrefixImportName = "";
     public String robotCompletionsKeywordsPrefixImportNameIgnore = "";
     public String robotCompletionsKeywordsArgumentsSeparator = "";
-    public String robotWorkspaceSymbolsOnlyForOpenDocs = "";
-    public String robotQuickFixKeywordTemplate = "";
-    public String robotLanguage = "";
     public String robotTimeoutUse = "";
     public String robotTimeoutGeneral = "";
     public String robotTimeoutCompletions = "";
@@ -75,12 +76,16 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
     public static final String ROBOT_VARIABLES = "robot.variables";
     public static final String ROBOT_LOAD_VARIABLES_FROM_ARGUMENTS_FILE = "robot.loadVariablesFromArgumentsFile";
     public static final String ROBOT_PYTHONPATH = "robot.pythonpath";
+    public static final String ROBOT_CODE_FORMATTER = "robot.codeFormatter";
+    public static final String ROBOT_FLOW_EXPLORER_THEME = "robot.flowExplorerTheme";
+    public static final String ROBOT_WORKSPACE_SYMBOLS_ONLY_FOR_OPEN_DOCS = "robot.workspaceSymbolsOnlyForOpenDocs";
+    public static final String ROBOT_QUICK_FIX_KEYWORD_TEMPLATE = "robot.quickFix.keywordTemplate";
+    public static final String ROBOT_LANGUAGE = "robot.language";
+    public static final String ROBOT_TEST_VIEW_ENABLED = "robot.testView.enabled";
     public static final String ROBOT_LIBRARIES_LIBDOC_NEEDS_ARGS = "robot.libraries.libdoc.needsArgs";
     public static final String ROBOT_LIBRARIES_LIBDOC_PRE_GENERATE = "robot.libraries.libdoc.preGenerate";
     public static final String ROBOT_LIBRARIES_BLACKLIST = "robot.libraries.blacklist";
     public static final String ROBOT_LIBRARIES_DEPRECATED = "robot.libraries.deprecated";
-    public static final String ROBOT_CODE_FORMATTER = "robot.codeFormatter";
-    public static final String ROBOT_FLOW_EXPLORER_THEME = "robot.flowExplorerTheme";
     public static final String ROBOT_LINT_ROBOCOP_ENABLED = "robot.lint.robocop.enabled";
     public static final String ROBOT_LINT_ENABLED = "robot.lint.enabled";
     public static final String ROBOT_LINT_UNDEFINED_KEYWORDS = "robot.lint.undefinedKeywords";
@@ -100,9 +105,6 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
     public static final String ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME = "robot.completions.keywords.prefixImportName";
     public static final String ROBOT_COMPLETIONS_KEYWORDS_PREFIX_IMPORT_NAME_IGNORE = "robot.completions.keywords.prefixImportNameIgnore";
     public static final String ROBOT_COMPLETIONS_KEYWORDS_ARGUMENTS_SEPARATOR = "robot.completions.keywords.argumentsSeparator";
-    public static final String ROBOT_WORKSPACE_SYMBOLS_ONLY_FOR_OPEN_DOCS = "robot.workspaceSymbolsOnlyForOpenDocs";
-    public static final String ROBOT_QUICK_FIX_KEYWORD_TEMPLATE = "robot.quickFix.keywordTemplate";
-    public static final String ROBOT_LANGUAGE = "robot.language";
     public static final String ROBOT_TIMEOUT_USE = "robot.timeout.use";
     public static final String ROBOT_TIMEOUT_GENERAL = "robot.timeout.general";
     public static final String ROBOT_TIMEOUT_COMPLETIONS = "robot.timeout.completions";
@@ -126,12 +128,16 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         robotState.robotVariables = getRobotVariables();
         robotState.robotLoadVariablesFromArgumentsFile = getRobotLoadVariablesFromArgumentsFile();
         robotState.robotPythonpath = getRobotPythonpath();
+        robotState.robotCodeFormatter = getRobotCodeFormatter();
+        robotState.robotFlowExplorerTheme = getRobotFlowExplorerTheme();
+        robotState.robotWorkspaceSymbolsOnlyForOpenDocs = getRobotWorkspaceSymbolsOnlyForOpenDocs();
+        robotState.robotQuickFixKeywordTemplate = getRobotQuickFixKeywordTemplate();
+        robotState.robotLanguage = getRobotLanguage();
+        robotState.robotTestViewEnabled = getRobotTestViewEnabled();
         robotState.robotLibrariesLibdocNeedsArgs = getRobotLibrariesLibdocNeedsArgs();
         robotState.robotLibrariesLibdocPreGenerate = getRobotLibrariesLibdocPreGenerate();
         robotState.robotLibrariesBlacklist = getRobotLibrariesBlacklist();
         robotState.robotLibrariesDeprecated = getRobotLibrariesDeprecated();
-        robotState.robotCodeFormatter = getRobotCodeFormatter();
-        robotState.robotFlowExplorerTheme = getRobotFlowExplorerTheme();
         robotState.robotLintRobocopEnabled = getRobotLintRobocopEnabled();
         robotState.robotLintEnabled = getRobotLintEnabled();
         robotState.robotLintUndefinedKeywords = getRobotLintUndefinedKeywords();
@@ -151,9 +157,6 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         robotState.robotCompletionsKeywordsPrefixImportName = getRobotCompletionsKeywordsPrefixImportName();
         robotState.robotCompletionsKeywordsPrefixImportNameIgnore = getRobotCompletionsKeywordsPrefixImportNameIgnore();
         robotState.robotCompletionsKeywordsArgumentsSeparator = getRobotCompletionsKeywordsArgumentsSeparator();
-        robotState.robotWorkspaceSymbolsOnlyForOpenDocs = getRobotWorkspaceSymbolsOnlyForOpenDocs();
-        robotState.robotQuickFixKeywordTemplate = getRobotQuickFixKeywordTemplate();
-        robotState.robotLanguage = getRobotLanguage();
         robotState.robotTimeoutUse = getRobotTimeoutUse();
         robotState.robotTimeoutGeneral = getRobotTimeoutGeneral();
         robotState.robotTimeoutCompletions = getRobotTimeoutCompletions();
@@ -175,12 +178,16 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         setRobotVariables(robotState.robotVariables);
         setRobotLoadVariablesFromArgumentsFile(robotState.robotLoadVariablesFromArgumentsFile);
         setRobotPythonpath(robotState.robotPythonpath);
+        setRobotCodeFormatter(robotState.robotCodeFormatter);
+        setRobotFlowExplorerTheme(robotState.robotFlowExplorerTheme);
+        setRobotWorkspaceSymbolsOnlyForOpenDocs(robotState.robotWorkspaceSymbolsOnlyForOpenDocs);
+        setRobotQuickFixKeywordTemplate(robotState.robotQuickFixKeywordTemplate);
+        setRobotLanguage(robotState.robotLanguage);
+        setRobotTestViewEnabled(robotState.robotTestViewEnabled);
         setRobotLibrariesLibdocNeedsArgs(robotState.robotLibrariesLibdocNeedsArgs);
         setRobotLibrariesLibdocPreGenerate(robotState.robotLibrariesLibdocPreGenerate);
         setRobotLibrariesBlacklist(robotState.robotLibrariesBlacklist);
         setRobotLibrariesDeprecated(robotState.robotLibrariesDeprecated);
-        setRobotCodeFormatter(robotState.robotCodeFormatter);
-        setRobotFlowExplorerTheme(robotState.robotFlowExplorerTheme);
         setRobotLintRobocopEnabled(robotState.robotLintRobocopEnabled);
         setRobotLintEnabled(robotState.robotLintEnabled);
         setRobotLintUndefinedKeywords(robotState.robotLintUndefinedKeywords);
@@ -200,9 +207,6 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         setRobotCompletionsKeywordsPrefixImportName(robotState.robotCompletionsKeywordsPrefixImportName);
         setRobotCompletionsKeywordsPrefixImportNameIgnore(robotState.robotCompletionsKeywordsPrefixImportNameIgnore);
         setRobotCompletionsKeywordsArgumentsSeparator(robotState.robotCompletionsKeywordsArgumentsSeparator);
-        setRobotWorkspaceSymbolsOnlyForOpenDocs(robotState.robotWorkspaceSymbolsOnlyForOpenDocs);
-        setRobotQuickFixKeywordTemplate(robotState.robotQuickFixKeywordTemplate);
-        setRobotLanguage(robotState.robotLanguage);
         setRobotTimeoutUse(robotState.robotTimeoutUse);
         setRobotTimeoutGeneral(robotState.robotTimeoutGeneral);
         setRobotTimeoutCompletions(robotState.robotTimeoutCompletions);
@@ -287,6 +291,60 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
             }
         }
         
+        if(!robotCodeFormatter.isEmpty()){
+            
+            try {
+                jsonObject.add(ROBOT_CODE_FORMATTER, new JsonPrimitive(robotCodeFormatter));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotFlowExplorerTheme.isEmpty()){
+            
+            try {
+                jsonObject.add(ROBOT_FLOW_EXPLORER_THEME, new JsonPrimitive(robotFlowExplorerTheme));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotWorkspaceSymbolsOnlyForOpenDocs.isEmpty()){
+            
+            try {
+                jsonObject.add(ROBOT_WORKSPACE_SYMBOLS_ONLY_FOR_OPEN_DOCS, new JsonPrimitive(Boolean.parseBoolean(robotWorkspaceSymbolsOnlyForOpenDocs)));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotQuickFixKeywordTemplate.isEmpty()){
+            
+            try {
+                jsonObject.add(ROBOT_QUICK_FIX_KEYWORD_TEMPLATE, new JsonPrimitive(robotQuickFixKeywordTemplate));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotLanguage.isEmpty()){
+            Gson g = new Gson();
+            try {
+                jsonObject.add(ROBOT_LANGUAGE, g.fromJson(robotLanguage, JsonArray.class));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
+        if(!robotTestViewEnabled.isEmpty()){
+            
+            try {
+                jsonObject.add(ROBOT_TEST_VIEW_ENABLED, new JsonPrimitive(Boolean.parseBoolean(robotTestViewEnabled)));
+            } catch(Exception e) {
+                LOG.error(e);
+            }
+        }
+        
         if(!robotLibrariesLibdocNeedsArgs.isEmpty()){
             Gson g = new Gson();
             try {
@@ -318,24 +376,6 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
             Gson g = new Gson();
             try {
                 jsonObject.add(ROBOT_LIBRARIES_DEPRECATED, g.fromJson(robotLibrariesDeprecated, JsonArray.class));
-            } catch(Exception e) {
-                LOG.error(e);
-            }
-        }
-        
-        if(!robotCodeFormatter.isEmpty()){
-            
-            try {
-                jsonObject.add(ROBOT_CODE_FORMATTER, new JsonPrimitive(robotCodeFormatter));
-            } catch(Exception e) {
-                LOG.error(e);
-            }
-        }
-        
-        if(!robotFlowExplorerTheme.isEmpty()){
-            
-            try {
-                jsonObject.add(ROBOT_FLOW_EXPLORER_THEME, new JsonPrimitive(robotFlowExplorerTheme));
             } catch(Exception e) {
                 LOG.error(e);
             }
@@ -507,33 +547,6 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
             
             try {
                 jsonObject.add(ROBOT_COMPLETIONS_KEYWORDS_ARGUMENTS_SEPARATOR, new JsonPrimitive(robotCompletionsKeywordsArgumentsSeparator));
-            } catch(Exception e) {
-                LOG.error(e);
-            }
-        }
-        
-        if(!robotWorkspaceSymbolsOnlyForOpenDocs.isEmpty()){
-            
-            try {
-                jsonObject.add(ROBOT_WORKSPACE_SYMBOLS_ONLY_FOR_OPEN_DOCS, new JsonPrimitive(Boolean.parseBoolean(robotWorkspaceSymbolsOnlyForOpenDocs)));
-            } catch(Exception e) {
-                LOG.error(e);
-            }
-        }
-        
-        if(!robotQuickFixKeywordTemplate.isEmpty()){
-            
-            try {
-                jsonObject.add(ROBOT_QUICK_FIX_KEYWORD_TEMPLATE, new JsonPrimitive(robotQuickFixKeywordTemplate));
-            } catch(Exception e) {
-                LOG.error(e);
-            }
-        }
-        
-        if(!robotLanguage.isEmpty()){
-            Gson g = new Gson();
-            try {
-                jsonObject.add(ROBOT_LANGUAGE, g.fromJson(robotLanguage, JsonArray.class));
             } catch(Exception e) {
                 LOG.error(e);
             }
@@ -973,6 +986,300 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         }
     }
     
+    private String robotCodeFormatter = "";
+
+    public @NotNull String getRobotCodeFormatter() {
+        return robotCodeFormatter;
+    }
+
+    public @Nullable JsonPrimitive getRobotCodeFormatterAsJson() {
+        if(robotCodeFormatter.isEmpty()){
+            return null;
+        }
+        
+        return new JsonPrimitive(robotCodeFormatter);
+    }
+
+    public @NotNull String validateRobotCodeFormatter(String robotCodeFormatter) {
+        if(robotCodeFormatter.isEmpty()) {
+            return "";
+        }
+        try {
+            
+            new JsonPrimitive(robotCodeFormatter);
+             
+            if(robotCodeFormatter.equalsIgnoreCase("robotidy")){
+                return "";
+            }
+            if(robotCodeFormatter.equalsIgnoreCase("builtinTidy")){
+                return "";
+            }
+            return "Unexpected value: " + robotCodeFormatter;
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotCodeFormatter(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotCodeFormatter)) {
+            return;
+        }
+        String old = robotCodeFormatter;
+        robotCodeFormatter = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            try {
+                listener.onChanged(ROBOT_CODE_FORMATTER, old, s);
+            } catch (CancelledException e) {
+                // just ignore at this point
+            }
+        }
+    }
+    
+    private String robotFlowExplorerTheme = "";
+
+    public @NotNull String getRobotFlowExplorerTheme() {
+        return robotFlowExplorerTheme;
+    }
+
+    public @Nullable JsonPrimitive getRobotFlowExplorerThemeAsJson() {
+        if(robotFlowExplorerTheme.isEmpty()){
+            return null;
+        }
+        
+        return new JsonPrimitive(robotFlowExplorerTheme);
+    }
+
+    public @NotNull String validateRobotFlowExplorerTheme(String robotFlowExplorerTheme) {
+        if(robotFlowExplorerTheme.isEmpty()) {
+            return "";
+        }
+        try {
+            
+            new JsonPrimitive(robotFlowExplorerTheme);
+             
+            if(robotFlowExplorerTheme.equalsIgnoreCase("dark")){
+                return "";
+            }
+            if(robotFlowExplorerTheme.equalsIgnoreCase("light")){
+                return "";
+            }
+            return "Unexpected value: " + robotFlowExplorerTheme;
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotFlowExplorerTheme(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotFlowExplorerTheme)) {
+            return;
+        }
+        String old = robotFlowExplorerTheme;
+        robotFlowExplorerTheme = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            try {
+                listener.onChanged(ROBOT_FLOW_EXPLORER_THEME, old, s);
+            } catch (CancelledException e) {
+                // just ignore at this point
+            }
+        }
+    }
+    
+    private String robotWorkspaceSymbolsOnlyForOpenDocs = "";
+
+    public @NotNull String getRobotWorkspaceSymbolsOnlyForOpenDocs() {
+        return robotWorkspaceSymbolsOnlyForOpenDocs;
+    }
+
+    public @Nullable JsonPrimitive getRobotWorkspaceSymbolsOnlyForOpenDocsAsJson() {
+        if(robotWorkspaceSymbolsOnlyForOpenDocs.isEmpty()){
+            return null;
+        }
+        
+        return new JsonPrimitive(Boolean.parseBoolean(robotWorkspaceSymbolsOnlyForOpenDocs));
+    }
+
+    public @NotNull String validateRobotWorkspaceSymbolsOnlyForOpenDocs(String robotWorkspaceSymbolsOnlyForOpenDocs) {
+        if(robotWorkspaceSymbolsOnlyForOpenDocs.isEmpty()) {
+            return "";
+        }
+        try {
+            
+            new JsonPrimitive(Boolean.parseBoolean(robotWorkspaceSymbolsOnlyForOpenDocs));
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotWorkspaceSymbolsOnlyForOpenDocs(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotWorkspaceSymbolsOnlyForOpenDocs)) {
+            return;
+        }
+        String old = robotWorkspaceSymbolsOnlyForOpenDocs;
+        robotWorkspaceSymbolsOnlyForOpenDocs = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            try {
+                listener.onChanged(ROBOT_WORKSPACE_SYMBOLS_ONLY_FOR_OPEN_DOCS, old, s);
+            } catch (CancelledException e) {
+                // just ignore at this point
+            }
+        }
+    }
+    
+    private String robotQuickFixKeywordTemplate = "";
+
+    public @NotNull String getRobotQuickFixKeywordTemplate() {
+        return robotQuickFixKeywordTemplate;
+    }
+
+    public @Nullable JsonPrimitive getRobotQuickFixKeywordTemplateAsJson() {
+        if(robotQuickFixKeywordTemplate.isEmpty()){
+            return null;
+        }
+        
+        return new JsonPrimitive(robotQuickFixKeywordTemplate);
+    }
+
+    public @NotNull String validateRobotQuickFixKeywordTemplate(String robotQuickFixKeywordTemplate) {
+        if(robotQuickFixKeywordTemplate.isEmpty()) {
+            return "";
+        }
+        try {
+            
+            new JsonPrimitive(robotQuickFixKeywordTemplate);
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotQuickFixKeywordTemplate(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotQuickFixKeywordTemplate)) {
+            return;
+        }
+        String old = robotQuickFixKeywordTemplate;
+        robotQuickFixKeywordTemplate = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            try {
+                listener.onChanged(ROBOT_QUICK_FIX_KEYWORD_TEMPLATE, old, s);
+            } catch (CancelledException e) {
+                // just ignore at this point
+            }
+        }
+    }
+    
+    private String robotLanguage = "";
+
+    public @NotNull String getRobotLanguage() {
+        return robotLanguage;
+    }
+
+    public @Nullable JsonArray getRobotLanguageAsJson() {
+        if(robotLanguage.isEmpty()){
+            return null;
+        }
+        Gson g = new Gson();
+        return g.fromJson(robotLanguage, JsonArray.class);
+    }
+
+    public @NotNull String validateRobotLanguage(String robotLanguage) {
+        if(robotLanguage.isEmpty()) {
+            return "";
+        }
+        try {
+            Gson g = new Gson();
+            g.fromJson(robotLanguage, JsonArray.class);
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotLanguage(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotLanguage)) {
+            return;
+        }
+        String old = robotLanguage;
+        robotLanguage = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            try {
+                listener.onChanged(ROBOT_LANGUAGE, old, s);
+            } catch (CancelledException e) {
+                // just ignore at this point
+            }
+        }
+    }
+    
+    private String robotTestViewEnabled = "";
+
+    public @NotNull String getRobotTestViewEnabled() {
+        return robotTestViewEnabled;
+    }
+
+    public @Nullable JsonPrimitive getRobotTestViewEnabledAsJson() {
+        if(robotTestViewEnabled.isEmpty()){
+            return null;
+        }
+        
+        return new JsonPrimitive(Boolean.parseBoolean(robotTestViewEnabled));
+    }
+
+    public @NotNull String validateRobotTestViewEnabled(String robotTestViewEnabled) {
+        if(robotTestViewEnabled.isEmpty()) {
+            return "";
+        }
+        try {
+            
+            new JsonPrimitive(Boolean.parseBoolean(robotTestViewEnabled));
+            
+            return "";
+            
+        } catch(Exception e) {
+            return e.toString();
+        }
+    }
+
+    public void setRobotTestViewEnabled(String s) {
+        if (s == null) {
+            s = "";
+        }
+        if (s.equals(robotTestViewEnabled)) {
+            return;
+        }
+        String old = robotTestViewEnabled;
+        robotTestViewEnabled = s;
+        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
+            try {
+                listener.onChanged(ROBOT_TEST_VIEW_ENABLED, old, s);
+            } catch (CancelledException e) {
+                // just ignore at this point
+            }
+        }
+    }
+    
     private String robotLibrariesLibdocNeedsArgs = "";
 
     public @NotNull String getRobotLibrariesLibdocNeedsArgs() {
@@ -1155,112 +1462,6 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             try {
                 listener.onChanged(ROBOT_LIBRARIES_DEPRECATED, old, s);
-            } catch (CancelledException e) {
-                // just ignore at this point
-            }
-        }
-    }
-    
-    private String robotCodeFormatter = "";
-
-    public @NotNull String getRobotCodeFormatter() {
-        return robotCodeFormatter;
-    }
-
-    public @Nullable JsonPrimitive getRobotCodeFormatterAsJson() {
-        if(robotCodeFormatter.isEmpty()){
-            return null;
-        }
-        
-        return new JsonPrimitive(robotCodeFormatter);
-    }
-
-    public @NotNull String validateRobotCodeFormatter(String robotCodeFormatter) {
-        if(robotCodeFormatter.isEmpty()) {
-            return "";
-        }
-        try {
-            
-            new JsonPrimitive(robotCodeFormatter);
-             
-            if(robotCodeFormatter.equalsIgnoreCase("robotidy")){
-                return "";
-            }
-            if(robotCodeFormatter.equalsIgnoreCase("builtinTidy")){
-                return "";
-            }
-            return "Unexpected value: " + robotCodeFormatter;
-            
-        } catch(Exception e) {
-            return e.toString();
-        }
-    }
-
-    public void setRobotCodeFormatter(String s) {
-        if (s == null) {
-            s = "";
-        }
-        if (s.equals(robotCodeFormatter)) {
-            return;
-        }
-        String old = robotCodeFormatter;
-        robotCodeFormatter = s;
-        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
-            try {
-                listener.onChanged(ROBOT_CODE_FORMATTER, old, s);
-            } catch (CancelledException e) {
-                // just ignore at this point
-            }
-        }
-    }
-    
-    private String robotFlowExplorerTheme = "";
-
-    public @NotNull String getRobotFlowExplorerTheme() {
-        return robotFlowExplorerTheme;
-    }
-
-    public @Nullable JsonPrimitive getRobotFlowExplorerThemeAsJson() {
-        if(robotFlowExplorerTheme.isEmpty()){
-            return null;
-        }
-        
-        return new JsonPrimitive(robotFlowExplorerTheme);
-    }
-
-    public @NotNull String validateRobotFlowExplorerTheme(String robotFlowExplorerTheme) {
-        if(robotFlowExplorerTheme.isEmpty()) {
-            return "";
-        }
-        try {
-            
-            new JsonPrimitive(robotFlowExplorerTheme);
-             
-            if(robotFlowExplorerTheme.equalsIgnoreCase("dark")){
-                return "";
-            }
-            if(robotFlowExplorerTheme.equalsIgnoreCase("light")){
-                return "";
-            }
-            return "Unexpected value: " + robotFlowExplorerTheme;
-            
-        } catch(Exception e) {
-            return e.toString();
-        }
-    }
-
-    public void setRobotFlowExplorerTheme(String s) {
-        if (s == null) {
-            s = "";
-        }
-        if (s.equals(robotFlowExplorerTheme)) {
-            return;
-        }
-        String old = robotFlowExplorerTheme;
-        robotFlowExplorerTheme = s;
-        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
-            try {
-                listener.onChanged(ROBOT_FLOW_EXPLORER_THEME, old, s);
             } catch (CancelledException e) {
                 // just ignore at this point
             }
@@ -2175,147 +2376,6 @@ public class RobotProjectPreferences implements PersistentStateComponent<RobotSt
         for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
             try {
                 listener.onChanged(ROBOT_COMPLETIONS_KEYWORDS_ARGUMENTS_SEPARATOR, old, s);
-            } catch (CancelledException e) {
-                // just ignore at this point
-            }
-        }
-    }
-    
-    private String robotWorkspaceSymbolsOnlyForOpenDocs = "";
-
-    public @NotNull String getRobotWorkspaceSymbolsOnlyForOpenDocs() {
-        return robotWorkspaceSymbolsOnlyForOpenDocs;
-    }
-
-    public @Nullable JsonPrimitive getRobotWorkspaceSymbolsOnlyForOpenDocsAsJson() {
-        if(robotWorkspaceSymbolsOnlyForOpenDocs.isEmpty()){
-            return null;
-        }
-        
-        return new JsonPrimitive(Boolean.parseBoolean(robotWorkspaceSymbolsOnlyForOpenDocs));
-    }
-
-    public @NotNull String validateRobotWorkspaceSymbolsOnlyForOpenDocs(String robotWorkspaceSymbolsOnlyForOpenDocs) {
-        if(robotWorkspaceSymbolsOnlyForOpenDocs.isEmpty()) {
-            return "";
-        }
-        try {
-            
-            new JsonPrimitive(Boolean.parseBoolean(robotWorkspaceSymbolsOnlyForOpenDocs));
-            
-            return "";
-            
-        } catch(Exception e) {
-            return e.toString();
-        }
-    }
-
-    public void setRobotWorkspaceSymbolsOnlyForOpenDocs(String s) {
-        if (s == null) {
-            s = "";
-        }
-        if (s.equals(robotWorkspaceSymbolsOnlyForOpenDocs)) {
-            return;
-        }
-        String old = robotWorkspaceSymbolsOnlyForOpenDocs;
-        robotWorkspaceSymbolsOnlyForOpenDocs = s;
-        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
-            try {
-                listener.onChanged(ROBOT_WORKSPACE_SYMBOLS_ONLY_FOR_OPEN_DOCS, old, s);
-            } catch (CancelledException e) {
-                // just ignore at this point
-            }
-        }
-    }
-    
-    private String robotQuickFixKeywordTemplate = "";
-
-    public @NotNull String getRobotQuickFixKeywordTemplate() {
-        return robotQuickFixKeywordTemplate;
-    }
-
-    public @Nullable JsonPrimitive getRobotQuickFixKeywordTemplateAsJson() {
-        if(robotQuickFixKeywordTemplate.isEmpty()){
-            return null;
-        }
-        
-        return new JsonPrimitive(robotQuickFixKeywordTemplate);
-    }
-
-    public @NotNull String validateRobotQuickFixKeywordTemplate(String robotQuickFixKeywordTemplate) {
-        if(robotQuickFixKeywordTemplate.isEmpty()) {
-            return "";
-        }
-        try {
-            
-            new JsonPrimitive(robotQuickFixKeywordTemplate);
-            
-            return "";
-            
-        } catch(Exception e) {
-            return e.toString();
-        }
-    }
-
-    public void setRobotQuickFixKeywordTemplate(String s) {
-        if (s == null) {
-            s = "";
-        }
-        if (s.equals(robotQuickFixKeywordTemplate)) {
-            return;
-        }
-        String old = robotQuickFixKeywordTemplate;
-        robotQuickFixKeywordTemplate = s;
-        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
-            try {
-                listener.onChanged(ROBOT_QUICK_FIX_KEYWORD_TEMPLATE, old, s);
-            } catch (CancelledException e) {
-                // just ignore at this point
-            }
-        }
-    }
-    
-    private String robotLanguage = "";
-
-    public @NotNull String getRobotLanguage() {
-        return robotLanguage;
-    }
-
-    public @Nullable JsonArray getRobotLanguageAsJson() {
-        if(robotLanguage.isEmpty()){
-            return null;
-        }
-        Gson g = new Gson();
-        return g.fromJson(robotLanguage, JsonArray.class);
-    }
-
-    public @NotNull String validateRobotLanguage(String robotLanguage) {
-        if(robotLanguage.isEmpty()) {
-            return "";
-        }
-        try {
-            Gson g = new Gson();
-            g.fromJson(robotLanguage, JsonArray.class);
-            
-            return "";
-            
-        } catch(Exception e) {
-            return e.toString();
-        }
-    }
-
-    public void setRobotLanguage(String s) {
-        if (s == null) {
-            s = "";
-        }
-        if (s.equals(robotLanguage)) {
-            return;
-        }
-        String old = robotLanguage;
-        robotLanguage = s;
-        for (LanguageServerDefinition.IPreferencesListener listener : listeners) {
-            try {
-                listener.onChanged(ROBOT_LANGUAGE, old, s);
             } catch (CancelledException e) {
                 // just ignore at this point
             }
