@@ -52,7 +52,7 @@ fire = "*"
 robotframework = "5.0.1"
 robotremoteserver = "*"
 
-robocorp-actions = "^0.0.7" # Just needed for testing.
+robocorp-actions = "^0.2.0" # Just needed for testing.
 
 numpy = "<2"
 black = "^24.3.0"
