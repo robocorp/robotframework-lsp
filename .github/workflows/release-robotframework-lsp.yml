@@ -71,11 +71,6 @@ jobs:
     - name: Check tag version
       run: python -m dev check-tag-version
       
-    - name: Publish intellij plugin
-      working-directory: ./robotframework-intellij
-      run: ./gradlew publishPlugin
-      env:
-        ORG_GRADLE_PROJECT_intellijPublishToken: ${{ secrets.ORG_GRADLE_PROJECT_intellijPublishToken }}
     - name: Upload to PyPI
       working-directory: ./robotframework-ls/src
       run: twine upload dist/*
