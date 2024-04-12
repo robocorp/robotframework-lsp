@@ -1,3 +1,19 @@
+New in 1.12.0 (2024-04-12)
+-----------------------------
+
+### New features
+
+- It's now possible to use a python variable file (with `robot.loadVariablesFromVariablesFile` setting) for linting. [#953](https://github.com/robocorp/robotframework-lsp/issues/953)
+- Added option (`robot.testView.enabled`) to disable test view.
+- Updated versions in dependencies to fix CVEs.
+
+### Bugfixes
+
+- Fixed issue with GitLens. [#1023](https://github.com/robocorp/robotframework-lsp/issues/1023)
+- Fix issue with RF (the EXCEPT target is now in an ASSIGN token instead of VARIABLE).
+- Fix issue with RF (the FOR target is now in an ASSIGN token instead of VARIABLE).
+
+
 New in 1.11.0 (2023-06-07)
 -----------------------------
 

@@ -12,7 +12,7 @@ publishPlugin {
 }
 
 group 'robotframework.intellij'
-version '1.11.0'
+version '1.12.0'
 
 task finishBuild(type: Exec) {
     def finishArgs = ['python', "finish_build.py"]
@@ -50,17 +50,22 @@ intellij {
 patchPluginXml {
     changeNotes = """
     <p>
-    <strong>Release 1.10.0</strong>
+    <strong>Release 1.12.0</strong>
     </p>
     
     <ul>
     
     <h3 id="new-features">New features</h3>
     <ul>
-    <li><code>Robot Framework 6.1.0</code> is now supported.</li>
-    <li><code>ignore_git_dir=True</code> is now used by default in the <code>robotframework-tidy</code> integration.</li>
-    <li>Bundled <code>robotframework-tidy</code> upgraded to <code>4.3.0</code>.</li>
-    <li>Bundled <code>robotframework-robocop</code> upgraded to <code>3.1.1</code>.</li>
+    <li>It's now possible to use a python variable file (with <code>robot.loadVariablesFromVariablesFile</code> setting) for linting.</li>
+    <li>Added option (<code>robot.testView.enabled</code>) to disable test view.</li>
+    <li>Updated versions in dependencies to fix CVEs.</li>
+    </ul>
+    <h3 id="bugfixes">Bugfixes</h3>
+    <ul>
+    <li>Fixed issue with GitLens.</li>
+    <li>Fix issue with RF (the EXCEPT target is now in an ASSIGN token instead of VARIABLE).</li>
+    <li>Fix issue with RF (the FOR target is now in an ASSIGN token instead of VARIABLE).</li>
     </ul>
 
 

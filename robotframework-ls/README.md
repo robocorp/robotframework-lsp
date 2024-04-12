@@ -34,7 +34,7 @@ See: [Contributing](docs/contributing.md) for how to help in the development of 
 
 See: [Reporting Issue](docs/reporting_issues.md) for details on how to report some issue in the `Robot Framework Language Server`.
 
-## Features (1.11.0)
+## Features (1.12.0)
 
 -   Robot Output View:
     -   View current task/test being executed.
