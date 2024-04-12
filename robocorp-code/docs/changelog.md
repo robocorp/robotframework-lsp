@@ -1,8 +1,13 @@
-New in 1.20.0 (2024-03-19)
+
+New in 1.20.0 (2024-04-12)
 -----------------------------
 
 - New Java Inspector available!
     - The Java Inspector will be supported only on Windows OS.
+- (Action Package support) Properly supports robocorp-actions 0.2.0 (for linting actions).
+- (Action Package support) When subitems of a task package are selected it's possible that the work-items aren't shown in the package tree.
+- (Action Package support) Preferred action server version is now 0.3.2.
+- Updated dependency versions (to fix CVEs).
 
 New in 1.19.0 (2024-03-12)
 -----------------------------
