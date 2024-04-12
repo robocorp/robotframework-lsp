@@ -20,7 +20,7 @@ if (process.platform === "win32") {
 }
 
 // Update so that Robocorp Code requests the latest version of the action server.
-const LATEST_ACTION_SERVER_VERSION = "0.0.28";
+const LATEST_ACTION_SERVER_VERSION = "0.3.2";
 
 async function downloadActionServer(internalActionServerLocation: string) {
     await window.withProgress(
