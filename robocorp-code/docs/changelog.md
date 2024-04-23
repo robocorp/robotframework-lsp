@@ -2,7 +2,7 @@
 New in 1.20.2 (2024-04-23)
 -----------------------------
 
-- Fixed issue where automatically installing browser would fail.
+- Fixed issue where automatically installing browser would fail (on Windows).
 
 New in 1.20.1 (2024-04-12)
 -----------------------------
