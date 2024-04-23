@@ -1,3 +1,4 @@
+import errno
 import os
 import platform
 import subprocess
@@ -111,11 +112,19 @@ def install_browser(engine: BrowserEngine, force=False, interactive=False):
             try:
                 process = subprocess.Popen(
                     cmd,
+                    stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     env=env,
                     bufsize=0,
                 )
+
+                # Not sure why, but (just when running in VSCode) something as:
+                # launching sys.executable actually got stuck unless a \n was written
+                # (even if stdin was closed it wasn't enough).
+                # -- note: this may be particular to my machine (fabioz), but it
+                # may also be related to VSCode + Windows 11 + Windows Defender + python
+                _stdin_write(process, b"\n")
 
                 threading.Thread(
                     target=_stream_reader,
@@ -168,3 +177,33 @@ def install_browser(engine: BrowserEngine, force=False, interactive=False):
                 + f"Return code: {returncode}\n"
                 + f"Output: {stdout}\n"
             )
+
+
+def _stdin_write(process, input):
+    if input:
+        try:
+            process.stdin.write(input)
+        except BrokenPipeError:
+            pass  # communicate() must ignore broken pipe errors.
+        except ValueError:
+            pass  # communicate() must ignore broken closed pipes
+        except OSError as exc:
+            if exc.errno == errno.EINVAL:
+                # bpo-19612, bpo-30418: On Windows, stdin.write() fails
+                # with EINVAL if the child process exited or if the child
+                # process is still running but closed the pipe.
+                pass
+            else:
+                raise
+
+    try:
+        process.stdin.close()
+    except BrokenPipeError:
+        pass  # communicate() must ignore broken pipe errors.
+    except ValueError:
+        pass  # communicate() must ignore broken closed pipes
+    except OSError as exc:
+        if exc.errno == errno.EINVAL:
+            pass
+        else:
+            raise

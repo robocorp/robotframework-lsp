@@ -1,4 +1,9 @@
 
+New in 1.20.2 (2024-04-23)
+-----------------------------
+
+- Fixed issue where automatically installing browser would fail.
+
 New in 1.20.1 (2024-04-12)
 -----------------------------
 
