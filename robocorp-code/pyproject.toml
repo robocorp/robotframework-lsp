@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "robocorp-code"
-version = "1.20.2"
+version = "1.21.0"
 description = "Robocorp Code: Visual Studio Code Extension for Software Robot Development"
 authors = [
     "Fabio Zadrozny <fabio@robocorp.com>",

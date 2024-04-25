@@ -1,4 +1,10 @@
 
+New in 1.21.0 (2024-04-25)
+-----------------------------
+
+- `sema4ai-actions` is now supported (`robocorp-actions` is still supported, although it's
+  now considered deprecated as `sema4ai-actions` is a drop-in replacement).
+
 New in 1.20.2 (2024-04-23)
 -----------------------------
 
