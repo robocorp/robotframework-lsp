@@ -1,36 +1,79 @@
 import json
 import sys
+from typing import Any
 
 
 def main() -> None:
     contents_to_lint: bytes = sys.stdin.buffer.read()
     try:
-        # May not be in the target env or could be an older version of
-        # robocorp.actions.
-        from robocorp.actions import _lint_action  # noqa #type: ignore
-        from robocorp.actions import version_info  # noqa #type: ignore
+        from sema4ai import actions  # noqa #type: ignore
 
-        requires_pm = version_info[:2] >= [0, 2]
-    except BaseException:
-        return
+        use_sema4lib = True
+    except ImportError:
+        use_sema4lib = False
 
-    pm = None
-    if requires_pm:
+    EPManagedParameters: Any
+    PluginManager: Any
+    ManagedParameters: Any
+    _lint_action: Any
+    version_info: Any
+
+    if use_sema4lib:
+        from sema4ai.actions import _lint_action  # noqa #type: ignore
+        from sema4ai.actions import version_info  # noqa #type: ignore
+
+        requires_pm = True
+
+        pm = None
+
+        # fmt: off
         try:
-            from robocorp.actions._managed_parameters import (
-                ManagedParameters,  # type: ignore
+            from sema4ai.actions._customization._extension_points import (  # noqa #type: ignore
+                EPManagedParameters,
             )
-            from robocorp.tasks._customization._extension_points import (
-                EPManagedParameters,  # type: ignore
+            from sema4ai.actions._customization._plugin_manager import (  # noqa #type: ignore
+                PluginManager,
             )
-            from robocorp.tasks._customization._plugin_manager import (
-                PluginManager,  # type: ignore
+            from sema4ai.actions._managed_parameters import (  # noqa #type: ignore
+                ManagedParameters,
             )
+
 
             pm = PluginManager()
             pm.set_instance(EPManagedParameters, ManagedParameters({}))
         except BaseException:
             pass
+        # fmt: on
+    else:
+        try:
+            # May not be in the target env or could be an older version of
+            # robocorp.actions.
+            from robocorp.actions import _lint_action  # noqa #type: ignore
+            from robocorp.actions import version_info  # noqa #type: ignore
+
+            requires_pm = version_info[:2] >= [0, 2]
+        except BaseException:
+            return
+
+        pm = None
+        if requires_pm:
+            # fmt: off
+            try:
+                from robocorp.actions._managed_parameters import (  # noqa #type: ignore
+                    ManagedParameters,
+                )
+                from robocorp.tasks._customization._extension_points import (  # noqa #type: ignore
+                    EPManagedParameters,
+                )
+                from robocorp.tasks._customization._plugin_manager import (  # noqa #type: ignore
+                    PluginManager,
+                )
+
+                pm = PluginManager()
+                pm.set_instance(EPManagedParameters, ManagedParameters({}))
+            except BaseException:
+                pass
+            # fmt: on
 
     if requires_pm:
         try:

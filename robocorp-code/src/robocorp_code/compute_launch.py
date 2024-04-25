@@ -20,6 +20,10 @@ def _compute_action_package_launch(
     uri: Optional[str],
     json_input: Optional[str],
 ):
+    from pathlib import Path
+
+    from robocorp_code.robo import launch_actions
+
     if not os.path.isfile(package):
         return {
             "success": False,
@@ -82,7 +86,7 @@ def _compute_action_package_launch(
         "name": name,
         "request": request,
         "cwd": cwd,
-        "module": "robocorp.actions",
+        "program": Path(launch_actions.__file__).as_posix(),
         "args": args,
         "console": "integratedTerminal",
         "internalConsoleOptions": "neverOpen",

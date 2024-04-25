@@ -457,9 +457,6 @@ def my_action(arg1: str) -> str:
 # Required: A description of what's in the action package.
 description: Action package description
 
-# Required: The current version of this action package.
-version: 0.0.1
-
 # Required: A link to where the documentation on the package lives.
 documentation: https://github.com/...
 
@@ -495,6 +492,7 @@ dependencies:
     )
 
     cwd = str(tmpdir)
+    launch["result"]["program"] = os.path.basename(launch["result"]["program"])
     expected = {
         "success": True,
         "message": None,
@@ -503,7 +501,7 @@ dependencies:
             "name": "Launch name",
             "request": "launch",
             "cwd": cwd,
-            "module": "robocorp.actions",
+            "program": "launch_actions.py",
             "args": [
                 "run",
                 "--action",

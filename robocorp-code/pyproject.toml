@@ -53,6 +53,7 @@ robotframework = "5.0.1"
 robotremoteserver = "*"
 
 robocorp-actions = "^0.2.0" # Just needed for testing.
+sema4ai-actions = "^0.3.1" # Just needed for testing.
 
 numpy = "<2"
 black = "^24.3.0"

@@ -8,7 +8,7 @@
       character: 4
       line: 4
   severity: 1
-  source: robocorp.actions
+  source: sema4ai.actions
 - message: '@action without a `return` (an `@action` must have a return value).'
   range:
     end:
@@ -18,7 +18,7 @@
       character: 4
       line: 4
   severity: 1
-  source: robocorp.actions
+  source: sema4ai.actions
 - message: '@action without return annotation defined (`str` considered as the return
     type).'
   range:
@@ -29,4 +29,4 @@
       character: 4
       line: 4
   severity: 2
-  source: robocorp.actions
+  source: sema4ai.actions
