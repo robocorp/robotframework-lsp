@@ -42,8 +42,16 @@ def collect_lint_errors(pm: PluginManager, doc: IDocument) -> list:
                 )
                 result = future.result(20)
                 if result.returncode == 0:
-                    loaded_errors = json.loads(result.stdout)
-                    return loaded_errors
+                    if result.stdout:
+                        try:
+                            return json.loads(result.stdout)
+                        except Exception:
+                            log.exception(f"Unable to parse as json: {result.stdout}")
+
+                if result.stderr:
+                    log.info(
+                        f"Found stderr while collecting lint errors: {result.stderr}"
+                    )
     except BaseException:
         log.exception("Error collection @action")
     return []
