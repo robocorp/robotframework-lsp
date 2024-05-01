@@ -610,9 +610,9 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         """
         check_yamls = [sub / "robot.yaml", sub / "package.yaml"]
 
-        cached_file_info: Optional[
-            CachedFileInfo[LocalRobotMetadataInfoDict]
-        ] = curr_cache.get(sub)
+        cached_file_info: Optional[CachedFileInfo[LocalRobotMetadataInfoDict]] = (
+            curr_cache.get(sub)
+        )
         if cached_file_info is not None:
             if cached_file_info.is_cache_valid():
                 new_cache[sub] = cached_file_info
@@ -1098,7 +1098,11 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
             return {"success": False, "message": str(e), "result": None}
 
         # i.e.: no error but we couldn't find an interpreter.
-        return {"success": True, "message": "", "result": None}
+        return {
+            "success": False,
+            "message": "Couldn't find an interpreter",
+            "result": None,
+        }
 
     @command_dispatcher(commands.ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL)
     def _verify_library_version(self, params: dict) -> LibraryVersionInfoDict:

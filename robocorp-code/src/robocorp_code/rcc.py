@@ -81,7 +81,7 @@ def download_rcc(
                     else:
                         relative_path = "/linux32/rcc"
 
-                RCC_VERSION = "v17.18.0"
+                RCC_VERSION = "v17.28.4"
                 prefix = f"https://downloads.robocorp.com/rcc/releases/{RCC_VERSION}"
                 url = prefix + relative_path
 
@@ -986,7 +986,7 @@ class Rcc(object):
                         return ActionResult(
                             True, None, RobotInfoEnv(new_env, space_info)
                         )
-                except:
+                except Exception:
                     log.exception(
                         "Error when waiting for space_info creation to finish (handled and still waiting)."
                     )
@@ -1046,6 +1046,7 @@ class Rcc(object):
             str(conda_yaml_path),
         ]
         args.append("--json")
+        args.append("--no-retry-build")
         try:
             sys.stderr.write(
                 f"Collecting environment info for {conda_yaml_path} in space: {space_info.space_name}\n"

@@ -18,12 +18,12 @@ The structure goes as follows:
 
 Each request for a space name creates a structure in the disk such as:
 
-/vscode-01.lock     Lock file used, needed to write contents and generate the env. 
+/vscode-01.lock     Lock file used, needed to write contents and generate the env.
 /vscode-01          The directory name as well as the space name.
     /time           The last time that this space name was used.
     /conda.yaml     The contents used for the space name.
     /conda_path     The path to the conda file last used for this env.
-    /state          The current state name. 
+    /state          The current state name.
                     It's contents are one of:
                        'created'
                        'environment_requested'
@@ -35,7 +35,6 @@ Each request for a space name creates a structure in the disk such as:
     /damaged        Written if the space is to be considered damaged
                     and should be reclaimed after a timeout.
 """
-
 
 from pathlib import Path
 from typing import Iterable, List, Optional
@@ -110,6 +109,7 @@ class HolotreeManager:
         self, space_name: str, conda_yaml_path: Path, conda_yaml_contents: str
     ) -> RCCSpaceInfo:
         space_info: RCCSpaceInfo = self.create_rcc_space_info(space_name)
+
         conda_contents_path = space_info.conda_contents_path
         state_path = space_info.state_path
         conda_path = space_info.conda_path

@@ -107,3 +107,4 @@ export const ROBOCORP_START_ACTION_SERVER = "robocorp.startActionServer";  // St
 export const ROBOCORP_DOWNLOAD_ACTION_SERVER = "robocorp.downloadActionServer";  // Download Action Server
 export const ROBOCORP_START_ACTION_SERVER_INTERNAL = "robocorp.startActionServer.internal";  // Start Action Server (internal)
 export const ROBOCORP_LIST_ACTIONS_INTERNAL = "robocorp.listActions.internal";  // Lists the actions available in an action package given a root dir (internal)
+export const ROBOCORP_PACKAGE_ENVIRONMENT_REBUILD = "robocorp.packageEnvironmentRebuild";  // Rebuild Package Environment

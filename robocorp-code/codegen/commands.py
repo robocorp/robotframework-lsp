@@ -786,6 +786,12 @@ COMMANDS = [
         server_handled=True,
         hide_from_command_palette=True,
     ),
+    Command(
+        "robocorp.packageEnvironmentRebuild",
+        "Rebuild Package Environment",
+        server_handled=False,
+        hide_from_command_palette=False,
+    ),
 ]
 
 

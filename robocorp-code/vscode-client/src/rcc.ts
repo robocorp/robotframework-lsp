@@ -131,7 +131,7 @@ async function downloadRcc(
             throw new Error("Currently only Linux amd64 is supported.");
         }
     }
-    const RCC_VERSION = "v17.18.0";
+    const RCC_VERSION = "v17.28.4";
     const prefix = "https://downloads.robocorp.com/rcc/releases/" + RCC_VERSION;
     const url: string = prefix + relativePath;
     return await download(url, progress, token, location);

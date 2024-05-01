@@ -257,6 +257,15 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                         "type": RobotEntryType.OpenPackageYaml,
                         "parent": element,
                     },
+                    {
+                        "label": "Rebuild Package Environment",
+                        "uri": element.uri,
+                        "robot": element.robot,
+                        "iconPath": "sync",
+                        "type": RobotEntryType.PackageRebuildEnvironment,
+                        "parent": element,
+                        "tooltip": "Rebuilds the current Python package environment",
+                    },
                 ];
             } else if (element.type === RobotEntryType.Robot) {
                 let yamlContents = element.robot.yamlContents;
@@ -465,6 +474,12 @@ export class RobotsTreeDataProvider implements vscode.TreeDataProvider<RobotEntr
                 "title": "Start Action Server",
                 "command": roboCommands.ROBOCORP_START_ACTION_SERVER,
                 "arguments": [vscode.Uri.file(element.robot.directory)],
+            };
+            treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
+        } else if (element.type === RobotEntryType.PackageRebuildEnvironment) {
+            treeItem.command = {
+                "title": "Rebuild Package Environment",
+                "command": roboCommands.ROBOCORP_PACKAGE_ENVIRONMENT_REBUILD,
             };
             treeItem.collapsibleState = vscode.TreeItemCollapsibleState.None;
         }

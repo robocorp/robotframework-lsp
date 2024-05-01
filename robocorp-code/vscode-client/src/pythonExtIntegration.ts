@@ -13,6 +13,23 @@ import { logError, OUTPUT_CHANNEL } from "./channel";
 import { handleProgressMessage } from "./progress";
 import { ActionResult, InterpreterInfo } from "./protocols";
 import { getAutosetpythonextensioninterpreter } from "./robocorpSettings";
+import { TREE_VIEW_ROBOCORP_TASK_PACKAGES_TREE } from "./robocorpViews";
+import { refreshTreeView } from "./viewsCommon";
+
+const dirtyWorkspaceFiles = new Set<string>();
+
+export function isEnvironmentFile(fsPath: string): boolean {
+    return (
+        fsPath.endsWith("conda.yaml") ||
+        fsPath.endsWith("action-server.yaml") ||
+        fsPath.endsWith("package.yaml") ||
+        fsPath.endsWith("robot.yaml")
+    );
+}
+
+export function isPythonFile(fsPath: string): boolean {
+    return fsPath.endsWith(".py");
+}
 
 export async function autoUpdateInterpreter(docUri: Uri) {
     if (!getAutosetpythonextensioninterpreter()) {
@@ -45,24 +62,54 @@ export async function autoUpdateInterpreter(docUri: Uri) {
     }
 }
 
-export async function installPythonInterpreterCheck(context: ExtensionContext) {
-    context.subscriptions.push(
-        window.onDidChangeActiveTextEditor(async (event: TextEditor) => {
-            try {
-                // Whenever the active editor changes we update the Python interpreter used (if needed).
-                let docUri = event?.document?.uri;
-                if (docUri) {
-                    await autoUpdateInterpreter(docUri);
+export async function installWorkspaceWatcher(context: ExtensionContext) {
+    // listen for document changes
+    const checkIfFilesHaveChanged = workspace.onDidChangeTextDocument(async (event) => {
+        let docURI = event.document.uri;
+        if (event.document.isDirty && (isEnvironmentFile(docURI.fsPath) || isPythonFile(docURI.fsPath))) {
+            dirtyWorkspaceFiles.add(docURI.fsPath);
+        }
+    });
+
+    // listen for when documents are about to be saved
+    const checkIfFilesWillBeSaved = workspace.onWillSaveTextDocument(async (event) => {
+        try {
+            let docURI = event.document.uri;
+            if (
+                docURI &&
+                dirtyWorkspaceFiles.has(docURI.fsPath) &&
+                (isEnvironmentFile(docURI.fsPath) || isPythonFile(docURI.fsPath))
+            ) {
+                // let's refresh the view each time we get a hit on the files that might impact the workspace
+                refreshTreeView(TREE_VIEW_ROBOCORP_TASK_PACKAGES_TREE);
+                dirtyWorkspaceFiles.delete(docURI.fsPath);
+                // if environment file has changed, let's ask the user if he wants to update the env
+                if (isEnvironmentFile(docURI.fsPath)) {
+                    window
+                        .showInformationMessage(
+                            "Changes were detected in the package configuration. Would you like to rebuild the environment?",
+                            "Yes",
+                            "No"
+                        )
+                        .then(async (selection) => {
+                            if (selection === "Yes") {
+                                await autoUpdateInterpreter(docURI);
+                            }
+                        });
                 }
-            } catch (error) {
-                logError("Error auto-updating Python interpreter.", error, "PYTHON_SET_INTERPRETER");
             }
-        })
-    );
+        } catch (error) {
+            logError("Error auto-updating Python interpreter.", error, "PYTHON_SET_INTERPRETER");
+        }
+    });
+    // create the appropriate subscriptions
+    context.subscriptions.push(checkIfFilesHaveChanged, checkIfFilesWillBeSaved);
+
+    // update the interpreter at start time
     try {
-        let uri = window.activeTextEditor?.document?.uri;
-        if (uri) {
-            await autoUpdateInterpreter(uri);
+        let docURI = window.activeTextEditor?.document?.uri;
+        if (docURI) {
+            await autoUpdateInterpreter(docURI);
         }
     } catch (error) {
         logError("Error on initial Python interpreter auto-update.", error, "PYTHON_INITIAL_SET_INTERPRETER");
