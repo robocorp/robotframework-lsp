@@ -1202,10 +1202,6 @@
                     "when": "false"
                 },
                 {
-                    "command": "robocorp.rccTerminalCreateRobotTreeSelection",
-                    "when": "false"
-                },
-                {
                     "command": "robocorp.submitIssue.internal",
                     "when": "false"
                 },

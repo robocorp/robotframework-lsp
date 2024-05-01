@@ -7,12 +7,13 @@ import { mergeEnviron } from "./subprocess";
 import { getAutosetpythonextensiondisableactivateterminal } from "./robocorpSettings";
 import { disablePythonTerminalActivateEnvironment } from "./pythonExtIntegration";
 import { LocalRobotMetadataInfo, ActionResult, InterpreterInfo } from "./protocols";
+import { platform } from "os";
 
 export async function askAndCreateRccTerminal() {
     let robot: LocalRobotMetadataInfo = await listAndAskRobotSelection(
         "Please select the target Task Package for the terminal.",
         "Unable to create terminal (no Task Package detected in the Workspace).",
-        { showActionPackages: false, showTaskPackages: true }
+        { showActionPackages: true, showTaskPackages: true }
     );
     if (robot) {
         await createRccTerminal(robot);
@@ -24,7 +25,6 @@ export async function createRccTerminal(robotInfo: LocalRobotMetadataInfo) {
         async function startShell(progress: Progress<{ message?: string; increment?: number }>): Promise<undefined> {
             const rccLocation = await getRccLocation();
             if (!rccLocation) {
-                let msg = "Unable to find RCC.";
                 OUTPUT_CHANNEL.appendLine(
                     "Unable to collect environment to create terminal with RCC:" +
                         rccLocation +
@@ -46,6 +46,7 @@ export async function createRccTerminal(robotInfo: LocalRobotMetadataInfo) {
                 window.showWarningMessage("Unable to obtain interpreter information from: " + robotInfo.filePath);
                 return;
             }
+            OUTPUT_CHANNEL.appendLine("Retrieved Python interpreter: " + interpreter.pythonExe);
 
             // If vscode-python is installed, we need to disable the terminal activation as it
             // conflicts with the robot environment.
@@ -54,7 +55,6 @@ export async function createRccTerminal(robotInfo: LocalRobotMetadataInfo) {
             }
 
             let env = mergeEnviron();
-
             // Update env to contain rcc location.
             if (interpreter.environ) {
                 for (let key of Object.keys(interpreter.environ)) {
@@ -77,14 +77,24 @@ export async function createRccTerminal(robotInfo: LocalRobotMetadataInfo) {
                     env[key] = value;
                 }
             }
+            OUTPUT_CHANNEL.appendLine("Retrieved environment: " + JSON.stringify(env, null, 2));
 
-            OUTPUT_CHANNEL.appendLine("Create terminal with RCC:" + rccLocation + " for Robot: " + robotInfo.name);
+            OUTPUT_CHANNEL.appendLine("Create terminal with RCC: " + rccLocation + " for Robot: " + robotInfo.filePath);
             const terminal = window.createTerminal({
                 name: robotInfo.name + " Robot environment",
                 env: env,
                 cwd: pathModule.dirname(robotInfo.filePath),
+                message: "Robocorp Code Package Activated Interpreter (Python Environment)",
             });
 
+            // send setup commands to the terminal
+            if (process.platform.toString() === "win32") {
+                terminal.sendText(`set PATH=${env.PATH}:$PATH\n`);
+            } else {
+                terminal.sendText(`export PATH=${env.PATH}:$PATH\n`);
+            }
+
+            OUTPUT_CHANNEL.appendLine("Terminal created!");
             terminal.show();
             return undefined;
         }
@@ -92,7 +102,7 @@ export async function createRccTerminal(robotInfo: LocalRobotMetadataInfo) {
         await window.withProgress(
             {
                 location: ProgressLocation.Notification,
-                title: "Robocorp: start RCC shell for: " + robotInfo.name + " Robot",
+                title: "Start RCC shell for: " + robotInfo.name,
                 cancellable: false,
             },
             startShell
