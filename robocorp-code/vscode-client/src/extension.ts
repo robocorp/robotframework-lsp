@@ -726,17 +726,19 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
     // i.e.: allow other extensions to also use our feedback api.
     C.registerWithoutStub(ROBOCORP_FEEDBACK_INTERNAL, (name: string, value: string) => feedback(name, value));
 
-    C.register(ROBOCORP_PACKAGE_ENVIRONMENT_REBUILD, () => {
-        const call = async () => {
-            const selected = await listAndAskRobotSelection(
-                "Please select the Task/Action Package for which you'd like to rebuild the environment",
-                "Unable to continue because no Action Package was found in the workspace.",
-                { showActionPackages: true, showTaskPackages: false }
-            );
+    C.register(ROBOCORP_PACKAGE_ENVIRONMENT_REBUILD, async () => {
+        const selected = await listAndAskRobotSelection(
+            "Please select the Task/Action Package for which you'd like to rebuild the environment",
+            "Unable to continue because no Action Package was found in the workspace.",
+            { showActionPackages: true, showTaskPackages: false }
+        );
 
-            await resolveInterpreter(selected.filePath);
-        };
-        call();
+        const result = await resolveInterpreter(selected.filePath);
+        if (result.success) {
+            vscode.window.showInformationMessage(`Environment built & cached. Python interpreter loaded.`);
+        } else {
+            vscode.window.showErrorMessage(`Error resolving interpreter: ${result.message}`);
+        }
     });
 
     C.registerWithoutStub(ROBOCORP_CLEAR_ENV_AND_RESTART, clearEnvAndRestart);

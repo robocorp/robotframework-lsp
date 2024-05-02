@@ -159,7 +159,6 @@ export async function resolveInterpreter(targetRobot: string): Promise<ActionRes
         if (interpreter === null || (typeof interpreter === "string" && interpreter === "null")) {
             throw Error("Interpreter not found. Retrying call...");
         }
-        vscode.window.showInformationMessage(`Environment built & cached. Python interpreter loaded.`);
         return { "success": true, "message": "", "result": interpreter };
     } catch (error) {
         // We couldn't resolve with the robotframework language server command, fallback to the robocorp code command.
@@ -173,11 +172,9 @@ export async function resolveInterpreter(targetRobot: string): Promise<ActionRes
             if (interpreter === null || (typeof interpreter === "string" && interpreter === "null")) {
                 throw Error("Interpreter not found");
             }
-            vscode.window.showInformationMessage(`Environment built & cached. Python interpreter loaded.`);
             return interpreter;
         } catch (error) {
             logError("Error resolving interpreter.", error, "ACT_RESOLVE_INTERPRETER");
-            vscode.window.showErrorMessage(`Error resolving interpreter: ${error}`);
             return { "success": false, "message": "Unable to resolve interpreter.", "result": undefined };
         }
     }

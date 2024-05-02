@@ -63,7 +63,20 @@ export async function autoUpdateInterpreter(docUri: Uri) {
 }
 
 export async function installWorkspaceWatcher(context: ExtensionContext) {
-    // listen for document changes
+    // listen to editor change/switch (this should cause environment switching as well)
+    const checkEditorSwitch = window.onDidChangeActiveTextEditor(async (event: TextEditor) => {
+        try {
+            // Whenever the active editor changes we update the Python interpreter used (if needed).
+            let docURI = event?.document?.uri;
+            if (docURI) {
+                await autoUpdateInterpreter(docURI);
+            }
+        } catch (error) {
+            logError("Error auto-updating Python interpreter.", error, "PYTHON_SET_INTERPRETER");
+        }
+    });
+
+    // listen for document changes and mark targeted files as dirty
     const checkIfFilesHaveChanged = workspace.onDidChangeTextDocument(async (event) => {
         let docURI = event.document.uri;
         if (event.document.isDirty && (isEnvironmentFile(docURI.fsPath) || isPythonFile(docURI.fsPath))) {
@@ -103,7 +116,7 @@ export async function installWorkspaceWatcher(context: ExtensionContext) {
         }
     });
     // create the appropriate subscriptions
-    context.subscriptions.push(checkIfFilesHaveChanged, checkIfFilesWillBeSaved);
+    context.subscriptions.push(checkEditorSwitch, checkIfFilesHaveChanged, checkIfFilesWillBeSaved);
 
     // update the interpreter at start time
     try {
