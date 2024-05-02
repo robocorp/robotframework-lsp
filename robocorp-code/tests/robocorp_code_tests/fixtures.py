@@ -322,7 +322,7 @@ class RccPatch(object):
             conda_prefix = Path(self.tmpdir.join(f"conda_prefix_{space_name}"))
             conda_prefix.mkdir()
 
-            conda_yaml = args[-2]
+            conda_yaml = args[-3]
             assert conda_yaml.endswith("conda.yaml")
             shutil.copyfile(conda_yaml, conda_prefix / "identity.yaml")
 

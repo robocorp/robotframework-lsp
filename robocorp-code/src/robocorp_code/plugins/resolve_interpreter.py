@@ -714,9 +714,8 @@ environmentConfigs:
                 env_json_path_file_info,
                 pm,
             )
-
-        except Exception:
-            log.exception(f"Error getting interpreter info for: {doc_uri}")
+        except Exception as e:
+            log.exception(f"Error getting interpreter info for: {doc_uri}: {e}")
         return None
 
     def __typecheckself__(self) -> None:
