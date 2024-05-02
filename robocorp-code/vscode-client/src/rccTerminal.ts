@@ -7,7 +7,7 @@ import { mergeEnviron } from "./subprocess";
 import { getAutosetpythonextensiondisableactivateterminal } from "./robocorpSettings";
 import { disablePythonTerminalActivateEnvironment } from "./pythonExtIntegration";
 import { LocalRobotMetadataInfo, ActionResult, InterpreterInfo } from "./protocols";
-import { platform } from "os";
+import * as fsModule from "fs";
 
 export async function askAndCreateRccTerminal() {
     let robot: LocalRobotMetadataInfo = await listAndAskRobotSelection(
@@ -28,7 +28,7 @@ export async function createRccTerminal(robotInfo: LocalRobotMetadataInfo) {
                 OUTPUT_CHANNEL.appendLine(
                     "Unable to collect environment to create terminal with RCC:" +
                         rccLocation +
-                        " for Robot: " +
+                        " for Package: " +
                         robotInfo.name
                 );
                 window.showErrorMessage("Unable to find RCC.");
@@ -79,23 +79,49 @@ export async function createRccTerminal(robotInfo: LocalRobotMetadataInfo) {
             }
             OUTPUT_CHANNEL.appendLine("Retrieved environment: " + JSON.stringify(env, null, 2));
 
-            OUTPUT_CHANNEL.appendLine("Create terminal with RCC: " + rccLocation + " for Robot: " + robotInfo.filePath);
-            const terminal = window.createTerminal({
-                name: robotInfo.name + " Robot environment",
-                env: env,
-                cwd: pathModule.dirname(robotInfo.filePath),
-                message: "Robocorp Code Package Activated Interpreter (Python Environment)",
-            });
+            OUTPUT_CHANNEL.appendLine(
+                "Create terminal with RCC: " + rccLocation + " for Package: " + robotInfo.filePath
+            );
 
             // send setup commands to the terminal
             if (process.platform.toString() === "win32") {
-                terminal.sendText(`set PATH=${env.PATH}:$PATH\n`);
+                const terminal = window.createTerminal({
+                    name: robotInfo.name + " Package environment",
+                    env: env,
+                    cwd: pathModule.dirname(robotInfo.filePath),
+                    message: "Robocorp Code Package Activated Interpreter (Python Environment)",
+                    shellPath: "C:\\Windows\\System32\\cmd.exe",
+                });
+                const varsFilePath = pathModule.join(env.RCC_HOLOTREE_SPACE_ROOT, "environment_vars.bat");
+                const envVarsContent = Object.keys(env)
+                    .reduce((acc, key) => {
+                        return `${acc}SET ${key}=${env[key]}\n`;
+                    }, "")
+                    .trim();
+                OUTPUT_CHANNEL.appendLine("Create terminal with RCC: " + envVarsContent);
+                fsModule.writeFileSync(varsFilePath, envVarsContent);
+                terminal.sendText(`call ${varsFilePath}\n`);
+                terminal.show();
             } else {
-                terminal.sendText(`export PATH=${env.PATH}:$PATH\n`);
+                const terminal = window.createTerminal({
+                    name: robotInfo.name + " Package environment",
+                    env: env,
+                    cwd: pathModule.dirname(robotInfo.filePath),
+                    message: "Robocorp Code Package Activated Interpreter (Python Environment)",
+                });
+                const varsFilePath = pathModule.join(env.RCC_HOLOTREE_SPACE_ROOT, "environment_vars.sh");
+                const envVarsContent = Object.keys(env)
+                    .reduce((acc, key) => {
+                        return `${acc}export ${key}=${env[key]}\n`;
+                    }, "")
+                    .trim();
+                OUTPUT_CHANNEL.appendLine("Create terminal with RCC: " + envVarsContent);
+                fsModule.writeFileSync(varsFilePath, envVarsContent);
+                terminal.sendText(`source ${varsFilePath}\n`);
+                terminal.show();
             }
 
             OUTPUT_CHANNEL.appendLine("Terminal created!");
-            terminal.show();
             return undefined;
         }
 
