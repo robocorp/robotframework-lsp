@@ -306,9 +306,9 @@ class _CacheInfo(object):
         env_json_path_file_info: Optional[_CachedFileInfo],
         pm: PluginManager,
     ) -> IInterpreterInfo:
-        interpreter_info: Optional[_CachedInterpreterInfo] = (
-            cls._cached_interpreter_info.get(robot_yaml_file_info.file_path)
-        )
+        interpreter_info: Optional[
+            _CachedInterpreterInfo
+        ] = cls._cached_interpreter_info.get(robot_yaml_file_info.file_path)
         if interpreter_info is not None and interpreter_info.is_cache_valid(
             robot_yaml_file_info, conda_config_file_info, env_json_path_file_info
         ):
@@ -547,9 +547,9 @@ class RobocorpResolveInterpreter(object):
         cached_info: Optional[_PackageYamlCachedInfo] = cache.get(
             package_yaml_file_info.file_path
         )
-        package_mtime_info: Optional[_CachedFileMTimeInfo] = (
-            package_yaml_file_info.mtime_info
-        )
+        package_mtime_info: Optional[
+            _CachedFileMTimeInfo
+        ] = package_yaml_file_info.mtime_info
         if package_mtime_info is None:
             log.critical(
                 "Unable to get mtime info from: %s", package_yaml_file_info.file_path

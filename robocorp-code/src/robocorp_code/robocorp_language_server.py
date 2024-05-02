@@ -610,9 +610,9 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
         """
         check_yamls = [sub / "robot.yaml", sub / "package.yaml"]
 
-        cached_file_info: Optional[CachedFileInfo[LocalRobotMetadataInfoDict]] = (
-            curr_cache.get(sub)
-        )
+        cached_file_info: Optional[
+            CachedFileInfo[LocalRobotMetadataInfoDict]
+        ] = curr_cache.get(sub)
         if cached_file_info is not None:
             if cached_file_info.is_cache_valid():
                 new_cache[sub] = cached_file_info
