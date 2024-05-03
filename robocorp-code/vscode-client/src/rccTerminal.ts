@@ -83,8 +83,12 @@ export async function createRccTerminal(robotInfo: LocalRobotMetadataInfo) {
                 "Create terminal with RCC: " + rccLocation + " for Package: " + robotInfo.filePath
             );
 
-            // send setup commands to the terminal
+            // We need to activate the RCC python environment after the terminal has spawned
+            // This way we avoid the environment being overwritten by shell startup scripts
+            // The Terminal env injection works if no overwrites happen
             if (process.platform.toString() === "win32") {
+                // Making sure we create a CMD prompt in Windows as it can default to PowerShell
+                // and the Python Environment activation fails
                 const terminal = window.createTerminal({
                     name: robotInfo.name + " Package environment",
                     env: env,
@@ -103,6 +107,7 @@ export async function createRccTerminal(robotInfo: LocalRobotMetadataInfo) {
                 terminal.sendText(`call ${varsFilePath}\n`);
                 terminal.show();
             } else {
+                // The shell in UNIX doesn't matter that much as the syntax to set the Python Environment is common
                 const terminal = window.createTerminal({
                     name: robotInfo.name + " Package environment",
                     env: env,
