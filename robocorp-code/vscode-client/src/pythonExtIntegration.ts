@@ -85,7 +85,7 @@ export async function installWorkspaceWatcher(context: ExtensionContext) {
         }
     });
 
-    // listen for when documents are about to be saved
+    // listen for when documents are saved and check if the files of interest have changed
     const checkIfFilesWillBeSaved = workspace.onDidSaveTextDocument(async (document) => {
         try {
             let docURI = document.uri;

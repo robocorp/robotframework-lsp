@@ -1047,6 +1047,7 @@ class Rcc(object):
         ]
         args.append("--json")
         args.append("--no-retry-build")
+        args.append("--no-pyc-management")
         try:
             sys.stderr.write(
                 f"Collecting environment info for {conda_yaml_path} in space: {space_info.space_name}\n"
