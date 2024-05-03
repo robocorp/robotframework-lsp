@@ -1,4 +1,23 @@
 
+New in 1.22.0 (2024-05-03)
+-----------------------------
+
+- Updated RCC to `v17.28.4`. 
+
+- Fixed issue in the Caching system for the RCC Python Env. 
+
+- Added command for rebuilding the rcc environment. 
+
+- Added shortcut to the Activities for the task/action package. 
+
+- Added listeners for workspace files that trigger question for user to rebuild env or refresh view
+
+- Activating the Terminal command. Correcting the environment injection to have the proper Python env set up
+
+- Terminal opens CMD Prompt for Windows (environment activation is better)
+
+- Added new param to rcc `--no-pyc-management`.
+
 New in 1.21.0 (2024-04-25)
 -----------------------------
 
