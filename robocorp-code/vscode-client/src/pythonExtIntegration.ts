@@ -31,17 +31,17 @@ export function isPythonFile(fsPath: string): boolean {
     return fsPath.endsWith(".py");
 }
 
-export async function autoUpdateInterpreter(docUri: Uri) {
+export async function autoUpdateInterpreter(docUri: Uri): Promise<boolean> {
     if (!getAutosetpythonextensioninterpreter()) {
-        return;
+        return false;
     }
     let result: ActionResult<InterpreterInfo | undefined> = await resolveInterpreter(docUri.fsPath);
     if (!result.success) {
-        return;
+        return false;
     }
     let interpreter: InterpreterInfo = result.result;
     if (!interpreter || !interpreter.pythonExe) {
-        return;
+        return false;
     }
 
     // Now, set the interpreter.
@@ -60,6 +60,7 @@ export async function autoUpdateInterpreter(docUri: Uri) {
             ConfigurationTarget.WorkspaceFolder
         );
     }
+    return true;
 }
 
 export async function installWorkspaceWatcher(context: ExtensionContext) {
@@ -85,9 +86,9 @@ export async function installWorkspaceWatcher(context: ExtensionContext) {
     });
 
     // listen for when documents are about to be saved
-    const checkIfFilesWillBeSaved = workspace.onWillSaveTextDocument(async (event) => {
+    const checkIfFilesWillBeSaved = workspace.onDidSaveTextDocument(async (document) => {
         try {
-            let docURI = event.document.uri;
+            let docURI = document.uri;
             if (
                 docURI &&
                 dirtyWorkspaceFiles.has(docURI.fsPath) &&
@@ -106,7 +107,14 @@ export async function installWorkspaceWatcher(context: ExtensionContext) {
                         )
                         .then(async (selection) => {
                             if (selection === "Yes") {
-                                await autoUpdateInterpreter(docURI);
+                                const result = await autoUpdateInterpreter(docURI);
+                                if (result) {
+                                    window.showInformationMessage(
+                                        `Environment built & cached. Python interpreter loaded.`
+                                    );
+                                } else {
+                                    window.showErrorMessage(`Failed to Auto Update the Python Interpreter`);
+                                }
                             }
                         });
                 }
