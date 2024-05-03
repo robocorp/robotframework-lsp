@@ -509,10 +509,10 @@ COMMANDS = [
     ),
     Command(
         "robocorp.rccTerminalCreateRobotTreeSelection",
-        "Open terminal with Task Package (Robot) environment",
+        "Open terminal with Package Python environment",
         add_to_package_json=True,
         server_handled=False,
-        hide_from_command_palette=True,
+        hide_from_command_palette=False,
         icon="$(terminal)",
         constant="ROBOCORP_CREATE_RCC_TERMINAL_TREE_SELECTION",
     ),
@@ -785,6 +785,12 @@ COMMANDS = [
         add_to_package_json=True,
         server_handled=True,
         hide_from_command_palette=True,
+    ),
+    Command(
+        "robocorp.packageEnvironmentRebuild",
+        "Rebuild Package Environment",
+        server_handled=False,
+        hide_from_command_palette=False,
     ),
 ]
 

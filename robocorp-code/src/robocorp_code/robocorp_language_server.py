@@ -1098,7 +1098,11 @@ class RobocorpLanguageServer(PythonLanguageServer, InspectorLanguageServer):
             return {"success": False, "message": str(e), "result": None}
 
         # i.e.: no error but we couldn't find an interpreter.
-        return {"success": True, "message": "", "result": None}
+        return {
+            "success": False,
+            "message": "Couldn't find an interpreter",
+            "result": None,
+        }
 
     @command_dispatcher(commands.ROBOCORP_VERIFY_LIBRARY_VERSION_INTERNAL)
     def _verify_library_version(self, params: dict) -> LibraryVersionInfoDict:

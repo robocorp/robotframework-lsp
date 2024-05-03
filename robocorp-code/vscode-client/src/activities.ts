@@ -156,17 +156,23 @@ export async function resolveInterpreter(targetRobot: string): Promise<ActionRes
             "robot.resolveInterpreter",
             targetRobot
         );
+        if (interpreter === null || (typeof interpreter === "string" && interpreter === "null")) {
+            throw Error("Interpreter not found. Retrying call...");
+        }
         return { "success": true, "message": "", "result": interpreter };
     } catch (error) {
         // We couldn't resolve with the robotframework language server command, fallback to the robocorp code command.
         try {
-            let result: ActionResult<InterpreterInfo | undefined> = await commands.executeCommand(
+            let interpreter: ActionResult<InterpreterInfo | undefined> = await commands.executeCommand(
                 roboCommands.ROBOCORP_RESOLVE_INTERPRETER,
                 {
                     "target_robot": targetRobot,
                 }
             );
-            return result;
+            if (interpreter === null || (typeof interpreter === "string" && interpreter === "null")) {
+                throw Error("Interpreter not found");
+            }
+            return interpreter;
         } catch (error) {
             logError("Error resolving interpreter.", error, "ACT_RESOLVE_INTERPRETER");
             return { "success": false, "message": "Unable to resolve interpreter.", "result": undefined };

@@ -35,6 +35,7 @@ export enum RobotEntryType {
     OpenRobotCondaYaml,
     OpenPackageYaml,
     StartActionServer,
+    PackageRebuildEnvironment,
 }
 
 export interface CloudEntry {

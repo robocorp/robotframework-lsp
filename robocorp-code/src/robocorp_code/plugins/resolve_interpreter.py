@@ -3,10 +3,11 @@ Note: this code will actually run as a plugin in the RobotFramework Language
 Server, or in the Robocorp Code environment, so, we need to be careful on the
 imports so that it works on both cases.
 
-Also, the required version must be checked in the client (in case imports or APIs 
+Also, the required version must be checked in the client (in case imports or APIs
 change in `robocorp_ls_core` we need a compatible version both on robotframework-ls
 as well as robocorp-code).
 """
+
 import itertools
 import os.path
 import sys
@@ -126,7 +127,7 @@ class _CachedInterpreterInfo(object):
             ) as f:
                 if progress_reporter is not None and progress_reporter.cancelled:
                     file_contents = f"""
-Robocorp Code: environment creation cancelled
+Robocorp Code: Environment creation cancelled
 ===============================================
 
 The process to create the the environment for:
@@ -138,22 +139,22 @@ was cancelled.
 In this case, open "{conda_config_file_info.file_path}"
 and update the dependencies accordingly (after saving
 the environment will be automatically updated).
-    
+
 If the environment file should be already correct, chose one of the options below:
-    
+
 - Retry restarting VSCode using the command:
 
   "Developer: Reload Window"
 
-- Clear all environments and restart Robocorp code (advised if you suspect 
+- Clear all environments and restart Robocorp Code (advised if you suspect
   that some environment was partially created and is corrupt):
-  
+
   "Robocorp: Clear Robocorp (RCC) environments and restart Robocorp Code"
 
 Full error message
 ====================
 
-{result.message} 
+{result.message}
 """
 
                 else:
@@ -165,37 +166,37 @@ There was an error creating the environment for:
 
 "{conda_config_file_info.file_path}"
 
-The full output to diagnose the issue is shown below. 
+The full output to diagnose the issue is shown below.
 The most common reasons and fixes for this failure are:
 
 1. Dependencies specified are not resolvable.
-    
+
     In this case, open "{conda_config_file_info.file_path}"
     and update the dependencies accordingly (after saving
     the environment will be automatically updated).
-    
+
 2. There's some intermittent network failure or some active firewall.
 
     In this case, fix the network connectivity issue and chose one of the options below:
-    
+
     - Retry restarting VSCode using the command:
-    
+
       "Developer: Reload Window"
-    
-    - Clear all environments and restart Robocorp code (advised if you suspect 
+
+    - Clear all environments and restart Robocorp code (advised if you suspect
       that some environment was partially created and is corrupt):
-      
+
       "Robocorp: Clear Robocorp (RCC) environments and restart Robocorp Code"
 
 If you still can't get it to work, please submit an issue to Robocorp using the command:
- 
+
   "Robocorp: Submit issue to Robocorp".
 
 
 Full error message
 ====================
 
-{result.message} 
+{result.message}
 """
                 f.write(file_contents.encode("utf-8"))
                 message = result.message
@@ -407,15 +408,20 @@ class _PackageYamlCachedInfo:
         robot_yaml: Path,
         conda_yaml: Path,
         package_yaml_file_info: _CachedFileInfo,
-        cached_time_mtime_info: Optional[_CachedFileMTimeInfo],
+        cached_package_mtime_info: Optional[_CachedFileMTimeInfo],
+        cached_package_contents: Optional[str],
     ):
         self.robot_yaml = robot_yaml
         self.conda_yaml = conda_yaml
         self.package_yaml_file_info: _CachedFileInfo = package_yaml_file_info
-        self.cached_time_mtime_info = cached_time_mtime_info
+        self.cached_package_mtime_info = cached_package_mtime_info
+        self.cached_package_contents = cached_package_contents
 
-    def is_valid(self) -> bool:
-        return self.package_yaml_file_info.mtime_info == self.cached_time_mtime_info
+    def is_valid(self, package_yaml_file_info: _CachedFileInfo) -> bool:
+        return (
+            package_yaml_file_info.mtime_info == self.cached_package_mtime_info
+            and package_yaml_file_info.contents == self.cached_package_contents
+        )
 
     def get_cached(self) -> Tuple[Path, Path]:
         return self.robot_yaml, self.conda_yaml
@@ -455,11 +461,12 @@ class RobocorpResolveInterpreter(object):
     def get_interpreter_info_for_doc_uri(self, doc_uri) -> Optional[IInterpreterInfo]:
         info = self._compute_base_interpreter_info_for_doc_uri(doc_uri)
         if info is None:
-            return info
-
+            return None
         return self._relocate_robot_root(info)
 
-    def _relocate_robot_root(self, interpreter_info: IInterpreterInfo):
+    def _relocate_robot_root(
+        self, interpreter_info: IInterpreterInfo
+    ) -> Optional[IInterpreterInfo]:
         environ = interpreter_info.get_environ()
         if not environ:
             return interpreter_info
@@ -540,17 +547,18 @@ class RobocorpResolveInterpreter(object):
         cached_info: Optional[_PackageYamlCachedInfo] = cache.get(
             package_yaml_file_info.file_path
         )
-        mtime_info: Optional[_CachedFileMTimeInfo] = package_yaml_file_info.mtime_info
-        if mtime_info is None:
+        package_mtime_info: Optional[
+            _CachedFileMTimeInfo
+        ] = package_yaml_file_info.mtime_info
+        if package_mtime_info is None:
             log.critical(
                 "Unable to get mtime info from: %s", package_yaml_file_info.file_path
             )
             return None
 
         if cached_info is not None:
-            if cached_info.is_valid():
+            if cached_info.is_valid(package_yaml_file_info):
                 return cached_info.get_cached()
-
         # If it got here, it's not cached or the cache is invalid.
         # Let's compute it now.
 
@@ -600,7 +608,11 @@ environmentConfigs:
         original_package_yaml.write_text(package_yaml_file_info.contents, "utf-8")
 
         cached_info = _PackageYamlCachedInfo(
-            robot_yaml, conda_yaml, package_yaml_file_info, mtime_info
+            robot_yaml,
+            conda_yaml,
+            package_yaml_file_info,
+            cached_package_mtime_info=package_mtime_info,
+            cached_package_contents=package_yaml_file_info.contents,
         )
         cache[package_yaml_file_info.file_path] = cached_info
         return cached_info.get_cached()
@@ -702,9 +714,8 @@ environmentConfigs:
                 env_json_path_file_info,
                 pm,
             )
-
-        except Exception:
-            log.exception(f"Error getting interpreter info for: {doc_uri}")
+        except Exception as e:
+            log.exception(f"Error getting interpreter info for: {doc_uri}: {e}")
         return None
 
     def __typecheckself__(self) -> None:

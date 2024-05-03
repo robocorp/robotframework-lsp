@@ -126,6 +126,7 @@
         "onCommand:robocorp.downloadActionServer",
         "onCommand:robocorp.startActionServer.internal",
         "onCommand:robocorp.listActions.internal",
+        "onCommand:robocorp.packageEnvironmentRebuild",
         "onDebugInitialConfigurations",
         "onDebugResolve:robocorp-code",
         "onView:robocorp-task-packages-tree",
@@ -607,7 +608,7 @@
             },
             {
                 "command": "robocorp.rccTerminalCreateRobotTreeSelection",
-                "title": "Open terminal with Task Package (Robot) environment",
+                "title": "Open terminal with Package Python environment",
                 "category": "Robocorp",
                 "icon": "$(terminal)"
             },
@@ -814,6 +815,11 @@
             {
                 "command": "robocorp.listActions.internal",
                 "title": "Lists the actions available in an action package given a root dir (internal)",
+                "category": "Robocorp"
+            },
+            {
+                "command": "robocorp.packageEnvironmentRebuild",
+                "title": "Rebuild Package Environment",
                 "category": "Robocorp"
             }
         ],
@@ -1193,10 +1199,6 @@
                 },
                 {
                     "command": "robocorp.cloudUploadRobotTreeSelection",
-                    "when": "false"
-                },
-                {
-                    "command": "robocorp.rccTerminalCreateRobotTreeSelection",
                     "when": "false"
                 },
                 {

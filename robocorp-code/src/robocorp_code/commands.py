@@ -66,7 +66,7 @@ ROBOCORP_OPEN_IN_VS_CODE = "robocorp.openInVSCode"  # Open in VSCode
 ROBOCORP_REVEAL_IN_EXPLORER = "robocorp.revealInExplorer"  # Reveal in File Explorer
 ROBOCORP_REVEAL_ROBOT_IN_EXPLORER = "robocorp.revealRobotInExplorer"  # Reveal robot.yaml in File Explorer
 ROBOCORP_CLOUD_UPLOAD_ROBOT_TREE_SELECTION = "robocorp.cloudUploadRobotTreeSelection"  # Upload Task Package (Robot) to Control Room
-ROBOCORP_CREATE_RCC_TERMINAL_TREE_SELECTION = "robocorp.rccTerminalCreateRobotTreeSelection"  # Open terminal with Task Package (Robot) environment
+ROBOCORP_CREATE_RCC_TERMINAL_TREE_SELECTION = "robocorp.rccTerminalCreateRobotTreeSelection"  # Open terminal with Package Python environment
 ROBOCORP_SEND_METRIC = "robocorp.sendMetric"  # Send metric
 ROBOCORP_SUBMIT_ISSUE_INTERNAL = "robocorp.submitIssue.internal"  # Submit issue (internal)
 ROBOCORP_SUBMIT_ISSUE = "robocorp.submitIssue"  # Submit issue to Robocorp
@@ -108,6 +108,7 @@ ROBOCORP_START_ACTION_SERVER = "robocorp.startActionServer"  # Start Action Serv
 ROBOCORP_DOWNLOAD_ACTION_SERVER = "robocorp.downloadActionServer"  # Download Action Server
 ROBOCORP_START_ACTION_SERVER_INTERNAL = "robocorp.startActionServer.internal"  # Start Action Server (internal)
 ROBOCORP_LIST_ACTIONS_INTERNAL = "robocorp.listActions.internal"  # Lists the actions available in an action package given a root dir (internal)
+ROBOCORP_PACKAGE_ENVIRONMENT_REBUILD = "robocorp.packageEnvironmentRebuild"  # Rebuild Package Environment
 
 ALL_SERVER_COMMANDS = [
     ROBOCORP_GET_PLUGINS_DIR,

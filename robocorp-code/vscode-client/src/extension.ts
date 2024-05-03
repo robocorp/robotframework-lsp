@@ -61,6 +61,8 @@ import {
     askAndRunRobotRCC,
     rccConfigurationDiagnostics,
     updateLaunchEnvironment,
+    resolveInterpreter,
+    listAndAskRobotSelection,
 } from "./activities";
 import { handleProgressMessage, ProgressReport } from "./progress";
 import { TREE_VIEW_ROBOCORP_TASK_PACKAGES_TREE, TREE_VIEW_ROBOCORP_PACKAGE_CONTENT_TREE } from "./robocorpViews";
@@ -151,8 +153,9 @@ import {
     ROBOCORP_CREATE_TASK_OR_ACTION_PACKAGE,
     ROBOCORP_NEW_ROBOCORP_INSPECTOR_JAVA,
     ROBOCORP_DOWNLOAD_ACTION_SERVER,
+    ROBOCORP_PACKAGE_ENVIRONMENT_REBUILD,
 } from "./robocorpCommands";
-import { installPythonInterpreterCheck } from "./pythonExtIntegration";
+import { installWorkspaceWatcher } from "./pythonExtIntegration";
 import { refreshCloudTreeView } from "./viewsRobocorp";
 import { connectWorkspace, disconnectWorkspace } from "./vault";
 import { CACHE_KEY_LAST_WORKED, getLanguageServerPythonInfoUncached } from "./extensionCreateEnv";
@@ -723,6 +726,21 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
     // i.e.: allow other extensions to also use our feedback api.
     C.registerWithoutStub(ROBOCORP_FEEDBACK_INTERNAL, (name: string, value: string) => feedback(name, value));
 
+    C.register(ROBOCORP_PACKAGE_ENVIRONMENT_REBUILD, async () => {
+        const selected = await listAndAskRobotSelection(
+            "Please select the Task/Action Package for which you'd like to rebuild the environment",
+            "Unable to continue because no Action Package was found in the workspace.",
+            { showActionPackages: true, showTaskPackages: false }
+        );
+
+        const result = await resolveInterpreter(selected.filePath);
+        if (result.success) {
+            vscode.window.showInformationMessage(`Environment built & cached. Python interpreter loaded.`);
+        } else {
+            vscode.window.showErrorMessage(`Error resolving interpreter: ${result.message}`);
+        }
+    });
+
     C.registerWithoutStub(ROBOCORP_CLEAR_ENV_AND_RESTART, clearEnvAndRestart);
     // Register other commands (which will have an error message shown depending on whether
     // the extension was activated properly).
@@ -850,7 +868,7 @@ export async function doActivate(context: ExtensionContext, C: CommandRegistry) 
     // Note: start the async ones below but don't await on them (the extension should be considered initialized
     // regardless of it -- as it may call robot.resolveInterpreter, it may need to activate the language
     // server extension, which in turn requires robocorp code to be activated already).
-    installPythonInterpreterCheck(context);
+    installWorkspaceWatcher(context);
     verifyRobotFrameworkInstalled();
 }
 

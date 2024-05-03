@@ -13,18 +13,35 @@ import { logError, OUTPUT_CHANNEL } from "./channel";
 import { handleProgressMessage } from "./progress";
 import { ActionResult, InterpreterInfo } from "./protocols";
 import { getAutosetpythonextensioninterpreter } from "./robocorpSettings";
+import { TREE_VIEW_ROBOCORP_TASK_PACKAGES_TREE } from "./robocorpViews";
+import { refreshTreeView } from "./viewsCommon";
 
-export async function autoUpdateInterpreter(docUri: Uri) {
+const dirtyWorkspaceFiles = new Set<string>();
+
+export function isEnvironmentFile(fsPath: string): boolean {
+    return (
+        fsPath.endsWith("conda.yaml") ||
+        fsPath.endsWith("action-server.yaml") ||
+        fsPath.endsWith("package.yaml") ||
+        fsPath.endsWith("robot.yaml")
+    );
+}
+
+export function isPythonFile(fsPath: string): boolean {
+    return fsPath.endsWith(".py");
+}
+
+export async function autoUpdateInterpreter(docUri: Uri): Promise<boolean> {
     if (!getAutosetpythonextensioninterpreter()) {
-        return;
+        return false;
     }
     let result: ActionResult<InterpreterInfo | undefined> = await resolveInterpreter(docUri.fsPath);
     if (!result.success) {
-        return;
+        return false;
     }
     let interpreter: InterpreterInfo = result.result;
     if (!interpreter || !interpreter.pythonExe) {
-        return;
+        return false;
     }
 
     // Now, set the interpreter.
@@ -43,26 +60,77 @@ export async function autoUpdateInterpreter(docUri: Uri) {
             ConfigurationTarget.WorkspaceFolder
         );
     }
+    return true;
 }
 
-export async function installPythonInterpreterCheck(context: ExtensionContext) {
-    context.subscriptions.push(
-        window.onDidChangeActiveTextEditor(async (event: TextEditor) => {
-            try {
-                // Whenever the active editor changes we update the Python interpreter used (if needed).
-                let docUri = event?.document?.uri;
-                if (docUri) {
-                    await autoUpdateInterpreter(docUri);
-                }
-            } catch (error) {
-                logError("Error auto-updating Python interpreter.", error, "PYTHON_SET_INTERPRETER");
+export async function installWorkspaceWatcher(context: ExtensionContext) {
+    // listen to editor change/switch (this should cause environment switching as well)
+    const checkEditorSwitch = window.onDidChangeActiveTextEditor(async (event: TextEditor) => {
+        try {
+            // Whenever the active editor changes we update the Python interpreter used (if needed).
+            let docURI = event?.document?.uri;
+            if (docURI) {
+                await autoUpdateInterpreter(docURI);
             }
-        })
-    );
+        } catch (error) {
+            logError("Error auto-updating Python interpreter.", error, "PYTHON_SET_INTERPRETER");
+        }
+    });
+
+    // listen for document changes and mark targeted files as dirty
+    const checkIfFilesHaveChanged = workspace.onDidChangeTextDocument(async (event) => {
+        let docURI = event.document.uri;
+        if (event.document.isDirty && (isEnvironmentFile(docURI.fsPath) || isPythonFile(docURI.fsPath))) {
+            dirtyWorkspaceFiles.add(docURI.fsPath);
+        }
+    });
+
+    // listen for when documents are saved and check if the files of interest have changed
+    const checkIfFilesWillBeSaved = workspace.onDidSaveTextDocument(async (document) => {
+        try {
+            let docURI = document.uri;
+            if (
+                docURI &&
+                dirtyWorkspaceFiles.has(docURI.fsPath) &&
+                (isEnvironmentFile(docURI.fsPath) || isPythonFile(docURI.fsPath))
+            ) {
+                // let's refresh the view each time we get a hit on the files that might impact the workspace
+                refreshTreeView(TREE_VIEW_ROBOCORP_TASK_PACKAGES_TREE);
+                dirtyWorkspaceFiles.delete(docURI.fsPath);
+                // if environment file has changed, let's ask the user if he wants to update the env
+                if (isEnvironmentFile(docURI.fsPath)) {
+                    window
+                        .showInformationMessage(
+                            "Changes were detected in the package configuration. Would you like to rebuild the environment?",
+                            "Yes",
+                            "No"
+                        )
+                        .then(async (selection) => {
+                            if (selection === "Yes") {
+                                const result = await autoUpdateInterpreter(docURI);
+                                if (result) {
+                                    window.showInformationMessage(
+                                        `Environment built & cached. Python interpreter loaded.`
+                                    );
+                                } else {
+                                    window.showErrorMessage(`Failed to Auto Update the Python Interpreter`);
+                                }
+                            }
+                        });
+                }
+            }
+        } catch (error) {
+            logError("Error auto-updating Python interpreter.", error, "PYTHON_SET_INTERPRETER");
+        }
+    });
+    // create the appropriate subscriptions
+    context.subscriptions.push(checkEditorSwitch, checkIfFilesHaveChanged, checkIfFilesWillBeSaved);
+
+    // update the interpreter at start time
     try {
-        let uri = window.activeTextEditor?.document?.uri;
-        if (uri) {
-            await autoUpdateInterpreter(uri);
+        let docURI = window.activeTextEditor?.document?.uri;
+        if (docURI) {
+            await autoUpdateInterpreter(docURI);
         }
     } catch (error) {
         logError("Error on initial Python interpreter auto-update.", error, "PYTHON_INITIAL_SET_INTERPRETER");
