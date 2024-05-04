@@ -1,4 +1,9 @@
 
+New in 1.22.1 (2024-05-04)
+-----------------------------
+
+- `--use-feature=truststore` is no longer added to rcc conda.yaml when using uv.
+
 New in 1.22.0 (2024-05-03)
 -----------------------------
 
