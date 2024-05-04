@@ -343,11 +343,15 @@ def create_conda_contents_from_package_yaml_contents(
 
     converted_conda_entries: list = []
     found_truststore = False
+    found_uv = False
+
     for entry in conda_forge:
         name, entry, op, version = convert_conda_entry(package_yaml, entry)
         _validate_name(name)
         if name in ("truststore", "robocorp-truststore"):
             found_truststore = True
+        if name == "uv":
+            found_uv = True
         converted_conda_entries.append(entry)
 
     if "python" not in found_names:
@@ -362,7 +366,7 @@ def create_conda_contents_from_package_yaml_contents(
                 bold_yellow(
                     "--use-feature=truststore flag does not need to "
                     "be specified (it is automatically used when a "
-                    '"robocorp-trustore" or "trustore" dependency is added).'
+                    '"robocorp-truststore" or "truststore" dependency is added).'
                 )
             )
             found_truststore = True
@@ -378,7 +382,7 @@ def create_conda_contents_from_package_yaml_contents(
 
         converted_pip_entries.append(entry)
 
-    if found_truststore:
+    if found_truststore and not found_uv:
         converted_pip_entries.insert(0, "--use-feature=truststore")
 
     cwd_dir = package_yaml.parent.absolute()

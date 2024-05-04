@@ -437,7 +437,7 @@ class PackageYamlAnalyzer(BaseAnalyzer):
                                     "message": (
                                         "--use-feature=truststore flag does not need to "
                                         "be specified (it is automatically used when a "
-                                        '"robocorp-trustore" or "trustore" dependency is added).'
+                                        '"robocorp-truststore" or "truststore" dependency is added).'
                                     ),
                                 }
                                 self._additional_load_errors.append(diagnostic)

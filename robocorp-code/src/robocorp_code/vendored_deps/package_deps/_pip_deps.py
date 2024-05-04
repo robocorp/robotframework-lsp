@@ -33,7 +33,7 @@ class PipDeps:
             req = parse_requirement(value)
         except Exception as e:
             remaining = value.strip()
-            # -- ignored because it's used for pip flags (i.e.: --use-feature=trustore).
+            # -- ignored because it's used for pip flags (i.e.: --use-feature=truststore).
             if not remaining or remaining.startswith("#") or remaining.startswith("--"):
                 return
 
