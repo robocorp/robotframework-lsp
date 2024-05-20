@@ -53,7 +53,7 @@ Find the full installation instructions at [https://robocorp.com/docs/visual-stu
 
 During the first activation, the extension will download additional dependencies (such as Conda manager) that are required for it to run.
 
-### Features (1.22.1)
+### Features (1.22.2)
 
 -   Preliminary Support for [Robocorp Action Server](https://github.com/robocorp/robocorp/action_server) (Coding Actions for AIs).
     - Packages view supporting Action Packages.
