@@ -5,6 +5,7 @@ import * as roboCommands from "../robocorpCommands";
 import { ActionResult, IActionInfo, LocalRobotMetadataInfo } from "../protocols";
 import {
     areThereRobotsInWorkspace,
+    compareVersions,
     isActionPackage,
     isDirectoryAPackageDirectory,
     verifyIfPathOkToCreatePackage,
@@ -14,7 +15,7 @@ import { fileExists, makeDirs } from "../files";
 import { QuickPickItemWithAction, askForWs, showSelectOneQuickPick } from "../ask";
 import * as path from "path";
 import { OUTPUT_CHANNEL, logError } from "../channel";
-import { downloadOrGetActionServerLocation } from "../actionServer";
+import { downloadOrGetActionServerLocation, getActionServerVersion } from "../actionServer";
 import { createEnvWithRobocorpHome, getRobocorpHome } from "../rcc";
 import { execFilePromise } from "../subprocess";
 
@@ -226,6 +227,8 @@ export async function createActionPackage() {
         return;
     }
 
+    const actionServerVersionPromise: Promise<string | undefined> = getActionServerVersion(actionServerLocation);
+
     if (await isDirectoryAPackageDirectory(ws.uri)) {
         return;
     }
@@ -294,11 +297,23 @@ export async function createActionPackage() {
     const robocorpHome = await getRobocorpHome();
     const env = createEnvWithRobocorpHome(robocorpHome);
 
-    const cwd = dirname(targetDir);
-    const useName = path.basename(targetDir);
+    await makeDirs(targetDir);
 
     try {
-        await execFilePromise(actionServerLocation, ["new", "--name", useName], { "env": env, "cwd": cwd });
+        const actionServerVersion: string | undefined = await actionServerVersionPromise;
+        if (actionServerVersion === undefined) {
+            const msg = "Cannot do `new` command (it was not possible to get the action server version).";
+            OUTPUT_CHANNEL.appendLine(msg);
+            window.showErrorMessage(msg);
+            return;
+        }
+        let cmdline = ["new", "--name", ".", "--template", "minimal"];
+        const compare = compareVersions("0.10.0", actionServerVersion);
+        if (compare > 0) {
+            // old version installed (no --template available).
+            cmdline = ["new", "--name", "."];
+        }
+        await execFilePromise(actionServerLocation, cmdline, { "env": env, "cwd": targetDir });
         try {
             commands.executeCommand("workbench.files.action.refreshFilesExplorer");
         } catch (error) {

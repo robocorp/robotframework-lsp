@@ -331,34 +331,35 @@ class CommandRegistry {
 }
 
 async function verifyRobotFrameworkInstalled() {
-    if (!roboConfig.getVerifylsp()) {
-        return;
-    }
-    const ROBOT_EXTENSION_ID = "robocorp.robotframework-lsp";
-    let found = true;
-    try {
-        let extension = extensions.getExtension(ROBOT_EXTENSION_ID);
-        if (!extension) {
-            found = false;
-        }
-    } catch (error) {
-        found = false;
-    }
-    if (!found) {
-        // It seems it's not installed, install?
-        let install = "Install";
-        let dontAsk = "Don't ask again";
-        let chosen = await window.showInformationMessage(
-            "It seems that the Robot Framework Language Server extension is not installed to work with .robot Files.",
-            install,
-            dontAsk
-        );
-        if (chosen == install) {
-            await commands.executeCommand("workbench.extensions.search", ROBOT_EXTENSION_ID);
-        } else if (chosen == dontAsk) {
-            roboConfig.setVerifylsp(false);
-        }
-    }
+    // No longer tries to check whether RFLS is installed (not required for Python).
+    // if (!roboConfig.getVerifylsp()) {
+    //     return;
+    // }
+    // const ROBOT_EXTENSION_ID = "robocorp.robotframework-lsp";
+    // let found = true;
+    // try {
+    //     let extension = extensions.getExtension(ROBOT_EXTENSION_ID);
+    //     if (!extension) {
+    //         found = false;
+    //     }
+    // } catch (error) {
+    //     found = false;
+    // }
+    // if (!found) {
+    //     // It seems it's not installed, install?
+    //     let install = "Install";
+    //     let dontAsk = "Don't ask again";
+    //     let chosen = await window.showInformationMessage(
+    //         "It seems that the Robot Framework Language Server extension is not installed to work with .robot Files.",
+    //         install,
+    //         dontAsk
+    //     );
+    //     if (chosen == install) {
+    //         await commands.executeCommand("workbench.extensions.search", ROBOT_EXTENSION_ID);
+    //     } else if (chosen == dontAsk) {
+    //         roboConfig.setVerifylsp(false);
+    //     }
+    // }
 }
 
 async function cloudLoginShowConfirmationAndRefresh() {

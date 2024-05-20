@@ -48,7 +48,7 @@ const getInternalActionServerLocation = async (tmpFlag: string = "") => {
     return path.join(await getInternalActionServerDirLocation(), binName);
 };
 
-const getActionServerVersion = async (actionServerLocation: string): Promise<string | undefined> => {
+export const getActionServerVersion = async (actionServerLocation: string): Promise<string | undefined> => {
     let result: ExecFileReturn;
     const maxTimes = 4;
     let lastError = undefined;

@@ -1,4 +1,10 @@
 
+New in 1.22.2 (2024-05-20)
+-----------------------------
+
+- If `Action Server 0.10.0` onwards is being used, creates a project using the `--template minimal`.
+- In the new project, if the project is not empty and the user agreed to proceed, create the contents even if it means overriding what's there.
+
 New in 1.22.1 (2024-05-04)
 -----------------------------
 
