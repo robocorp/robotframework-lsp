@@ -145,25 +145,35 @@ def main():
     from tempfile import gettempdir
 
     cli = None
+    actions = None
     try:
+        from sema4ai import actions
         from sema4ai.actions import cli  # noqa #type: ignore
     except ImportError:
         try:
             # Backward compatibility
             from robocorp.actions import cli  # noqa #type: ignore
+
         except ImportError:
             pass
 
         if cli is None:
             raise  # Raise the sema4ai.actions error
 
-    dir_path = Path(gettempdir()) / "sema4ai-actions-run"
+    dir_path = Path(gettempdir()) / "sema4ai-vscode-actions"
     dir_path.mkdir(parents=True, exist_ok=True)
 
     store_artifacts_at = create_and_rotate_directories(dir_path, "run-action", 20)
     os.environ.pop("ROBOT_ROOT", None)
     os.environ["ROBOT_ARTIFACTS"] = store_artifacts_at
-    return cli.main(sys.argv[1:], exit=True)
+
+    args = sys.argv[1:]
+    if actions is not None:
+        if actions.version_info >= [0, 7, 0]:
+            # Only available on newer versions of sema4ai-actions.
+            args.append("--print-result")
+
+    return cli.main(args, exit=True)
 
 
 if __name__ == "__main__":
