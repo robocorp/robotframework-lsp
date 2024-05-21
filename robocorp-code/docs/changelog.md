@@ -1,4 +1,11 @@
 
+Unreleased
+-----------------------------
+
+- Fixes when running actions:
+    - Logs will show local variables (ROBOT_ROOT is no longer set).
+    - ROBOT_ARTIFACTS set to a better place for the log.html.
+
 New in 1.22.2 (2024-05-20)
 -----------------------------
 
