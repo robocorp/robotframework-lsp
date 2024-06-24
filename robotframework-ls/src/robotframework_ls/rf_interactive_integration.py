@@ -39,7 +39,7 @@ class _RfInterpretersManager:
         endpoint: IEndPoint,
         pm: PluginManager,
         get_workspace_root_path=lambda: None,
-        get_integration_option=lambda: 'none',
+        get_integration_option=lambda: "none",
     ):
         self._interpreter_id_to_rf_info: Dict[int, _RfInfo] = {}
         self._next_interpreter_id = partial(next, itertools.count(0))
@@ -139,15 +139,17 @@ class _RfInterpretersManager:
                     interpreter_info = ep.get_interpreter_info_for_doc_uri(uri)
                     if interpreter_info is not None:
                         integration_option = self._get_integration_option()
-                        if integration_option != 'none':
+                        if integration_option != "none":
                             target = str(interpreter_info.get_interpreter_id())
                             info["target"] = target
-                            apply_interpreter_info_to_config(rf_config, interpreter_info)
-    
+                            apply_interpreter_info_to_config(
+                                rf_config, interpreter_info
+                            )
+
                             existing_env = rf_config.get_setting(
                                 OPTION_ROBOT_PYTHON_ENV, dict, {}
                             )
-    
+
                             command_name = f"{integration_option}.updateLaunchEnv"
                             # Now, verify whether we have a
                             # 'robocorp|sema4ai.updateLaunchEnv', which is an additional
