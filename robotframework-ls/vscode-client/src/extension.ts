@@ -45,6 +45,7 @@ import { RobotDocumentationViewProvider } from "./docs";
 import { RobotOutputViewProvider } from "./output/outView";
 import { setupDebugSessionOutViewIntegration } from "./output/outViewRunIntegration";
 import { applySnippetWorkspaceEdit } from "./snippet";
+import { getIntegrationToUse } from "./robocorpOrSema4ai";
 
 interface ExecuteWorkspaceCommandArgs {
     command: string;
@@ -140,18 +141,21 @@ async function getDefaultLanguageServerPythonExecutable(): Promise<ExecutableAnd
     // Try to use the Robocorp Code extension to provide one for us (if it's installed and
     // available).
     try {
-        const languageServerPython: string = await commands.executeCommand<string>("robocorp.getLanguageServerPython");
-        if (languageServerPython) {
-            OUTPUT_CHANNEL.appendLine(
-                "Language server Python executable gotten from robocorp.getLanguageServerPython."
-            );
-            return {
-                executable: [languageServerPython],
-                "message": undefined,
-            };
+        const integration = getIntegrationToUse();
+        if (integration !== "none") {
+            const commandName = `${integration}.getLanguageServerPython`;
+
+            const languageServerPython: string = await commands.executeCommand<string>(commandName);
+            if (languageServerPython) {
+                OUTPUT_CHANNEL.appendLine(`Language server Python executable gotten from ${commandName}.`);
+                return {
+                    executable: [languageServerPython],
+                    "message": undefined,
+                };
+            }
         }
     } catch (error) {
-        // The command may not be available (in this case, go forward and try to find it in the filesystem).
+        logError("Error getting language server python", error, "ERR_GET_LANGUAGE_SERVER_PYTHON");
     }
 
     // If the user hasn't defined an executable, try to see if we can get it
@@ -407,17 +411,21 @@ async function startLanguageServer(): Promise<LanguageClient> {
     let langServer: LanguageClient;
     let initializationOptions: object = {};
     try {
-        let pluginsDir: string = await commands.executeCommand<string>("robocorp.getPluginsDir");
-        try {
-            if (pluginsDir && pluginsDir.length > 0) {
-                OUTPUT_CHANNEL.appendLine("Plugins dir: " + pluginsDir + ".");
-                initializationOptions["pluginsDir"] = pluginsDir;
+        const integration = getIntegrationToUse();
+        if (integration !== "none") {
+            let pluginsDir: string = await commands.executeCommand<string>(`${integration}.getPluginsDir`);
+            try {
+                if (pluginsDir && pluginsDir.length > 0) {
+                    OUTPUT_CHANNEL.appendLine("Plugins dir: " + pluginsDir + ".");
+                    initializationOptions["pluginsDir"] = pluginsDir;
+                    initializationOptions["integration"] = integration;
+                }
+            } catch (error) {
+                logError("Error setting pluginsDir.", error, "EXT_PLUGINS_DIR");
             }
-        } catch (error) {
-            logError("Error setting pluginsDir.", error, "EXT_PLUGINS_DIR");
         }
     } catch (error) {
-        // The command may not be available.
+        logError("Error getting plugins dir", error, "ERR_PLUGINS_DIR");
     }
 
     langServer = new LanguageClient(

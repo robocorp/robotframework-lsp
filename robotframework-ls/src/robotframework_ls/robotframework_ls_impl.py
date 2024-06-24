@@ -190,9 +190,18 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             if ws is not None:
                 return ws.root_path
             return None
+        
+        # Either 'none', 'robocorp' or 'sema4ai'.
+        self._integration_option = 'none'
+        
+        def get_integration_option():
+            s = weak_self()  # We don't want a cyclic reference.
+            if s is None:
+                return 'none'
+            return s._integration_option
 
         self._rf_interpreters_manager = _RfInterpretersManager(
-            self._endpoint, self._pm, get_workspace_root_path=get_workspace_root_path
+            self._endpoint, self._pm, get_workspace_root_path=get_workspace_root_path, get_integration_option=get_integration_option
         )
 
         watch_impl = os.environ.get("ROBOTFRAMEWORK_LS_WATCH_IMPL", "auto")
@@ -308,6 +317,14 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
         #     hierarchical_document_symbol_support
         # )
 
+        initialization_options = initializationOptions
+        if initialization_options:
+            integration_option = initialization_options.get("integrationOption")
+            # Integration may be "none", "sema4ai" or "robocorp"
+            if integration_option != 'none':
+                pass
+            
+        
         ret = PythonLanguageServer.m_initialize(
             self,
             processId=processId,
@@ -318,7 +335,6 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
             **_kwargs,
         )
 
-        initialization_options = initializationOptions
         if initialization_options:
             plugins_dir = initialization_options.get("pluginsDir")
             if isinstance(plugins_dir, str):
@@ -326,6 +342,9 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
                     log.critical(f"Expected: {plugins_dir} to be a directory.")
                 else:
                     self._pm.load_plugins_from(Path(plugins_dir))
+                    
+                
+            
 
         return ret
 
