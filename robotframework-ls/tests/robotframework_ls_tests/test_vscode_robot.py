@@ -2001,7 +2001,10 @@ def test_rf_interactive_integrated_hook_robocorp_update_env(
     language_server.initialize(
         workspace_dir,
         process_id=os.getpid(),
-        initialization_options={"pluginsDir": str(plugins_path)},
+        initialization_options={
+            "pluginsDir": str(plugins_path),
+            "integrationOption": "robocorp",
+        },
     )
 
     p = Path(workspace_dir) / "env1" / "caselib1.robot"
