@@ -418,7 +418,7 @@ async function startLanguageServer(): Promise<LanguageClient> {
                 if (pluginsDir && pluginsDir.length > 0) {
                     OUTPUT_CHANNEL.appendLine("Plugins dir: " + pluginsDir + ".");
                     initializationOptions["pluginsDir"] = pluginsDir;
-                    initializationOptions["integration"] = integration;
+                    initializationOptions["integrationOption"] = integration;
                 }
             } catch (error) {
                 logError("Error setting pluginsDir.", error, "EXT_PLUGINS_DIR");
