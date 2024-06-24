@@ -39,12 +39,14 @@ class _RfInterpretersManager:
         endpoint: IEndPoint,
         pm: PluginManager,
         get_workspace_root_path=lambda: None,
+        get_integration_option=lambda: "none",
     ):
         self._interpreter_id_to_rf_info: Dict[int, _RfInfo] = {}
         self._next_interpreter_id = partial(next, itertools.count(0))
         self._endpoint = endpoint
         self._pm = pm
         self._get_workspace_root_path = get_workspace_root_path
+        self._get_integration_option = get_integration_option
 
     def interpreter_start(
         self, arguments, config: IConfig
@@ -136,51 +138,56 @@ class _RfInterpretersManager:
                 for ep in self._pm.get_implementations(EPResolveInterpreter):
                     interpreter_info = ep.get_interpreter_info_for_doc_uri(uri)
                     if interpreter_info is not None:
-                        target = str(interpreter_info.get_interpreter_id())
-                        info["target"] = target
-                        apply_interpreter_info_to_config(rf_config, interpreter_info)
-
-                        existing_env = rf_config.get_setting(
-                            OPTION_ROBOT_PYTHON_ENV, dict, {}
-                        )
-
-                        # Now, verify whether we have a
-                        # 'robocorp.updateLaunchEnv', which is an additional
-                        # hook that can be called to update the environment for
-                        # launches (only available when we do have a custom
-                        # interpreter set for it).
-                        command_future = self._endpoint.request(
-                            "$/executeWorkspaceCommand",
-                            {
-                                "command": "robocorp.updateLaunchEnv",
-                                "arguments": {
-                                    "targetRobot": target,
-                                    "env": existing_env,
-                                },
-                            },
-                        )
-                        try:
-                            new_env = command_future.result()
-                            if new_env == "cancelled":
-                                return ActionResult(
-                                    False, message="Launch cancelled"
-                                ).as_dict()
-                        except:
-                            log.exception(
-                                "Unable to execute workspace command from the extension."
+                        integration_option = self._get_integration_option()
+                        if integration_option != "none":
+                            target = str(interpreter_info.get_interpreter_id())
+                            info["target"] = target
+                            apply_interpreter_info_to_config(
+                                rf_config, interpreter_info
                             )
-                        else:
-                            if new_env:
-                                if isinstance(new_env, dict):
-                                    rf_config.update_override_settings(
-                                        {OPTION_ROBOT_PYTHON_ENV: new_env}
-                                    )
-                                else:
-                                    log.critical(
-                                        "Expected robocorp.updateLaunchEnv to return a dict. Returned: %s (%s)",
-                                        new_env,
-                                        type(new_env),
-                                    )
+
+                            existing_env = rf_config.get_setting(
+                                OPTION_ROBOT_PYTHON_ENV, dict, {}
+                            )
+
+                            command_name = f"{integration_option}.updateLaunchEnv"
+                            # Now, verify whether we have a
+                            # 'robocorp|sema4ai.updateLaunchEnv', which is an additional
+                            # hook that can be called to update the environment for
+                            # launches (only available when we do have a custom
+                            # interpreter set for it).
+                            command_future = self._endpoint.request(
+                                "$/executeWorkspaceCommand",
+                                {
+                                    "command": command_name,
+                                    "arguments": {
+                                        "targetRobot": target,
+                                        "env": existing_env,
+                                    },
+                                },
+                            )
+                            try:
+                                new_env = command_future.result()
+                                if new_env == "cancelled":
+                                    return ActionResult(
+                                        False, message="Launch cancelled"
+                                    ).as_dict()
+                            except:
+                                log.exception(
+                                    "Unable to execute workspace command from the extension."
+                                )
+                            else:
+                                if new_env:
+                                    if isinstance(new_env, dict):
+                                        rf_config.update_override_settings(
+                                            {OPTION_ROBOT_PYTHON_ENV: new_env}
+                                        )
+                                    else:
+                                        log.critical(
+                                            "Expected robocorp.updateLaunchEnv to return a dict. Returned: %s (%s)",
+                                            new_env,
+                                            type(new_env),
+                                        )
 
                         break
 

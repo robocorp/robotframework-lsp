@@ -17,6 +17,7 @@ import { logError, OUTPUT_CHANNEL } from "./channel";
 import { languageServerClient, lastLanguageServerExecutable } from "./extension";
 import * as path from "path";
 import * as fs from "fs";
+import { getIntegrationToUse } from "./robocorpOrSema4ai";
 
 function removeEscaping(s) {
     if (s instanceof Array) {
@@ -104,19 +105,23 @@ class RobotDebugConfigurationProvider implements DebugConfigurationProvider {
             }
             // Also, overridde env variables in the launch config.
             try {
-                let newEnv: { [key: string]: string } | "cancelled" = await commands.executeCommand(
-                    "robocorp.updateLaunchEnv",
-                    {
-                        "targetRobot": targetRobot,
-                        "env": debugConfiguration.env,
-                    }
-                );
-                if (newEnv == "cancelled") {
-                    OUTPUT_CHANNEL.appendLine("Launch cancelled");
-                    return undefined;
-                }
+                const integration = getIntegrationToUse();
 
-                debugConfiguration.env = newEnv;
+                if (integration !== "none") {
+                    let newEnv: { [key: string]: string } | "cancelled" = await commands.executeCommand(
+                        `${integration}.updateLaunchEnv`,
+                        {
+                            "targetRobot": targetRobot,
+                            "env": debugConfiguration.env,
+                        }
+                    );
+                    if (newEnv == "cancelled") {
+                        OUTPUT_CHANNEL.appendLine("Launch cancelled");
+                        return undefined;
+                    }
+
+                    debugConfiguration.env = newEnv;
+                }
             } catch (error) {
                 // The command may not be available.
             }
