@@ -322,10 +322,9 @@ class RobotFrameworkLanguageServer(PythonLanguageServer):
 
         initialization_options = initializationOptions
         if initialization_options:
-            integration_option = initialization_options.get("integrationOption")
+            integration_option = initialization_options.get("integrationOption", 'none')
             # Integration may be "none", "sema4ai" or "robocorp"
-            if integration_option != "none":
-                pass
+            self._integration_option = integration_option
 
         ret = PythonLanguageServer.m_initialize(
             self,
