@@ -326,7 +326,9 @@ class _ServerApi(object):
                     os.getpid(),
                     server_process.pid,
                 )
+                config = self._config
                 api.initialize(
+                    config,
                     process_id=os.getpid(),
                     root_uri=workspace.root_uri,
                     workspace_folders=list(
@@ -335,7 +337,6 @@ class _ServerApi(object):
                     ),
                 )
 
-                config = self._config
                 log.debug("Forwarding config to api...")
                 if config is not None:
                     api.forward(
