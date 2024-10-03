@@ -80,7 +80,7 @@ jobs:
         /usr/bin/Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
         pwd
         ./gradlew buildPlugin
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v4
       with:
         name: intellij-distribution
         path: robotframework-intellij/build/distributions/

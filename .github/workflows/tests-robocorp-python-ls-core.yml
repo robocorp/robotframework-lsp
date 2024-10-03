@@ -62,7 +62,7 @@ jobs:
       env:
         PYTHONPATH: .
       run: python -u ./run_tests.py -rfE -otests_output -vv .
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v4
       with:
         name: tests_output.${{ matrix.name }}.txt
         path: robocorp-python-ls-core/tests/tests_output

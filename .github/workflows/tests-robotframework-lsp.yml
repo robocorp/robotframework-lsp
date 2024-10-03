@@ -108,7 +108,7 @@ jobs:
         PYTHONPATH: .
         RUN_TESTS_TIMEOUT: 800
       run: python -u ../../robocorp-python-ls-core/tests/run_tests.py -rfE -otests_output -vv .
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v4
       with:
         name: tests_output.${{ matrix.name }}.txt
         path: robotframework-ls/tests/tests_output

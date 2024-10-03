@@ -65,7 +65,7 @@ jobs:
       
     - run: vsce package --pre-release --target win32-x64 -o robocorp-code-win32-x64.vsix
 
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v4
       with:
         name: robocorp-code-win32-x64.vsix
         path: ./robocorp-code/robocorp-code-win32-x64.vsix
@@ -81,7 +81,7 @@ jobs:
       
     - run: vsce package --pre-release --target linux-x64 -o robocorp-code-linux-x64.vsix
 
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v4
       with:
         name: robocorp-code-linux-x64.vsix
         path: ./robocorp-code/robocorp-code-linux-x64.vsix
@@ -97,7 +97,7 @@ jobs:
       
     - run: vsce package --pre-release --target darwin-x64 -o robocorp-code-darwin-x64.vsix
 
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v4
       with:
         name: robocorp-code-darwin-x64.vsix
         path: ./robocorp-code/robocorp-code-darwin-x64.vsix
@@ -113,7 +113,7 @@ jobs:
       
     - run: vsce package --pre-release --target darwin-arm64 -o robocorp-code-darwin-arm64.vsix
 
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v4
       with:
         name: robocorp-code-darwin-arm64.vsix
         path: ./robocorp-code/robocorp-code-darwin-arm64.vsix

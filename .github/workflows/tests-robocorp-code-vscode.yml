@@ -65,12 +65,12 @@ jobs:
         # Big timeout to create environment in windows.
         RUN_TESTS_TIMEOUT: 3000
       run: poetry run python -u ../../robocorp-python-ls-core/tests/run_tests.py -rfE -otests_output -vv .
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v4
       if: always()
       with:
         name: tests_output.${{ matrix.name }}.txt
         path: robocorp-code/tests/tests_output
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v4
       if: always()
       with:
         name: log.${{ matrix.name }}.html

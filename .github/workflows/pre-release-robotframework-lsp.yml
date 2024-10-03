@@ -63,7 +63,7 @@ jobs:
     # VSCode (build)
     - run: npm install -g vsce@2.6.7
     - run: vsce package -o robotframework-lsp.vsix
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v4
       with:
         name: robotframework-lsp.vsix
         path: ./robotframework-ls/robotframework-lsp.vsix
@@ -72,7 +72,7 @@ jobs:
     - name: Package
       working-directory: ./robotframework-intellij
       run: ./gradlew buildPlugin
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v4
       with:
         name: intellij-distribution
         path: robotframework-intellij/build/distributions/
