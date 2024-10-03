@@ -68,14 +68,14 @@ jobs:
         name: robotframework-lsp.vsix
         path: ./robotframework-ls/robotframework-lsp.vsix
 
-    # Intellij (build)  
-    - name: Package
-      working-directory: ./robotframework-intellij
-      run: ./gradlew buildPlugin
-    - uses: actions/upload-artifact@v4
-      with:
-        name: intellij-distribution
-        path: robotframework-intellij/build/distributions/
+    # # Intellij (build)  
+    # - name: Package
+    #   working-directory: ./robotframework-intellij
+    #   run: ./gradlew buildPlugin
+    # - uses: actions/upload-artifact@v4
+    #   with:
+    #     name: intellij-distribution
+    #     path: robotframework-intellij/build/distributions/
 
     # Note: always publish a pre-release to VSCode marketplace.
     - name: Publish pre-release to vscode marketplace

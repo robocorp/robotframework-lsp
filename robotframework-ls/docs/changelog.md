@@ -1,3 +1,13 @@
+New in 1.13.0 (2024-10-03)
+-----------------------------
+
+### New features
+
+- The `Robot Framework Language Server` can now work both with `Robocorp Code` (which is currently deprecated) 
+  as well as well as with the new `Sema4.ai VSCode extension` (which supersedes `Robocorp Code` for `Robots`
+  development and also has support for developing AI actions).
+
+
 New in 1.12.0 (2024-04-12)
 -----------------------------
 
