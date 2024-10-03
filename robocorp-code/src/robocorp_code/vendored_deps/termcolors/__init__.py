@@ -7,6 +7,7 @@ except ImportError:
 
     bold_yellow = _noop
     bold_red = _noop
+    bold = _noop
 else:
 
     def bold_yellow(msg):
@@ -14,3 +15,6 @@ else:
 
     def bold_red(msg):
         return colored(msg, color="red", attrs=["bold"])
+
+    def bold(msg):
+        return colored(msg, attrs=["bold"])
