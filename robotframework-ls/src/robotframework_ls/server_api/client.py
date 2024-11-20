@@ -56,12 +56,25 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
         return True
 
     def initialize(
-        self, msg_id=None, process_id=None, root_uri="", workspace_folders=()
+        self, config, msg_id=None, process_id=None, root_uri="", workspace_folders=()
     ):
         from robocorp_ls_core.options import NO_TIMEOUT, USE_TIMEOUTS
 
         self._check_process_alive()
         msg_id = msg_id if msg_id is not None else self.next_id()
+
+        from robotframework_ls.impl.robot_generated_lsp_constants import (
+            OPTION_ROBOT_TIMEOUT_USE,
+        )
+
+        timeout = 30
+        if config and not config.get_setting(
+            OPTION_ROBOT_TIMEOUT_USE, bool, USE_TIMEOUTS
+        ):
+            timeout = NO_TIMEOUT
+        if not USE_TIMEOUTS:
+            timeout = NO_TIMEOUT
+
         return self.request(
             {
                 "jsonrpc": "2.0",
@@ -73,7 +86,7 @@ class RobotFrameworkApiClient(LanguageServerClientBase):
                     "workspaceFolders": workspace_folders,
                 },
             },
-            timeout=30 if USE_TIMEOUTS else NO_TIMEOUT,
+            timeout=timeout,
         )
 
     @implements(IRobotFrameworkApiClient.settings)
