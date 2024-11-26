@@ -262,7 +262,10 @@ def get_json_contents():
                                 "target": '^"\\${file}"',
                                 "terminal": "integrated",
                                 "env": {},
-                                "args": [],
+                                "args": [
+                                    "--outputdir",
+                                    "output"
+                                ],
                             },
                         },
                         {
@@ -272,6 +275,10 @@ def get_json_contents():
                                 "type": "robotframework-lsp",
                                 "name": "Robot Framework: Launch template",
                                 "request": "launch",
+                                "args": [
+                                    "--outputdir",
+                                    "output"
+                                ],
                             },
                         },
                     ],
