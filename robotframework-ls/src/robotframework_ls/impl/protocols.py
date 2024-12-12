@@ -116,6 +116,8 @@ class IRobotToken(Protocol):
     ERROR: str
     FATAL_ERROR: str
 
+    VAR: str  # Added for Robot Framework 7.0
+
     type: str
     value: str
     lineno: int  # 1-based
@@ -1150,6 +1152,7 @@ class VariableKind:
     SUITE_SET_VARIABLE = "Variable (suite set)"
     GLOBAL_SET_VARIABLE = "Variable (global)"
     ENV_SET_VARIABLE = "Variable (environment)"
+    VAR = "Variable (VAR syntax)"  # Added for Robot Framework 7.0
 
 
 LOCAL_ASSIGNS_VARIABLE_KIND = {

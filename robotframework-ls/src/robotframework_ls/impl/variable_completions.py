@@ -228,6 +228,22 @@ def _collect_current_doc_variables(
 
     collect_current_doc_global_variables(completion_context, collector)
 
+    # Handle the new VAR syntax from Robot Framework 7.0
+    for node_info in completion_context.get_ast().iter_indexed("Variable"):
+        for token in node_info.node.tokens:
+            if token.type == token.VARIABLE:
+                variable_name = token.value
+                if collector.accepts(variable_name):
+                    variable_found = VariableFoundFromToken(
+                        completion_context,
+                        token,
+                        "",
+                        variable_name=variable_name,
+                        variable_kind=VariableKind.VARIABLE,
+                        stack=node_info.stack,
+                    )
+                    collector.on_variable(variable_found)
+
 
 def _collect_resource_imports_variables(
     completion_context: ICompletionContext, collector: IVariablesCollector
@@ -238,6 +254,22 @@ def _collect_resource_imports_variables(
             continue
         new_ctx = completion_context.create_copy(resource_doc)
         _collect_global_variables_from_document_context(new_ctx, collector)
+
+        # Handle the new VAR syntax from Robot Framework 7.0
+        for node_info in new_ctx.get_ast().iter_indexed("Variable"):
+            for token in node_info.node.tokens:
+                if token.type == token.VARIABLE:
+                    variable_name = token.value
+                    if collector.accepts(variable_name):
+                        variable_found = VariableFoundFromToken(
+                            new_ctx,
+                            token,
+                            "",
+                            variable_name=variable_name,
+                            variable_kind=VariableKind.VARIABLE,
+                            stack=node_info.stack,
+                        )
+                        collector.on_variable(variable_found)
 
 
 def _collect_variables_from_variable_import_doc(

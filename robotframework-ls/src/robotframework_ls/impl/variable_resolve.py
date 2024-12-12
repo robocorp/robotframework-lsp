@@ -396,7 +396,7 @@ class ResolveVariablesContext:
             if tok.type == tok.NAME:
                 parts.append(str(tok))
 
-            elif tok.type == tok.VARIABLE:
+            elif tok.type == tok.VARIABLE or tok.type == tok.VAR:
                 if count > 6:
                     unresolved.append(
                         (
@@ -469,6 +469,9 @@ class ResolveVariablesContext:
 
         elif value.startswith("%{") and value.endswith("}"):
             convert_with = self._convert_environment_variable
+
+        elif value.startswith("VAR{") and value.endswith("}"):
+            convert_with = self._convert_robot_variable
 
         if convert_with is None:
             log.info("Cannot resolve variable: %s", value)

@@ -139,6 +139,10 @@ def doc_highlight(
     if curr_var_token_info is not None:
         return _highlight_variables(completion_context, curr_var_token_info)
 
+    # Handle the new VAR syntax from Robot Framework 7.0
+    if curr_token_info.token.type == curr_token_info.token.VAR:
+        return _highlight_variables(completion_context, curr_token_info)
+
     # We found no custom heuristics, just use a text-based approach.
     doc = completion_context.doc
     sel = completion_context.sel
