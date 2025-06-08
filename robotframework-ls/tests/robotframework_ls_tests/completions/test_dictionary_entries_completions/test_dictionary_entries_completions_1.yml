@@ -1,4 +1,5 @@
 - deprecated: false
+  detail: John
   documentation: John
   insertText: First name
   insertTextFormat: 2

@@ -1,4 +1,5 @@
 - deprecated: false
+  detail: '12345'
   documentation: '12345'
   insertText: Zip Code
   insertTextFormat: 2
